@@ -579,3 +579,95 @@ body {
         border-radius: 20px;
     }
 }
+
+/* Phone Screen Content Styles */
+.phone-frame {
+    text-decoration: none;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.phone-frame:hover {
+    transform: scale(1.02);
+}
+
+.phone-screen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 2rem;
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+    color: #fff;
+    text-align: center;
+}
+
+.pb-logo {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #D4A5AE;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pb-logo span {
+    font-size: 0.7rem;
+    font-weight: normal;
+    color: #888;
+    letter-spacing: 2px;
+}
+
+.phone-screen-content h3 {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    color: #fff;
+}
+
+.phone-screen-content .subtitle {
+    font-size: 0.75rem;
+    color: #999;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+    letter-spacing: 1px;
+}
+
+.phone-screen-content .subtitle span {
+    display: block;
+    font-size: 0.65rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+.booking-cta {
+    margin-top: auto;
+}
+
+.cta-button {
+    background: transparent;
+    border: 2px solid #D4A5AE;
+    color: #D4A5AE;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.phone-frame:hover .cta-button {
+    background: #D4A5AE;
+    color: #000;
+}
+
+.tap-text {
+    font-size: 0.75rem;
+    color: #666;
+    margin: 0;
+}
