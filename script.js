@@ -1,132 +1,186 @@
-// Mobile Menu Toggle
-const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-const navMenu = document.querySelector('.nav-menu');
+/* ==============================================
+   PhenomeBeauty — script.js
+   Handles:
+     1. Navbar scroll shrink + background shift
+     2. Mobile menu toggle
+     3. Nav link active state on scroll (IntersectionObserver)
+     4. Scroll reveal (.reveal → .is-visible)
+     5. Smooth close of mobile menu on link click
+     6. Pill nav: close on outside click
+============================================== */
 
-if (mobileMenuToggle) {
-    mobileMenuToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
+(function () {
+  "use strict";
+
+  /* ------------------------------------------
+     1. Element refs
+  ------------------------------------------ */
+  const navbar      = document.getElementById("navbar");
+  const menuToggle  = document.getElementById("menuToggle");
+  const navMenu     = document.getElementById("navMenu");
+  const navLinks    = navMenu ? [...navMenu.querySelectorAll("a")] : [];
+  const sections    = [...document.querySelectorAll("section[id]")];
+  const revealEls   = [...document.querySelectorAll(".reveal")];
+
+  /* ------------------------------------------
+     2. Navbar — scroll shrink
+  ------------------------------------------ */
+  function onScroll() {
+    if (!navbar) return;
+    if (window.scrollY > 40) {
+      navbar.classList.add("scrolled");
+    } else {
+      navbar.classList.remove("scrolled");
+    }
+  }
+
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll(); // run once on load
+
+  /* ------------------------------------------
+     3. Mobile menu toggle
+  ------------------------------------------ */
+  if (menuToggle && navbar) {
+    menuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = navbar.classList.toggle("menu-open");
+      menuToggle.setAttribute("aria-expanded", String(isOpen));
+
+      // animate hamburger → X
+      const spans = menuToggle.querySelectorAll("span");
+      if (isOpen) {
+        spans[0].style.transform = "translateY(7px) rotate(45deg)";
+        spans[1].style.opacity   = "0";
+        spans[2].style.transform = "translateY(-7px) rotate(-45deg)";
+      } else {
+        spans[0].style.transform = "";
+        spans[1].style.opacity   = "";
+        spans[2].style.transform = "";
+      }
     });
-}
+  }
 
-// Smooth Scrolling for Navigation Links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-            // Close mobile menu if open
-            if (navMenu && navMenu.classList.contains('active')) {
-                navMenu.classList.remove('active');
-            }
-        }
-    });
-});
+  // Close on outside click
+  document.addEventListener("click", (e) => {
+    if (navbar && navbar.classList.contains("menu-open")) {
+      if (!navbar.contains(e.target)) {
+        closeMenu();
+      }
+    }
+  });
 
-// Booking Form Handling
-const bookingForm = document.getElementById('bookingForm');
+  // Close on nav link click
+  navLinks.forEach((link) => {
+    link.addEventListener("click", closeMenu);
+  });
 
-if (bookingForm) {
-    bookingForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            phone: document.getElementById('phone').value,
-            service: document.getElementById('service').value,
-            date: document.getElementById('date').value,
-            message: document.getElementById('message').value
-        };
-        
-        // Validate form
-        if (!formData.name || !formData.email || !formData.phone || !formData.service || !formData.date) {
-            alert('Please fill in all required fields.');
-            return;
-        }
-        
-        // Email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            alert('Please enter a valid email address.');
-            return;
-        }
-        
-        // Show success message
-        alert(`Thank you, ${formData.name}! Your booking request for ${formData.service} on ${formData.date} has been received. We'll contact you at ${formData.email} shortly.`);
-        
-        // Reset form
-        bookingForm.reset();
-        
-        // In a real application, you would send this data to a server
-        console.log('Form Data:', formData);
-    });
-}
+  function closeMenu() {
+    if (!navbar) return;
+    navbar.classList.remove("menu-open");
+    if (menuToggle) {
+      menuToggle.setAttribute("aria-expanded", "false");
+      const spans = menuToggle.querySelectorAll("span");
+      spans[0].style.transform = "";
+      spans[1].style.opacity   = "";
+      spans[2].style.transform = "";
+    }
+  }
 
-// Add animation on scroll
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
+  /* ------------------------------------------
+     4. Active nav link on scroll
+  ------------------------------------------ */
+  const sectionObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
         if (entry.isIntersecting) {
-            entry.target.style.opacity = '1';
-            entry.target.style.transform = 'translateY(0)';
+          const id = entry.target.getAttribute("id");
+          navLinks.forEach((link) => {
+            link.classList.toggle(
+              "active",
+              link.getAttribute("href") === `#${id}`
+            );
+          });
         }
-    });
-}, observerOptions);
+      });
+    },
+    {
+      rootMargin: "-30% 0px -60% 0px",
+      threshold: 0,
+    }
+  );
 
-// Observe all cards and sections
-document.addEventListener('DOMContentLoaded', () => {
-    const animatedElements = document.querySelectorAll('.blog-card, .guide-card, .review-card');
-    
-    animatedElements.forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(20px)';
-        el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        observer.observe(el);
-    });
-});
+  sections.forEach((sec) => sectionObserver.observe(sec));
 
-// Form input validation feedback
-const formInputs = document.querySelectorAll('.booking-form input, .booking-form select, .booking-form textarea');
+  /* ------------------------------------------
+     5. Scroll reveal
+  ------------------------------------------ */
+  if ("IntersectionObserver" in window) {
+    const revealObserver = new IntersectionObserver(
+      (entries, obs) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            // stagger siblings inside the same parent
+            const siblings = [
+              ...entry.target.parentElement.querySelectorAll(".reveal:not(.is-visible)"),
+            ];
+            const delay = siblings.indexOf(entry.target) * 80;
 
-formInputs.forEach(input => {
-    input.addEventListener('blur', function() {
-        if (this.hasAttribute('required') && !this.value) {
-            this.style.borderColor = '#e74c3c';
-        } else {
-            this.style.borderColor = '#dfe6e9';
+            setTimeout(() => {
+              entry.target.classList.add("is-visible");
+            }, delay);
+
+            obs.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        rootMargin: "0px 0px -60px 0px",
+        threshold: 0.08,
+      }
+    );
+
+    revealEls.forEach((el) => revealObserver.observe(el));
+  } else {
+    // Fallback: just show everything
+    revealEls.forEach((el) => el.classList.add("is-visible"));
+  }
+
+  /* ------------------------------------------
+     6. Navbar scrolled style tweak
+        (adds backdrop-filter strength increase)
+  ------------------------------------------ */
+  const navbarInner = navbar ? navbar.querySelector(".navbar-inner") : null;
+
+  function updateNavbarDepth() {
+    if (!navbarInner) return;
+    const depth = Math.min(window.scrollY / 200, 1);
+    const alpha = 0.7 + depth * 0.2;
+    navbarInner.style.background = `linear-gradient(
+      135deg,
+      rgba(28, 28, 30, ${alpha}),
+      rgba(18, 18, 20, ${alpha - 0.14})
+    )`;
+  }
+
+  window.addEventListener("scroll", updateNavbarDepth, { passive: true });
+  updateNavbarDepth();
+
+  /* ------------------------------------------
+     7. Smooth scroll polyfill for older Safari
+  ------------------------------------------ */
+  navLinks.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      const href = link.getAttribute("href");
+      if (href && href.startsWith("#")) {
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          const navH = navbar ? navbar.offsetHeight : 0;
+          const top  = target.getBoundingClientRect().top + window.scrollY - navH - 16;
+          window.scrollTo({ top, behavior: "smooth" });
         }
+      }
     });
-    
-    input.addEventListener('focus', function() {
-        this.style.borderColor = '#3498db';
-    });
-});
+  });
 
-// Set minimum date for booking to today
-const dateInput = document.getElementById('date');
-if (dateInput) {
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.setAttribute('min', today);
-}
-
-// Add hover effect to blog categories
-document.querySelectorAll('.blog-category').forEach(category => {
-    category.addEventListener('click', function(e) {
-        e.preventDefault();
-        const categoryName = this.textContent;
-        alert(`Showing all posts in category: ${categoryName}`);
-    });
-});
-
-// Console welcome message
-console.log('%c🎨 LifeStyle Website', 'color: #3498db; font-size: 20px; font-weight: bold;');
-console.log('%cWelcome to the LifeStyle website! Explore our blog, guides, reviews, and book your experience.', 'color: #2c3e50; font-size: 14px;');
+})();
