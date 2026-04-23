@@ -560,7 +560,7 @@ section, footer, nav { position: relative; z-index: 1; }
 }
 
 /* =========================
-   Services — accordion
+   Services - accordion
 ========================= */
 .services-section { padding: 10px 0; }
 
@@ -741,12 +741,11 @@ section, footer, nav { position: relative; z-index: 1; }
 ========================= */
 .guides-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
 }
 
-.blog-card,
-.guide-card {
+.blog-card {
     position: relative;
     overflow: hidden;
     padding: 22px;
@@ -762,26 +761,88 @@ section, footer, nav { position: relative; z-index: 1; }
     min-height: 190px;
 }
 
-.blog-card:hover,
-.guide-card:hover {
+.blog-card:hover {
     transform: translateY(-6px);
     border-color: rgba(255,255,255,0.22);
 }
 
-.blog-card h3,
-.guide-card h3 {
+.blog-card h3 {
     font-family: var(--font-display);
     font-size: 1.05rem;
     line-height: 1.15;
     color: var(--accent-strong);
 }
 
-.blog-card p,
-.guide-card p {
+.blog-card p {
     color: var(--text-soft);
     font-size: 0.88rem;
     flex: 1;
     line-height: 1.65;
+}
+
+/* Guide cards with image background */
+.guide-card--image {
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    aspect-ratio: 3 / 4;
+    border: 1px solid rgba(255,255,255,0.13);
+    box-shadow: var(--shadow-md);
+    display: block;
+    cursor: pointer;
+    transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+    text-decoration: none;
+}
+
+.guide-card--image:hover {
+    transform: translateY(-8px) scale(1.01);
+    border-color: rgba(255,255,255,0.28);
+    box-shadow: var(--shadow-lg);
+}
+
+.guide-card--image img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.42s ease;
+}
+
+.guide-card--image:hover img { transform: scale(1.05); }
+
+.guide-card--image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.88) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.guide-label {
+    position: absolute;
+    inset: auto 16px 20px 16px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.guide-label h3 {
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+    line-height: 1.1;
+    color: var(--accent-strong);
+}
+
+.guide-label p {
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    line-height: 1.55;
+    max-width: 34ch;
 }
 
 /* =========================
@@ -964,24 +1025,31 @@ section, footer, nav { position: relative; z-index: 1; }
 .footer-section ul { display: grid; gap: 8px; }
 .footer-section a:hover { color: var(--accent-strong); }
 
-.social-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.social-links { display: flex; flex-wrap: wrap; gap: 10px; }
 
 .social-links a {
-    height: 38px;
-    padding: 0 15px;
-    border-radius: var(--radius-pill);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text-soft);
-    font-size: 0.83rem;
-    transition: background 0.22s ease, color 0.22s ease;
+    transition: background 0.22s ease, transform 0.22s ease;
+    flex-shrink: 0;
 }
 
 .social-links a:hover {
     background: rgba(255,255,255,0.14);
-    color: var(--accent-strong);
+    transform: translateY(-2px);
+}
+
+.social-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    display: block;
 }
 
 .footer-bottom {
@@ -1021,7 +1089,7 @@ section, footer, nav { position: relative; z-index: 1; }
 }
 
 /* =========================
-   Responsive — Tablet ≤ 1024px
+   Responsive - Tablet <= 1024px
 ========================= */
 @media (max-width: 1024px) {
     .hero-layout { grid-template-columns: 1fr; }
@@ -1031,7 +1099,7 @@ section, footer, nav { position: relative; z-index: 1; }
 
     .promo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-    .blog-grid,
+    .blog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .guides-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     .services-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1040,7 +1108,7 @@ section, footer, nav { position: relative; z-index: 1; }
 }
 
 /* =========================
-   Responsive — Mobile nav ≤ 820px
+   Responsive - Mobile nav <= 820px
 ========================= */
 @media (max-width: 820px) {
     .navbar { top: 8px; padding-top: 8px; }
@@ -1087,7 +1155,7 @@ section, footer, nav { position: relative; z-index: 1; }
 }
 
 /* =========================
-   Responsive — Small mobile ≤ 600px
+   Responsive - Small mobile <= 600px
 ========================= */
 @media (max-width: 600px) {
     :root {
@@ -1116,15 +1184,16 @@ section, footer, nav { position: relative; z-index: 1; }
     .promo-grid { grid-template-columns: 1fr; }
     .promo-card { aspect-ratio: 4 / 3; }
 
+    .guides-grid { grid-template-columns: 1fr; }
+    .guide-card--image { aspect-ratio: 4 / 3; }
+
     .blog-grid,
-    .guides-grid,
     .services-grid { grid-template-columns: 1fr; }
 
     .glass-panel,
     .section-inner { border-radius: 20px; padding: 18px; }
 
-    .blog-card,
-    .guide-card { border-radius: 16px; min-height: auto; padding: 18px; }
+    .blog-card { border-radius: 16px; min-height: auto; padding: 18px; }
 
     .service-card { border-radius: 14px; padding: 16px; }
 
