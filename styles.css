@@ -1058,6 +1058,17 @@ section, footer, nav { position: relative; z-index: 1; }
     transform: translateY(-2px);
 }
 
+/* Social bubble - white background so black icons pop */
+.social-bubble {
+    background: rgba(255,255,255,0.90) !important;
+    border-color: rgba(255,255,255,0.60) !important;
+}
+
+.social-bubble:hover {
+    background: rgba(255,255,255,1) !important;
+    transform: translateY(-2px);
+}
+
 .social-icon {
     width: 22px;
     height: 22px;
