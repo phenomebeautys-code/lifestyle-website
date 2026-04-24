@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T&Cs — PhenomeBeauty</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        .tcs-hero {
+            padding: 18px 0 10px;
+        }
+        .tcs-hero-panel {
+            position: relative;
+            overflow: hidden;
+            padding: clamp(28px, 5vw, 52px) clamp(20px, 4vw, 48px);
+            border-radius: 32px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+            border: 1px solid rgba(255,255,255,0.13);
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            text-align: center;
+        }
+        .tcs-hero-panel .section-kicker { margin-bottom: 16px; }
+        .tcs-hero-panel h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2.4rem, 6vw, 4.8rem);
+            line-height: 1.0;
+            color: #ffffff;
+            margin-bottom: 14px;
+        }
+        .tcs-hero-panel p {
+            color: var(--text-soft);
+            font-size: 0.97rem;
+            max-width: 52ch;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+        /* Section */
+        .tcs-section { padding: 10px 0 36px; }
+        .tcs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 14px;
+        }
+        .tcs-card {
+            padding: 24px 26px;
+            border-radius: 20px;
+            background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.13);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+        .tcs-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255,255,255,0.22);
+        }
+        .tcs-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .tcs-num {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.14);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+        .tcs-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            color: #ffffff;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .tcs-card p {
+            color: var(--text-soft);
+            font-size: 0.88rem;
+            line-height: 1.65;
+            margin: 0;
+        }
+        /* Back link */
+        .back-wrap {
+            padding: 22px 0 4px;
+        }
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-soft);
+            font-size: 0.88rem;
+            font-family: var(--font-body);
+            transition: color 0.22s ease, transform 0.22s ease;
+        }
+        .back-link:hover {
+            color: #ffffff;
+            transform: translateX(-3px);
+        }
+        @media (max-width: 700px) {
+            .tcs-grid { grid-template-columns: 1fr; }
+            .tcs-hero-panel { border-radius: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <div class="navbar-inner">
+                <a href="index.html" class="logo-wrap">
+                    <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty" class="logo-img" />
+                    <span class="logo-wordmark">PhenomeBeauty</span>
+                </a>
+                <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
+                    <span></span><span></span><span></span>
+                </button>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="index.html#guides">Guides</a></li>
+                    <li><a href="index.html#services">Services</a></li>
+                    <li><a href="index.html#booking">Book</a></li>
+                </ul>
+                <div class="nav-cta">
+                    <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- BACK -->
+    <div class="container">
+        <div class="back-wrap">
+            <a href="index.html" class="back-link">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+                Back to Home
+            </a>
+        </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="tcs-hero">
+        <div class="container">
+            <div class="tcs-hero-panel">
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Legal &amp; Policy
+                </span>
+                <h1>Terms &amp; Conditions</h1>
+                <p>Please read these terms carefully before booking. By using our services you agree to the policy outlined below.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- T&Cs GRID -->
+    <section class="tcs-section">
+        <div class="container">
+            <div class="tcs-grid">
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">1</span>
+                        <h3>Cancellation &mdash; Before Service</h3>
+                    </div>
+                    <p>7+ days: Full refund. &nbsp;3&ndash;6 days: 50% refund. &nbsp;Within 48 hrs: 25% refund. &nbsp;Within 24 hrs: No refund.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">2</span>
+                        <h3>Cancellation &mdash; After Service</h3>
+                    </div>
+                    <p>Not applicable once a service has been rendered. For unsatisfactory service, see Section 3.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">3</span>
+                        <h3>Service Not As Described</h3>
+                    </div>
+                    <p>Notify us within 48 hours. Remedies: redo, partial refund (20&ndash;50%), or full refund. Processing within 5 business days.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">4</span>
+                        <h3>Unsatisfactory Service</h3>
+                    </div>
+                    <p>Contact us within 7 days with documented examples. Review may result in a redo or partial refund (25&ndash;50%).</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">5</span>
+                        <h3>Partial Services</h3>
+                    </div>
+                    <p>Completed sessions are non-refundable. Remaining sessions refunded within 7 business days.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">6</span>
+                        <h3>Payment Terms</h3>
+                    </div>
+                    <p>Deposit non-refundable once service has begun. Balance due on completion. Refunds to original payment method only.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">7</span>
+                        <h3>Rescheduling</h3>
+                    </div>
+                    <p>Rescheduling is available at any time. Refunds follow the cancellation terms outlined in Section 1.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">8</span>
+                        <h3>Transaction Fees</h3>
+                    </div>
+                    <p>Refunds are issued via the original payment method at the original purchase price.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">9</span>
+                        <h3>Disputes &amp; Escalation</h3>
+                    </div>
+                    <p>All disputes are reviewed within 5 business days of submission.</p>
+                </div>
+
+                <div class="tcs-card">
+                    <div class="tcs-card-header">
+                        <span class="tcs-num">10</span>
+                        <h3>Consumer Protection Act</h3>
+                    </div>
+                    <p>This policy does not limit your statutory rights under applicable consumer protection law.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-shell">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <div class="footer-logo">
+                            <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty" class="footer-logo-img" />
+                            <span class="footer-logo-name">PhenomeBeauty</span>
+                        </div>
+                        <p>Mobile beauty specialist based in Cape Town. Professional waxing, nails, and tinting delivered to your door.</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="index.html#guides">Guides</a></li>
+                            <li><a href="index.html#services">Services</a></li>
+                            <li><a href="index.html#booking">Book Now</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Contact</h4>
+                        <p>hello@phenomebeauty.co.za</p>
+                        <p>+27 74 511 5725</p>
+                        <p>Cape Town, South Africa</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Follow Us</h4>
+                        <div class="social-links">
+                            <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
+                            <a href="https://www.facebook.com/phenomebeauty" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
+                            <a href="https://www.instagram.com/phenomebeauty_" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
+                            <a href="https://www.tiktok.com/@phenomebeauty_" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2025 PhenomeBeauty. All rights reserved.</p>
+                    <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
