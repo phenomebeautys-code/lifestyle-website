@@ -11,7 +11,6 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* Login screen */
     .login-wrap { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; }
     .login-card {
       width:100%; max-width:380px;
@@ -28,7 +27,6 @@
     }
     .field-input:focus { border-color:rgba(255,255,255,0.35); }
     .login-error { font-size:0.82rem; color:#f87171; text-align:center; display:none; }
-    /* Admin UI */
     #adminUI { display:none; }
     .admin-header {
       position:sticky; top:0; z-index:50;
@@ -39,7 +37,6 @@
     }
     .admin-header-title { font-family:var(--font-display); font-size:1.3rem; color:var(--accent-strong); }
     .admin-header-actions { display:flex; align-items:center; gap:10px; }
-    /* Stats */
     .stat-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; padding:20px 24px; }
     .stat-card {
       padding:18px 20px;
@@ -49,7 +46,6 @@
     .stat-label { font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
     .stat-value { font-family:var(--font-display); font-size:2rem; color:var(--accent-strong); }
     .stat-value.gold { color:var(--accent); }
-    /* Filters */
     .filters { display:flex; align-items:center; gap:10px; padding:0 24px 16px; flex-wrap:wrap; }
     .filter-btn {
       padding:7px 16px; border:1px solid var(--glass-border);
@@ -70,7 +66,6 @@
       width:200px; transition:border-color 0.2s;
     }
     .search-input:focus { border-color:rgba(255,255,255,0.35); }
-    /* Table */
     .table-wrap { padding:0 24px 60px; overflow-x:auto; }
     table { width:100%; border-collapse:collapse; }
     th {
@@ -80,7 +75,6 @@
     }
     td { padding:14px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.82rem; vertical-align:top; }
     tr:hover td { background:rgba(255,255,255,0.02); }
-    /* Badges */
     .badge {
       display:inline-block; padding:3px 10px;
       border-radius:var(--radius-pill); font-size:0.7rem;
@@ -93,7 +87,6 @@
     .badge-dispatched  { background:rgba(245,243,239,0.08); border-color:rgba(245,243,239,0.18); color:var(--accent); }
     .badge-delivered   { background:rgba(74,222,128,0.12);  border-color:rgba(74,222,128,0.3);   color:#4ade80; }
     .items-mini { font-size:0.75rem; color:var(--text-muted); line-height:1.9; }
-    /* Status select */
     .status-select {
       background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);
       color:var(--text); border-radius:8px; padding:5px 8px;
@@ -124,7 +117,6 @@
 
   <!-- ADMIN UI -->
   <div id="adminUI">
-
     <div class="admin-header">
       <span class="admin-header-title">Shop Orders</span>
       <div class="admin-header-actions">
@@ -133,14 +125,12 @@
         <a href="index.html" class="btn btn-primary" style="padding:8px 16px;font-size:0.78rem;">← Site</a>
       </div>
     </div>
-
     <div class="stat-bar">
       <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="statTotal">—</div></div>
       <div class="stat-card"><div class="stat-label">Paid Orders</div><div class="stat-value gold" id="statPaid">—</div></div>
       <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value gold" id="statRevenue">—</div></div>
       <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="statPending">—</div></div>
     </div>
-
     <div class="filters">
       <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
       <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
@@ -149,18 +139,11 @@
       <button class="filter-btn" onclick="setFilter('dispatched',this)">Dispatched</button>
       <input class="search-input" type="text" id="searchInput" placeholder="Search name / email…" oninput="renderTable()" />
     </div>
-
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Customer</th>
-            <th>Items</th>
-            <th>Total</th>
-            <th>Payment</th>
-            <th>Status</th>
-            <th>Update</th>
+            <th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th>
           </tr>
         </thead>
         <tbody id="ordersBody">
@@ -168,14 +151,13 @@
         </tbody>
       </table>
     </div>
-
   </div>
 
   <script src="script.js"></script>
   <script>
-    const SUPABASE_URL   = 'https://xxwmdrohbkyrnhcapoto.supabase.co';
-    const SUPABASE_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d21kcm9oYmt5cm5oY2Fwb3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzU4MTIsImV4cCI6MjA5MjAxMTgxMn0.50Rd-uKV8zTBY9B5zh-Yqo0u7IUzj4WqhzJuQaPbgcg';
-    const ADMIN_PASSWORD = 'phenome2026'; // ⚠️ Change this!
+    const SUPABASE_URL   = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+    const SUPABASE_ANON  = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
+    const ADMIN_PASSWORD = 'phenome2026';
     let allOrders = [], activeFilter = 'all';
 
     function login() {
@@ -248,10 +230,10 @@
           <td><span class="badge ${badgeMap[o.status]||'badge-unpaid'}">${o.status}</span></td>
           <td>
             <select class="status-select" onchange="updateStatus('${o.id}',this.value)">
-              <option value="pending"     ${o.status==='pending'?'selected':''}>Pending</option>
-              <option value="processing"  ${o.status==='processing'?'selected':''}>Processing</option>
-              <option value="dispatched"  ${o.status==='dispatched'?'selected':''}>Dispatched</option>
-              <option value="delivered"   ${o.status==='delivered'?'selected':''}>Delivered</option>
+              <option value="pending"    ${o.status==='pending'   ?'selected':''}>Pending</option>
+              <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
+              <option value="dispatched" ${o.status==='dispatched'?'selected':''}>Dispatched</option>
+              <option value="delivered"  ${o.status==='delivered' ?'selected':''}>Delivered</option>
             </select>
           </td>
         </tr>`;

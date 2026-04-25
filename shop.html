@@ -11,7 +11,6 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* ── Shop-specific extensions (all tokens from styles.css) ── */
     .shop-hero { padding: 18px 0 10px; }
     .shop-hero-panel {
       padding: var(--section-pad);
@@ -25,7 +24,6 @@
     }
     .shop-hero-panel h1 { font-family: var(--font-display); font-size: clamp(2.8rem,8vw,5rem); line-height:1; color: var(--accent-strong); margin-bottom:12px; }
     .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto 24px; line-height:1.7; }
-    /* Cart button in nav area */
     .cart-float {
       display: inline-flex; align-items: center; gap:8px;
       padding: 10px 20px; border-radius: var(--radius-pill);
@@ -41,7 +39,6 @@
       width:20px; height:20px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
     }
-    /* Product grid */
     .shop-section { padding: 10px 0 60px; }
     .product-grid {
       display: grid;
@@ -74,7 +71,6 @@
       color:var(--accent); font-weight:700; font-size:1rem;
       width:fit-content; margin-top:auto;
     }
-    /* Variant pills */
     .variant-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
     .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
     .v-pill {
@@ -87,7 +83,6 @@
     }
     .v-pill:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .v-pill.active { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.10); color:var(--accent-strong); }
-    /* Overlay + Drawer */
     .overlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
@@ -143,7 +138,6 @@
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
     .total-row.grand span:last-child { color:var(--accent); }
-    /* Checkout form */
     .checkout-form { display:flex; flex-direction:column; gap:10px; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .field-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:4px; }
@@ -185,7 +179,7 @@
           <li><a href="index.html">Home</a></li>
           <li><a href="index.html#guides">Guides</a></li>
           <li><a href="index.html#services">Services</a></li>
-          <li><a href="terms.html">T&Cs</a></li>
+          <li><a href="terms.html">T&amp;Cs</a></li>
           <li><a href="index.html#booking">Book</a></li>
           <li><a href="shop.html" class="active">Shop</a></li>
         </ul>
@@ -284,7 +278,7 @@
               <li><a href="index.html#guides">Guides</a></li>
               <li><a href="index.html#services">Services</a></li>
               <li><a href="index.html#booking">Book Now</a></li>
-              <li><a href="terms.html">T&Cs</a></li>
+              <li><a href="terms.html">T&amp;Cs</a></li>
               <li><a href="shop.html">Shop</a></li>
             </ul>
           </div>
@@ -305,7 +299,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2025 PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&Cs</a></p>
+          <p>&copy; 2025 PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&amp;Cs</a></p>
           <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
         </div>
       </div>
@@ -314,10 +308,10 @@
 
   <script src="script.js"></script>
   <script>
-    const SUPABASE_URL  = 'https://xxwmdrohbkyrnhcapoto.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d21kcm9oYmt5cm5oY2Fwb3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzU4MTIsImV4cCI6MjA5MjAxMTgxMn0.50Rd-uKV8zTBY9B5zh-Yqo0u7IUzj4WqhzJuQaPbgcg';
+    const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
-    const ORIGIN        = window.location.origin + '/lifestyle-website';
+    const ORIGIN        = 'https://www.phenomebeauty.co.za';
 
     const SCENTS      = ['Balance','Calm','Bloom','Pure'];
     const WAX_COLOURS = ['Black','White','Pink'];

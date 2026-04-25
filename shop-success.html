@@ -69,7 +69,7 @@
           <li><a href="index.html">Home</a></li>
           <li><a href="index.html#guides">Guides</a></li>
           <li><a href="index.html#services">Services</a></li>
-          <li><a href="terms.html">T&Cs</a></li>
+          <li><a href="terms.html">T&amp;Cs</a></li>
           <li><a href="index.html#booking">Book</a></li>
           <li><a href="shop.html">Shop</a></li>
         </ul>
@@ -104,7 +104,7 @@
               <li><a href="index.html#services">Services</a></li>
               <li><a href="index.html#booking">Book Now</a></li>
               <li><a href="shop.html">Shop</a></li>
-              <li><a href="terms.html">T&Cs</a></li>
+              <li><a href="terms.html">T&amp;Cs</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -131,8 +131,8 @@
 
   <script src="script.js"></script>
   <script>
-    const SUPABASE_URL  = 'https://xxwmdrohbkyrnhcapoto.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d21kcm9oYmt5cm5oY2Fwb3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzU4MTIsImV4cCI6MjA5MjAxMTgxMn0.50Rd-uKV8zTBY9B5zh-Yqo0u7IUzj4WqhzJuQaPbgcg';
+    const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+    const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const params  = new URLSearchParams(window.location.search);
     const payment = params.get('payment');
     const orderId = params.get('order_id');
@@ -179,8 +179,8 @@
       else renderSuccess(order||null);
     }
 
-    if (payment==='cancelled')                   renderCancelled();
-    else if (payment==='success' && orderId)     pollOrder(orderId);
+    if (payment==='cancelled')               renderCancelled();
+    else if (payment==='success' && orderId) pollOrder(orderId);
     else card.innerHTML = `<p style="color:var(--text-muted)">Invalid page. <a href="shop.html" style="color:var(--accent)">Go to shop</a></p>`;
   </script>
 </body>
