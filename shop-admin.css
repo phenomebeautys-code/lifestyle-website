@@ -5,6 +5,29 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* ── ADMIN BACKGROUND ──────────────── */
+body {
+  background-image: url('https://iili.io/B6PBk8v.png');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+/* Dark scrim so text/UI remains readable */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: rgba(4, 4, 6, 0.82);
+  z-index: 0;
+  pointer-events: none;
+}
+/* Ensure all admin content sits above the scrim */
+#loginWrap,
+#adminUI,
+.admin-toast,
+.modal-overlay,
+#printLabelArea { position: relative; z-index: 1; }
+
 /* ── LOGIN ─────────────────────────── */
 .login-wrap {
   min-height: 100dvh; display: flex;
@@ -15,6 +38,7 @@
   display: flex; flex-direction: column; gap: 24px;
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 20px;
+  backdrop-filter: blur(20px);
 }
 .login-brand { font-family: var(--font-display); font-size: 1.2rem; color: var(--accent-strong); }
 .login-title { font-family: var(--font-display); font-size: 2.4rem; color: var(--accent-strong); line-height: 1; }
@@ -54,7 +78,9 @@
 /* ── SIDEBAR ───────────────────────── */
 .sidebar {
   width: 220px; min-height: 100dvh; flex-shrink: 0;
-  background: rgba(6,6,8,0.98); border-right: 1px solid var(--glass-border);
+  background: rgba(4,4,6,0.88);
+  backdrop-filter: blur(24px);
+  border-right: 1px solid var(--glass-border);
   display: flex; flex-direction: column;
   position: sticky; top: 0; height: 100dvh; overflow-y: auto;
   z-index: 100;
@@ -117,7 +143,7 @@
   height: 60px; padding: 0 28px; flex-shrink: 0;
   display: flex; align-items: center; justify-content: space-between;
   border-bottom: 1px solid var(--glass-border);
-  background: rgba(6,6,8,0.96); backdrop-filter: blur(24px);
+  background: rgba(4,4,6,0.80); backdrop-filter: blur(24px);
   position: sticky; top: 0; z-index: 50;
 }
 .topbar-left  { display: flex; align-items: center; gap: 12px; }
@@ -144,6 +170,7 @@
   background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 16px;
   display: flex; flex-direction: column; gap: 6px; transition: border-color 0.2s;
+  backdrop-filter: blur(12px);
 }
 .stat-card:hover { border-color: rgba(255,255,255,0.18); }
 .stat-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
@@ -158,6 +185,7 @@
 .panel {
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
+  backdrop-filter: blur(12px);
 }
 .panel-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -218,7 +246,10 @@
 }
 .search-input:focus { border-color: rgba(255,255,255,0.35); }
 
-.table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--glass-border); }
+.table-wrap {
+  overflow-x: auto; border-radius: 14px; border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+}
 table { width: 100%; border-collapse: collapse; }
 th {
   font-size: 0.67rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
@@ -258,6 +289,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 14px;
   padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  backdrop-filter: blur(12px);
 }
 .oc-top    { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
 .oc-name   { font-size: 0.9rem; font-weight: 700; color: var(--accent-strong); }
@@ -293,6 +325,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
   display: flex; flex-direction: column; transition: border-color 0.2s, transform 0.15s;
+  backdrop-filter: blur(12px);
 }
 .product-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
 .product-img-wrap {
@@ -325,6 +358,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   border: 1px solid var(--glass-border); border-radius: 16px;
   display: flex; flex-direction: column; gap: 8px;
   cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+  backdrop-filter: blur(12px);
 }
 .report-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
 .report-card-title { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); margin-top: 4px; }
@@ -467,14 +501,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   .order-cards { display: flex; }
   .search-input { width: 100%; }
 
-  /* prevent page jump when modal/sidebar opens */
   body.sidebar-open { overflow: hidden; }
 }
 @media (max-width: 640px) {
   .stat-bar { grid-template-columns: 1fr 1fr; gap: 10px; }
   .stat-value { font-size: 1.6rem; }
   .reports-grid { grid-template-columns: 1fr; }
-  /* modal: full screen on small phones */
   .modal-overlay { padding: 0; align-items: flex-end; }
   .modal {
     max-height: 92dvh; border-radius: 20px 20px 0 0;
