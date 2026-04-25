@@ -114,6 +114,65 @@
     .delivery-banner-text strong { color: #34d399; font-weight: 600; }
     .delivery-banner-text span   { color: var(--text-muted); }
 
+    /* ─ Gift toggle ──────────────────────────────── */
+    .gift-toggle-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .gift-toggle-row:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
+    .gift-toggle-row.active { border-color: rgba(255,200,120,0.35); background: rgba(255,200,120,0.05); }
+    .gift-toggle-icon {
+      font-size: 1.2rem; flex-shrink: 0; line-height: 1;
+    }
+    .gift-toggle-label {
+      flex: 1;
+    }
+    .gift-toggle-label strong {
+      display: block; font-size: 0.88rem; font-weight: 600; color: var(--text);
+    }
+    .gift-toggle-label span {
+      font-size: 0.75rem; color: var(--text-muted);
+    }
+    /* custom toggle switch */
+    .gift-switch {
+      position: relative; width: 38px; height: 22px; flex-shrink: 0;
+    }
+    .gift-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .gift-switch-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.12); border-radius: 11px;
+      border: 1px solid var(--glass-border);
+      transition: background 0.22s;
+    }
+    .gift-switch input:checked + .gift-switch-track { background: rgba(255,190,100,0.55); border-color: rgba(255,190,100,0.5); }
+    .gift-switch-track::after {
+      content: ''; position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: #fff; border-radius: 50%;
+      transition: transform 0.22s;
+    }
+    .gift-switch input:checked + .gift-switch-track::after { transform: translateX(16px); }
+
+    /* gift message reveal */
+    .gift-message-reveal {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, margin-top 0.28s ease;
+      opacity: 0;
+      margin-top: 0;
+    }
+    .gift-message-reveal.open {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 12px;
+    }
+
     /* ─ Review blocks ────────────────────────────── */
     .review-block { border: 1px solid var(--glass-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; }
     .review-block-head {
@@ -133,7 +192,6 @@
       border-top: 1px solid var(--glass-border);
       display: flex; flex-direction: column; align-items: center; gap: 12px;
     }
-    /* White bubble — same card language as the rest of the page */
     .pay-trust-strip {
       display: inline-flex; align-items: center; justify-content: center; gap: 14px;
       flex-wrap: wrap;
@@ -142,17 +200,14 @@
       padding: 12px 24px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.35);
     }
-    /* Strip sits on white — no filter needed */
     .pay-trust-strip img.yoco-strip {
       height: 22px; width: auto; display: block;
     }
-    /* Thin white divider between strip and PCI pill */
     .pay-trust-strip .strip-divider {
       width: 1px; height: 20px;
       background: rgba(0,0,0,0.12);
       flex-shrink: 0;
     }
-    /* PCI DSS pill — sits inside the same white bubble */
     .pay-trust-pci {
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 0.64rem; font-weight: 800;
@@ -304,7 +359,7 @@
       <div class="co-empty" id="emptyState" style="display:none">
         <h2>Your cart is empty</h2>
         <p>Add some products before checking out.</p>
-        <a href="shop.html" class="btn btn-primary">← Back to Shop</a>
+        <a href="shop.html" class="btn btn-primary">Back to Shop</a>
       </div>
 
       <div id="checkoutContent">
@@ -367,7 +422,7 @@
           <div class="delivery-banner">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             <div class="delivery-banner-text">
-              <strong id="deliveryDateText2">Calculating delivery date…</strong>
+              <strong id="deliveryDateText2">Calculating delivery date...</strong>
               <span> &mdash; Standard delivery, Cape Town</span>
             </div>
           </div>
@@ -411,6 +466,29 @@
             </div>
           </div>
           <div class="field-divider"></div>
+
+          <!-- ══ GIFT MESSAGE TOGGLE ══ -->
+          <div style="margin-bottom:14px">
+            <label class="gift-toggle-row" id="giftToggleRow" onclick="toggleGift()">
+              <span class="gift-toggle-icon">&#127873;</span>
+              <span class="gift-toggle-label">
+                <strong>This is a gift</strong>
+                <span>Add a personalised message to include with the order</span>
+              </span>
+              <span class="gift-switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="f-is-gift" onchange="toggleGift()" />
+                <span class="gift-switch-track"></span>
+              </span>
+            </label>
+            <div class="gift-message-reveal" id="giftReveal">
+              <div class="field-group" style="margin-bottom:0">
+                <label class="field-label">Gift Message <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <textarea class="field-input" id="f-gift-message" placeholder="e.g. Happy Birthday! Wishing you a day as beautiful as you are. Love, Sarah &#128149;" style="min-height:90px"></textarea>
+              </div>
+            </div>
+          </div>
+          <!-- end gift message -->
+
           <div class="field-group">
             <label class="field-label">Order Notes <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
             <textarea class="field-input" id="f-notes" placeholder="Any special instructions for your order or delivery?"></textarea>
@@ -451,6 +529,15 @@
             <div class="review-block-body" id="reviewItems"></div>
           </div>
 
+          <!-- Gift message review card (shown only if gift is toggled) -->
+          <div class="review-block" id="giftReviewBlock" style="display:none">
+            <div class="review-block-head">
+              <span>&#127873; Gift Message</span>
+              <button class="done-card-edit" onclick="goStep(2)">Edit</button>
+            </div>
+            <div class="review-block-body" id="giftReviewBody" style="font-style:italic;color:var(--text-soft)"></div>
+          </div>
+
           <div class="review-block">
             <div class="review-block-head">Totals</div>
             <div class="review-block-body">
@@ -466,7 +553,7 @@
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
                     Est. delivery
                   </span>
-                  <span style="color:#34d399;font-weight:600" id="rv-delivery-date">–</span>
+                  <span style="color:#34d399;font-weight:600" id="rv-delivery-date">-</span>
                 </div>
                 <div style="height:1px;background:var(--glass-border)"></div>
                 <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700">
@@ -477,13 +564,13 @@
             </div>
           </div>
 
-          <!-- ══ YOCO PAYMENT STRIP — white bubble ══ -->
+          <!-- Yoco payment strip -->
           <div class="pay-trust-wrap">
             <div class="pay-trust-strip">
               <img
                 class="yoco-strip"
                 src="https://assets.yoco.com/f/111633/313x19/cbe08e96e2/payment-strip-dark.svg"
-                alt="Visa, Mastercard, Amex, Diners — accepted via Yoco"
+                alt="Visa, Mastercard, Amex, Diners accepted via Yoco"
                 loading="lazy"
                 width="313"
                 height="19"
@@ -498,7 +585,6 @@
               Your payment is encrypted &amp; processed securely by Yoco
             </div>
           </div>
-          <!-- end payment strip -->
 
           <div class="co-btn-row" style="margin-top:18px">
             <button class="co-back-link" onclick="goStep(2)">
@@ -537,7 +623,7 @@
   <!-- Loading overlay -->
   <div class="co-loading" id="coLoading">
     <div class="co-spinner"></div>
-    <p id="loadingMsg">Creating your order…</p>
+    <p id="loadingMsg">Creating your order...</p>
   </div>
 
   <script src="script.js"></script>
@@ -561,6 +647,20 @@
 
     const calcSub   = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
     const calcTotal = () => calcSub() + (cart.length ? DELIVERY_FEE : 0);
+
+    /* ═ Gift toggle ═════════════════════════════ */
+    function toggleGift() {
+      const cb     = document.getElementById('f-is-gift');
+      const reveal = document.getElementById('giftReveal');
+      const row    = document.getElementById('giftToggleRow');
+      // sync checkbox if the row label was clicked
+      if (event && event.currentTarget === row) cb.checked = !cb.checked;
+      reveal.classList.toggle('open', cb.checked);
+      row.classList.toggle('active', cb.checked);
+      if (cb.checked) {
+        setTimeout(() => document.getElementById('f-gift-message').focus(), 340);
+      }
+    }
 
     /* ═ Delivery date ════════════════════════════ */
     const SA_HOLIDAYS = new Set([
@@ -586,7 +686,7 @@
       const now = new Date();
       const hourSAST = now.getUTCHours() + 2;
       const base = (hourSAST >= 14 && isBusinessDay(now)) ? addBusinessDays(now,1) : (isBusinessDay(now) ? now : addBusinessDays(now,1));
-      return `${fmtDate(addBusinessDays(base,1))} – ${fmtDate(addBusinessDays(base,3))}`;
+      return `${fmtDate(addBusinessDays(base,1))} - ${fmtDate(addBusinessDays(base,3))}`;
     }
     function renderDeliveryDate() {
       const range = getDeliveryWindow();
@@ -597,9 +697,11 @@
     }
 
     /* ═ Draft persistence ════════════════════════ */
-    const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes'];
+    const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes','f-gift-message'];
     function saveDraft() {
       const d={}; DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});
+      const giftCb = document.getElementById('f-is-gift');
+      if (giftCb) d['f-is-gift-checked'] = giftCb.checked;
       localStorage.setItem(DRAFT_KEY,JSON.stringify(d));
     }
     function loadDraft() {
@@ -607,6 +709,10 @@
         const raw=localStorage.getItem(DRAFT_KEY); if(!raw) return false;
         const d=JSON.parse(raw); let found=false;
         DRAFT_FIELDS.forEach(id=>{ if(d[id]!==undefined&&d[id]!==''){const el=document.getElementById(id);if(el){el.value=d[id];found=true;}} });
+        if (d['f-is-gift-checked']) {
+          const cb = document.getElementById('f-is-gift');
+          if (cb) { cb.checked = true; document.getElementById('giftReveal').classList.add('open'); document.getElementById('giftToggleRow').classList.add('active'); }
+        }
         return found;
       } catch(e){return false;}
     }
@@ -616,6 +722,8 @@
         const el=document.getElementById(id);if(!el)return;
         el.addEventListener((el.tagName==='SELECT'?'change':'input'),saveDraft);
       });
+      const giftCb = document.getElementById('f-is-gift');
+      if (giftCb) giftCb.addEventListener('change', saveDraft);
     }
     function showRestoredToast(){
       const t=document.getElementById('coToast');t.classList.add('show');
@@ -645,7 +753,7 @@
       document.getElementById('summaryTotals').innerHTML=`
         <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
         <div class="co-total-row"><span>Delivery</span><span>R${DELIVERY_FEE}</span></div>
-        <div class="co-total-row delivery-date"><span>🚚 Est. delivery</span><span id="summaryDeliveryDate">–</span></div>
+        <div class="co-total-row delivery-date"><span>&#128666; Est. delivery</span><span id="summaryDeliveryDate">-</span></div>
         <div class="co-divider" style="margin:6px 0"></div>
         <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
     }
@@ -658,7 +766,7 @@
       document.getElementById('mobileTotals').innerHTML=`
         <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
         <div class="co-total-row"><span>Delivery</span><span>R${DELIVERY_FEE}</span></div>
-        <div class="co-total-row delivery-date"><span>🚚 Est. delivery</span><span id="mobileDeliveryDate">–</span></div>
+        <div class="co-total-row delivery-date"><span>&#128666; Est. delivery</span><span id="mobileDeliveryDate">-</span></div>
         <div class="co-divider" style="margin:6px 0"></div>
         <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
     }
@@ -732,7 +840,7 @@
       document.getElementById('reviewItems').innerHTML=cart.map(item=>`
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--glass-border);gap:12px">
           <div>
-            <div style="font-weight:600;color:var(--accent-strong)">${item.name} <span style="font-weight:400;color:var(--text-muted)">×${item.qty}</span></div>
+            <div style="font-weight:600;color:var(--accent-strong)">${item.name} <span style="font-weight:400;color:var(--text-muted)">x${item.qty}</span></div>
             <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">${item.variant}</div>
           </div>
           <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price*item.qty}</div>
@@ -741,6 +849,17 @@
       document.getElementById('rv-delivery').textContent=`R${DELIVERY_FEE}`;
       document.getElementById('rv-total').textContent=`R${calcTotal()}`;
       document.getElementById('payBtnTotal').textContent=calcTotal();
+      // Gift review block
+      const isGift   = document.getElementById('f-is-gift').checked;
+      const giftMsg  = document.getElementById('f-gift-message').value.trim();
+      const giftBlock = document.getElementById('giftReviewBlock');
+      const giftBody  = document.getElementById('giftReviewBody');
+      if (isGift) {
+        giftBlock.style.display = '';
+        giftBody.textContent = giftMsg || '(No message added)';
+      } else {
+        giftBlock.style.display = 'none';
+      }
     }
 
     /* ═ Pay ═════════════════════════════════════ */
@@ -748,26 +867,40 @@
       const btn=document.getElementById('payBtn');
       btn.disabled=true;
       document.getElementById('coLoading').classList.add('show');
-      const name=document.getElementById('f-name').value.trim();
-      const email=document.getElementById('f-email').value.trim();
-      const phone=document.getElementById('f-phone').value.trim();
-      const street=document.getElementById('f-street').value.trim();
-      const suburb=document.getElementById('f-suburb').value.trim();
-      const city=document.getElementById('f-city').value.trim();
-      const postal=document.getElementById('f-postal').value.trim();
-      const province=document.getElementById('f-province').value;
-      const notes=document.getElementById('f-notes').value.trim();
+      const name     = document.getElementById('f-name').value.trim();
+      const email    = document.getElementById('f-email').value.trim();
+      const phone    = document.getElementById('f-phone').value.trim();
+      const street   = document.getElementById('f-street').value.trim();
+      const suburb   = document.getElementById('f-suburb').value.trim();
+      const city     = document.getElementById('f-city').value.trim();
+      const postal   = document.getElementById('f-postal').value.trim();
+      const province = document.getElementById('f-province').value;
+      const notes    = document.getElementById('f-notes').value.trim();
+      const isGift   = document.getElementById('f-is-gift').checked;
+      const giftMsg  = document.getElementById('f-gift-message').value.trim();
       const deliveryAddress=`${street}, ${suburb}, ${city}, ${postal}, ${province}`;
       try{
-        document.getElementById('loadingMsg').textContent='Saving your order…';
+        document.getElementById('loadingMsg').textContent='Saving your order...';
         const orderRes=await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`,{
           method:'POST',
           headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`,'Prefer':'return=representation'},
-          body:JSON.stringify({customer_name:name,customer_email:email,customer_phone:phone,delivery_address:deliveryAddress,items:cart,subtotal:calcSub(),delivery_fee:DELIVERY_FEE,total_amount:calcTotal(),notes:notes||null})
+          body:JSON.stringify({
+            customer_name:name,
+            customer_email:email,
+            customer_phone:phone,
+            delivery_address:deliveryAddress,
+            items:cart,
+            subtotal:calcSub(),
+            delivery_fee:DELIVERY_FEE,
+            total_amount:calcTotal(),
+            notes:notes||null,
+            is_gift: isGift,
+            gift_message: isGift && giftMsg ? giftMsg : null
+          })
         });
         if(!orderRes.ok) throw new Error('Failed to save order. Please try again.');
         const [order]=await orderRes.json();
-        document.getElementById('loadingMsg').textContent='Redirecting to payment…';
+        document.getElementById('loadingMsg').textContent='Redirecting to payment...';
         const checkoutRes=await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,{
           method:'POST',
           headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`},
@@ -799,7 +932,7 @@
             el.style.background='rgba(251,191,36,0.08)';
             el.style.borderColor='rgba(251,191,36,0.28)';
             el.style.color='#fbbf24';
-            el.textContent='Payment was cancelled — no charge was made. Review your order and try again.';
+            el.textContent='Payment was cancelled - no charge was made. Review your order and try again.';
             el.classList.add('show');
           }
         },300);
