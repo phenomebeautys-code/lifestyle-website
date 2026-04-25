@@ -34,7 +34,7 @@
     }
     .co-form-col { padding: 40px 48px 60px 0; border-right: 1px solid var(--glass-border); }
 
-    /* ─ Breadcrumb ───────────────────────────────── */
+    /* ─ Breadcrumb ──────────────────────────────── */
     .co-steps { display: flex; align-items: center; gap: 0; margin-bottom: 36px; font-size: 0.8rem; }
     .co-step  { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; }
     .co-step.active { color: var(--accent-strong); }
@@ -48,16 +48,16 @@
     .co-step.active .co-step-num { background: #fff; color: #000; border-color: #fff; }
     .co-sep { width: 28px; height: 1px; background: var(--glass-border); margin: 0 8px; }
 
-    /* ─ Section heads ────────────────────────────── */
+    /* ─ Section heads ───────────────────────────── */
     .co-section-head { margin-bottom: 22px; }
     .co-section-head h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent-strong); line-height: 1.1; margin-bottom: 4px; }
     .co-section-head p  { font-size: 0.83rem; color: var(--text-muted); }
 
-    /* ─ Step panels ──────────────────────────────── */
+    /* ─ Step panels ─────────────────────────────── */
     .co-step-panel        { display: none; }
     .co-step-panel.active { display: block; }
 
-    /* ─ Done cards ───────────────────────────────── */
+    /* ─ Done cards ──────────────────────────────── */
     .done-card {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 16px; border-radius: var(--radius-md);
@@ -92,7 +92,7 @@
     .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 14px; }
     .field-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
 
-    /* ─ Buttons ──────────────────────────────────── */
+    /* ─ Buttons ─────────────────────────────────── */
     .co-btn-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 26px; flex-wrap: wrap; }
     .co-back-link {
       font-size: 0.82rem; color: var(--text-muted);
@@ -102,13 +102,12 @@
     }
     .co-back-link:hover { color: var(--text); }
 
-    /* ─ Delivery date banner (BUILD 2) ───────────────── */
+    /* ─ Delivery date banner ───────────────────────── */
     .delivery-banner {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 16px; border-radius: var(--radius-md);
       border: 1px solid rgba(52,211,153,0.22);
-      background: rgba(52,211,153,0.06);
-      margin-bottom: 22px;
+      background: rgba(52,211,153,0.06); margin-bottom: 22px;
     }
     .delivery-banner svg { flex-shrink: 0; color: #34d399; }
     .delivery-banner-text { font-size: 0.83rem; }
@@ -127,33 +126,44 @@
     .review-block-body { padding: 16px 18px; font-size: 0.88rem; color: var(--text-soft); line-height: 1.7; }
     .review-block-body strong { color: var(--text); }
 
-    /* ─ Payment trust bar (BUILD 2) ─────────────────── */
-    .pay-trust-bar {
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px; flex-wrap: wrap;
-      padding: 14px 0 6px;
+    /* ─ Payment trust bar ──────────────────────────── */
+    .pay-trust-wrap {
+      margin-top: 20px;
+      padding: 16px 0 8px;
       border-top: 1px solid var(--glass-border);
-      margin-top: 18px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
-    .pay-trust-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 5px 10px; border-radius: 6px;
-      border: 1px solid var(--glass-border);
-      background: rgba(255,255,255,0.04);
-      font-size: 0.72rem; font-weight: 700;
-      color: var(--text-soft); letter-spacing: 0.04em;
+    .pay-trust-logos {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap;
     }
-    /* Visa blue */
-    .pay-trust-badge.visa   { color: #1a1f71; background: #fff; border-color: rgba(255,255,255,0.2); }
-    /* MC red+orange */
-    .pay-trust-badge.mc     { background: #fff; border-color: rgba(255,255,255,0.2); }
-    /* Yoco teal */
-    .pay-trust-badge.yoco   { color: #00c4a0; border-color: rgba(0,196,160,0.3); background: rgba(0,196,160,0.06); }
-    /* PCI */
-    .pay-trust-badge.pci    { color: var(--text-muted); }
-    .pay-trust-bar-label {
-      width: 100%; text-align: center;
-      font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;
+    /* Each logo sits on a white pill so the brand colours pop */
+    .ptl {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #ffffff;
+      border-radius: 7px;
+      padding: 5px 10px;
+      height: 34px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+    }
+    .ptl img  { display: block; height: 20px; width: auto; }
+    /* Yoco pill gets brand teal background */
+    .ptl.ptl-yoco {
+      background: #00c4a0;
+      padding: 5px 12px;
+    }
+    /* PCI pill */
+    .ptl.ptl-pci {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: none;
+      gap: 5px;
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.06em; color: var(--text-muted);
+      padding: 5px 10px;
+    }
+    .pay-trust-caption {
+      font-size: 0.7rem; color: var(--text-muted); text-align: center; line-height: 1.5;
     }
 
     /* ─ Secure note ──────────────────────────────── */
@@ -194,7 +204,6 @@
     .co-total-row span:last-child { color: var(--text); }
     .co-total-row.grand { font-size: 1.05rem; font-weight: 700; }
     .co-total-row.grand span:last-child { color: var(--accent); }
-    /* Delivery date row in right summary */
     .co-total-row.delivery-date span { color: #34d399 !important; font-size: 0.78rem; }
     .co-total-row.delivery-date span:first-child { color: var(--text-muted) !important; font-size: 0.78rem; }
 
@@ -246,7 +255,9 @@
       .form-row-3 { grid-template-columns: 1fr; gap: 0; }
       .co-steps { font-size: 0.72rem; }
       .co-sep { width: 16px; }
-      .pay-trust-bar { gap: 6px; }
+      .pay-trust-logos { gap: 6px; }
+      .ptl { height: 30px; padding: 4px 8px; }
+      .ptl img { height: 17px; }
     }
   </style>
 </head>
@@ -357,16 +368,14 @@
             <h2>Delivery</h2>
             <p>We deliver across Cape Town. Standard delivery is R80.</p>
           </div>
-
-          <!-- BUILD 2: Delivery date banner on Step 2 -->
-          <div class="delivery-banner" id="deliveryBanner2">
+          <!-- Delivery date banner -->
+          <div class="delivery-banner">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
             <div class="delivery-banner-text">
-              <strong id="deliveryDateText2">Est. delivery: Mon 28 Apr – Wed 30 Apr</strong>
+              <strong id="deliveryDateText2">Calculating delivery date…</strong>
               <span> &mdash; Standard delivery, Cape Town</span>
             </div>
           </div>
-
           <div class="co-alert" id="alert-2"></div>
           <div class="field-group">
             <label class="field-label">Street Address</label>
@@ -457,7 +466,6 @@
                 <div style="display:flex;justify-content:space-between;font-size:0.88rem">
                   <span style="color:var(--text-muted)">Delivery (Cape Town)</span><span id="rv-delivery">R80</span>
                 </div>
-                <!-- BUILD 2: Delivery date row in totals -->
                 <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding-top:2px">
                   <span style="color:var(--text-muted)">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -474,36 +482,72 @@
             </div>
           </div>
 
-          <!-- BUILD 2: Payment trust logos -->
-          <div class="pay-trust-bar">
-            <!-- Visa -->
-            <span class="pay-trust-badge visa">
-              <svg width="32" height="11" viewBox="0 0 60 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <text x="0" y="16" font-family="Arial,sans-serif" font-size="18" font-weight="900" fill="#1a1f71">VISA</text>
-              </svg>
-            </span>
-            <!-- Mastercard -->
-            <span class="pay-trust-badge mc">
-              <svg width="30" height="19" viewBox="0 0 38 24" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="14" cy="12" r="10" fill="#EB001B"/>
-                <circle cx="24" cy="12" r="10" fill="#F79E1B"/>
-                <path d="M19 5.27a10 10 0 010 13.46A10 10 0 0119 5.27z" fill="#FF5F00"/>
-              </svg>
-            </span>
-            <!-- Yoco -->
-            <span class="pay-trust-badge yoco">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Yoco
-            </span>
-            <!-- PCI -->
-            <span class="pay-trust-badge pci">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-              PCI Secured
-            </span>
-            <div class="pay-trust-bar-label">Your payment is encrypted and processed securely by Yoco</div>
-          </div>
+          <!-- ║║ REAL YOCO PAYMENT PARTNER LOGOS ║║ -->
+          <div class="pay-trust-wrap">
+            <div class="pay-trust-logos">
 
-          <div class="co-btn-row" style="margin-top:14px">
+              <!-- Visa -->
+              <span class="ptl" title="Visa" aria-label="Visa">
+                <svg height="20" viewBox="0 0 78 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M31.4 1.8L26.1 23.2H20.5L25.8 1.8H31.4Z" fill="#1A1F71"/>
+                  <path d="M53.8 1.8L46.4 15.5L44.6 6.5C44.2 4.6 42.7 1.8 42.7 1.8H34.3L34.2 2.2C36.2 2.6 38.4 3.4 39.8 4.2C40.7 4.7 41 5.1 41.3 6.2L45.7 23.2H51.4L61.3 1.8H53.8Z" fill="#1A1F71"/>
+                  <path d="M18.5 1.8L10.3 16.3L8.7 8.4C8.1 4.8 5.4 2.1 2.3 1.8H-0.1L-0.2 2.4C3 3.1 5.8 4.7 7.1 8.2L10.5 23.2H16.3L26.4 1.8H18.5Z" fill="#1A1F71"/>
+                  <path d="M65.3 1.8C63.1 1.8 61.4 2.9 60.6 4.8L51.3 23.2H57.1L58.3 19.9H65.3L66 23.2H71.2L66.8 1.8H65.3ZM59.9 15.9L63 7.4L64.7 15.9H59.9Z" fill="#1A1F71"/>
+                </svg>
+              </span>
+
+              <!-- Mastercard -->
+              <span class="ptl" title="Mastercard" aria-label="Mastercard">
+                <svg height="20" viewBox="0 0 50 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="19" cy="16" r="14" fill="#EB001B"/>
+                  <circle cx="31" cy="16" r="14" fill="#F79E1B"/>
+                  <path d="M25 5.3A14 14 0 0 1 31 16a14 14 0 0 1-6 10.7A14 14 0 0 1 19 16 14 14 0 0 1 25 5.3z" fill="#FF5F00"/>
+                </svg>
+              </span>
+
+              <!-- American Express -->
+              <span class="ptl" title="American Express" aria-label="American Express" style="background:#016FCE;">
+                <svg height="20" viewBox="0 0 60 24" xmlns="http://www.w3.org/2000/svg">
+                  <text x="2" y="18" font-family="Arial,sans-serif" font-size="13" font-weight="900" fill="#FFFFFF" letter-spacing="0.5">AMEX</text>
+                </svg>
+              </span>
+
+              <!-- Diners Club -->
+              <span class="ptl" title="Diners Club" aria-label="Diners Club">
+                <svg height="20" viewBox="0 0 56 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="56" height="36" rx="4" fill="#FFFFFF"/>
+                  <!-- Diners interlocking circles -->
+                  <circle cx="22" cy="18" r="11" fill="none" stroke="#004A97" stroke-width="1.5"/>
+                  <circle cx="34" cy="18" r="11" fill="none" stroke="#004A97" stroke-width="1.5"/>
+                  <!-- D letter hint -->
+                  <text x="24" y="23" font-family="Arial,sans-serif" font-size="9" font-weight="700" fill="#004A97" text-anchor="middle">DC</text>
+                </svg>
+              </span>
+
+              <!-- Yoco -->
+              <span class="ptl ptl-yoco" title="Yoco" aria-label="Yoco">
+                <svg height="20" viewBox="0 0 72 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <!-- Shield icon -->
+                  <path d="M8 2L2 5v6c0 4.4 2.6 8.2 6 9.9C11.4 19.2 14 15.4 14 11V5L8 2z" fill="#FFFFFF"/>
+                  <!-- Wordmark -->
+                  <text x="18" y="17" font-family="Arial,sans-serif" font-size="13" font-weight="900" fill="#FFFFFF" letter-spacing="0.3">yoco</text>
+                </svg>
+              </span>
+
+              <!-- PCI DSS badge -->
+              <span class="ptl ptl-pci" title="PCI DSS Secured" aria-label="PCI DSS Secured">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                PCI DSS
+              </span>
+
+            </div>
+            <div class="pay-trust-caption">
+              Your payment is encrypted &amp; processed securely by Yoco
+            </div>
+          </div>
+          <!-- end trust logos -->
+
+          <div class="co-btn-row" style="margin-top:18px">
             <button class="co-back-link" onclick="goStep(2)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
               Back to Delivery
@@ -545,7 +589,6 @@
 
   <script src="script.js"></script>
   <script>
-    /* ─ Config ──────────────────────────────────── */
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
@@ -566,11 +609,7 @@
     const calcSub   = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
     const calcTotal = () => calcSub() + (cart.length ? DELIVERY_FEE : 0);
 
-    /* ═══════════════════════════════════════════
-       BUILD 2 — Delivery date calculator
-       Skips weekends + South African public holidays 2025/2026.
-       Returns { from: Date, to: Date } for a 2–3 business-day window.
-    ═══════════════════════════════════════════ */
+    /* ═ Delivery date (BUILD 2) ═════════════════════ */
     const SA_HOLIDAYS = new Set([
       '2025-01-01','2025-03-21','2025-04-18','2025-04-19','2025-04-21',
       '2025-04-27','2025-05-01','2025-06-16','2025-08-09','2025-09-24',
@@ -579,317 +618,236 @@
       '2026-04-27','2026-05-01','2026-06-16','2026-08-10','2026-09-24',
       '2026-12-16','2026-12-25','2026-12-26'
     ]);
-
     function isBusinessDay(d) {
       const day = d.getDay();
       if (day === 0 || day === 6) return false;
-      const key = d.toISOString().slice(0, 10);
-      return !SA_HOLIDAYS.has(key);
+      return !SA_HOLIDAYS.has(d.toISOString().slice(0,10));
     }
-
-    function addBusinessDays(startDate, n) {
-      const d = new Date(startDate);
-      let added = 0;
-      while (added < n) {
-        d.setDate(d.getDate() + 1);
-        if (isBusinessDay(d)) added++;
-      }
+    function addBusinessDays(start, n) {
+      const d = new Date(start); let added = 0;
+      while (added < n) { d.setDate(d.getDate()+1); if (isBusinessDay(d)) added++; }
       return d;
     }
-
-    function fmtDate(d) {
-      return d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
-    }
-
+    function fmtDate(d) { return d.toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'}); }
     function getDeliveryWindow() {
-      const now  = new Date();
-      /* If order placed after 14:00 SAST, start counting from next business day */
-      const cutoff = 14;
+      const now = new Date();
       const hourSAST = now.getUTCHours() + 2;
-      const base = (hourSAST >= cutoff && isBusinessDay(now))
-        ? addBusinessDays(now, 1)
-        : (isBusinessDay(now) ? now : addBusinessDays(now, 1));
-
-      const from = addBusinessDays(base, 1);
-      const to   = addBusinessDays(base, 3);
-      return `${fmtDate(from)} – ${fmtDate(to)}`;
+      const base = (hourSAST >= 14 && isBusinessDay(now)) ? addBusinessDays(now,1) : (isBusinessDay(now) ? now : addBusinessDays(now,1));
+      return `${fmtDate(addBusinessDays(base,1))} – ${fmtDate(addBusinessDays(base,3))}`;
     }
-
-    /* Populate all delivery date elements */
     function renderDeliveryDate() {
       const range = getDeliveryWindow();
-      /* Step 2 banner */
-      const b2 = document.getElementById('deliveryDateText2');
-      if (b2) b2.textContent = `Est. delivery: ${range}`;
-      /* Step 3 totals row */
-      const rv = document.getElementById('rv-delivery-date');
-      if (rv) rv.textContent = range;
-      /* Right-column summary — injected by renderSummary */
-      const sc = document.getElementById('summaryDeliveryDate');
-      if (sc) sc.textContent = range;
-      /* Mobile summary */
-      const mc = document.getElementById('mobileDeliveryDate');
-      if (mc) mc.textContent = range;
+      const ids = ['deliveryDateText2','rv-delivery-date','summaryDeliveryDate','mobileDeliveryDate'];
+      ids.forEach(id => { const el = document.getElementById(id); if (!el) return; if (id==='deliveryDateText2') el.textContent=`Est. delivery: ${range}`; else el.textContent=range; });
     }
 
-    /* ═══════════════════════════════════════════
-       BUILD 1 — localStorage draft persistence
-    ═══════════════════════════════════════════ */
+    /* ═ Draft persistence (BUILD 1) ═════════════════ */
     const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes'];
-
     function saveDraft() {
-      const d = {};
-      DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      const d={}; DRAFT_FIELDS.forEach(id=>{const el=document.getElementById(id);if(el)d[id]=el.value;});
+      localStorage.setItem(DRAFT_KEY,JSON.stringify(d));
     }
     function loadDraft() {
       try {
-        const raw = localStorage.getItem(DRAFT_KEY);
-        if (!raw) return false;
-        const d = JSON.parse(raw); let found = false;
-        DRAFT_FIELDS.forEach(id => {
-          if (d[id] !== undefined && d[id] !== '') {
-            const el = document.getElementById(id); if (el) { el.value = d[id]; found = true; }
-          }
-        });
+        const raw=localStorage.getItem(DRAFT_KEY); if(!raw) return false;
+        const d=JSON.parse(raw); let found=false;
+        DRAFT_FIELDS.forEach(id=>{ if(d[id]!==undefined&&d[id]!==''){const el=document.getElementById(id);if(el){el.value=d[id];found=true;}} });
         return found;
-      } catch(e) { return false; }
+      } catch(e){return false;}
     }
-    function clearDraft() { localStorage.removeItem(DRAFT_KEY); }
-    function attachDraftListeners() {
-      DRAFT_FIELDS.forEach(id => {
-        const el = document.getElementById(id); if (!el) return;
-        const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
-        el.addEventListener(evt, saveDraft);
+    function clearDraft(){localStorage.removeItem(DRAFT_KEY);}
+    function attachDraftListeners(){
+      DRAFT_FIELDS.forEach(id=>{
+        const el=document.getElementById(id);if(!el)return;
+        el.addEventListener((el.tagName==='SELECT'?'change':'input'),saveDraft);
       });
     }
-    function showRestoredToast() {
-      const t = document.getElementById('coToast'); t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
+    function showRestoredToast(){
+      const t=document.getElementById('coToast');t.classList.add('show');
+      setTimeout(()=>t.classList.remove('show'),3000);
     }
 
-    /* ─ Init ────────────────────────────────────── */
-    (function init() {
-      if (!cart.length) {
-        document.getElementById('checkoutContent').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'flex';
-        document.getElementById('coLayout').querySelector('.co-summary-col').style.display = 'none';
-        document.getElementById('mobileSummary').style.display = 'none';
+    /* ═ Init ══════════════════════════════════ */
+    (function init(){
+      if(!cart.length){
+        document.getElementById('checkoutContent').style.display='none';
+        document.getElementById('emptyState').style.display='flex';
+        document.getElementById('coLayout').querySelector('.co-summary-col').style.display='none';
+        document.getElementById('mobileSummary').style.display='none';
         return;
       }
-      renderSummary();
-      renderMobileSummary();
-      renderDeliveryDate();
+      renderSummary(); renderMobileSummary(); renderDeliveryDate();
       attachDraftListeners();
-      const wasRestored = loadDraft();
-      if (wasRestored) setTimeout(showRestoredToast, 400);
+      if(loadDraft()) setTimeout(showRestoredToast,400);
     })();
 
-    /* ─ Render summary col ───────────────────────── */
-    function renderSummary() {
-      document.getElementById('summaryItems').innerHTML = cart.map(item => {
-        const img = PRODUCT_IMGS[item.productId] || '';
-        return `<div class="co-item">
-          <div class="co-item-img">
-            ${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}
-            <span class="co-item-qty-badge">${item.qty}</span>
-          </div>
-          <div class="co-item-info">
-            <div class="co-item-name">${item.name}</div>
-            <div class="co-item-var">${item.variant}</div>
-          </div>
-          <div class="co-item-price">R${item.price * item.qty}</div>
-        </div>`;
+    /* ═ Render summaries ═══════════════════════════ */
+    function renderSummary(){
+      document.getElementById('summaryItems').innerHTML=cart.map(item=>{
+        const img=PRODUCT_IMGS[item.productId]||'';
+        return `<div class="co-item"><div class="co-item-img">${img?`<img src="${img}" alt="${item.name}" loading="lazy" />`:''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant}</div></div><div class="co-item-price">R${item.price*item.qty}</div></div>`;
       }).join('');
-      document.getElementById('summaryTotals').innerHTML = `
+      document.getElementById('summaryTotals').innerHTML=`
         <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
         <div class="co-total-row"><span>Delivery</span><span>R${DELIVERY_FEE}</span></div>
         <div class="co-total-row delivery-date"><span>🚚 Est. delivery</span><span id="summaryDeliveryDate">–</span></div>
         <div class="co-divider" style="margin:6px 0"></div>
         <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
     }
-
-    /* ─ Render mobile summary ────────────────────── */
-    function renderMobileSummary() {
-      document.getElementById('msTotalDisplay').textContent = `R${calcTotal()}`;
-      document.getElementById('mobileItems').innerHTML = cart.map(item => {
-        const img = PRODUCT_IMGS[item.productId] || '';
-        return `<div class="co-item">
-          <div class="co-item-img">
-            ${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}
-            <span class="co-item-qty-badge">${item.qty}</span>
-          </div>
-          <div class="co-item-info">
-            <div class="co-item-name">${item.name}</div>
-            <div class="co-item-var">${item.variant}</div>
-          </div>
-          <div class="co-item-price">R${item.price * item.qty}</div>
-        </div>`;
+    function renderMobileSummary(){
+      document.getElementById('msTotalDisplay').textContent=`R${calcTotal()}`;
+      document.getElementById('mobileItems').innerHTML=cart.map(item=>{
+        const img=PRODUCT_IMGS[item.productId]||'';
+        return `<div class="co-item"><div class="co-item-img">${img?`<img src="${img}" alt="${item.name}" loading="lazy" />`:''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant}</div></div><div class="co-item-price">R${item.price*item.qty}</div></div>`;
       }).join('');
-      document.getElementById('mobileTotals').innerHTML = `
+      document.getElementById('mobileTotals').innerHTML=`
         <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
         <div class="co-total-row"><span>Delivery</span><span>R${DELIVERY_FEE}</span></div>
         <div class="co-total-row delivery-date"><span>🚚 Est. delivery</span><span id="mobileDeliveryDate">–</span></div>
         <div class="co-divider" style="margin:6px 0"></div>
         <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
     }
-
-    function toggleMobileSummary() {
-      const body = document.getElementById('mobileSummaryBody');
-      const chevron = document.getElementById('msChevron');
-      const open = body.classList.toggle('open');
-      chevron.style.transform = open ? 'rotate(180deg)' : '';
+    function toggleMobileSummary(){
+      const body=document.getElementById('mobileSummaryBody');
+      const chevron=document.getElementById('msChevron');
+      chevron.style.transform=body.classList.toggle('open')?'rotate(180deg)':'';
     }
 
-    /* ─ Step nav ────────────────────────────────── */
-    function goStep(n) {
-      if (n > currentStep) {
-        if (currentStep === 1 && !validateStep1()) return;
-        if (currentStep === 2 && !validateStep2()) return;
+    /* ═ Step nav ═════════════════════════════════ */
+    function goStep(n){
+      if(n>currentStep){
+        if(currentStep===1&&!validateStep1()) return;
+        if(currentStep===2&&!validateStep2()) return;
       }
       document.getElementById(`panel-${currentStep}`).classList.remove('active');
       document.getElementById(`panel-${n}`).classList.add('active');
-      for (let i = 1; i <= 3; i++) {
-        const el = document.getElementById(`breadcrumb-${i}`);
+      for(let i=1;i<=3;i++){
+        const el=document.getElementById(`breadcrumb-${i}`);
         el.classList.remove('active','done');
-        if (i < n)  el.classList.add('done');
-        if (i === n) el.classList.add('active');
+        if(i<n) el.classList.add('done');
+        if(i===n) el.classList.add('active');
       }
-      currentStep = n;
-      if (n >= 2) populateDoneContact();
-      if (n >= 3) { populateDoneDelivery(); populateReview(); renderDeliveryDate(); }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      currentStep=n;
+      if(n>=2) populateDoneContact();
+      if(n>=3){populateDoneDelivery();populateReview();renderDeliveryDate();}
+      window.scrollTo({top:0,behavior:'smooth'});
     }
 
-    /* ─ Validation ─────────────────────────────── */
-    function setFieldError(id, errId, show) {
-      document.getElementById(id).classList.toggle('error', show);
-      document.getElementById(errId).classList.toggle('show', show);
+    /* ═ Validation ══─────────────────────────────── */
+    function setFieldError(id,errId,show){
+      document.getElementById(id).classList.toggle('error',show);
+      document.getElementById(errId).classList.toggle('show',show);
     }
-    function validateStep1() {
-      const name  = document.getElementById('f-name').value.trim();
-      const email = document.getElementById('f-email').value.trim();
-      const phone = document.getElementById('f-phone').value.trim();
-      setFieldError('f-name',  'err-name',  name.length < 2);
-      setFieldError('f-email', 'err-email', !/^[^@]+@[^@]+\.[^@]+$/.test(email));
-      setFieldError('f-phone', 'err-phone', phone.length < 7);
-      return name.length >= 2 && /^[^@]+@[^@]+\.[^@]+$/.test(email) && phone.length >= 7;
+    function validateStep1(){
+      const name=document.getElementById('f-name').value.trim();
+      const email=document.getElementById('f-email').value.trim();
+      const phone=document.getElementById('f-phone').value.trim();
+      setFieldError('f-name','err-name',name.length<2);
+      setFieldError('f-email','err-email',!/^[^@]+@[^@]+\.[^@]+$/.test(email));
+      setFieldError('f-phone','err-phone',phone.length<7);
+      return name.length>=2&&/^[^@]+@[^@]+\.[^@]+$/.test(email)&&phone.length>=7;
     }
-    function validateStep2() {
-      const street = document.getElementById('f-street').value.trim();
-      const suburb = document.getElementById('f-suburb').value.trim();
-      const city   = document.getElementById('f-city').value.trim();
-      const postal = document.getElementById('f-postal').value.trim();
-      setFieldError('f-street','err-street', street.length < 3);
-      setFieldError('f-suburb','err-suburb', suburb.length < 2);
-      setFieldError('f-city',  'err-city',   city.length < 2);
-      setFieldError('f-postal','err-postal', postal.length < 4);
-      return street.length >= 3 && suburb.length >= 2 && city.length >= 2 && postal.length >= 4;
-    }
-
-    /* ─ Done cards ─────────────────────────────── */
-    function populateDoneContact() {
-      const val = `${document.getElementById('f-name').value.trim()} · ${document.getElementById('f-email').value.trim()}`;
-      ['done-contact-val','done-contact-val-2'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = val; });
-    }
-    function populateDoneDelivery() {
-      const s = document.getElementById('f-street').value.trim();
-      const u = document.getElementById('f-suburb').value.trim();
-      const c = document.getElementById('f-city').value.trim();
-      const p = document.getElementById('f-postal').value.trim();
-      document.getElementById('done-delivery-val').textContent = `${s}, ${u}, ${c}, ${p}`;
+    function validateStep2(){
+      const s=document.getElementById('f-street').value.trim();
+      const u=document.getElementById('f-suburb').value.trim();
+      const c=document.getElementById('f-city').value.trim();
+      const p=document.getElementById('f-postal').value.trim();
+      setFieldError('f-street','err-street',s.length<3);
+      setFieldError('f-suburb','err-suburb',u.length<2);
+      setFieldError('f-city','err-city',c.length<2);
+      setFieldError('f-postal','err-postal',p.length<4);
+      return s.length>=3&&u.length>=2&&c.length>=2&&p.length>=4;
     }
 
-    /* ─ Review ──────────────────────────────────── */
-    function populateReview() {
-      document.getElementById('reviewItems').innerHTML = cart.map(item => `
+    /* ═ Done cards ──────────────────────────────── */
+    function populateDoneContact(){
+      const val=`${document.getElementById('f-name').value.trim()} · ${document.getElementById('f-email').value.trim()}`;
+      ['done-contact-val','done-contact-val-2'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=val;});
+    }
+    function populateDoneDelivery(){
+      const s=document.getElementById('f-street').value.trim();
+      const u=document.getElementById('f-suburb').value.trim();
+      const c=document.getElementById('f-city').value.trim();
+      const p=document.getElementById('f-postal').value.trim();
+      document.getElementById('done-delivery-val').textContent=`${s}, ${u}, ${c}, ${p}`;
+    }
+
+    /* ═ Review ───────────────────────────────────── */
+    function populateReview(){
+      document.getElementById('reviewItems').innerHTML=cart.map(item=>`
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--glass-border);gap:12px">
           <div>
             <div style="font-weight:600;color:var(--accent-strong)">${item.name} <span style="font-weight:400;color:var(--text-muted)">×${item.qty}</span></div>
             <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">${item.variant}</div>
           </div>
-          <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price * item.qty}</div>
+          <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price*item.qty}</div>
         </div>`).join('');
-      document.getElementById('rv-subtotal').textContent = `R${calcSub()}`;
-      document.getElementById('rv-delivery').textContent  = `R${DELIVERY_FEE}`;
-      document.getElementById('rv-total').textContent     = `R${calcTotal()}`;
-      document.getElementById('payBtnTotal').textContent  = calcTotal();
+      document.getElementById('rv-subtotal').textContent=`R${calcSub()}`;
+      document.getElementById('rv-delivery').textContent=`R${DELIVERY_FEE}`;
+      document.getElementById('rv-total').textContent=`R${calcTotal()}`;
+      document.getElementById('payBtnTotal').textContent=calcTotal();
     }
 
-    /* ─ Pay ──────────────────────────────────────── */
-    async function handlePay() {
-      const btn = document.getElementById('payBtn');
-      btn.disabled = true;
+    /* ═ Pay ─────────────────────────────────────── */
+    async function handlePay(){
+      const btn=document.getElementById('payBtn');
+      btn.disabled=true;
       document.getElementById('coLoading').classList.add('show');
-
-      const name     = document.getElementById('f-name').value.trim();
-      const email    = document.getElementById('f-email').value.trim();
-      const phone    = document.getElementById('f-phone').value.trim();
-      const street   = document.getElementById('f-street').value.trim();
-      const suburb   = document.getElementById('f-suburb').value.trim();
-      const city     = document.getElementById('f-city').value.trim();
-      const postal   = document.getElementById('f-postal').value.trim();
-      const province = document.getElementById('f-province').value;
-      const notes    = document.getElementById('f-notes').value.trim();
-      const deliveryAddress = `${street}, ${suburb}, ${city}, ${postal}, ${province}`;
-
-      try {
-        document.getElementById('loadingMsg').textContent = 'Saving your order…';
-        const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Prefer': 'return=representation' },
-          body: JSON.stringify({
-            customer_name: name, customer_email: email, customer_phone: phone,
-            delivery_address: deliveryAddress, items: cart,
-            subtotal: calcSub(), delivery_fee: DELIVERY_FEE, total_amount: calcTotal(),
-            notes: notes || null
-          })
+      const name=document.getElementById('f-name').value.trim();
+      const email=document.getElementById('f-email').value.trim();
+      const phone=document.getElementById('f-phone').value.trim();
+      const street=document.getElementById('f-street').value.trim();
+      const suburb=document.getElementById('f-suburb').value.trim();
+      const city=document.getElementById('f-city').value.trim();
+      const postal=document.getElementById('f-postal').value.trim();
+      const province=document.getElementById('f-province').value;
+      const notes=document.getElementById('f-notes').value.trim();
+      const deliveryAddress=`${street}, ${suburb}, ${city}, ${postal}, ${province}`;
+      try{
+        document.getElementById('loadingMsg').textContent='Saving your order…';
+        const orderRes=await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`,'Prefer':'return=representation'},
+          body:JSON.stringify({customer_name:name,customer_email:email,customer_phone:phone,delivery_address:deliveryAddress,items:cart,subtotal:calcSub(),delivery_fee:DELIVERY_FEE,total_amount:calcTotal(),notes:notes||null})
         });
-        if (!orderRes.ok) throw new Error('Failed to save order. Please try again.');
-        const [order] = await orderRes.json();
-
-        document.getElementById('loadingMsg').textContent = 'Redirecting to payment…';
-        const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
-          body: JSON.stringify({
-            order_id:    order.id,
-            success_url: `${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}`,
-            cancel_url:  `${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`
-          })
+        if(!orderRes.ok) throw new Error('Failed to save order. Please try again.');
+        const [order]=await orderRes.json();
+        document.getElementById('loadingMsg').textContent='Redirecting to payment…';
+        const checkoutRes=await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`},
+          body:JSON.stringify({order_id:order.id,success_url:`${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}`,cancel_url:`${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`})
         });
-        if (!checkoutRes.ok) throw new Error('Failed to create payment session. Please try again.');
-        const cd = await checkoutRes.json();
-        const redirect = cd.redirectUrl || cd.url;
-        if (!redirect) throw new Error('No payment URL returned. Please try again.');
-
-        cart = []; localStorage.setItem('phenome_cart', '[]'); clearDraft();
-        window.location.href = redirect;
-
-      } catch (err) {
+        if(!checkoutRes.ok) throw new Error('Failed to create payment session. Please try again.');
+        const cd=await checkoutRes.json();
+        const redirect=cd.redirectUrl||cd.url;
+        if(!redirect) throw new Error('No payment URL returned. Please try again.');
+        cart=[];localStorage.setItem('phenome_cart','[]');clearDraft();
+        window.location.href=redirect;
+      }catch(err){
         document.getElementById('coLoading').classList.remove('show');
-        btn.disabled = false;
-        const alertEl = document.getElementById('alert-3');
-        alertEl.textContent = err.message; alertEl.classList.add('show');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        btn.disabled=false;
+        const alertEl=document.getElementById('alert-3');
+        alertEl.textContent=err.message;alertEl.classList.add('show');
+        window.scrollTo({top:0,behavior:'smooth'});
       }
     }
 
-    /* ─ Cancelled return ─────────────────────────── */
-    (function checkReturn() {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('payment') === 'cancelled') {
-        window.history.replaceState({}, '', 'checkout.html');
-        setTimeout(() => {
-          const el = document.getElementById('alert-3');
-          if (el) {
-            el.style.background  = 'rgba(251,191,36,0.08)';
-            el.style.borderColor = 'rgba(251,191,36,0.28)';
-            el.style.color       = '#fbbf24';
-            el.textContent       = 'Payment was cancelled — no charge was made. Review your order and try again.';
+    /* ═ Cancelled return ──────────────────────────── */
+    (function checkReturn(){
+      const params=new URLSearchParams(window.location.search);
+      if(params.get('payment')==='cancelled'){
+        window.history.replaceState({},'','checkout.html');
+        setTimeout(()=>{
+          const el=document.getElementById('alert-3');
+          if(el){
+            el.style.background='rgba(251,191,36,0.08)';
+            el.style.borderColor='rgba(251,191,36,0.28)';
+            el.style.color='#fbbf24';
+            el.textContent='Payment was cancelled — no charge was made. Review your order and try again.';
             el.classList.add('show');
           }
-        }, 300);
+        },300);
       }
     })();
   </script>
