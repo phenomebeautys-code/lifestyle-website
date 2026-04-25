@@ -12,87 +12,42 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     .login-wrap { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:24px; }
-    .login-card {
-      width:100%; max-width:380px;
-      padding:var(--section-pad);
-      display:flex; flex-direction:column; gap:20px;
-    }
+    .login-card { width:100%; max-width:360px; padding:var(--section-pad); display:flex; flex-direction:column; gap:20px; }
     .login-card h1 { font-family:var(--font-display); font-size:2rem; color:var(--accent-strong); }
     .login-card p  { font-size:0.88rem; color:var(--text-soft); }
     .field-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:4px; }
-    .field-input {
-      width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);
-      color:var(--text); border-radius:var(--radius-md); padding:11px 14px;
-      font-size:0.88rem; font-family:var(--font-body); outline:none; transition:border-color 0.2s;
-    }
+    .field-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text); border-radius:var(--radius-md); padding:11px 14px; font-size:0.88rem; font-family:var(--font-body); outline:none; transition:border-color 0.2s; }
     .field-input:focus { border-color:rgba(255,255,255,0.35); }
     .login-error { font-size:0.82rem; color:#f87171; text-align:center; display:none; }
     #adminUI { display:none; }
-    .admin-header {
-      position:sticky; top:0; z-index:50;
-      background:rgba(0,0,0,0.92); backdrop-filter:blur(20px);
-      border-bottom:1px solid var(--glass-border);
-      padding:14px 24px;
-      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
-    }
+    .admin-header { position:sticky; top:0; z-index:50; background:rgba(0,0,0,0.92); backdrop-filter:blur(20px); border-bottom:1px solid var(--glass-border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
     .admin-header-title { font-family:var(--font-display); font-size:1.3rem; color:var(--accent-strong); }
-    .admin-header-actions { display:flex; align-items:center; gap:10px; }
     .stat-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; padding:20px 24px; }
-    .stat-card {
-      padding:18px 20px;
-      background:linear-gradient(160deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
-      border:1px solid var(--glass-border); border-radius:var(--radius-lg);
-    }
+    .stat-card { padding:18px 20px; background:linear-gradient(160deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04)); border:1px solid var(--glass-border); border-radius:var(--radius-lg); }
     .stat-label { font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px; }
     .stat-value { font-family:var(--font-display); font-size:2rem; color:var(--accent-strong); }
     .stat-value.gold { color:var(--accent); }
     .filters { display:flex; align-items:center; gap:10px; padding:0 24px 16px; flex-wrap:wrap; }
-    .filter-btn {
-      padding:7px 16px; border:1px solid var(--glass-border);
-      background:transparent; color:var(--text-muted);
-      border-radius:var(--radius-pill); font-size:0.78rem; font-weight:500;
-      cursor:pointer; font-family:var(--font-body);
-      transition:background 0.18s, border-color 0.18s, color 0.18s;
-    }
-    .filter-btn:hover, .filter-btn.active {
-      border-color:rgba(255,255,255,0.4); color:var(--accent-strong);
-      background:rgba(255,255,255,0.08);
-    }
-    .search-input {
-      margin-left:auto; background:rgba(255,255,255,0.05);
-      border:1px solid var(--glass-border); color:var(--text);
-      border-radius:var(--radius-md); padding:8px 14px;
-      font-size:0.82rem; font-family:var(--font-body); outline:none;
-      width:200px; transition:border-color 0.2s;
-    }
+    .filter-btn { padding:7px 16px; border:1px solid var(--glass-border); background:transparent; color:var(--text-muted); border-radius:var(--radius-pill); font-size:0.78rem; font-weight:500; cursor:pointer; font-family:var(--font-body); transition:background 0.18s,border-color 0.18s,color 0.18s; }
+    .filter-btn:hover,.filter-btn.active { border-color:rgba(255,255,255,0.4); color:var(--accent-strong); background:rgba(255,255,255,0.08); }
+    .search-input { margin-left:auto; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text); border-radius:var(--radius-md); padding:8px 14px; font-size:0.82rem; font-family:var(--font-body); outline:none; width:200px; transition:border-color 0.2s; }
     .search-input:focus { border-color:rgba(255,255,255,0.35); }
     .table-wrap { padding:0 24px 60px; overflow-x:auto; }
     table { width:100%; border-collapse:collapse; }
-    th {
-      font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase;
-      color:var(--text-muted); text-align:left; padding:10px 14px;
-      border-bottom:1px solid var(--glass-border); white-space:nowrap;
-    }
+    th { font-size:0.7rem; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); text-align:left; padding:10px 14px; border-bottom:1px solid var(--glass-border); white-space:nowrap; }
     td { padding:14px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.82rem; vertical-align:top; }
     tr:hover td { background:rgba(255,255,255,0.02); }
-    .badge {
-      display:inline-block; padding:3px 10px;
-      border-radius:var(--radius-pill); font-size:0.7rem;
-      font-weight:600; letter-spacing:0.05em; text-transform:uppercase;
-      border:1px solid;
-    }
-    .badge-paid        { background:rgba(74,222,128,0.08);  border-color:rgba(74,222,128,0.25);  color:#4ade80; }
-    .badge-unpaid      { background:rgba(251,191,36,0.08);  border-color:rgba(251,191,36,0.25);  color:#fbbf24; }
-    .badge-processing  { background:rgba(99,179,237,0.08);  border-color:rgba(99,179,237,0.25);  color:#63b3ed; }
-    .badge-dispatched  { background:rgba(245,243,239,0.08); border-color:rgba(245,243,239,0.18); color:var(--accent); }
-    .badge-delivered   { background:rgba(74,222,128,0.12);  border-color:rgba(74,222,128,0.3);   color:#4ade80; }
+    .badge { display:inline-block; padding:3px 10px; border-radius:var(--radius-pill); font-size:0.7rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; border:1px solid; }
+    .badge-paid       { background:rgba(74,222,128,0.08);  border-color:rgba(74,222,128,0.25);  color:#4ade80; }
+    .badge-unpaid     { background:rgba(251,191,36,0.08);  border-color:rgba(251,191,36,0.25);  color:#fbbf24; }
+    .badge-processing { background:rgba(99,179,237,0.08);  border-color:rgba(99,179,237,0.25);  color:#63b3ed; }
+    .badge-dispatched { background:rgba(245,243,239,0.08); border-color:rgba(245,243,239,0.18); color:var(--accent); }
+    .badge-delivered  { background:rgba(74,222,128,0.12);  border-color:rgba(74,222,128,0.3);   color:#4ade80; }
     .items-mini { font-size:0.75rem; color:var(--text-muted); line-height:1.9; }
-    .status-select {
-      background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);
-      color:var(--text); border-radius:8px; padding:5px 8px;
-      font-size:0.78rem; font-family:var(--font-body); cursor:pointer; outline:none;
-    }
+    .status-select { background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text); border-radius:8px; padding:5px 8px; font-size:0.78rem; font-family:var(--font-body); cursor:pointer; outline:none; }
     .empty-row td { text-align:center; color:var(--text-muted); padding:48px; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.15); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:6px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
     @media(max-width:600px) { .search-input{width:100%;margin-left:0;} }
   </style>
 </head>
@@ -108,10 +63,13 @@
       </div>
       <div>
         <label class="field-label">Password</label>
-        <input class="field-input" type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()" />
+        <input class="field-input" type="password" id="pwInput" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')login()" autocomplete="current-password" />
       </div>
-      <p class="login-error" id="loginError">Incorrect password. Try again.</p>
-      <button class="btn btn-primary" onclick="login()" style="width:100%;justify-content:center;">Sign In</button>
+      <p class="login-error" id="loginError"></p>
+      <button class="btn btn-primary" id="loginBtn" onclick="login()" style="width:100%;justify-content:center;">
+        Sign In
+      </button>
     </div>
   </div>
 
@@ -119,7 +77,7 @@
   <div id="adminUI">
     <div class="admin-header">
       <span class="admin-header-title">Shop Orders</span>
-      <div class="admin-header-actions">
+      <div style="display:flex;align-items:center;gap:10px;">
         <button class="btn btn-secondary" onclick="loadOrders()" style="padding:8px 16px;font-size:0.78rem;">↻ Refresh</button>
         <button class="btn btn-secondary" onclick="logout()" style="padding:8px 16px;font-size:0.78rem;">Sign Out</button>
         <a href="index.html" class="btn btn-primary" style="padding:8px 16px;font-size:0.78rem;">← Site</a>
@@ -142,9 +100,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th>
-          </tr>
+          <tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th></tr>
         </thead>
         <tbody id="ordersBody">
           <tr class="empty-row"><td colspan="7">Loading orders…</td></tr>
@@ -155,99 +111,214 @@
 
   <script src="script.js"></script>
   <script>
-    const SUPABASE_URL   = 'https://papdxjcfimeyjgzmatpl.supabase.co';
-    const SUPABASE_ANON  = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
-    const ADMIN_PASSWORD = 'phenome2026';
-    let allOrders = [], activeFilter = 'all';
+    const EDGE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
+    let allOrders = [], activeFilter = 'all', adminToken = '';
 
-    function login() {
-      if (document.getElementById('pwInput').value === ADMIN_PASSWORD) {
-        sessionStorage.setItem('shop_admin_auth','1');
-        document.getElementById('loginWrap').style.display='none';
-        document.getElementById('adminUI').style.display='block';
-        loadOrders();
-      } else {
-        document.getElementById('loginError').style.display='block';
+    /* ── Auth ─────────────────────────────────────── */
+    async function login() {
+      const pw  = document.getElementById('pwInput').value;
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('loginError');
+      if (!pw) { showError('Please enter your password.'); return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Signing in…';
+      err.style.display = 'none';
+
+      try {
+        const res = await callEdge({ action: 'get_orders', password: pw });
+        if (res.status === 401) { showError('Incorrect password.'); return; }
+        if (!res.ok) { showError('Server error. Try again.'); return; }
+        const data = await res.json();
+        adminToken = pw;
+        sessionStorage.setItem('_at', btoa(pw));
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('adminUI').style.display = 'block';
+        allOrders = data.orders || [];
+        updateStats(); renderTable();
+      } catch {
+        showError('Network error. Check connection.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In';
       }
     }
-    function logout() { sessionStorage.removeItem('shop_admin_auth'); location.reload(); }
 
-    if (sessionStorage.getItem('shop_admin_auth')==='1') {
-      document.getElementById('loginWrap').style.display='none';
-      document.getElementById('adminUI').style.display='block';
-      loadOrders();
+    function showError(msg) {
+      const el = document.getElementById('loginError');
+      el.textContent = msg; el.style.display = 'block';
     }
 
+    function logout() {
+      sessionStorage.removeItem('_at');
+      adminToken = '';
+      location.reload();
+    }
+
+    /* ── Auto-restore session ─────────────────────── */
+    (async function tryRestore() {
+      const stored = sessionStorage.getItem('_at');
+      if (!stored) return;
+      try {
+        const pw = atob(stored);
+        const res = await callEdge({ action: 'get_orders', password: pw });
+        if (!res.ok) { sessionStorage.removeItem('_at'); return; }
+        const data = await res.json();
+        adminToken = pw;
+        document.getElementById('loginWrap').style.display = 'none';
+        document.getElementById('adminUI').style.display = 'block';
+        allOrders = data.orders || [];
+        updateStats(); renderTable();
+      } catch { sessionStorage.removeItem('_at'); }
+    })();
+
+    /* ── Edge function helper ─────────────────────── */
+    function callEdge(body) {
+      return fetch(EDGE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    }
+
+    /* ── Load orders ──────────────────────────────── */
     async function loadOrders() {
-      document.getElementById('ordersBody').innerHTML='<tr class="empty-row"><td colspan="7">Loading…</td></tr>';
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?select=*&order=created_at.desc`,
-        {headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}});
-      allOrders = await res.json();
-      updateStats(); renderTable();
+      document.getElementById('ordersBody').innerHTML =
+        '<tr class="empty-row"><td colspan="7"><span class="spinner"></span>Loading…</td></tr>';
+      try {
+        const res = await callEdge({ action: 'get_orders', password: adminToken });
+        if (!res.ok) { document.getElementById('ordersBody').innerHTML = '<tr class="empty-row"><td colspan="7">Failed to load orders.</td></tr>'; return; }
+        const data = await res.json();
+        allOrders = data.orders || [];
+        updateStats(); renderTable();
+      } catch {
+        document.getElementById('ordersBody').innerHTML = '<tr class="empty-row"><td colspan="7">Network error.</td></tr>';
+      }
     }
 
+    /* ── Stats ────────────────────────────────────── */
     function updateStats() {
-      const paid = allOrders.filter(o=>o.payment_status==='paid');
-      const rev  = paid.reduce((s,o)=>s+Number(o.total_amount),0);
+      const paid = allOrders.filter(o => o.payment_status === 'paid');
+      const rev  = paid.reduce((s, o) => s + Number(o.total_amount), 0);
       document.getElementById('statTotal').textContent   = allOrders.length;
       document.getElementById('statPaid').textContent    = paid.length;
       document.getElementById('statRevenue').textContent = `R${rev.toLocaleString('en-ZA')}`;
-      document.getElementById('statPending').textContent = allOrders.filter(o=>o.payment_status==='unpaid').length;
+      document.getElementById('statPending').textContent = allOrders.filter(o => o.payment_status === 'unpaid').length;
     }
 
-    function setFilter(f,btn) {
-      activeFilter=f;
-      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    /* ── Filters ──────────────────────────────────── */
+    function setFilter(f, btn) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderTable();
     }
 
+    /* ── Render table (XSS-safe) ──────────────────── */
     function renderTable() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       let orders = allOrders;
-      if (activeFilter!=='all') orders=orders.filter(o=>o.payment_status===activeFilter||o.status===activeFilter);
-      if (search) orders=orders.filter(o=>o.customer_name?.toLowerCase().includes(search)||o.customer_email?.toLowerCase().includes(search));
-      if (!orders.length) { document.getElementById('ordersBody').innerHTML='<tr class="empty-row"><td colspan="7">No orders found.</td></tr>'; return; }
+      if (activeFilter !== 'all') orders = orders.filter(o => o.payment_status === activeFilter || o.status === activeFilter);
+      if (search) orders = orders.filter(o =>
+        o.customer_name?.toLowerCase().includes(search) ||
+        o.customer_email?.toLowerCase().includes(search)
+      );
+      const tbody = document.getElementById('ordersBody');
+      if (!orders.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No orders found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '';
       const badgeMap = { pending:'badge-unpaid', processing:'badge-processing', dispatched:'badge-dispatched', delivered:'badge-delivered' };
-      document.getElementById('ordersBody').innerHTML = orders.map(o => {
-        const date  = new Date(o.created_at).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
+      orders.forEach(o => {
+        const tr = document.createElement('tr');
+        const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' });
         const items = Array.isArray(o.items) ? o.items : [];
-        const iHtml = items.map(i=>`${i.qty}&times; ${i.name} (${i.variant})`).join('<br/>');
-        const pBadge = o.payment_status==='paid'
-          ? '<span class="badge badge-paid">Paid</span>'
-          : '<span class="badge badge-unpaid">Unpaid</span>';
-        return `<tr>
-          <td style="white-space:nowrap;color:var(--text-muted)">${date}</td>
-          <td>
-            <div style="font-weight:600;color:var(--accent-strong)">${o.customer_name}</div>
-            <div style="color:var(--text-muted);font-size:0.75rem">${o.customer_email}</div>
-            <div style="color:var(--text-muted);font-size:0.75rem">${o.customer_phone}</div>
-            <div style="color:var(--text-muted);font-size:0.72rem;margin-top:2px">${o.delivery_address}</div>
-          </td>
-          <td><div class="items-mini">${iHtml}</div></td>
-          <td style="font-weight:700;color:var(--accent);white-space:nowrap">R${o.total_amount}</td>
-          <td>${pBadge}</td>
-          <td><span class="badge ${badgeMap[o.status]||'badge-unpaid'}">${o.status}</span></td>
-          <td>
-            <select class="status-select" onchange="updateStatus('${o.id}',this.value)">
-              <option value="pending"    ${o.status==='pending'   ?'selected':''}>Pending</option>
-              <option value="processing" ${o.status==='processing'?'selected':''}>Processing</option>
-              <option value="dispatched" ${o.status==='dispatched'?'selected':''}>Dispatched</option>
-              <option value="delivered"  ${o.status==='delivered' ?'selected':''}>Delivered</option>
-            </select>
-          </td>
-        </tr>`;
-      }).join('');
+        // XSS-safe: build cells with textContent
+        const cells = [
+          mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
+          mkCustomerTd(o),
+          mkItemsTd(items),
+          mkTd(`R${o.total_amount}`, 'font-weight:700;color:var(--accent);white-space:nowrap'),
+          mkBadgeTd(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid'),
+          mkBadgeTd(badgeMap[o.status] || 'badge-unpaid', o.status),
+          mkSelectTd(o),
+        ];
+        cells.forEach(c => tr.appendChild(c));
+        tbody.appendChild(tr);
+      });
     }
 
-    async function updateStatus(id,status) {
-      await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?id=eq.${id}`,{
-        method:'PATCH',
-        headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body:JSON.stringify({status}),
+    function mkTd(text, style='') {
+      const td = document.createElement('td');
+      if (style) td.style.cssText = style;
+      td.textContent = text;
+      return td;
+    }
+    function mkCustomerTd(o) {
+      const td = document.createElement('td');
+      const name = document.createElement('div');
+      name.style.cssText = 'font-weight:600;color:var(--accent-strong)';
+      name.textContent = o.customer_name;
+      const email = document.createElement('div');
+      email.style.cssText = 'color:var(--text-muted);font-size:0.75rem';
+      email.textContent = o.customer_email;
+      const phone = document.createElement('div');
+      phone.style.cssText = 'color:var(--text-muted);font-size:0.75rem';
+      phone.textContent = o.customer_phone;
+      const addr = document.createElement('div');
+      addr.style.cssText = 'color:var(--text-muted);font-size:0.72rem;margin-top:2px';
+      addr.textContent = o.delivery_address;
+      [name, email, phone, addr].forEach(el => td.appendChild(el));
+      return td;
+    }
+    function mkItemsTd(items) {
+      const td = document.createElement('td');
+      const wrap = document.createElement('div');
+      wrap.className = 'items-mini';
+      items.forEach((item, i) => {
+        if (i > 0) wrap.appendChild(document.createElement('br'));
+        const t = document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`);
+        wrap.appendChild(t);
       });
-      const o=allOrders.find(x=>x.id===id); if(o) o.status=status;
-      renderTable();
+      td.appendChild(wrap);
+      return td;
+    }
+    function mkBadgeTd(cls, label) {
+      const td = document.createElement('td');
+      const span = document.createElement('span');
+      span.className = `badge ${cls}`;
+      span.textContent = label;
+      td.appendChild(span);
+      return td;
+    }
+    function mkSelectTd(o) {
+      const td = document.createElement('td');
+      const sel = document.createElement('select');
+      sel.className = 'status-select';
+      ['pending','processing','dispatched','delivered'].forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+        if (o.status === val) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => updateStatus(o.id, sel.value));
+      td.appendChild(sel);
+      return td;
+    }
+
+    /* ── Update status ────────────────────────────── */
+    async function updateStatus(id, status) {
+      try {
+        const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
+        if (!res.ok) { alert('Failed to update status.'); return; }
+        const o = allOrders.find(x => x.id === id);
+        if (o) o.status = status;
+        updateStats();
+      } catch {
+        alert('Network error updating status.');
+      }
     }
   </script>
 </body>
