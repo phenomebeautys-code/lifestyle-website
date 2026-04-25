@@ -2,10 +2,9 @@
    SHOP ADMIN — JavaScript
 ═══════════════════════════════════════ */
 
-const EDGE_URL      = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
-const SUPA_URL      = 'https://papdxjcfimeyjgzmatpl.supabase.co';
-const SUPA_ANON     = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
-// Adjust this to match your exact products table name in Supabase
+const EDGE_URL       = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
+const SUPA_URL       = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+const SUPA_ANON      = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
 const PRODUCTS_TABLE = 'products';
 
 let allOrders       = [];
@@ -22,7 +21,7 @@ const BADGE_MAP = {
 };
 const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
 
-/* ─── INIT ─────────────────────────── */
+/* ─── INIT ──────────────────────────── */
 document.getElementById('adminDate').textContent =
   new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
 
@@ -70,14 +69,16 @@ function toggleSidebar() {
   const isOpen    = sidebar.classList.toggle('open');
   overlay.classList.toggle('active', isOpen);
   hamburger.classList.toggle('open', isOpen);
+  document.body.classList.toggle('sidebar-open', isOpen);
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('active');
   document.getElementById('hamburgerBtn').classList.remove('open');
+  document.body.classList.remove('sidebar-open');
 }
 
-/* ─── AUTH ─────────────────────────── */
+/* ─── AUTH ──────────────────────────── */
 async function hashToken(pw) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -124,7 +125,7 @@ function callEdge(body) {
   });
 }
 
-/* ─── NAVIGATION ───────────────────── */
+/* ─── NAVIGATION ────────────────────── */
 function navTo(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -134,7 +135,7 @@ function navTo(page, btn) {
   if (page === 'products') loadProducts();
 }
 
-/* ─── REFRESH ──────────────────────── */
+/* ─── REFRESH ───────────────────────── */
 async function refreshData() {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
@@ -150,7 +151,7 @@ async function refreshData() {
   finally { btn.disabled = false; }
 }
 
-/* ─── STATS ────────────────────────── */
+/* ─── STATS ─────────────────────────── */
 function updateStats() {
   const paid       = allOrders.filter(o => o.payment_status === 'paid');
   const unpaid     = allOrders.filter(o => o.payment_status !== 'paid');
@@ -197,7 +198,7 @@ function updateReports() {
   setText('repDeliveryRate', paid.length ? rate + '%' : '—');
 }
 
-/* ─── RECENT SALES ─────────────────── */
+/* ─── RECENT SALES ──────────────────── */
 function renderRecent() {
   const el   = document.getElementById('recentList');
   const list = [...allOrders]
@@ -208,7 +209,7 @@ function renderRecent() {
   el.innerHTML = list.map(o => {
     const date     = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
     const items    = Array.isArray(o.items) ? o.items : [];
-    const itemStr  = items.map(i => i.qty + '× ' + i.name).join(', ');
+    const itemStr  = items.map(i => i.qty + '\u00d7 ' + i.name).join(', ');
     const initials = (o.customer_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return `
       <div class="recent-item">
@@ -225,7 +226,7 @@ function renderRecent() {
   }).join('');
 }
 
-/* ─── ORDERS TABLE ─────────────────── */
+/* ─── ORDERS TABLE ──────────────────── */
 function applyFilter(filter, btn) {
   activeFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -286,26 +287,45 @@ function renderCards() {
     const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
     const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
     const sel = makeStatusSelect(o, statusBadge);
+
     card.innerHTML = `
       <div class="oc-top">
         <div>
           <div class="oc-name">${esc(o.customer_name)}</div>
-          <div class="oc-meta">${esc(o.customer_email || '')} · ${esc(o.customer_phone || '')}</div>
+          <div class="oc-meta">${esc(o.customer_email || '')} &middot; ${esc(o.customer_phone || '')}</div>
         </div>
         <div class="oc-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
       </div>`;
+
     const badges = document.createElement('div'); badges.className = 'oc-badges';
     badges.appendChild(payBadge); badges.appendChild(statusBadge);
+
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
     items.forEach((item, i) => {
       if (i > 0) itemsEl.appendChild(document.createElement('br'));
-      itemsEl.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
+      itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
     });
     if (!items.length) itemsEl.textContent = 'No items';
-    const footer = document.createElement('div'); footer.className = 'oc-footer';
-    const dateEl = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
-    footer.appendChild(dateEl); footer.appendChild(sel);
-    card.appendChild(badges); card.appendChild(itemsEl); card.appendChild(footer);
+
+    const footer  = document.createElement('div'); footer.className = 'oc-footer';
+    const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
+
+    const actions = document.createElement('div'); actions.className = 'oc-actions';
+
+    // Print label button
+    const printBtn = document.createElement('button');
+    printBtn.className = 'btn-print-label';
+    printBtn.textContent = 'Print Label';
+    printBtn.addEventListener('click', () => printLabel(o));
+
+    actions.appendChild(sel);
+    actions.appendChild(printBtn);
+    footer.appendChild(dateEl);
+    footer.appendChild(actions);
+
+    card.appendChild(badges);
+    card.appendChild(itemsEl);
+    card.appendChild(footer);
     el.appendChild(card);
   });
 }
@@ -342,7 +362,7 @@ function mkItemsTd(items) {
   const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
   items.forEach((item, i) => {
     if (i > 0) wrap.appendChild(document.createElement('br'));
-    wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
+    wrap.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
   }); td.appendChild(wrap); return td;
 }
 function mkBadgeTd(cls, label) {
@@ -359,75 +379,109 @@ async function updateOrderStatus(id, status, badgeEl) {
     const o = allOrders.find(x => x.id === id); if (o) o.status = status;
     if (badgeEl) { badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid'); badgeEl.textContent = status; }
     updateStats(); renderRecent(); updateReports();
-    showToast('Status → ' + status + ' ✓');
+    showToast('Status \u2192 ' + status + ' \u2713');
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── PRODUCTS ───────────────────────
-   Fetches directly from Supabase REST API.
-   The edge function may not have get_products wired,
-   so we bypass it and hit the DB directly with the anon key.
-   Write operations (add/update/delete) still go through the edge function.
-────────────────────────────── */
+/* ─── PRINT LABEL ───────────────────── */
+function printLabel(order) {
+  const items   = Array.isArray(order.items) ? order.items : [];
+  const date    = new Date(order.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+  const isPaid  = order.payment_status === 'paid';
+  const orderNo = String(order.id).slice(0, 8).toUpperCase();
+
+  const itemsHTML = items.map(item => `
+    <div class="label-item">${item.qty}\u00d7 &nbsp;<strong>${esc(item.name)}</strong></div>
+    ${item.variant ? `<div class="label-item-variant">${esc(item.variant)}</div>` : ''}
+  `).join('');
+
+  const area = document.getElementById('printLabelArea');
+  area.innerHTML = `
+    <div class="label-sheet">
+      <div class="label-header">
+        <div class="label-brand">PhenomeBeauty</div>
+        <div class="label-date">${date}</div>
+      </div>
+
+      <div class="label-section">
+        <div class="label-section-title">Deliver To</div>
+        <div class="label-name">${esc(order.customer_name)}</div>
+        ${order.customer_phone   ? `<div class="label-sub">${esc(order.customer_phone)}</div>`   : ''}
+        ${order.customer_email   ? `<div class="label-sub">${esc(order.customer_email)}</div>`   : ''}
+        ${order.delivery_address ? `<div class="label-sub">${esc(order.delivery_address)}</div>` : ''}
+      </div>
+
+      <hr class="label-divider" />
+
+      <div class="label-section">
+        <div class="label-section-title">Order #${orderNo}</div>
+        ${itemsHTML || '<div class="label-item">No items</div>'}
+      </div>
+
+      <div class="label-total">
+        <span>Total</span>
+        <span>R${Number(order.total_amount).toLocaleString('en-ZA')}&nbsp;
+          <span class="label-paid-badge">${isPaid ? 'PAID' : 'UNPAID'}</span>
+        </span>
+      </div>
+
+      <button class="label-print-btn" onclick="window.print()">Print</button>
+      <button class="label-close-btn" onclick="closePrintLabel()">Close</button>
+    </div>`;
+
+  area.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePrintLabel() {
+  document.getElementById('printLabelArea').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/* ─── PRODUCTS ──────────────────────── */
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
     '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
   try {
-    // First try the edge function
     const res = await callEdge({ action: 'get_products', password: adminToken });
     if (res.ok) {
       const data = await res.json();
-      // Edge function returned products
       if (Array.isArray(data.products)) {
         allProducts = data.products;
         renderProducts();
         return;
       }
     }
-    // Fallback: query Supabase REST directly
     await loadProductsFromRest();
   } catch {
     await loadProductsFromRest();
   }
 }
-
 async function loadProductsFromRest() {
   try {
     const res = await fetch(
-      `${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=created_at.desc`,
-      {
-        headers: {
-          'apikey': SUPA_ANON,
-          'Authorization': `Bearer ${SUPA_ANON}`,
-          'Content-Type': 'application/json',
-        },
-      }
+      `${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=idx.asc`,
+      { headers: { 'apikey': SUPA_ANON, 'Authorization': `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' } }
     );
     if (!res.ok) {
-      const err = await res.text();
-      console.error('Products REST error:', err);
-      allProducts = [];
-      renderProducts();
+      console.error('Products REST error:', await res.text());
+      allProducts = []; renderProducts();
       showToast('Could not load products: ' + res.status, true);
       return;
     }
-    const data = await res.json();
-    allProducts = Array.isArray(data) ? data : [];
+    allProducts = await res.json();
     renderProducts();
   } catch (e) {
     console.error('Products fetch failed:', e);
-    allProducts = [];
-    renderProducts();
+    allProducts = []; renderProducts();
   }
 }
-
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
   const list = q
     ? allProducts.filter(p =>
         p.name?.toLowerCase().includes(q) ||
-        p.sku?.toLowerCase().includes(q) ||
         p.brand?.toLowerCase().includes(q)
       )
     : allProducts;
@@ -441,13 +495,11 @@ function renderProducts() {
     document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal());
     return;
   }
-
   el.innerHTML = '';
   list.forEach(p => {
     const card     = document.createElement('div'); card.className = 'product-card';
     const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).filter(Boolean).join(', ');
-
-    const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
+    const imgWrap  = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (p.image_url) {
       const img = document.createElement('img'); img.src = p.image_url; img.alt = p.name || '';
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); };
@@ -455,29 +507,24 @@ function renderProducts() {
     } else {
       imgWrap.innerHTML = noImgSVG();
     }
-
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
-      ${p.category    ? `<div class="product-cat">${esc(p.category)}</div>`     : ''}
+      ${p.category    ? `<div class="product-cat">${esc(p.category)}</div>`      : ''}
       <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
-      ${p.brand       ? `<div class="product-brand">${esc(p.brand)}</div>`      : ''}
-      ${p.sku         ? `<div class="product-sku">SKU: ${esc(p.sku)}</div>`    : ''}
-      ${variants      ? `<div class="product-variant">${esc(variants)}</div>`   : ''}
-      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>`: ''}
+      ${p.brand       ? `<div class="product-brand">${esc(p.brand)}</div>`       : ''}
+      ${variants      ? `<div class="product-variant">${esc(variants)}</div>`    : ''}
+      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
-
     const footer  = document.createElement('div'); footer.className = 'product-card-footer';
     const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => openProductModal(p));
     const delBtn  = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
     delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
     footer.appendChild(editBtn); footer.appendChild(delBtn);
-
     card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
     el.appendChild(card);
   });
 }
-
 function noImgSVG() {
   return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 }
@@ -508,7 +555,7 @@ function renderVariantRows() {
     const row = document.createElement('div'); row.className = 'variant-row';
     const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. Scent: Calm';
     inp.addEventListener('input', () => { editingVariants[i] = inp.value; });
-    const rm  = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '×'; rm.type = 'button';
+    const rm  = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
     rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
     row.appendChild(inp); row.appendChild(rm); el.appendChild(row);
   });
@@ -553,7 +600,7 @@ async function saveProduct() {
       allProducts.unshift(data.product || payload.product);
     }
     renderProducts(); closeProductModal();
-    showToast(id ? 'Product updated ✓' : 'Product added ✓');
+    showToast(id ? 'Product updated \u2713' : 'Product added \u2713');
   } catch { showToast('Network error.', true); }
   finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
 }
@@ -567,7 +614,7 @@ async function deleteProduct(id, name) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── UTILITIES ────────────────────── */
+/* ─── UTILITIES ─────────────────────── */
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 function showToast(msg, isError = false) {
