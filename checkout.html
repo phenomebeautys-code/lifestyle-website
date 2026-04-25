@@ -11,13 +11,12 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* ── Page shell ───────────────────────────────── */
     body {
       background: #0a0a0b;
       min-height: 100vh;
     }
 
-    /* ── Checkout-specific nav (minimal / trust bar) */
+    /* ── Checkout nav ──────────────────────────────── */
     .co-nav {
       position: sticky; top: 0; z-index: 200;
       border-bottom: 1px solid var(--glass-border);
@@ -33,13 +32,10 @@
       display: flex; align-items: center; gap: 10px;
       font-family: var(--font-display); font-size: 1.1rem; color: #fff;
     }
-    .co-nav-logo img {
-      height: 34px; border-radius: 6px;
-    }
+    .co-nav-logo img { height: 34px; border-radius: 6px; }
     .co-nav-back {
       display: inline-flex; align-items: center; gap: 6px;
-      font-size: 0.82rem; color: var(--text-muted);
-      transition: color 0.2s;
+      font-size: 0.82rem; color: var(--text-muted); transition: color 0.2s;
     }
     .co-nav-back:hover { color: var(--text); }
     .co-trust {
@@ -47,7 +43,7 @@
       font-size: 0.78rem; color: var(--text-muted);
     }
 
-    /* ── Layout: form left | summary right ───────── */
+    /* ── Layout ────────────────────────────────────── */
     .co-layout {
       display: grid;
       grid-template-columns: 1fr 420px;
@@ -57,75 +53,47 @@
       margin: 0 auto;
       padding: 0 20px;
     }
-
-    /* ── Left column ─────────────────────────────── */
     .co-form-col {
       padding: 40px 48px 60px 0;
       border-right: 1px solid var(--glass-border);
     }
 
-    /* ── Breadcrumb steps ─────────────────────────── */
+    /* ── Breadcrumb ────────────────────────────────── */
     .co-steps {
       display: flex; align-items: center; gap: 0;
-      margin-bottom: 36px;
-      font-size: 0.8rem;
+      margin-bottom: 36px; font-size: 0.8rem;
     }
-    .co-step {
-      display: flex; align-items: center; gap: 6px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
+    .co-step { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; }
     .co-step.active { color: var(--accent-strong); }
     .co-step.done   { color: var(--text-soft); }
     .co-step-num {
       width: 22px; height: 22px; border-radius: 50%;
       border: 1px solid currentColor;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.68rem; font-weight: 700;
-      flex-shrink: 0;
+      font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
     }
-    .co-step.done .co-step-num {
-      background: rgba(255,255,255,0.10);
-      border-color: rgba(255,255,255,0.20);
-    }
-    .co-step.active .co-step-num {
-      background: #fff; color: #000;
-      border-color: #fff;
-    }
-    .co-sep {
-      width: 28px; height: 1px;
-      background: var(--glass-border);
-      margin: 0 8px;
-    }
+    .co-step.done .co-step-num { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.20); }
+    .co-step.active .co-step-num { background: #fff; color: #000; border-color: #fff; }
+    .co-sep { width: 28px; height: 1px; background: var(--glass-border); margin: 0 8px; }
 
-    /* ── Section headers ─────────────────────────── */
-    .co-section-head {
-      margin-bottom: 22px;
-    }
+    /* ── Section heads ─────────────────────────────── */
+    .co-section-head { margin-bottom: 22px; }
     .co-section-head h2 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      color: var(--accent-strong);
-      line-height: 1.1;
-      margin-bottom: 4px;
+      font-family: var(--font-display); font-size: 1.5rem;
+      color: var(--accent-strong); line-height: 1.1; margin-bottom: 4px;
     }
-    .co-section-head p {
-      font-size: 0.83rem; color: var(--text-muted);
-    }
+    .co-section-head p { font-size: 0.83rem; color: var(--text-muted); }
 
-    /* ── Steps panel visibility ──────────────────── */
+    /* ── Step panels ───────────────────────────────── */
     .co-step-panel { display: none; }
     .co-step-panel.active { display: block; }
 
-    /* ── Completed step summary cards ───────────── */
+    /* ── Done cards ────────────────────────────────── */
     .done-card {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 16px;
-      border-radius: var(--radius-md);
+      padding: 14px 16px; border-radius: var(--radius-md);
       border: 1px solid var(--glass-border);
-      background: rgba(255,255,255,0.04);
-      margin-bottom: 10px;
-      gap: 12px;
+      background: rgba(255,255,255,0.04); margin-bottom: 10px; gap: 12px;
     }
     .done-card-left { font-size: 0.82rem; color: var(--text-muted); }
     .done-card-val  { font-size: 0.88rem; color: var(--text); font-weight: 500; margin-top: 2px; }
@@ -137,11 +105,8 @@
     }
     .done-card-edit:hover { color: var(--accent-strong); }
 
-    /* ── Form fields ─────────────────────────────── */
-    .field-group {
-      display: flex; flex-direction: column; gap: 4px;
-      margin-bottom: 14px;
-    }
+    /* ── Fields ────────────────────────────────────── */
+    .field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
     .field-group:last-of-type { margin-bottom: 0; }
     .field-label {
       font-size: 0.72rem; font-weight: 600;
@@ -152,160 +117,101 @@
       width: 100%;
       background: rgba(255,255,255,0.05);
       border: 1px solid var(--glass-border);
-      color: var(--text);
-      border-radius: var(--radius-md);
-      padding: 12px 16px;
-      font-size: 0.9rem;
-      font-family: var(--font-body);
-      outline: none;
+      color: var(--text); border-radius: var(--radius-md);
+      padding: 12px 16px; font-size: 0.9rem;
+      font-family: var(--font-body); outline: none;
       transition: border-color 0.2s, background 0.2s;
     }
-    .field-input:focus {
-      border-color: rgba(255,255,255,0.38);
-      background: rgba(255,255,255,0.07);
-    }
+    .field-input:focus { border-color: rgba(255,255,255,0.38); background: rgba(255,255,255,0.07); }
     .field-input.error { border-color: #f87171; }
     .field-error { font-size: 0.75rem; color: #f87171; display: none; }
     .field-error.show { display: block; }
     textarea.field-input { resize: vertical; min-height: 76px; }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    .form-row-3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 120px;
-      gap: 14px;
-    }
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 14px; }
+    .field-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
 
-    /* ── Fieldset divider ────────────────────────── */
-    .field-divider {
-      height: 1px; background: var(--glass-border);
-      margin: 20px 0;
-    }
-
-    /* ── Continue / Pay buttons ─────────────────── */
+    /* ── Buttons ───────────────────────────────────── */
     .co-btn-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      margin-top: 26px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 14px; margin-top: 26px; flex-wrap: wrap;
     }
     .co-back-link {
       font-size: 0.82rem; color: var(--text-muted);
       display: inline-flex; align-items: center; gap: 5px;
       background: none; border: none; cursor: pointer;
-      font-family: var(--font-body);
-      transition: color 0.2s;
+      font-family: var(--font-body); transition: color 0.2s;
     }
     .co-back-link:hover { color: var(--text); }
 
-    /* ── Review step ─────────────────────────────── */
+    /* ── Review blocks ─────────────────────────────── */
     .review-block {
       border: 1px solid var(--glass-border);
-      border-radius: var(--radius-lg);
-      overflow: hidden;
-      margin-bottom: 16px;
+      border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px;
     }
     .review-block-head {
-      padding: 12px 18px;
-      background: rgba(255,255,255,0.04);
+      padding: 12px 18px; background: rgba(255,255,255,0.04);
       border-bottom: 1px solid var(--glass-border);
       font-size: 0.72rem; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--text-muted);
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
       display: flex; justify-content: space-between; align-items: center;
     }
     .review-block-body {
-      padding: 16px 18px;
-      font-size: 0.88rem;
-      color: var(--text-soft);
-      line-height: 1.7;
+      padding: 16px 18px; font-size: 0.88rem;
+      color: var(--text-soft); line-height: 1.7;
     }
     .review-block-body strong { color: var(--text); }
 
-    /* ── Secure payment note ─────────────────────── */
+    /* ── Secure note ───────────────────────────────── */
     .co-secure {
       display: flex; align-items: center; justify-content: center;
-      gap: 7px;
-      font-size: 0.75rem; color: var(--text-muted);
-      margin-top: 14px;
+      gap: 7px; font-size: 0.75rem; color: var(--text-muted); margin-top: 14px;
     }
 
-    /* ── Right column: Order Summary ─────────────── */
+    /* ── Right summary col ─────────────────────────── */
     .co-summary-col {
       padding: 40px 0 60px 40px;
-      position: sticky;
-      top: 64px;
+      position: sticky; top: 64px;
       align-self: start;
-      max-height: calc(100vh - 64px);
-      overflow-y: auto;
+      max-height: calc(100vh - 64px); overflow-y: auto;
     }
     .co-summary-title {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      color: var(--accent-strong);
-      margin-bottom: 20px;
+      font-family: var(--font-display); font-size: 1.1rem;
+      color: var(--accent-strong); margin-bottom: 20px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .co-summary-toggle {
-      background: none; border: none;
-      font-size: 0.78rem; color: var(--accent);
-      cursor: pointer; font-family: var(--font-body);
-      display: none;
-    }
     .co-items { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-    .co-item {
-      display: flex; align-items: flex-start; gap: 12px;
-    }
+    .co-item  { display: flex; align-items: flex-start; gap: 12px; }
     .co-item-img {
-      width: 56px; height: 56px;
-      border-radius: 10px;
+      width: 56px; height: 56px; border-radius: 10px;
       border: 1px solid var(--glass-border);
       overflow: hidden; flex-shrink: 0;
-      background: rgba(255,255,255,0.04);
-      position: relative;
+      background: rgba(255,255,255,0.04); position: relative;
     }
-    .co-item-img img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
+    .co-item-img img { width: 100%; height: 100%; object-fit: cover; }
     .co-item-qty-badge {
       position: absolute; top: -6px; right: -6px;
-      background: rgba(255,255,255,0.20);
-      border: 1px solid var(--glass-border);
-      border-radius: 50%;
-      width: 20px; height: 20px;
+      background: rgba(255,255,255,0.20); border: 1px solid var(--glass-border);
+      border-radius: 50%; width: 20px; height: 20px;
       font-size: 0.65rem; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff;
+      display: flex; align-items: center; justify-content: center; color: #fff;
     }
     .co-item-info { flex: 1; }
-    .co-item-name { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); line-height: 1.2; }
-    .co-item-var  { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .co-item-name  { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); line-height: 1.2; }
+    .co-item-var   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
     .co-item-price { font-size: 0.9rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
-
-    .co-divider { height: 1px; background: var(--glass-border); margin: 16px 0; }
-
-    .co-totals { display: flex; flex-direction: column; gap: 8px; }
-    .co-total-row {
-      display: flex; justify-content: space-between;
-      font-size: 0.85rem; color: var(--text-muted);
-    }
+    .co-divider    { height: 1px; background: var(--glass-border); margin: 16px 0; }
+    .co-totals     { display: flex; flex-direction: column; gap: 8px; }
+    .co-total-row  { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
     .co-total-row span:last-child { color: var(--text); }
-    .co-total-row.grand {
-      font-size: 1.05rem; font-weight: 700;
-    }
+    .co-total-row.grand { font-size: 1.05rem; font-weight: 700; }
     .co-total-row.grand span:last-child { color: var(--accent); }
 
-    /* ── Mobile: summary collapses above form ────── */
+    /* ── Mobile summary bar ────────────────────────── */
     .co-mobile-summary {
       display: none;
       border-bottom: 1px solid var(--glass-border);
-      background: rgba(8,8,10,0.95);
-      padding: 14px 20px;
+      background: rgba(8,8,10,0.95); padding: 14px 20px;
     }
     .co-mobile-summary-toggle {
       display: flex; align-items: center; justify-content: space-between;
@@ -315,64 +221,63 @@
       font-size: 0.85rem; color: var(--accent);
       display: flex; align-items: center; gap: 6px;
     }
-    .co-mobile-summary-toggle .ms-total {
-      font-size: 0.95rem; font-weight: 700; color: var(--accent);
-    }
+    .co-mobile-summary-toggle .ms-total { font-size: 0.95rem; font-weight: 700; color: var(--accent); }
     .co-mobile-summary-body { display: none; padding-top: 14px; }
     .co-mobile-summary-body.open { display: block; }
 
-    /* ── Error alert ─────────────────────────────── */
+    /* ── Alerts ────────────────────────────────────── */
     .co-alert {
-      padding: 12px 16px;
-      border-radius: var(--radius-md);
-      background: rgba(248,113,113,0.08);
-      border: 1px solid rgba(248,113,113,0.22);
-      color: #f87171; font-size: 0.83rem;
-      margin-bottom: 18px; display: none;
+      padding: 12px 16px; border-radius: var(--radius-md);
+      background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22);
+      color: #f87171; font-size: 0.83rem; margin-bottom: 18px; display: none;
     }
     .co-alert.show { display: block; }
 
-    /* ── Loading overlay ─────────────────────────── */
+    /* ── Draft restored toast ──────────────────────── */
+    .co-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(16px);
+      color: var(--text); font-size: 0.82rem;
+      padding: 10px 20px; border-radius: var(--radius-pill);
+      display: flex; align-items: center; gap: 8px;
+      z-index: 800; opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none; white-space: nowrap;
+    }
+    .co-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Loading overlay ───────────────────────────── */
     .co-loading {
       position: fixed; inset: 0; z-index: 900;
-      background: rgba(4,4,6,0.88);
-      backdrop-filter: blur(8px);
-      display: none;
-      flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 20px;
+      background: rgba(4,4,6,0.88); backdrop-filter: blur(8px);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
     }
     .co-loading.show { display: flex; }
     .co-spinner {
       width: 48px; height: 48px;
       border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: #fff;
-      border-radius: 50%;
+      border-top-color: #fff; border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .co-loading p { color: var(--text-soft); font-size: 0.9rem; }
 
-    /* ── Empty cart redirect notice ─────────────── */
+    /* ── Empty state ───────────────────────────────── */
     .co-empty {
-      min-height: 60vh;
-      display: flex; flex-direction: column;
+      min-height: 60vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 16px; text-align: center; padding: 40px;
     }
     .co-empty h2 { font-family: var(--font-display); font-size: 2rem; color: var(--accent-strong); }
     .co-empty p  { color: var(--text-muted); font-size: 0.9rem; }
 
-    /* ── Responsive ──────────────────────────────── */
+    /* ── Responsive ────────────────────────────────── */
     @media (max-width: 900px) {
-      .co-layout {
-        grid-template-columns: 1fr;
-        padding: 0 16px;
-      }
-      .co-form-col {
-        padding: 24px 0 40px;
-        border-right: none;
-      }
+      .co-layout { grid-template-columns: 1fr; padding: 0 16px; }
+      .co-form-col { padding: 24px 0 40px; border-right: none; }
       .co-summary-col { display: none; }
       .co-mobile-summary { display: block; }
     }
@@ -386,7 +291,7 @@
 </head>
 <body>
 
-  <!-- ── Checkout Navbar ───────────────────────── -->
+  <!-- ── Checkout Navbar ──────────────────────────── -->
   <nav class="co-nav">
     <div class="container">
       <div class="co-nav-inner">
@@ -406,7 +311,7 @@
     </div>
   </nav>
 
-  <!-- ── Mobile Summary Bar ────────────────────── -->
+  <!-- ── Mobile Summary Bar ───────────────────────── -->
   <div class="co-mobile-summary" id="mobileSummary">
     <div class="co-mobile-summary-toggle" onclick="toggleMobileSummary()">
       <span>
@@ -424,13 +329,12 @@
     </div>
   </div>
 
-  <!-- ── Main layout ───────────────────────────── -->
+  <!-- ── Main layout ──────────────────────────────── -->
   <div class="co-layout" id="coLayout">
 
     <!-- LEFT: Form steps -->
     <div class="co-form-col">
 
-      <!-- Empty cart state -->
       <div class="co-empty" id="emptyState" style="display:none">
         <h2>Your cart is empty</h2>
         <p>Add some products before checking out.</p>
@@ -439,19 +343,13 @@
 
       <div id="checkoutContent">
 
-        <!-- Step breadcrumb -->
+        <!-- Breadcrumb -->
         <div class="co-steps" id="stepsBreadcrumb">
-          <div class="co-step active" id="breadcrumb-1">
-            <span class="co-step-num">1</span> Contact
-          </div>
+          <div class="co-step active" id="breadcrumb-1"><span class="co-step-num">1</span> Contact</div>
           <div class="co-sep"></div>
-          <div class="co-step" id="breadcrumb-2">
-            <span class="co-step-num">2</span> Delivery
-          </div>
+          <div class="co-step" id="breadcrumb-2"><span class="co-step-num">2</span> Delivery</div>
           <div class="co-sep"></div>
-          <div class="co-step" id="breadcrumb-3">
-            <span class="co-step-num">3</span> Review
-          </div>
+          <div class="co-step" id="breadcrumb-3"><span class="co-step-num">3</span> Review</div>
         </div>
 
         <!-- ══ STEP 1: Contact ══ -->
@@ -460,9 +358,7 @@
             <h2>Contact</h2>
             <p>We'll use these details for your order confirmation and delivery.</p>
           </div>
-
           <div class="co-alert" id="alert-1"></div>
-
           <div class="field-group">
             <label class="field-label">Full Name</label>
             <input class="field-input" id="f-name" type="text" placeholder="Jane Doe" autocomplete="name" />
@@ -480,7 +376,6 @@
               <span class="field-error" id="err-phone">Please enter your phone number.</span>
             </div>
           </div>
-
           <div class="co-btn-row">
             <a href="shop.html" class="co-back-link">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -495,23 +390,15 @@
 
         <!-- ══ STEP 2: Delivery ══ -->
         <div class="co-step-panel" id="panel-2">
-
-          <!-- Done: Contact card -->
-          <div class="done-card" id="done-contact">
-            <div class="done-card-left">
-              Contact
-              <div class="done-card-val" id="done-contact-val"></div>
-            </div>
+          <div class="done-card">
+            <div class="done-card-left">Contact<div class="done-card-val" id="done-contact-val"></div></div>
             <button class="done-card-edit" onclick="goStep(1)">Edit</button>
           </div>
-
           <div class="co-section-head" style="margin-top:24px">
             <h2>Delivery</h2>
             <p>We deliver across Cape Town. Standard delivery is R80.</p>
           </div>
-
           <div class="co-alert" id="alert-2"></div>
-
           <div class="field-group">
             <label class="field-label">Street Address</label>
             <input class="field-input" id="f-street" type="text" placeholder="12 Main Road" autocomplete="address-line1" />
@@ -555,7 +442,6 @@
             <label class="field-label">Order Notes <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
             <textarea class="field-input" id="f-notes" placeholder="Any special instructions for your order or delivery?"></textarea>
           </div>
-
           <div class="co-btn-row">
             <button class="co-back-link" onclick="goStep(1)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -570,33 +456,19 @@
 
         <!-- ══ STEP 3: Review & Pay ══ -->
         <div class="co-step-panel" id="panel-3">
-
-          <!-- Done: Contact card -->
-          <div class="done-card" id="done-contact-2">
-            <div class="done-card-left">
-              Contact
-              <div class="done-card-val" id="done-contact-val-2"></div>
-            </div>
+          <div class="done-card">
+            <div class="done-card-left">Contact<div class="done-card-val" id="done-contact-val-2"></div></div>
             <button class="done-card-edit" onclick="goStep(1)">Edit</button>
           </div>
-
-          <!-- Done: Delivery card -->
-          <div class="done-card" id="done-delivery">
-            <div class="done-card-left">
-              Deliver to
-              <div class="done-card-val" id="done-delivery-val"></div>
-            </div>
+          <div class="done-card">
+            <div class="done-card-left">Deliver to<div class="done-card-val" id="done-delivery-val"></div></div>
             <button class="done-card-edit" onclick="goStep(2)">Edit</button>
           </div>
-
           <div class="co-section-head" style="margin-top:24px">
             <h2>Review &amp; Pay</h2>
             <p>Check your order below, then click Pay to be taken to the secure Yoco payment page.</p>
           </div>
-
           <div class="co-alert" id="alert-3"></div>
-
-          <!-- Order items review -->
           <div class="review-block">
             <div class="review-block-head">
               <span>Order Items</span>
@@ -604,19 +476,15 @@
             </div>
             <div class="review-block-body" id="reviewItems"></div>
           </div>
-
-          <!-- Totals review -->
           <div class="review-block">
             <div class="review-block-head">Totals</div>
             <div class="review-block-body">
               <div style="display:flex;flex-direction:column;gap:8px">
                 <div style="display:flex;justify-content:space-between;font-size:0.88rem">
-                  <span style="color:var(--text-muted)">Subtotal</span>
-                  <span id="rv-subtotal">R0</span>
+                  <span style="color:var(--text-muted)">Subtotal</span><span id="rv-subtotal">R0</span>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:0.88rem">
-                  <span style="color:var(--text-muted)">Delivery (Cape Town)</span>
-                  <span id="rv-delivery">R80</span>
+                  <span style="color:var(--text-muted)">Delivery (Cape Town)</span><span id="rv-delivery">R80</span>
                 </div>
                 <div style="height:1px;background:var(--glass-border)"></div>
                 <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700">
@@ -626,7 +494,6 @@
               </div>
             </div>
           </div>
-
           <div class="co-btn-row">
             <button class="co-back-link" onclick="goStep(2)">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -637,7 +504,6 @@
               Pay R<span id="payBtnTotal">0</span>
             </button>
           </div>
-
           <div class="co-secure">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
             Secured by Yoco &bull; All major cards accepted
@@ -649,15 +515,19 @@
 
     <!-- RIGHT: Order Summary -->
     <div class="co-summary-col">
-      <div class="co-summary-title">
-        Order Summary
-      </div>
+      <div class="co-summary-title">Order Summary</div>
       <div class="co-items" id="summaryItems"></div>
       <div class="co-divider"></div>
       <div class="co-totals" id="summaryTotals"></div>
     </div>
 
   </div><!-- /co-layout -->
+
+  <!-- Draft restored toast -->
+  <div class="co-toast" id="coToast">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Details restored from your last visit
+  </div>
 
   <!-- Loading overlay -->
   <div class="co-loading" id="coLoading">
@@ -672,8 +542,8 @@
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
     const ORIGIN        = 'https://www.phenomebeauty.co.za';
+    const DRAFT_KEY     = 'phenome_checkout_draft';
 
-    /* Product image map (id → img url) for summary thumbnails */
     const PRODUCT_IMGS = {
       'smooth-ritual':     'https://iili.io/B6e8cSR.png',
       'smooth-veil':       'https://iili.io/B6e8acv.jpg',
@@ -689,6 +559,61 @@
     const calcSub   = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
     const calcTotal = () => calcSub() + (cart.length ? DELIVERY_FEE : 0);
 
+    /* ══════════════════════════════════════════════
+       BUILD 1 — localStorage form persistence
+       All field IDs that we persist
+    ══════════════════════════════════════════════ */
+    const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes'];
+
+    /** Read all fields → save to localStorage */
+    function saveDraft() {
+      const draft = {};
+      DRAFT_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) draft[id] = el.value;
+      });
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    }
+
+    /** Load draft → populate fields, return true if any data found */
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return false;
+        const draft = JSON.parse(raw);
+        let found = false;
+        DRAFT_FIELDS.forEach(id => {
+          if (draft[id] !== undefined && draft[id] !== '') {
+            const el = document.getElementById(id);
+            if (el) { el.value = draft[id]; found = true; }
+          }
+        });
+        return found;
+      } catch(e) { return false; }
+    }
+
+    /** Clear the draft (called after successful payment redirect) */
+    function clearDraft() {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+
+    /** Attach input listeners to every field so every keystroke saves */
+    function attachDraftListeners() {
+      DRAFT_FIELDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const evt = (el.tagName === 'SELECT' || el.type === 'checkbox') ? 'change' : 'input';
+        el.addEventListener(evt, saveDraft);
+      });
+    }
+
+    /** Show the "Details restored" toast for 3 seconds */
+    function showRestoredToast() {
+      const toast = document.getElementById('coToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
     /* ── Initialise ───────────────────────────────── */
     (function init() {
       if (!cart.length) {
@@ -700,12 +625,19 @@
       }
       renderSummary();
       renderMobileSummary();
+      attachDraftListeners();
+
+      /* Restore draft — show toast if data was pre-filled */
+      const wasRestored = loadDraft();
+      if (wasRestored) {
+        /* Small delay so the user sees the fields fill in first */
+        setTimeout(showRestoredToast, 400);
+      }
     })();
 
     /* ── Render right-column summary ─────────────── */
     function renderSummary() {
-      const container = document.getElementById('summaryItems');
-      container.innerHTML = cart.map(item => {
+      document.getElementById('summaryItems').innerHTML = cart.map(item => {
         const img = PRODUCT_IMGS[item.productId] || '';
         return `
           <div class="co-item">
@@ -731,7 +663,6 @@
     /* ── Render mobile summary ────────────────────── */
     function renderMobileSummary() {
       document.getElementById('msTotalDisplay').textContent = `R${calcTotal()}`;
-
       document.getElementById('mobileItems').innerHTML = cart.map(item => {
         const img = PRODUCT_IMGS[item.productId] || '';
         return `
@@ -747,7 +678,6 @@
             <div class="co-item-price">R${item.price * item.qty}</div>
           </div>`;
       }).join('');
-
       document.getElementById('mobileTotals').innerHTML = `
         <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
         <div class="co-total-row"><span>Delivery</span><span>R${DELIVERY_FEE}</span></div>
@@ -756,39 +686,29 @@
     }
 
     function toggleMobileSummary() {
-      const body = document.getElementById('mobileSummaryBody');
+      const body    = document.getElementById('mobileSummaryBody');
       const chevron = document.getElementById('msChevron');
-      const open = body.classList.toggle('open');
+      const open    = body.classList.toggle('open');
       chevron.style.transform = open ? 'rotate(180deg)' : '';
     }
 
     /* ── Step navigation ─────────────────────────── */
     function goStep(n) {
       if (n > currentStep) {
-        // Validate before advancing
         if (currentStep === 1 && !validateStep1()) return;
         if (currentStep === 2 && !validateStep2()) return;
       }
-
-      // Hide current, show new
       document.getElementById(`panel-${currentStep}`).classList.remove('active');
       document.getElementById(`panel-${n}`).classList.add('active');
-
-      // Update breadcrumb
       for (let i = 1; i <= 3; i++) {
         const el = document.getElementById(`breadcrumb-${i}`);
         el.classList.remove('active', 'done');
         if (i < n)  el.classList.add('done');
         if (i === n) el.classList.add('active');
       }
-
       currentStep = n;
-
-      // Populate done-cards & review
       if (n >= 2) populateDoneContact();
       if (n >= 3) { populateDoneDelivery(); populateReview(); }
-
-      // Scroll to top of form
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -797,57 +717,44 @@
       document.getElementById(id).classList.toggle('error', show);
       document.getElementById(errId).classList.toggle('show', show);
     }
-
     function validateStep1() {
-      let ok = true;
       const name  = document.getElementById('f-name').value.trim();
       const email = document.getElementById('f-email').value.trim();
       const phone = document.getElementById('f-phone').value.trim();
-
       setFieldError('f-name',  'err-name',  name.length < 2);
       setFieldError('f-email', 'err-email', !/^[^@]+@[^@]+\.[^@]+$/.test(email));
       setFieldError('f-phone', 'err-phone', phone.length < 7);
-
-      if (name.length < 2 || !/^[^@]+@[^@]+\.[^@]+$/.test(email) || phone.length < 7) ok = false;
-      return ok;
+      return name.length >= 2 && /^[^@]+@[^@]+\.[^@]+$/.test(email) && phone.length >= 7;
     }
-
     function validateStep2() {
-      let ok = true;
       const street = document.getElementById('f-street').value.trim();
       const suburb = document.getElementById('f-suburb').value.trim();
       const city   = document.getElementById('f-city').value.trim();
       const postal = document.getElementById('f-postal').value.trim();
-
       setFieldError('f-street', 'err-street', street.length < 3);
       setFieldError('f-suburb', 'err-suburb', suburb.length < 2);
       setFieldError('f-city',   'err-city',   city.length < 2);
       setFieldError('f-postal', 'err-postal', postal.length < 4);
-
-      if (street.length < 3 || suburb.length < 2 || city.length < 2 || postal.length < 4) ok = false;
-      return ok;
+      return street.length >= 3 && suburb.length >= 2 && city.length >= 2 && postal.length >= 4;
     }
 
-    /* ── Populate done-cards ─────────────────────── */
+    /* ── Done cards ──────────────────────────────── */
     function populateDoneContact() {
       const val = `${document.getElementById('f-name').value.trim()} · ${document.getElementById('f-email').value.trim()}`;
-      ['done-contact-val', 'done-contact-val-2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = val;
+      ['done-contact-val','done-contact-val-2'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = val;
       });
     }
-
     function populateDoneDelivery() {
-      const street = document.getElementById('f-street').value.trim();
-      const suburb = document.getElementById('f-suburb').value.trim();
-      const city   = document.getElementById('f-city').value.trim();
-      const postal = document.getElementById('f-postal').value.trim();
-      document.getElementById('done-delivery-val').textContent = `${street}, ${suburb}, ${city}, ${postal}`;
+      const s = document.getElementById('f-street').value.trim();
+      const u = document.getElementById('f-suburb').value.trim();
+      const c = document.getElementById('f-city').value.trim();
+      const p = document.getElementById('f-postal').value.trim();
+      document.getElementById('done-delivery-val').textContent = `${s}, ${u}, ${c}, ${p}`;
     }
 
-    /* ── Populate review step ────────────────────── */
+    /* ── Review ──────────────────────────────────── */
     function populateReview() {
-      // Items
       document.getElementById('reviewItems').innerHTML = cart.map(item => `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--glass-border);gap:12px">
           <div>
@@ -856,9 +763,7 @@
           </div>
           <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price * item.qty}</div>
         </div>`).join('');
-
-      // Totals
-      const sub = calcSub();
+      const sub   = calcSub();
       const total = calcTotal();
       document.getElementById('rv-subtotal').textContent = `R${sub}`;
       document.getElementById('rv-delivery').textContent  = `R${DELIVERY_FEE}`;
@@ -870,24 +775,20 @@
     async function handlePay() {
       const btn = document.getElementById('payBtn');
       btn.disabled = true;
+      document.getElementById('coLoading').classList.add('show');
 
-      const loading = document.getElementById('coLoading');
-      loading.classList.add('show');
-
-      const name    = document.getElementById('f-name').value.trim();
-      const email   = document.getElementById('f-email').value.trim();
-      const phone   = document.getElementById('f-phone').value.trim();
-      const street  = document.getElementById('f-street').value.trim();
-      const suburb  = document.getElementById('f-suburb').value.trim();
-      const city    = document.getElementById('f-city').value.trim();
-      const postal  = document.getElementById('f-postal').value.trim();
-      const province= document.getElementById('f-province').value;
-      const notes   = document.getElementById('f-notes').value.trim();
-
+      const name     = document.getElementById('f-name').value.trim();
+      const email    = document.getElementById('f-email').value.trim();
+      const phone    = document.getElementById('f-phone').value.trim();
+      const street   = document.getElementById('f-street').value.trim();
+      const suburb   = document.getElementById('f-suburb').value.trim();
+      const city     = document.getElementById('f-city').value.trim();
+      const postal   = document.getElementById('f-postal').value.trim();
+      const province = document.getElementById('f-province').value;
+      const notes    = document.getElementById('f-notes').value.trim();
       const deliveryAddress = `${street}, ${suburb}, ${city}, ${postal}, ${province}`;
 
       try {
-        // 1. Save order to Supabase
         document.getElementById('loadingMsg').textContent = 'Saving your order…';
         const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`, {
           method: 'POST',
@@ -898,49 +799,38 @@
             'Prefer': 'return=representation'
           },
           body: JSON.stringify({
-            customer_name:    name,
-            customer_email:   email,
-            customer_phone:   phone,
-            delivery_address: deliveryAddress,
-            items:            cart,
-            subtotal:         calcSub(),
-            delivery_fee:     DELIVERY_FEE,
-            total_amount:     calcTotal(),
-            notes:            notes || null
+            customer_name: name, customer_email: email, customer_phone: phone,
+            delivery_address: deliveryAddress, items: cart,
+            subtotal: calcSub(), delivery_fee: DELIVERY_FEE, total_amount: calcTotal(),
+            notes: notes || null
           })
         });
-
         if (!orderRes.ok) throw new Error('Failed to save order. Please try again.');
         const [order] = await orderRes.json();
 
-        // 2. Create Yoco checkout via edge function
         document.getElementById('loadingMsg').textContent = 'Redirecting to payment…';
         const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON,
-            'Authorization': `Bearer ${SUPABASE_ANON}`
-          },
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
           body: JSON.stringify({
             order_id:    order.id,
             success_url: `${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}`,
             cancel_url:  `${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`
           })
         });
-
         if (!checkoutRes.ok) throw new Error('Failed to create payment session. Please try again.');
         const cd = await checkoutRes.json();
         const redirect = cd.redirectUrl || cd.url;
         if (!redirect) throw new Error('No payment URL returned. Please try again.');
 
-        // 3. Clear cart & redirect to Yoco
+        /* Clear cart AND draft on successful redirect */
         cart = [];
         localStorage.setItem('phenome_cart', '[]');
+        clearDraft();
         window.location.href = redirect;
 
       } catch (err) {
-        loading.classList.remove('show');
+        document.getElementById('coLoading').classList.remove('show');
         btn.disabled = false;
         const alertEl = document.getElementById('alert-3');
         alertEl.textContent = err.message;
@@ -953,20 +843,15 @@
     (function checkReturn() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('payment') === 'cancelled') {
-        // Reload cart (may have been cleared optimistically, restore from order if needed)
-        const alertEl = document.getElementById('alert-3');
-        // Jump straight to review step and show message
-        // Cart was NOT cleared because redirect happens before clear on cancel path
         window.history.replaceState({}, '', 'checkout.html');
-        // Show notice on step 3 after a beat
         setTimeout(() => {
-          const alertEl3 = document.getElementById('alert-3');
-          if (alertEl3) {
-            alertEl3.style.background = 'rgba(251,191,36,0.08)';
-            alertEl3.style.borderColor = 'rgba(251,191,36,0.28)';
-            alertEl3.style.color = '#fbbf24';
-            alertEl3.textContent = 'Payment was cancelled — no charge was made. Review your order and try again.';
-            alertEl3.classList.add('show');
+          const el = document.getElementById('alert-3');
+          if (el) {
+            el.style.background   = 'rgba(251,191,36,0.08)';
+            el.style.borderColor  = 'rgba(251,191,36,0.28)';
+            el.style.color        = '#fbbf24';
+            el.textContent        = 'Payment was cancelled — no charge was made. Review your order and try again.';
+            el.classList.add('show');
           }
         }, 300);
       }
