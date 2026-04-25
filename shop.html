@@ -107,6 +107,8 @@
     }
     .v-pill:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .v-pill.active { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.10); color:var(--accent-strong); }
+
+    /* ── Cart Drawer ─────────────────────────────── */
     .overlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
@@ -158,22 +160,14 @@
     .qty-num { font-size:0.88rem; font-weight:600; min-width:20px; text-align:center; }
     .remove-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.78rem; text-decoration:underline; transition:color 0.18s; font-family:var(--font-body); }
     .remove-btn:hover { color:#f87171; }
+
+    /* ── Cart Footer (no inline form — just totals + checkout CTA) ── */
     .cart-footer { padding:20px 24px; border-top:1px solid var(--glass-border); display:flex; flex-direction:column; gap:14px; }
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
     .total-row.grand span:last-child { color:var(--accent); }
-    .checkout-form { display:flex; flex-direction:column; gap:10px; }
-    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .field-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:4px; }
-    .field-input {
-      width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border);
-      color:var(--text); border-radius:var(--radius-md); padding:10px 14px;
-      font-size:0.88rem; font-family:var(--font-body); outline:none;
-      transition:border-color 0.2s;
-    }
-    .field-input:focus { border-color:rgba(255,255,255,0.35); }
-    textarea.field-input { resize:vertical; min-height:64px; }
     .secure-note { text-align:center; font-size:0.75rem; color:var(--text-muted); }
+
     .banner {
       margin:16px 0 0; padding:12px 16px;
       border-radius:var(--radius-md);
@@ -183,7 +177,7 @@
     .banner.show { display:block; }
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:4px; }
-    @media(max-width:600px) { .form-row { grid-template-columns:1fr; } .product-grid { grid-template-columns:1fr; } }
+    @media(max-width:600px) { .product-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -218,7 +212,7 @@
     </div>
   </nav>
 
-  <div class="banner" id="cancelBanner">Payment was cancelled - your cart is still saved. Try again when ready.</div>
+  <div class="banner" id="cancelBanner">Payment was cancelled — your cart is still saved. Try again when ready.</div>
 
   <!-- HERO -->
   <section class="shop-hero section">
@@ -248,7 +242,7 @@
   <!-- OVERLAY -->
   <div class="overlay" id="overlay" onclick="closeCart()"></div>
 
-  <!-- CART DRAWER -->
+  <!-- CART DRAWER (review only — no inline form) -->
   <aside class="cart-drawer" id="cartDrawer">
     <div class="drawer-header">
       <h2>Your Cart</h2>
@@ -261,26 +255,11 @@
         <div class="total-row"><span>Delivery</span><span id="deliveryDisplay">R80</span></div>
         <div class="total-row grand"><span>Total</span><span id="totalDisplay">R0</span></div>
       </div>
-      <form class="checkout-form" id="checkoutForm" onsubmit="handleCheckout(event)">
-        <div>
-          <label class="field-label">Full Name</label>
-          <input class="field-input" id="cName" type="text" placeholder="Jane Doe" required minlength="2" />
-        </div>
-        <div class="form-row">
-          <div><label class="field-label">Email</label><input class="field-input" id="cEmail" type="email" placeholder="jane@example.com" required /></div>
-          <div><label class="field-label">Phone</label><input class="field-input" id="cPhone" type="tel" placeholder="082 000 0000" required /></div>
-        </div>
-        <div>
-          <label class="field-label">Delivery Address</label>
-          <textarea class="field-input" id="cAddress" placeholder="Street, Suburb, City, Postal Code" required></textarea>
-        </div>
-        <div>
-          <label class="field-label">Order Notes (optional)</label>
-          <textarea class="field-input" id="cNotes" placeholder="Any special requests?"></textarea>
-        </div>
-        <button class="btn btn-primary" type="submit" id="checkoutBtn" style="width:100%;justify-content:center;">Proceed to Payment</button>
-        <p class="secure-note">&#128274; Secured by Yoco - card payments accepted</p>
-      </form>
+      <a href="checkout.html" class="btn btn-primary" style="width:100%;justify-content:center;text-align:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Proceed to Checkout
+      </a>
+      <p class="secure-note">&#128274; Secured by Yoco &mdash; card payments accepted</p>
     </div>
   </aside>
 
@@ -335,13 +314,11 @@
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
-    const ORIGIN        = 'https://www.phenomebeauty.co.za';
 
     const SCENTS      = ['Balance','Calm','Bloom','Pure'];
     const WAX_COLOURS = ['Black','White','Pink'];
     const WAX_TYPES   = ['Gentle Touch','Everyday Smooth','Firm Hold','Pro Strength'];
     const WAX_SIZES   = ['500g - R260','1kg - R380'];
-
     const WAX_SIZE_PRICES = { '500g - R260': 260, '1kg - R380': 380 };
 
     const PRODUCTS = [
@@ -357,14 +334,11 @@
     PRODUCTS.forEach(p => { sel1[p.id] = p.variants[0]; if (p.variants2) sel2[p.id] = p.variants2[0]; });
 
     function getProductPrice(p) {
-      if (p.dynamicPrice && p.dynamicPriceKey === 'variant2') {
-        return p.dynamicPrice[sel2[p.id]] || p.price;
-      }
+      if (p.dynamicPrice && p.dynamicPriceKey === 'variant2') return p.dynamicPrice[sel2[p.id]] || p.price;
       return p.price;
     }
-
-    function saveCart() { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
-    function cartKey(pid,v1,v2) { return v2 ? `${pid}::${v1}::${v2}` : `${pid}::${v1}`; }
+    function saveCart()          { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
+    function cartKey(pid,v1,v2)  { return v2 ? `${pid}::${v1}::${v2}` : `${pid}::${v1}`; }
 
     function addToCart(pid) {
       const p  = PRODUCTS.find(x => x.id === pid);
@@ -381,11 +355,11 @@
     }
 
     function updateBadge() {
-      const n = cart.reduce((s,i)=>s+i.qty,0);
-      document.getElementById('cartBadge').textContent    = n;
+      const n = cart.reduce((s,i) => s+i.qty, 0);
+      document.getElementById('cartBadge').textContent     = n;
       document.getElementById('heroCartCount').textContent = n;
     }
-    function calcSub()   { return cart.reduce((s,i)=>s+i.price*i.qty,0); }
+    function calcSub()   { return cart.reduce((s,i) => s+i.price*i.qty, 0); }
     function calcTotal() { return calcSub() + (cart.length ? DELIVERY_FEE : 0); }
 
     function renderCart() {
@@ -416,46 +390,6 @@
     function removeItem(idx)  { cart.splice(idx,1); saveCart();updateBadge();renderCart(); }
     function openCart()  { document.getElementById('cartDrawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
     function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
-
-    async function handleCheckout(e) {
-      e.preventDefault();
-      if (!cart.length) return;
-      const btn = document.getElementById('checkoutBtn');
-      btn.disabled=true; btn.textContent='Creating order...';
-      const name    = document.getElementById('cName').value.trim();
-      const email   = document.getElementById('cEmail').value.trim();
-      const phone   = document.getElementById('cPhone').value.trim();
-      const address = document.getElementById('cAddress').value.trim();
-      const notes   = document.getElementById('cNotes').value.trim();
-      try {
-        const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`,'Prefer':'return=representation'},
-          body:JSON.stringify({customer_name:name,customer_email:email,customer_phone:phone,delivery_address:address,items:cart,subtotal:calcSub(),delivery_fee:DELIVERY_FEE,total_amount:calcTotal(),notes:notes||null}),
-        });
-        if(!orderRes.ok) throw new Error('Failed to save order');
-        const [order] = await orderRes.json();
-        const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,{
-          method:'POST',
-          headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`},
-          body:JSON.stringify({
-            order_id:order.id,
-            success_url:`${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}`,
-            cancel_url:`${ORIGIN}/shop.html?payment=cancelled&order_id=${order.id}`
-          }),
-        });
-        if(!checkoutRes.ok) throw new Error('Failed to create checkout');
-        const cd = await checkoutRes.json();
-        const redirect = cd.redirectUrl||cd.url;
-        if(!redirect) throw new Error('No redirect URL returned');
-        cart=[]; saveCart();
-        window.location.href = redirect;
-      } catch(err) {
-        console.error(err);
-        btn.disabled=false; btn.textContent='Proceed to Payment';
-        alert('Something went wrong: '+err.message+'\nPlease try again.');
-      }
-    }
 
     function renderProducts() {
       document.getElementById('productGrid').innerHTML = PRODUCTS.map(p => {
@@ -492,7 +426,11 @@
       }).join('');
     }
 
-    function pickV1(pid,val,btn) { sel1[pid]=val; btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); }
+    function pickV1(pid,val,btn) {
+      sel1[pid]=val;
+      btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+    }
     function pickV2(pid,val,btn) {
       sel2[pid]=val;
       btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active'));
@@ -506,10 +444,11 @@
     }
 
     renderProducts(); renderCart(); updateBadge();
+
     const params = new URLSearchParams(window.location.search);
-    if (params.get('payment')==='cancelled') {
+    if (params.get('payment') === 'cancelled') {
       document.getElementById('cancelBanner').classList.add('show');
-      window.history.replaceState({},'','shop.html');
+      window.history.replaceState({}, '', 'shop.html');
     }
   </script>
 </body>
