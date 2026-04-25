@@ -114,30 +114,44 @@
     const EDGE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
     let allOrders = [], activeFilter = 'all', adminToken = '';
 
+    /* ── Hash helper (SHA-256, one-way) ──────────────── */
+    async function hashToken(pw) {
+      const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    }
+
     /* ── Auth ─────────────────────────────────────── */
     async function login() {
       const pw  = document.getElementById('pwInput').value;
       const btn = document.getElementById('loginBtn');
-      const err = document.getElementById('loginError');
       if (!pw) { showError('Please enter your password.'); return; }
 
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Signing in…';
-      err.style.display = 'none';
+      hideError();
 
       try {
         const res = await callEdge({ action: 'get_orders', password: pw });
+
+        if (res.status === 429) {
+          showError('Too many attempts. Please wait 60 seconds and try again.');
+          return;
+        }
         if (res.status === 401) { showError('Incorrect password.'); return; }
         if (!res.ok) { showError('Server error. Try again.'); return; }
+
         const data = await res.json();
+
+        // Store only a SHA-256 hash — raw password lives only in memory
         adminToken = pw;
-        sessionStorage.setItem('_at', btoa(pw));
+        sessionStorage.setItem('_at_hash', await hashToken(pw));
+
         document.getElementById('loginWrap').style.display = 'none';
-        document.getElementById('adminUI').style.display = 'block';
+        document.getElementById('adminUI').style.display   = 'block';
         allOrders = data.orders || [];
         updateStats(); renderTable();
       } catch {
-        showError('Network error. Check connection.');
+        showError('Network error. Check your connection.');
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Sign In';
@@ -148,36 +162,27 @@
       const el = document.getElementById('loginError');
       el.textContent = msg; el.style.display = 'block';
     }
+    function hideError() {
+      const el = document.getElementById('loginError');
+      el.style.display = 'none';
+    }
 
     function logout() {
-      sessionStorage.removeItem('_at');
+      sessionStorage.removeItem('_at_hash');
       adminToken = '';
       location.reload();
     }
 
-    /* ── Auto-restore session ─────────────────────── */
-    (async function tryRestore() {
-      const stored = sessionStorage.getItem('_at');
-      if (!stored) return;
-      try {
-        const pw = atob(stored);
-        const res = await callEdge({ action: 'get_orders', password: pw });
-        if (!res.ok) { sessionStorage.removeItem('_at'); return; }
-        const data = await res.json();
-        adminToken = pw;
-        document.getElementById('loginWrap').style.display = 'none';
-        document.getElementById('adminUI').style.display = 'block';
-        allOrders = data.orders || [];
-        updateStats(); renderTable();
-      } catch { sessionStorage.removeItem('_at'); }
-    })();
+    /* ── No auto-restore: password never recoverable from storage ── */
+    // Session hash (_at_hash) is a one-way SHA-256 fingerprint only.
+    // On page reload the user must re-enter their password. Intentional.
 
     /* ── Edge function helper ─────────────────────── */
     function callEdge(body) {
       return fetch(EDGE_URL, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body:    JSON.stringify(body),
       });
     }
 
@@ -187,6 +192,7 @@
         '<tr class="empty-row"><td colspan="7"><span class="spinner"></span>Loading…</td></tr>';
       try {
         const res = await callEdge({ action: 'get_orders', password: adminToken });
+        if (res.status === 429) { document.getElementById('ordersBody').innerHTML = '<tr class="empty-row"><td colspan="7">Rate limited. Wait 60 seconds.</td></tr>'; return; }
         if (!res.ok) { document.getElementById('ordersBody').innerHTML = '<tr class="empty-row"><td colspan="7">Failed to load orders.</td></tr>'; return; }
         const data = await res.json();
         allOrders = data.orders || [];
@@ -231,10 +237,9 @@
       tbody.innerHTML = '';
       const badgeMap = { pending:'badge-unpaid', processing:'badge-processing', dispatched:'badge-dispatched', delivered:'badge-delivered' };
       orders.forEach(o => {
-        const tr = document.createElement('tr');
+        const tr    = document.createElement('tr');
         const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' });
         const items = Array.isArray(o.items) ? o.items : [];
-        // XSS-safe: build cells with textContent
         const cells = [
           mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
           mkCustomerTd(o),
@@ -256,49 +261,48 @@
       return td;
     }
     function mkCustomerTd(o) {
-      const td = document.createElement('td');
+      const td   = document.createElement('td');
       const name = document.createElement('div');
       name.style.cssText = 'font-weight:600;color:var(--accent-strong)';
-      name.textContent = o.customer_name;
+      name.textContent   = o.customer_name;
       const email = document.createElement('div');
       email.style.cssText = 'color:var(--text-muted);font-size:0.75rem';
-      email.textContent = o.customer_email;
+      email.textContent   = o.customer_email;
       const phone = document.createElement('div');
       phone.style.cssText = 'color:var(--text-muted);font-size:0.75rem';
-      phone.textContent = o.customer_phone;
+      phone.textContent   = o.customer_phone;
       const addr = document.createElement('div');
       addr.style.cssText = 'color:var(--text-muted);font-size:0.72rem;margin-top:2px';
-      addr.textContent = o.delivery_address;
+      addr.textContent   = o.delivery_address;
       [name, email, phone, addr].forEach(el => td.appendChild(el));
       return td;
     }
     function mkItemsTd(items) {
-      const td = document.createElement('td');
+      const td   = document.createElement('td');
       const wrap = document.createElement('div');
       wrap.className = 'items-mini';
       items.forEach((item, i) => {
         if (i > 0) wrap.appendChild(document.createElement('br'));
-        const t = document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`);
-        wrap.appendChild(t);
+        wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`));
       });
       td.appendChild(wrap);
       return td;
     }
     function mkBadgeTd(cls, label) {
-      const td = document.createElement('td');
+      const td   = document.createElement('td');
       const span = document.createElement('span');
-      span.className = `badge ${cls}`;
+      span.className   = `badge ${cls}`;
       span.textContent = label;
       td.appendChild(span);
       return td;
     }
     function mkSelectTd(o) {
-      const td = document.createElement('td');
+      const td  = document.createElement('td');
       const sel = document.createElement('select');
       sel.className = 'status-select';
       ['pending','processing','dispatched','delivered'].forEach(val => {
         const opt = document.createElement('option');
-        opt.value = val;
+        opt.value       = val;
         opt.textContent = val.charAt(0).toUpperCase() + val.slice(1);
         if (o.status === val) opt.selected = true;
         sel.appendChild(opt);
@@ -312,6 +316,7 @@
     async function updateStatus(id, status) {
       try {
         const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
+        if (res.status === 429) { alert('Rate limited. Please wait 60 seconds.'); return; }
         if (!res.ok) { alert('Failed to update status.'); return; }
         const o = allOrders.find(x => x.id === id);
         if (o) o.status = status;
