@@ -23,12 +23,12 @@ const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', report
 document.getElementById('adminDate').textContent =
   new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
 
-// Nav items (data-page)
+// Nav items
 document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-  btn.addEventListener('click', () => navTo(btn.dataset.page, btn));
+  btn.addEventListener('click', () => { navTo(btn.dataset.page, btn); closeSidebar(); });
 });
 
-// Panel "See all" links
+// Panel links
 document.querySelectorAll('[data-nav]').forEach(el => {
   el.addEventListener('click', () => {
     const navBtn = document.querySelector(`.nav-item[data-page="${el.dataset.nav}"]`);
@@ -55,11 +55,14 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 document.getElementById('searchInput').addEventListener('input', () => { renderTable(); renderCards(); });
 document.getElementById('productSearch').addEventListener('input', renderProducts);
 
-// Buttons
+// Auth buttons
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('topbarSignout').addEventListener('click', logout);
 document.getElementById('refreshBtn').addEventListener('click', refreshData);
+
+// Product modal
 document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
 document.getElementById('modalCancelBtn').addEventListener('click', closeProductModal);
 document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
@@ -67,6 +70,24 @@ document.getElementById('addVariantBtn').addEventListener('click', addVariantRow
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
 });
+
+// Hamburger / sidebar
+document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
+document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebarOverlay');
+  const hamburger = document.getElementById('hamburgerBtn');
+  const isOpen   = sidebar.classList.toggle('open');
+  overlay.classList.toggle('active', isOpen);
+  hamburger.classList.toggle('open', isOpen);
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+  document.getElementById('hamburgerBtn').classList.remove('open');
+}
 
 /* ─── AUTH ─────────────────────────── */
 async function hashToken(pw) {
@@ -105,8 +126,7 @@ async function login() {
 
 function showLoginError(msg) {
   const el = document.getElementById('loginError');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
 function hideLoginError() { document.getElementById('loginError').style.display = 'none'; }
 function logout() { sessionStorage.removeItem('_at_hash'); adminToken = ''; location.reload(); }
@@ -310,7 +330,7 @@ function renderCards() {
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
     items.forEach((item, i) => {
       if (i > 0) itemsEl.appendChild(document.createElement('br'));
-      itemsEl.appendChild(document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`));
+      itemsEl.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
     });
     if (!items.length) itemsEl.textContent = 'No items';
 
@@ -364,7 +384,7 @@ function mkItemsTd(items) {
   const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
   items.forEach((item, i) => {
     if (i > 0) wrap.appendChild(document.createElement('br'));
-    wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`));
+    wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
   });
   td.appendChild(wrap); return td;
 }
@@ -397,11 +417,7 @@ async function loadProducts() {
     '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
   try {
     const res = await callEdge({ action: 'get_products', password: adminToken });
-    if (!res.ok) {
-      allProducts = [];
-      renderProducts();
-      return;
-    }
+    if (!res.ok) { allProducts = []; renderProducts(); return; }
     const data = await res.json();
     allProducts = data.products || [];
     renderProducts();
@@ -414,7 +430,7 @@ async function loadProducts() {
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
-  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q)) : allProducts;
+  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q)) : allProducts;
 
   if (!list.length) {
     el.innerHTML = `
@@ -445,6 +461,8 @@ function renderProducts() {
     body.innerHTML = `
       ${p.category ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
       <div class="product-name">${esc(p.name)}</div>
+      ${p.brand ? `<div class="product-brand">${esc(p.brand)}</div>` : ''}
+      ${p.sku   ? `<div class="product-sku">SKU: ${esc(p.sku)}</div>` : ''}
       ${variants ? `<div class="product-variant">${esc(variants)}</div>` : ''}
       ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
@@ -467,14 +485,16 @@ function placeholderSVG() {
 
 /* PRODUCT MODAL */
 function openProductModal(product = null) {
-  document.getElementById('modalTitle').textContent       = product ? 'Edit Product' : 'Add Product';
-  document.getElementById('modalProductId').value         = product?.id || '';
-  document.getElementById('mpName').value                 = product?.name || '';
-  document.getElementById('mpPrice').value                = product?.price || '';
-  document.getElementById('mpCost').value                 = product?.cost_price || '';
-  document.getElementById('mpDesc').value                 = product?.description || '';
-  document.getElementById('mpImage').value                = product?.image_url || '';
-  document.getElementById('mpCategory').value             = product?.category || '';
+  document.getElementById('modalTitle').textContent   = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('modalProductId').value     = product?.id || '';
+  document.getElementById('mpName').value             = product?.name || '';
+  document.getElementById('mpPrice').value            = product?.price || '';
+  document.getElementById('mpCost').value             = product?.cost_price || '';
+  document.getElementById('mpSku').value              = product?.sku || '';
+  document.getElementById('mpBrand').value            = product?.brand || '';
+  document.getElementById('mpDesc').value             = product?.description || '';
+  document.getElementById('mpImage').value            = product?.image_url || '';
+  document.getElementById('mpCategory').value         = product?.category || '';
   editingVariants = (product?.variants || []).map(v => (typeof v === 'string' ? v : v.name || ''));
   renderVariantRows();
   const modal = document.getElementById('productModal');
@@ -491,7 +511,7 @@ function renderVariantRows() {
   el.innerHTML = '';
   editingVariants.forEach((v, i) => {
     const row = document.createElement('div'); row.className = 'variant-row';
-    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. 30ml';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. Scent: Calm';
     inp.addEventListener('input', () => { editingVariants[i] = inp.value; });
     const rm  = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '×'; rm.type = 'button';
     rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
@@ -520,6 +540,8 @@ async function saveProduct() {
       name,
       price:       parseFloat(document.getElementById('mpPrice').value)    || 0,
       cost_price:  parseFloat(document.getElementById('mpCost').value)     || 0,
+      sku:         document.getElementById('mpSku').value.trim(),
+      brand:       document.getElementById('mpBrand').value.trim(),
       description: document.getElementById('mpDesc').value.trim(),
       image_url:   document.getElementById('mpImage').value.trim(),
       category:    document.getElementById('mpCategory').value.trim(),
