@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shop — PhenomeBeauty</title>
+  <title>Shop - PhenomeBeauty</title>
   <meta name="description" content="Shop professional skincare and wax supplies from PhenomeBeauty. Delivered to your door across Cape Town." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -194,7 +194,7 @@
     </div>
   </nav>
 
-  <div class="banner" id="cancelBanner">Payment was cancelled — your cart is still saved. Try again when ready.</div>
+  <div class="banner" id="cancelBanner">Payment was cancelled - your cart is still saved. Try again when ready.</div>
 
   <!-- HERO -->
   <section class="shop-hero section">
@@ -255,7 +255,7 @@
           <textarea class="field-input" id="cNotes" placeholder="Any special requests?"></textarea>
         </div>
         <button class="btn btn-primary" type="submit" id="checkoutBtn" style="width:100%;justify-content:center;">Proceed to Payment</button>
-        <p class="secure-note">&#128274; Secured by Yoco — card payments accepted</p>
+        <p class="secure-note">&#128274; Secured by Yoco - card payments accepted</p>
       </form>
     </div>
   </aside>
@@ -316,18 +316,28 @@
     const SCENTS      = ['Balance','Calm','Bloom','Pure'];
     const WAX_COLOURS = ['Black','White','Pink'];
     const WAX_TYPES   = ['Gentle Touch','Everyday Smooth','Firm Hold','Pro Strength'];
+    const WAX_SIZES   = ['500g - R249','1kg - R365'];
+
+    const WAX_SIZE_PRICES = { '500g - R249': 249, '1kg - R365': 365 };
 
     const PRODUCTS = [
-      { id:'smooth-ritual',     tag:'Body Scrub',          name:'Smooth Ritual',      desc:'A luxuriously gritty exfoliating scrub that melts away dead skin, leaving you silky-soft and glowing. 200ml.',           price:210, emoji:'✨', variantLabel:'Scent',        variants:SCENTS },
-      { id:'smooth-veil',       tag:'Body Cream',          name:'Smooth Veil',        desc:'A rich, fast-absorbing body cream that locks in moisture and leaves skin dewy-smooth all day. 200ml.',                  price:249, emoji:'🌿', variantLabel:'Scent',        variants:SCENTS },
-      { id:'smooth-ritual-kit', tag:'Bundle — Best Value', name:'Smooth Ritual Kit',  desc:'The full glow experience — Smooth Ritual Scrub + Smooth Veil Cream. Pick a scent for each.',                         price:399, emoji:'💛', variantLabel:'Scrub Scent',  variants:SCENTS, variant2Label:'Cream Scent', variants2:SCENTS },
-      { id:'wax-melting-pot',   tag:'Wax Equipment',       name:'Wax Melting Pot',    desc:'Professional-grade electric wax melting pot for smooth, even wax temperatures every session.',                       price:310, emoji:'🕯️', variantLabel:'Colour',       variants:WAX_COLOURS },
-      { id:'professional-wax',  tag:'Professional Wax',    name:'Professional Wax',   desc:'Premium depilatory wax in 800g bags. Formulated for professional salon use — clean, smooth, effective.',             price:365, emoji:'🪮', variantLabel:'Type',         variants:WAX_TYPES },
+      { id:'smooth-ritual',     tag:'Body Scrub',         name:'Smooth Ritual',     desc:'A luxuriously gritty exfoliating scrub that melts away dead skin, leaving you silky-soft and glowing. 200ml.',      price:210, emoji:'\u2728', variantLabel:'Scent',       variants:SCENTS },
+      { id:'smooth-veil',       tag:'Body Cream',         name:'Smooth Veil',       desc:'A rich, fast-absorbing body cream that locks in moisture and leaves skin dewy-smooth all day. 200ml.',             price:249, emoji:'\ud83c\udf3f', variantLabel:'Scent',       variants:SCENTS },
+      { id:'smooth-ritual-kit', tag:'Bundle - Best Value',name:'Smooth Ritual Kit', desc:'The full glow experience: Smooth Ritual Scrub + Smooth Veil Cream. Pick a scent for each.',                     price:399, emoji:'\ud83d\udc9b', variantLabel:'Scrub Scent', variants:SCENTS, variant2Label:'Cream Scent', variants2:SCENTS },
+      { id:'wax-melting-pot',   tag:'Wax Equipment',      name:'Wax Melting Pot',   desc:'Professional-grade electric wax melting pot for smooth, even wax temperatures every session.',                    price:310, emoji:'\ud83d\udd6f\ufe0f', variantLabel:'Colour',      variants:WAX_COLOURS },
+      { id:'professional-wax',  tag:'Professional Wax',   name:'Professional Wax',  desc:'Premium depilatory wax for professional salon use - clean, smooth, and effective. Choose your type and size.', price:249, emoji:'\ud83e\udeae', variantLabel:'Type',        variants:WAX_TYPES, variant2Label:'Size', variants2:WAX_SIZES, dynamicPrice:WAX_SIZE_PRICES, dynamicPriceKey:'variant2' },
     ];
 
     let cart = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
     const sel1 = {}, sel2 = {};
     PRODUCTS.forEach(p => { sel1[p.id] = p.variants[0]; if (p.variants2) sel2[p.id] = p.variants2[0]; });
+
+    function getProductPrice(p) {
+      if (p.dynamicPrice && p.dynamicPriceKey === 'variant2') {
+        return p.dynamicPrice[sel2[p.id]] || p.price;
+      }
+      return p.price;
+    }
 
     function saveCart() { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
     function cartKey(pid,v1,v2) { return v2 ? `${pid}::${v1}::${v2}` : `${pid}::${v1}`; }
@@ -337,10 +347,11 @@
       const v1 = sel1[pid], v2 = p.variants2 ? sel2[pid] : null;
       const key = cartKey(pid,v1,v2);
       const ex  = cart.find(i => i.key === key);
+      const price = getProductPrice(p);
       if (ex) { ex.qty++; } else {
         cart.push({ key, productId:pid, name:p.name,
           variant: v2 ? `${p.variantLabel}: ${v1} / ${p.variant2Label}: ${v2}` : `${p.variantLabel}: ${v1}`,
-          price:p.price, qty:1 });
+          price, qty:1 });
       }
       saveCart(); updateBadge(); renderCart(); openCart();
     }
@@ -386,7 +397,7 @@
       e.preventDefault();
       if (!cart.length) return;
       const btn = document.getElementById('checkoutBtn');
-      btn.disabled=true; btn.textContent='Creating order…';
+      btn.disabled=true; btn.textContent='Creating order...';
       const name    = document.getElementById('cName').value.trim();
       const email   = document.getElementById('cEmail').value.trim();
       const phone   = document.getElementById('cPhone').value.trim();
@@ -432,8 +443,9 @@
             <div class="variant-label">${p.variant2Label}</div>
             <div class="pill-group">${p.variants2.map(v=>`<button class="v-pill ${v===sel2[p.id]?'active':''}" onclick="pickV2('${p.id}','${v}',this)">${v}</button>`).join('')}</div>
           </div>` : '';
+        const displayPrice = p.dynamicPrice ? getProductPrice(p) : p.price;
         return `
-          <div class="product-card">
+          <div class="product-card" id="card-${p.id}">
             <div class="product-img">${p.emoji}</div>
             <div class="product-body">
               <div class="product-tag">${p.tag}</div>
@@ -444,7 +456,7 @@
                 <div class="pill-group">${pills1}</div>
                 ${pills2}
               </div>
-              <div class="product-price">R${p.price} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span></div>
+              <div class="product-price" id="price-${p.id}">R${displayPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span></div>
               <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%;justify-content:center;margin-top:4px">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Add to Cart
@@ -455,7 +467,17 @@
     }
 
     function pickV1(pid,val,btn) { sel1[pid]=val; btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); }
-    function pickV2(pid,val,btn) { sel2[pid]=val; btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active')); btn.classList.add('active'); }
+    function pickV2(pid,val,btn) {
+      sel2[pid]=val;
+      btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      const prod = PRODUCTS.find(x=>x.id===pid);
+      if (prod && prod.dynamicPrice) {
+        const newPrice = getProductPrice(prod);
+        const priceEl = document.getElementById('price-'+pid);
+        if (priceEl) priceEl.innerHTML = `R${newPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+      }
+    }
 
     renderProducts(); renderCart(); updateBadge();
     const params = new URLSearchParams(window.location.search);
