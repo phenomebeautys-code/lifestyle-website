@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop Admin — Phenome Beauty</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d0d0f;--bg2:#141416;--card:#1a1a1e;--border:rgba(255,255,255,0.07);--primary:#c9a96e;--text:#f0ece4;--muted:#8a8680;--green:#4ade80;--amber:#fbbf24;--red:#f87171;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100dvh;}
+    .login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .login-box{width:100%;max-width:360px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:36px;display:flex;flex-direction:column;gap:20px;}
+    .login-box h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;}
+    .login-box p{font-size:13px;color:var(--muted);}
+    label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px;}
+    input[type=password],input[type=text]{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:11px 14px;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+    input:focus{border-color:var(--primary);}
+    .btn{width:100%;padding:13px;background:var(--primary);color:#000;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border:none;border-radius:10px;cursor:pointer;transition:background 0.2s;}
+    .btn:hover{background:#b8924f;}
+    .error{font-size:13px;color:var(--red);text-align:center;display:none;}
+    #adminUI{display:none;}
+    header{background:rgba(13,13,15,0.95);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .logo{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--primary);}
+    .stat-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:20px 24px;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+    .stat-label{font-size:11px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+    .stat-value{font-size:26px;font-weight:700;color:var(--text);}
+    .stat-value.gold{color:var(--primary);}
+    .filters{display:flex;align-items:center;gap:10px;padding:0 24px 16px;flex-wrap:wrap;}
+    .filter-btn{padding:7px 16px;border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.18s;}
+    .filter-btn:hover,.filter-btn.active{border-color:var(--primary);color:var(--primary);background:rgba(201,169,110,0.08);}
+    .search-input{margin-left:auto;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;width:200px;transition:border-color 0.2s;}
+    .search-input:focus{border-color:var(--primary);}
+    .table-wrap{padding:0 24px 40px;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;}
+    th{font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap;}
+    td{padding:14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;vertical-align:top;}
+    tr:hover td{background:rgba(255,255,255,0.02);}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;}
+    .badge-paid{background:rgba(74,222,128,0.12);color:var(--green);}
+    .badge-unpaid{background:rgba(251,191,36,0.12);color:var(--amber);}
+    .badge-processing{background:rgba(99,179,237,0.12);color:#63b3ed;}
+    .badge-dispatched{background:rgba(201,169,110,0.14);color:var(--primary);}
+    .badge-delivered{background:rgba(74,222,128,0.18);color:var(--green);}
+    .items-mini{font-size:11px;color:var(--muted);line-height:1.8;}
+    .status-select{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 8px;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;outline:none;}
+    .loading-row td{text-align:center;color:var(--muted);padding:40px;}
+    .logout-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;transition:border-color 0.2s,color 0.2s;}
+    .logout-btn:hover{border-color:var(--red);color:var(--red);}
+    ::-webkit-scrollbar{width:4px;height:4px;}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+    @media(max-width:600px){.search-input{width:100%;margin-left:0;}}
+  </style>
+</head>
+<body>
+
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div><p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--primary)">Phenome<span style="color:var(--text);font-weight:400">Beauty</span></p></div>
+    <div><h1>Shop Admin</h1><p>Enter your admin password to continue.</p></div>
+    <div><label>Password</label><input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()" /></div>
+    <p class="error" id="loginError">Incorrect password. Try again.</p>
+    <button class="btn" onclick="login()">Sign In</button>
+  </div>
+</div>
+
+<div id="adminUI">
+  <header>
+    <span class="logo">Phenome<span style="color:var(--text);font-weight:400">Beauty</span> — Shop Orders</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn" style="width:auto;padding:8px 16px;font-size:12px" onclick="loadOrders()">↻ Refresh</button>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+  <div class="stat-bar">
+    <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="statTotal">—</div></div>
+    <div class="stat-card"><div class="stat-label">Paid Orders</div><div class="stat-value gold" id="statPaid">—</div></div>
+    <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value gold" id="statRevenue">—</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="statPending">—</div></div>
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('paid',this)">Paid</button>
+    <button class="filter-btn" onclick="setFilter('unpaid',this)">Unpaid</button>
+    <button class="filter-btn" onclick="setFilter('processing',this)">Processing</button>
+    <button class="filter-btn" onclick="setFilter('dispatched',this)">Dispatched</button>
+    <input class="search-input" type="text" id="searchInput" placeholder="Search name / email…" oninput="renderTable()" />
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th><th>Update</th></tr></thead>
+      <tbody id="ordersBody"><tr class="loading-row"><td colspan="7">Loading orders…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://xxwmdrohbkyrnhcapoto.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d21kcm9oYmt5cm5oY2Fwb3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzU4MTIsImV4cCI6MjA5MjAxMTgxMn0.50Rd-uKV8zTBY9B5zh-Yqo0u7IUzj4WqhzJuQaPbgcg';
+  const ADMIN_PASSWORD = 'phenome2026'; // ⚠️ Change this!
+  let allOrders = [], activeFilter = 'all';
+
+  function login() {
+    if (document.getElementById('pwInput').value === ADMIN_PASSWORD) {
+      sessionStorage.setItem('shop_admin_auth','1');
+      document.getElementById('loginWrap').style.display='none';
+      document.getElementById('adminUI').style.display='block';
+      loadOrders();
+    } else { document.getElementById('loginError').style.display='block'; }
+  }
+  function logout() { sessionStorage.removeItem('shop_admin_auth'); location.reload(); }
+  if (sessionStorage.getItem('shop_admin_auth')==='1') {
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('adminUI').style.display='block';
+    loadOrders();
+  }
+
+  async function loadOrders() {
+    document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="7">Loading…</td></tr>';
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?select=*&order=created_at.desc`,{headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}});
+    allOrders = await res.json();
+    updateStats(); renderTable();
+  }
+
+  function updateStats() {
+    const paid = allOrders.filter(o=>o.payment_status==='paid');
+    const rev  = paid.reduce((s,o)=>s+Number(o.total_amount),0);
+    document.getElementById('statTotal').textContent   = allOrders.length;
+    document.getElementById('statPaid').textContent    = paid.length;
+    document.getElementById('statRevenue').textContent = `R${rev.toLocaleString('en-ZA')}`;
+    document.getElementById('statPending').textContent = allOrders.filter(o=>o.payment_status==='unpaid').length;
+  }
+
+  function setFilter(f,btn) { activeFilter=f; document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderTable(); }
+
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    let orders = allOrders;
+    if (activeFilter!=='all') orders=orders.filter(o=>o.payment_status===activeFilter||o.status===activeFilter);
+    if (search) orders=orders.filter(o=>o.customer_name.toLowerCase().includes(search)||o.customer_email.toLowerCase().includes(search));
+    if (!orders.length) { document.getElementById('ordersBody').innerHTML='<tr class="loading-row"><td colspan="7">No orders found.</td></tr>'; return; }
+    const badgeMap={pending:'badge-unpaid',processing:'badge-processing',dispatched:'badge-dispatched',delivered:'badge-delivered'};
+    document.getElementById('ordersBody').innerHTML = orders.map(o=>{
+      const date=new Date(o.created_at).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
+      const items=Array.isArray(o.items)?o.items:[];
+      const itemsHtml=items.map(i=>`${i.qty}× ${i.name} (${i.variant})`).join('<br>');
+      const pBadge=o.payment_status==='paid'?'<span class="badge badge-paid">Paid</span>':'<span class="badge badge-unpaid">Unpaid</span>';
+      return `<tr><td style="white-space:nowrap;color:var(--muted)">${date}</td><td><div style="font-weight:600">${o.customer_name}</div><div style="color:var(--muted);font-size:12px">${o.customer_email}</div><div style="color:var(--muted);font-size:12px">${o.customer_phone}</div><div style="color:var(--muted);font-size:11px;margin-top:2px">${o.delivery_address}</div></td><td><div class="items-mini">${itemsHtml}</div></td><td style="font-weight:700;color:var(--primary);white-space:nowrap">R${o.total_amount}</td><td>${pBadge}</td><td><span class="badge ${badgeMap[o.status]||'badge-unpaid'}">${o.status}</span></td><td><select class="status-select" onchange="updateStatus('${o.id}',this.value)"><option value="pending" ${o.status==='pending'?'selected':''}>Pending</option><option value="processing" ${o.status==='processing'?'selected':''}>Processing</option><option value="dispatched" ${o.status==='dispatched'?'selected':''}>Dispatched</option><option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option></select></td></tr>`;
+    }).join('');
+  }
+
+  async function updateStatus(id,status) {
+    await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({status})});
+    const o=allOrders.find(x=>x.id===id); if(o) o.status=status;
+    renderTable();
+  }
+</script>
+</body>
+</html>

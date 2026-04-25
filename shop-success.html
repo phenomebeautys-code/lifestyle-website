@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Confirmed — Phenome Beauty</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#0d0d0f; --card:#1a1a1e; --border:rgba(255,255,255,0.07); --primary:#c9a96e; --text:#f0ece4; --muted:#8a8680; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;}
+    .wrap{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center;animation:fadeUp 0.5s ease both;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .icon-wrap{width:72px;height:72px;border-radius:50%;background:rgba(201,169,110,0.12);border:2px solid rgba(201,169,110,0.3);display:flex;align-items:center;justify-content:center;font-size:36px;animation:pop 0.6s cubic-bezier(.175,.885,.32,1.275) 0.1s both;}
+    @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+    h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;}
+    .sub{font-size:14px;color:var(--muted);line-height:1.7;max-width:320px;}
+    .card{width:100%;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;text-align:left;}
+    .card-row{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);}
+    .card-row span:last-child{color:var(--text);font-weight:500;}
+    .card-row.total span:last-child{color:var(--primary);font-weight:700;font-size:16px;}
+    .divider{height:1px;background:var(--border);}
+    .item-row{font-size:13px;color:var(--muted);}
+    .item-row strong{color:var(--text);}
+    .btn-back{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:var(--primary);color:#000;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border:none;border-radius:12px;text-decoration:none;cursor:pointer;transition:background 0.2s;}
+    .btn-back:hover{background:#b8924f;}
+    .loading{font-size:14px;color:var(--muted);animation:pulse 1.2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  </style>
+</head>
+<body>
+<div class="wrap" id="wrap"><div class="loading" id="loadingState">Confirming your order…</div></div>
+<script>
+  const SUPABASE_URL  = 'https://xxwmdrohbkyrnhcapoto.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh4d21kcm9oYmt5cm5oY2Fwb3RvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MzU4MTIsImV4cCI6MjA5MjAxMTgxMn0.50Rd-uKV8zTBY9B5zh-Yqo0u7IUzj4WqhzJuQaPbgcg';
+  const params  = new URLSearchParams(window.location.search);
+  const payment = params.get('payment');
+  const orderId = params.get('order_id');
+  const name    = params.get('name') || 'there';
+  const wrap    = document.getElementById('wrap');
+
+  function renderCancelled() {
+    wrap.innerHTML=`<div class="icon-wrap">❌</div><h1>Payment Cancelled</h1><p class="sub">No payment was taken. Your cart items are still saved.</p><a href="/shop.html" class="btn-back">← Back to Shop</a>`;
+  }
+  function renderSuccess(order) {
+    const items = Array.isArray(order?.items) ? order.items : [];
+    const itemsHtml = items.map(i=>`<div class="item-row"><strong>${i.name}</strong> &times;${i.qty} <span style="color:var(--primary)">R${i.price*i.qty}</span><br><span style="font-size:11px">${i.variant}</span></div>`).join('');
+    wrap.innerHTML=`<div class="icon-wrap">✨</div><h1>Thank you, ${name.split(' ')[0]}! 💛</h1><p class="sub">Your order is confirmed and is being prepared for dispatch. We’ll be in touch soon.</p>${order?`<div class="card"><div class="card-row"><span>Order ID</span><span>${order.id.slice(0,8).toUpperCase()}…</span></div><div class="card-row"><span>Delivery to</span><span>${order.delivery_address}</span></div><div class="divider"></div><div style="display:flex;flex-direction:column;gap:6px">${itemsHtml}</div><div class="divider"></div><div class="card-row"><span>Delivery fee</span><span>R${order.delivery_fee}</span></div><div class="card-row total"><span>Total paid</span><span>R${order.total_amount}</span></div></div>`:''}<a href="/shop.html" class="btn-back">Shop Again</a>`;
+  }
+  async function pollOrder(id, attempts=0) {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?id=eq.${id}&select=*`,{headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}});
+    const [order] = await res.json();
+    if (order && order.payment_status==='paid') { renderSuccess(order); return; }
+    if (attempts<6) setTimeout(()=>pollOrder(id,attempts+1),2000);
+    else renderSuccess(order||null);
+  }
+  if (payment==='cancelled') renderCancelled();
+  else if (payment==='success' && orderId) pollOrder(orderId);
+  else wrap.innerHTML='<p>Invalid page. <a href="/shop.html" style="color:var(--primary)">Go to shop</a></p>';
+</script>
+</body>
+</html>
