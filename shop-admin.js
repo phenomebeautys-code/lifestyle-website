@@ -1,0 +1,573 @@
+/* ═══════════════════════════════════════
+   SHOP ADMIN — JavaScript
+   Depends on: shop-admin.html structure
+═══════════════════════════════════════ */
+
+const EDGE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
+
+let allOrders   = [];
+let allProducts = [];
+let activeFilter = 'all';
+let adminToken   = '';
+let editingVariants = [];
+
+const BADGE_MAP = {
+  pending:    'badge-unpaid',
+  processing: 'badge-processing',
+  dispatched: 'badge-dispatched',
+  delivered:  'badge-delivered',
+};
+const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
+
+/* ─── INIT ─────────────────────────── */
+document.getElementById('adminDate').textContent =
+  new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
+
+// Nav items (data-page)
+document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => navTo(btn.dataset.page, btn));
+});
+
+// Panel "See all" links
+document.querySelectorAll('[data-nav]').forEach(el => {
+  el.addEventListener('click', () => {
+    const navBtn = document.querySelector(`.nav-item[data-page="${el.dataset.nav}"]`);
+    navTo(el.dataset.nav, navBtn);
+    if (el.dataset.filter) applyFilter(el.dataset.filter);
+  });
+});
+
+// Report cards
+document.querySelectorAll('.report-card[data-nav]').forEach(card => {
+  card.addEventListener('click', () => {
+    const navBtn = document.querySelector(`.nav-item[data-page="${card.dataset.nav}"]`);
+    navTo(card.dataset.nav, navBtn);
+    if (card.dataset.filter) applyFilter(card.dataset.filter);
+  });
+});
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyFilter(btn.dataset.filter, btn));
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', () => { renderTable(); renderCards(); });
+document.getElementById('productSearch').addEventListener('input', renderProducts);
+
+// Buttons
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+document.getElementById('logoutBtn').addEventListener('click', logout);
+document.getElementById('refreshBtn').addEventListener('click', refreshData);
+document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
+document.getElementById('modalCancelBtn').addEventListener('click', closeProductModal);
+document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
+document.getElementById('addVariantBtn').addEventListener('click', addVariantRow);
+document.getElementById('productModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('productModal')) closeProductModal();
+});
+
+/* ─── AUTH ─────────────────────────── */
+async function hashToken(pw) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function login() {
+  const pw  = document.getElementById('pwInput').value;
+  const btn = document.getElementById('loginBtn');
+  if (!pw) { showLoginError('Please enter your password.'); return; }
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+  hideLoginError();
+  try {
+    const res = await callEdge({ action: 'get_orders', password: pw });
+    if (res.status === 429) { showLoginError('Too many attempts. Wait 60 seconds.'); return; }
+    if (res.status === 401) { showLoginError('Incorrect password.'); return; }
+    if (!res.ok)            { showLoginError('Server error. Try again.'); return; }
+    const data = await res.json();
+    adminToken = pw;
+    sessionStorage.setItem('_at_hash', await hashToken(pw));
+    document.getElementById('loginWrap').style.display = 'none';
+    const ui = document.getElementById('adminUI');
+    ui.classList.add('visible');
+    ui.removeAttribute('aria-hidden');
+    allOrders = data.orders || [];
+    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+  } catch {
+    showLoginError('Network error. Check your connection.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideLoginError() { document.getElementById('loginError').style.display = 'none'; }
+function logout() { sessionStorage.removeItem('_at_hash'); adminToken = ''; location.reload(); }
+
+function callEdge(body) {
+  return fetch(EDGE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+/* ─── NAVIGATION ───────────────────── */
+function navTo(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (btn) btn.classList.add('active');
+  document.getElementById('topbarTitle').textContent = PAGE_TITLES[page] || page;
+  if (page === 'products') loadProducts();
+}
+
+/* ─── REFRESH ──────────────────────── */
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  try {
+    const res = await callEdge({ action: 'get_orders', password: adminToken });
+    if (res.status === 429) { showToast('Rate limited. Wait 60 seconds.', true); return; }
+    if (!res.ok)            { showToast('Failed to refresh.', true); return; }
+    const data = await res.json();
+    allOrders = data.orders || [];
+    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+    showToast('Refreshed ✓');
+  } catch { showToast('Network error.', true); }
+  finally { btn.disabled = false; }
+}
+
+/* ─── STATS ────────────────────────── */
+function updateStats() {
+  const paid       = allOrders.filter(o => o.payment_status === 'paid');
+  const unpaid     = allOrders.filter(o => o.payment_status !== 'paid');
+  const dispatched = allOrders.filter(o => o.status === 'dispatched');
+  const delivered  = allOrders.filter(o => o.status === 'delivered');
+  const rev = paid.reduce((s, o) => s + Number(o.total_amount), 0);
+  const avg = paid.length ? Math.round(rev / paid.length) : 0;
+  const pct = allOrders.length ? Math.round((paid.length / allOrders.length) * 100) : 0;
+
+  setText('statTotal',    allOrders.length);
+  setText('statPaid',     paid.length);
+  setText('statPaidPct',  allOrders.length ? pct + '% conversion' : '\u00a0');
+  setText('statRevenue',  'R' + rev.toLocaleString('en-ZA'));
+  setText('statPending',  unpaid.length);
+  setText('payoutRevenue',    'R' + rev.toLocaleString('en-ZA'));
+  setText('payoutPaidCount',  paid.length);
+  setText('payoutAvg',        'R' + avg.toLocaleString('en-ZA'));
+  setText('payoutDispatched', dispatched.length);
+  setText('payoutDelivered',  delivered.length);
+  setText('payoutUnpaid',     unpaid.length);
+}
+
+function updateOrdersBadge() {
+  const unpaid = allOrders.filter(o => o.payment_status !== 'paid').length;
+  const badge  = document.getElementById('navOrdersBadge');
+  badge.textContent = unpaid;
+  badge.hidden = unpaid === 0;
+}
+
+function updateReports() {
+  const paid  = allOrders.filter(o => o.payment_status === 'paid');
+  const now   = Date.now();
+  const week  = paid.filter(o => now - new Date(o.created_at) < 7  * 864e5);
+  const month = paid.filter(o => now - new Date(o.created_at) < 30 * 864e5);
+  const wRev  = week.reduce((s, o) => s + Number(o.total_amount), 0);
+  const mRev  = month.reduce((s, o) => s + Number(o.total_amount), 0);
+
+  setText('repWeekRev',    'R' + wRev.toLocaleString('en-ZA'));
+  setText('repWeekCount',  week.length + ' orders');
+  setText('repMonthRev',   'R' + mRev.toLocaleString('en-ZA'));
+  setText('repMonthCount', month.length + ' orders');
+
+  const freq = {};
+  paid.forEach(o => (o.items || []).forEach(i => { freq[i.name] = (freq[i.name] || 0) + i.qty; }));
+  const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
+  setText('repTopProduct', top ? top[0] : '—');
+
+  const delivered = paid.filter(o => o.status === 'delivered').length;
+  const rate = paid.length ? Math.round((delivered / paid.length) * 100) : 0;
+  setText('repDeliveryRate', paid.length ? rate + '%' : '—');
+}
+
+/* ─── RECENT SALES ─────────────────── */
+function renderRecent() {
+  const el = document.getElementById('recentList');
+  const list = [...allOrders]
+    .filter(o => o.payment_status === 'paid')
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 6);
+
+  if (!list.length) { el.innerHTML = '<div class="recent-empty">No paid orders yet.</div>'; return; }
+
+  el.innerHTML = list.map(o => {
+    const date     = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+    const items    = Array.isArray(o.items) ? o.items : [];
+    const itemStr  = items.map(i => i.qty + '× ' + i.name).join(', ');
+    const initials = (o.customer_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return `
+      <div class="recent-item">
+        <div class="ri-avatar">${initials}</div>
+        <div class="ri-info">
+          <div class="ri-name">${esc(o.customer_name)}</div>
+          <div class="ri-meta">${esc(itemStr || 'No items')}</div>
+        </div>
+        <div class="ri-right">
+          <div class="ri-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
+          <div class="ri-date">${date}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+/* ─── ORDERS TABLE ─────────────────── */
+function applyFilter(filter, btn) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const target = btn || document.querySelector(`.filter-btn[data-filter="${filter}"]`);
+  if (target) target.classList.add('active');
+  renderTable();
+  renderCards();
+}
+
+function getFiltered() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  let orders = allOrders;
+  if (activeFilter !== 'all') {
+    orders = orders.filter(o => o.payment_status === activeFilter || o.status === activeFilter);
+  }
+  if (q) {
+    orders = orders.filter(o =>
+      o.customer_name?.toLowerCase().includes(q) ||
+      o.customer_email?.toLowerCase().includes(q)
+    );
+  }
+  return orders;
+}
+
+function renderTable() {
+  const orders = getFiltered();
+  const tbody  = document.getElementById('ordersBody');
+  if (!orders.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No orders found.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '';
+  orders.forEach(o => {
+    const tr    = document.createElement('tr');
+    const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const items = Array.isArray(o.items) ? o.items : [];
+    [
+      mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
+      mkCustomerTd(o),
+      mkItemsTd(items),
+      mkTd('R' + Number(o.total_amount).toLocaleString('en-ZA'), 'font-weight:700;color:var(--accent);white-space:nowrap'),
+      mkBadgeTd(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid'),
+      mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending'),
+      mkSelectTd(o),
+    ].forEach(c => tr.appendChild(c));
+    tbody.appendChild(tr);
+  });
+}
+
+function renderCards() {
+  const orders = getFiltered();
+  const el     = document.getElementById('orderCards');
+  if (!orders.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No orders found.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  orders.forEach(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const card  = document.createElement('div'); card.className = 'order-card';
+
+    const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
+    const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
+    const sel = makeStatusSelect(o, statusBadge);
+
+    card.innerHTML = `
+      <div class="oc-top">
+        <div>
+          <div class="oc-name">${esc(o.customer_name)}</div>
+          <div class="oc-meta">${esc(o.customer_email || '')} · ${esc(o.customer_phone || '')}</div>
+        </div>
+        <div class="oc-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
+      </div>`;
+
+    const badges = document.createElement('div'); badges.className = 'oc-badges';
+    badges.appendChild(payBadge); badges.appendChild(statusBadge);
+
+    const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
+    items.forEach((item, i) => {
+      if (i > 0) itemsEl.appendChild(document.createElement('br'));
+      itemsEl.appendChild(document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`));
+    });
+    if (!items.length) itemsEl.textContent = 'No items';
+
+    const footer  = document.createElement('div'); footer.className = 'oc-footer';
+    const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
+    footer.appendChild(dateEl); footer.appendChild(sel);
+
+    card.appendChild(badges); card.appendChild(itemsEl); card.appendChild(footer);
+    el.appendChild(card);
+  });
+}
+
+function makeBadge(cls, label) {
+  const span = document.createElement('span');
+  span.className = 'badge ' + cls;
+  span.textContent = label;
+  return span;
+}
+
+function makeStatusSelect(o, statusBadge) {
+  const sel = document.createElement('select'); sel.className = 'status-select';
+  ['pending', 'processing', 'dispatched', 'delivered'].forEach(v => {
+    const opt = document.createElement('option'); opt.value = v;
+    opt.textContent = v.charAt(0).toUpperCase() + v.slice(1);
+    if (o.status === v) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => updateOrderStatus(o.id, sel.value, statusBadge));
+  return sel;
+}
+
+function mkTd(text, style = '') {
+  const td = document.createElement('td');
+  if (style) td.style.cssText = style;
+  td.textContent = text;
+  return td;
+}
+function mkCustomerTd(o) {
+  const td = document.createElement('td');
+  [
+    ['font-weight:600;color:var(--accent-strong)', o.customer_name],
+    ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
+    ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
+    ['color:var(--text-muted);font-size:0.71rem;margin-top:2px', o.delivery_address],
+  ].forEach(([style, val]) => {
+    const d = document.createElement('div'); d.style.cssText = style; d.textContent = val || ''; td.appendChild(d);
+  });
+  return td;
+}
+function mkItemsTd(items) {
+  const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
+  items.forEach((item, i) => {
+    if (i > 0) wrap.appendChild(document.createElement('br'));
+    wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name} (${item.variant})`));
+  });
+  td.appendChild(wrap); return td;
+}
+function mkBadgeTd(cls, label) {
+  const td = document.createElement('td');
+  td.appendChild(makeBadge(cls, label));
+  return td;
+}
+function mkSelectTd(o) {
+  const td = document.createElement('td');
+  td.appendChild(makeStatusSelect(o));
+  return td;
+}
+
+async function updateOrderStatus(id, status, badgeEl) {
+  try {
+    const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to update.', true); return; }
+    const o = allOrders.find(x => x.id === id); if (o) o.status = status;
+    if (badgeEl) { badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid'); badgeEl.textContent = status; }
+    updateStats(); renderRecent(); updateReports();
+    showToast('Status → ' + status + ' ✓');
+  } catch { showToast('Network error.', true); }
+}
+
+/* ─── PRODUCTS ─────────────────────── */
+async function loadProducts() {
+  document.getElementById('productsGrid').innerHTML =
+    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
+  try {
+    const res = await callEdge({ action: 'get_products', password: adminToken });
+    if (!res.ok) {
+      allProducts = [];
+      renderProducts();
+      return;
+    }
+    const data = await res.json();
+    allProducts = data.products || [];
+    renderProducts();
+  } catch {
+    allProducts = [];
+    renderProducts();
+  }
+}
+
+function renderProducts() {
+  const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
+  const el   = document.getElementById('productsGrid');
+  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q)) : allProducts;
+
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="products-empty" style="grid-column:1/-1">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2;display:block;margin:0 auto 12px"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        No products yet.<br>
+        <button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button>
+      </div>`;
+    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal());
+    return;
+  }
+
+  el.innerHTML = '';
+  list.forEach(p => {
+    const card = document.createElement('div'); card.className = 'product-card';
+    const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).join(', ');
+
+    const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
+    if (p.image_url) {
+      const img = document.createElement('img'); img.src = p.image_url; img.alt = p.name;
+      img.onerror = () => { imgWrap.innerHTML = placeholderSVG(); };
+      imgWrap.appendChild(img);
+    } else {
+      imgWrap.innerHTML = placeholderSVG();
+    }
+
+    const body = document.createElement('div'); body.className = 'product-card-body';
+    body.innerHTML = `
+      ${p.category ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
+      <div class="product-name">${esc(p.name)}</div>
+      ${variants ? `<div class="product-variant">${esc(variants)}</div>` : ''}
+      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
+      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
+
+    const footer  = document.createElement('div'); footer.className = 'product-card-footer';
+    const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => openProductModal(p));
+    const delBtn  = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
+    footer.appendChild(editBtn); footer.appendChild(delBtn);
+
+    card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
+    el.appendChild(card);
+  });
+}
+
+function placeholderSVG() {
+  return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>`;
+}
+
+/* PRODUCT MODAL */
+function openProductModal(product = null) {
+  document.getElementById('modalTitle').textContent       = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('modalProductId').value         = product?.id || '';
+  document.getElementById('mpName').value                 = product?.name || '';
+  document.getElementById('mpPrice').value                = product?.price || '';
+  document.getElementById('mpCost').value                 = product?.cost_price || '';
+  document.getElementById('mpDesc').value                 = product?.description || '';
+  document.getElementById('mpImage').value                = product?.image_url || '';
+  document.getElementById('mpCategory').value             = product?.category || '';
+  editingVariants = (product?.variants || []).map(v => (typeof v === 'string' ? v : v.name || ''));
+  renderVariantRows();
+  const modal = document.getElementById('productModal');
+  modal.removeAttribute('hidden');
+  document.getElementById('mpName').focus();
+}
+
+function closeProductModal() {
+  document.getElementById('productModal').setAttribute('hidden', '');
+}
+
+function renderVariantRows() {
+  const el = document.getElementById('variantsList');
+  el.innerHTML = '';
+  editingVariants.forEach((v, i) => {
+    const row = document.createElement('div'); row.className = 'variant-row';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. 30ml';
+    inp.addEventListener('input', () => { editingVariants[i] = inp.value; });
+    const rm  = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '×'; rm.type = 'button';
+    rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
+    row.appendChild(inp); row.appendChild(rm); el.appendChild(row);
+  });
+}
+
+function addVariantRow() {
+  editingVariants.push('');
+  renderVariantRows();
+  const inputs = document.getElementById('variantsList').querySelectorAll('input');
+  inputs[inputs.length - 1]?.focus();
+}
+
+async function saveProduct() {
+  const btn  = document.getElementById('modalSaveBtn');
+  const id   = document.getElementById('modalProductId').value;
+  const name = document.getElementById('mpName').value.trim();
+  if (!name) { showToast('Product name is required.', true); return; }
+
+  const payload = {
+    action:   id ? 'update_product' : 'add_product',
+    password: adminToken,
+    product: {
+      ...(id && { id }),
+      name,
+      price:       parseFloat(document.getElementById('mpPrice').value)    || 0,
+      cost_price:  parseFloat(document.getElementById('mpCost').value)     || 0,
+      description: document.getElementById('mpDesc').value.trim(),
+      image_url:   document.getElementById('mpImage').value.trim(),
+      category:    document.getElementById('mpCategory').value.trim(),
+      variants:    editingVariants.filter(v => v.trim()).map(v => ({ name: v.trim() })),
+    },
+  };
+
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
+  try {
+    const res = await callEdge(payload);
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to save product.', true); return; }
+    const data = await res.json();
+    if (id) {
+      const idx = allProducts.findIndex(p => p.id === id);
+      if (idx > -1) allProducts[idx] = data.product || allProducts[idx];
+    } else {
+      allProducts.unshift(data.product || payload.product);
+    }
+    renderProducts();
+    closeProductModal();
+    showToast(id ? 'Product updated ✓' : 'Product added ✓');
+  } catch { showToast('Network error.', true); }
+  finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
+}
+
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    const res = await callEdge({ action: 'delete_product', password: adminToken, product_id: id });
+    if (!res.ok) { showToast('Failed to delete.', true); return; }
+    allProducts = allProducts.filter(p => p.id !== id);
+    renderProducts();
+    showToast('Product deleted.');
+  } catch { showToast('Network error.', true); }
+}
+
+/* ─── UTILITIES ────────────────────── */
+function setText(id, val) {
+  const el = document.getElementById(id); if (el) el.textContent = val;
+}
+function esc(str) {
+  const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
+}
+function showToast(msg, isError = false) {
+  const t = document.getElementById('adminToast');
+  t.textContent = msg;
+  t.className = 'admin-toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
