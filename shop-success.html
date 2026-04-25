@@ -133,55 +133,101 @@
   <script>
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
-    const params  = new URLSearchParams(window.location.search);
-    const payment = params.get('payment');
-    const orderId = params.get('order_id');
-    const name    = params.get('name') || 'there';
-    const card    = document.getElementById('successCard');
+    const params     = new URLSearchParams(window.location.search);
+    const payment    = params.get('payment');
+    const orderId    = params.get('order_id');
+    const custToken  = params.get('ct');
+    const name       = params.get('name') || 'there';
+    const card       = document.getElementById('successCard');
+
+    // XSS-safe escape helper
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = String(str ?? '');
+      return d.innerHTML;
+    }
 
     function renderCancelled() {
       card.innerHTML = `
-        <div class="success-icon">✕</div>
+        <div class="success-icon">&#10005;</div>
         <h1>Payment Cancelled</h1>
         <p class="sub">No payment was taken. Your cart is still saved — return to the shop to try again.</p>
-        <a href="shop.html" class="btn btn-primary">← Back to Shop</a>`;
+        <a href="shop.html" class="btn btn-primary">&#8592; Back to Shop</a>`;
     }
 
     function renderSuccess(order) {
-      const firstName = name.split(' ')[0];
+      const firstName = esc(name.split(' ')[0]);
       const items = Array.isArray(order?.items) ? order.items : [];
-      const itemsHtml = items.map(i =>
-        `<div class="item-row"><strong>${i.name}</strong> &times;${i.qty} — R${i.price*i.qty}<br/><span style="font-size:0.72rem;color:var(--text-muted)">${i.variant}</span></div>`
-      ).join('');
+
       card.innerHTML = `
-        <div class="success-icon">✨</div>
+        <div class="success-icon">&#10024;</div>
         <h1>Thank you, ${firstName}!</h1>
         <p class="sub">Your order is confirmed and is being prepared for dispatch. We'll be in touch soon.</p>
         ${order ? `
         <div class="order-panel">
-          <div class="order-row"><span>Order ID</span><span>${order.id.slice(0,8).toUpperCase()}…</span></div>
-          <div class="order-row"><span>Delivery to</span><span style="max-width:200px;text-align:right">${order.delivery_address}</span></div>
+          <div class="order-row"><span>Order ID</span><span>${esc(order.id?.slice(0,8).toUpperCase())}&hellip;</span></div>
+          <div class="order-row"><span>Delivery to</span><span style="max-width:200px;text-align:right">${esc(order.delivery_address)}</span></div>
           <div class="divider"></div>
-          <div style="display:flex;flex-direction:column;gap:6px">${itemsHtml}</div>
+          <div id="itemsSlot" style="display:flex;flex-direction:column;gap:6px"></div>
           <div class="divider"></div>
-          <div class="order-row"><span>Delivery fee</span><span>R${order.delivery_fee}</span></div>
-          <div class="order-row total"><span>Total paid</span><span>R${order.total_amount}</span></div>
+          <div class="order-row"><span>Delivery fee</span><span>R${esc(order.delivery_fee)}</span></div>
+          <div class="order-row total"><span>Total paid</span><span>R${esc(order.total_amount)}</span></div>
         </div>` : ''}
         <a href="shop.html" class="btn btn-primary">Shop Again</a>`;
+
+      // Build items with DOM — never innerHTML with DB data (XSS prevention)
+      const slot = document.getElementById('itemsSlot');
+      if (slot) {
+        items.forEach(function(item) {
+          const row = document.createElement('div');
+          row.className = 'item-row';
+          const strong = document.createElement('strong');
+          strong.textContent = item.name;
+          const detail = document.createTextNode(' \u00d7' + item.qty + ' \u2014 R' + (item.price * item.qty));
+          const br = document.createElement('br');
+          const variant = document.createElement('span');
+          variant.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
+          variant.textContent = item.variant;
+          row.append(strong, detail, br, variant);
+          slot.appendChild(row);
+        });
+      }
     }
 
-    async function pollOrder(id, attempts=0) {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders?id=eq.${id}&select=*`,
-        {headers:{'apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`}});
-      const [order] = await res.json();
-      if (order && order.payment_status==='paid') { renderSuccess(order); return; }
-      if (attempts < 6) setTimeout(()=>pollOrder(id,attempts+1),2000);
-      else renderSuccess(order||null);
+    async function pollOrder(id, token, attempts) {
+      attempts = attempts || 0;
+      try {
+        const res = await fetch(
+          SUPABASE_URL + '/rest/v1/shop_orders?id=eq.' + encodeURIComponent(id) + '&select=id,delivery_address,items,delivery_fee,total_amount,payment_status',
+          {
+            headers: {
+              'apikey': SUPABASE_ANON,
+              'Authorization': 'Bearer ' + SUPABASE_ANON,
+              'x-customer-token': token
+            }
+          }
+        );
+        const data = await res.json();
+        const order = Array.isArray(data) ? data[0] : null;
+        if (order && order.payment_status === 'paid') { renderSuccess(order); return; }
+        if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
+        else { renderSuccess(order || null); }
+      } catch(e) {
+        if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
+        else { renderSuccess(null); }
+      }
     }
 
-    if (payment==='cancelled')               renderCancelled();
-    else if (payment==='success' && orderId) pollOrder(orderId);
-    else card.innerHTML = `<p style="color:var(--text-muted)">Invalid page. <a href="shop.html" style="color:var(--accent)">Go to shop</a></p>`;
+    if (payment === 'cancelled') {
+      renderCancelled();
+    } else if (payment === 'success' && orderId && custToken) {
+      pollOrder(orderId, custToken, 0);
+    } else if (payment === 'success' && orderId && !custToken) {
+      // Graceful fallback for orders placed before the customer_token migration
+      renderSuccess(null);
+    } else {
+      card.innerHTML = '<p style="color:var(--text-muted)">Invalid page. <a href="shop.html" style="color:var(--accent)">Go to shop</a></p>';
+    }
   </script>
 </body>
 </html>
