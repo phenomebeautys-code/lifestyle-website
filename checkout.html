@@ -605,7 +605,7 @@
           <div class="exit-nudge" id="exitNudge">
             <span class="exit-nudge-icon">&#128cart;</span>
             <div class="exit-nudge-text">
-              <strong>Your order is ready — don&#8217;t lose it!</strong>
+              <strong>Your order is ready &mdash; don&#8217;t lose it!</strong>
               <span>Complete payment now to secure your items.</span>
             </div>
             <button class="exit-nudge-close" onclick="dismissNudge()" aria-label="Dismiss">&#215;</button>
@@ -1089,7 +1089,7 @@
         const checkoutRes=await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,{
           method:'POST',
           headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':`Bearer ${SUPABASE_ANON}`},
-          body:JSON.stringify({order_id:order.id,success_url:`${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}`,cancel_url:`${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`})
+          body:JSON.stringify({order_id:order.id,success_url:`${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}&ct=${order.customer_token}`,cancel_url:`${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`})
         });
         if(!checkoutRes.ok) throw new Error('Failed to create payment session. Please try again.');
         const cd=await checkoutRes.json();
@@ -1126,9 +1126,9 @@
   </script>
 
   <!--
-    ╔══════════════════════════════════════════════════════════╗
+    ╬══════════════════════════════════════════════════════════╣
     ║  Google Places Autocomplete                              ║
-    ║  ─────────────────────────────────────────────────────── ║
+    ║  ───────────────────────────────────────────────────── ║
     ║  ACTION REQUIRED: Replace YOUR_GOOGLE_PLACES_API_KEY     ║
     ║  with your actual key from Google Cloud Console.         ║
     ║                                                          ║
@@ -1138,7 +1138,7 @@
     ║                                                          ║
     ║  Free tier: 28,500 requests/month — more than enough     ║
     ║  for a small e-commerce store.                           ║
-    ╚══════════════════════════════════════════════════════════╝
+    ╙══════════════════════════════════════════════════════════╜
   -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_PLACES_API_KEY&libraries=places&callback=initPlaces&loading=async"
