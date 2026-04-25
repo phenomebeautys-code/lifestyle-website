@@ -126,52 +126,29 @@
     }
     .gift-toggle-row:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
     .gift-toggle-row.active { border-color: rgba(255,200,120,0.35); background: rgba(255,200,120,0.05); }
-    .gift-toggle-icon {
-      font-size: 1.2rem; flex-shrink: 0; line-height: 1;
-    }
-    .gift-toggle-label {
-      flex: 1;
-    }
-    .gift-toggle-label strong {
-      display: block; font-size: 0.88rem; font-weight: 600; color: var(--text);
-    }
-    .gift-toggle-label span {
-      font-size: 0.75rem; color: var(--text-muted);
-    }
-    /* custom toggle switch */
-    .gift-switch {
-      position: relative; width: 38px; height: 22px; flex-shrink: 0;
-    }
+    .gift-toggle-icon { font-size: 1.2rem; flex-shrink: 0; line-height: 1; }
+    .gift-toggle-label { flex: 1; }
+    .gift-toggle-label strong { display: block; font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .gift-toggle-label span   { font-size: 0.75rem; color: var(--text-muted); }
+    .gift-switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
     .gift-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
     .gift-switch-track {
       position: absolute; inset: 0;
       background: rgba(255,255,255,0.12); border-radius: 11px;
-      border: 1px solid var(--glass-border);
-      transition: background 0.22s;
+      border: 1px solid var(--glass-border); transition: background 0.22s;
     }
     .gift-switch input:checked + .gift-switch-track { background: rgba(255,190,100,0.55); border-color: rgba(255,190,100,0.5); }
     .gift-switch-track::after {
-      content: ''; position: absolute;
-      top: 2px; left: 2px;
-      width: 16px; height: 16px;
-      background: #fff; border-radius: 50%;
-      transition: transform 0.22s;
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.22s;
     }
     .gift-switch input:checked + .gift-switch-track::after { transform: translateX(16px); }
-
-    /* gift message reveal */
     .gift-message-reveal {
-      overflow: hidden;
-      max-height: 0;
+      overflow: hidden; max-height: 0;
       transition: max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, margin-top 0.28s ease;
-      opacity: 0;
-      margin-top: 0;
+      opacity: 0; margin-top: 0;
     }
-    .gift-message-reveal.open {
-      max-height: 200px;
-      opacity: 1;
-      margin-top: 12px;
-    }
+    .gift-message-reveal.open { max-height: 200px; opacity: 1; margin-top: 12px; }
 
     /* ─ Review blocks ────────────────────────────── */
     .review-block { border: 1px solid var(--glass-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; }
@@ -187,42 +164,55 @@
 
     /* ─ Payment trust strip ──────────────────────── */
     .pay-trust-wrap {
-      margin-top: 20px;
-      padding: 18px 0 10px;
+      margin-top: 20px; padding: 18px 0 10px;
       border-top: 1px solid var(--glass-border);
       display: flex; flex-direction: column; align-items: center; gap: 12px;
     }
     .pay-trust-strip {
       display: inline-flex; align-items: center; justify-content: center; gap: 14px;
-      flex-wrap: wrap;
-      background: #ffffff;
-      border-radius: var(--radius-md);
-      padding: 12px 24px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+      flex-wrap: wrap; background: #ffffff; border-radius: var(--radius-md);
+      padding: 12px 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.35);
     }
-    .pay-trust-strip img.yoco-strip {
-      height: 22px; width: auto; display: block;
-    }
-    .pay-trust-strip .strip-divider {
-      width: 1px; height: 20px;
-      background: rgba(0,0,0,0.12);
-      flex-shrink: 0;
-    }
+    .pay-trust-strip img.yoco-strip { height: 22px; width: auto; display: block; }
+    .pay-trust-strip .strip-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
     .pay-trust-pci {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 0.64rem; font-weight: 800;
-      letter-spacing: 0.08em; color: rgba(0,0,0,0.45);
-      white-space: nowrap;
+      font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em;
+      color: rgba(0,0,0,0.45); white-space: nowrap;
     }
-    .pay-trust-caption {
-      font-size: 0.7rem; color: var(--text-muted); text-align: center; line-height: 1.5;
-    }
+    .pay-trust-caption { font-size: 0.7rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
 
     /* ─ Secure note ──────────────────────────────── */
     .co-secure {
       display: flex; align-items: center; justify-content: center;
       gap: 7px; font-size: 0.75rem; color: var(--text-muted); margin-top: 14px;
     }
+
+    /* ─ Exit-intent nudge ────────────────────────── */
+    .exit-nudge {
+      display: none;
+      align-items: center; gap: 10px;
+      padding: 13px 16px; border-radius: var(--radius-md);
+      border: 1px solid rgba(251,191,36,0.35);
+      background: rgba(251,191,36,0.07);
+      margin-bottom: 18px;
+      animation: nudgeFadeIn 0.35s ease forwards;
+    }
+    .exit-nudge.show { display: flex; }
+    @keyframes nudgeFadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .exit-nudge-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1; }
+    .exit-nudge-text { flex: 1; font-size: 0.83rem; color: #fbbf24; line-height: 1.4; }
+    .exit-nudge-text strong { display: block; font-weight: 700; margin-bottom: 1px; }
+    .exit-nudge-text span   { font-size: 0.76rem; color: rgba(251,191,36,0.75); }
+    .exit-nudge-close {
+      background: none; border: none; cursor: pointer;
+      color: rgba(251,191,36,0.5); font-size: 1rem; line-height: 1;
+      padding: 2px; transition: color 0.18s; flex-shrink: 0;
+    }
+    .exit-nudge-close:hover { color: #fbbf24; }
 
     /* ─ Right summary col ─────────────────────────── */
     .co-summary-col {
@@ -519,6 +509,18 @@
             <h2>Review &amp; Pay</h2>
             <p>Check your order below, then click Pay to be taken to the secure Yoco payment page.</p>
           </div>
+
+          <!-- ══ EXIT-INTENT NUDGE ══ -->
+          <div class="exit-nudge" id="exitNudge">
+            <span class="exit-nudge-icon">&#128cart;</span>
+            <div class="exit-nudge-text">
+              <strong>Your order is ready — don&#8217;t lose it!</strong>
+              <span>Complete payment now to secure your items.</span>
+            </div>
+            <button class="exit-nudge-close" onclick="dismissNudge()" aria-label="Dismiss">&#215;</button>
+          </div>
+          <!-- end exit nudge -->
+
           <div class="co-alert" id="alert-3"></div>
 
           <div class="review-block">
@@ -571,9 +573,7 @@
                 class="yoco-strip"
                 src="https://assets.yoco.com/f/111633/313x19/cbe08e96e2/payment-strip-dark.svg"
                 alt="Visa, Mastercard, Amex, Diners accepted via Yoco"
-                loading="lazy"
-                width="313"
-                height="19"
+                loading="lazy" width="313" height="19"
               />
               <span class="strip-divider" aria-hidden="true"></span>
               <span class="pay-trust-pci">
@@ -653,7 +653,6 @@
       const cb     = document.getElementById('f-is-gift');
       const reveal = document.getElementById('giftReveal');
       const row    = document.getElementById('giftToggleRow');
-      // sync checkbox if the row label was clicked
       if (event && event.currentTarget === row) cb.checked = !cb.checked;
       reveal.classList.toggle('open', cb.checked);
       row.classList.toggle('active', cb.checked);
@@ -730,6 +729,28 @@
       setTimeout(()=>t.classList.remove('show'),3000);
     }
 
+    /* ═ Exit-intent nudge ════════════════════════ */
+    let nudgeFired = false;
+    let nudgeDismissed = false;
+    function initExitIntent() {
+      document.documentElement.addEventListener('mouseleave', function onMouseLeave(e) {
+        if (e.clientY > 10) return;                  // only top-of-viewport exit
+        if (currentStep !== 3) return;               // only on Step 3
+        if (nudgeFired || nudgeDismissed) return;    // fire once per session
+        nudgeFired = true;
+        const nudge = document.getElementById('exitNudge');
+        nudge.classList.add('show');
+        nudge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+    function dismissNudge() {
+      nudgeDismissed = true;
+      const nudge = document.getElementById('exitNudge');
+      nudge.style.transition = 'opacity 0.25s ease';
+      nudge.style.opacity = '0';
+      setTimeout(() => nudge.classList.remove('show'), 260);
+    }
+
     /* ═ Init ════════════════════════════════════ */
     (function init(){
       if(!cart.length){
@@ -742,6 +763,7 @@
       renderSummary(); renderMobileSummary(); renderDeliveryDate();
       attachDraftListeners();
       if(loadDraft()) setTimeout(showRestoredToast,400);
+      initExitIntent();
     })();
 
     /* ═ Render summaries ════════════════════════ */
@@ -849,7 +871,6 @@
       document.getElementById('rv-delivery').textContent=`R${DELIVERY_FEE}`;
       document.getElementById('rv-total').textContent=`R${calcTotal()}`;
       document.getElementById('payBtnTotal').textContent=calcTotal();
-      // Gift review block
       const isGift   = document.getElementById('f-is-gift').checked;
       const giftMsg  = document.getElementById('f-gift-message').value.trim();
       const giftBlock = document.getElementById('giftReviewBlock');
