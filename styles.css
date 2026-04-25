@@ -1150,28 +1150,54 @@ section, footer, nav { position: relative; z-index: 1; }
 @media (max-width: 820px) {
     .navbar { top: 8px; padding-top: 8px; }
     .mobile-menu-toggle { display: inline-flex; }
-    .nav-cta { display: none; }
+
+    /* Hide ALL nav-cta content on mobile, overriding any inline styles */
+    .nav-cta,
+    .nav-cta * {
+        display: none !important;
+    }
 
     .navbar-inner {
         position: relative;
+        /* Simple 3-column: logo | wordmark | hamburger */
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
     }
 
     .logo-wrap {
-        flex: 0 0 auto;
-        z-index: 1;
+        /* Only show the logo image, hide the wordmark from logo-wrap */
+        gap: 0;
+        height: 40px;
+        padding: 0;
     }
 
+    /* Hide wordmark inside logo-wrap on mobile - shown separately via grid */
     .logo-wordmark {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 1.05rem;
+        display: none;
+    }
+
+    /* Centred wordmark as a standalone grid cell */
+    .navbar-inner::after {
+        content: 'PhenomeBeauty';
+        font-family: var(--font-display);
+        font-size: 1rem;
+        color: #ffffff;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         pointer-events: none;
+        grid-column: 2;
+        grid-row: 1;
     }
 
     .mobile-menu-toggle {
         flex: 0 0 auto;
-        z-index: 1;
+        grid-column: 3;
+        grid-row: 1;
     }
 
     .nav-menu {
@@ -1227,9 +1253,8 @@ section, footer, nav { position: relative; z-index: 1; }
     }
 
     .container { width: calc(100% - 16px); }
-    .navbar-inner { padding: 7px 9px; }
-    .logo-img { height: 32px; }
-    .logo-wordmark { font-size: 0.95rem; }
+    .navbar-inner { padding: 6px 10px; }
+    .logo-img { height: 30px; }
 
     .section { padding: 7px 0; }
     .hero { padding: 10px 0 7px; }
