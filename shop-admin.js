@@ -88,7 +88,7 @@ async function login() {
   const btn = document.getElementById('loginBtn');
   if (!pw) { showLoginError('Please enter your password.'); return; }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+  btn.innerHTML = '<span class="spinner"></span>Signing in\u2026';
   hideLoginError();
   try {
     const res = await callEdge({ action: 'get_orders', password: pw });
@@ -146,7 +146,7 @@ async function refreshData() {
     const data = await res.json();
     allOrders = data.orders || [];
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    showToast('Refreshed ✓');
+    showToast('Refreshed \u2713');
   } catch { showToast('Network error.', true); }
   finally { btn.disabled = false; }
 }
@@ -192,10 +192,10 @@ function updateReports() {
   const freq = {};
   paid.forEach(o => (o.items || []).forEach(i => { freq[i.name] = (freq[i.name] || 0) + i.qty; }));
   const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
-  setText('repTopProduct', top ? top[0] : '—');
+  setText('repTopProduct', top ? top[0] : '\u2014');
   const delivered = paid.filter(o => o.status === 'delivered').length;
   const rate = paid.length ? Math.round((delivered / paid.length) * 100) : 0;
-  setText('repDeliveryRate', paid.length ? rate + '%' : '—');
+  setText('repDeliveryRate', paid.length ? rate + '%' : '\u2014');
 }
 
 /* ─── RECENT SALES ──────────────────── */
@@ -312,7 +312,6 @@ function renderCards() {
 
     const actions = document.createElement('div'); actions.className = 'oc-actions';
 
-    // Print label button
     const printBtn = document.createElement('button');
     printBtn.className = 'btn-print-label';
     printBtn.textContent = 'Print Label';
@@ -439,9 +438,19 @@ function closePrintLabel() {
 }
 
 /* ─── PRODUCTS ──────────────────────── */
+
+/* Normalise stored images into an array of up to 3 URLs */
+function getProductImages(p) {
+  if (Array.isArray(p.image_urls) && p.image_urls.length) {
+    return p.image_urls.filter(Boolean).slice(0, 3);
+  }
+  if (p.image_url) return [p.image_url];
+  return [];
+}
+
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
-    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
+    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading\u2026</div>';
   try {
     const res = await callEdge({ action: 'get_products', password: adminToken });
     if (res.ok) {
@@ -499,14 +508,57 @@ function renderProducts() {
   list.forEach(p => {
     const card     = document.createElement('div'); card.className = 'product-card';
     const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).filter(Boolean).join(', ');
-    const imgWrap  = document.createElement('div'); imgWrap.className = 'product-img-wrap';
-    if (p.image_url) {
-      const img = document.createElement('img'); img.src = p.image_url; img.alt = p.name || '';
+    const images   = getProductImages(p);
+
+    /* ── Image carousel ── */
+    const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
+    if (images.length > 1) {
+      /* build a carousel */
+      const carousel = document.createElement('div'); carousel.className = 'img-carousel';
+      const track    = document.createElement('div'); track.className = 'img-carousel-track';
+      images.forEach((url, idx) => {
+        const slide = document.createElement('div'); slide.className = 'img-carousel-slide';
+        const img   = document.createElement('img'); img.src = url; img.alt = (p.name || '') + ' ' + (idx + 1);
+        img.onerror = () => { slide.innerHTML = noImgSVG(); };
+        slide.appendChild(img);
+        track.appendChild(slide);
+      });
+      carousel.appendChild(track);
+
+      /* dots */
+      const dots = document.createElement('div'); dots.className = 'img-carousel-dots';
+      let currentSlide = 0;
+      const dotEls = images.map((_, idx) => {
+        const d = document.createElement('button'); d.className = 'img-carousel-dot' + (idx === 0 ? ' active' : '');
+        d.setAttribute('aria-label', 'Image ' + (idx + 1));
+        d.addEventListener('click', () => goToSlide(idx));
+        dots.appendChild(d); return d;
+      });
+
+      /* prev / next arrows */
+      const prev = document.createElement('button'); prev.className = 'img-carousel-btn img-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous image');
+      const next = document.createElement('button'); next.className = 'img-carousel-btn img-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next image');
+
+      function goToSlide(idx) {
+        currentSlide = (idx + images.length) % images.length;
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        dotEls.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+      }
+      prev.addEventListener('click', () => goToSlide(currentSlide - 1));
+      next.addEventListener('click', () => goToSlide(currentSlide + 1));
+
+      carousel.appendChild(prev);
+      carousel.appendChild(next);
+      carousel.appendChild(dots);
+      imgWrap.appendChild(carousel);
+    } else if (images.length === 1) {
+      const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); };
       imgWrap.appendChild(img);
     } else {
       imgWrap.innerHTML = noImgSVG();
     }
+
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
       ${p.category    ? `<div class="product-cat">${esc(p.category)}</div>`      : ''}
@@ -539,8 +591,14 @@ function openProductModal(product = null) {
   document.getElementById('mpSku').value             = product?.sku || '';
   document.getElementById('mpBrand').value           = product?.brand || '';
   document.getElementById('mpDesc').value            = product?.description || '';
-  document.getElementById('mpImage').value           = product?.image_url || '';
   document.getElementById('mpCategory').value        = product?.category || '';
+
+  /* populate image fields — support both old image_url and new image_urls array */
+  const imgs = product ? getProductImages(product) : [];
+  document.getElementById('mpImage1').value = imgs[0] || '';
+  document.getElementById('mpImage2').value = imgs[1] || '';
+  document.getElementById('mpImage3').value = imgs[2] || '';
+
   editingVariants = (product?.variants || []).map(v => (typeof v === 'string' ? v : v.name || ''));
   renderVariantRows();
   document.getElementById('productModal').removeAttribute('hidden');
@@ -571,6 +629,14 @@ async function saveProduct() {
   const id   = document.getElementById('modalProductId').value;
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
+
+  /* collect up to 3 image URLs, filtering empties */
+  const imageUrls = [
+    document.getElementById('mpImage1').value.trim(),
+    document.getElementById('mpImage2').value.trim(),
+    document.getElementById('mpImage3').value.trim(),
+  ].filter(Boolean);
+
   const payload = {
     action:   id ? 'update_product' : 'add_product',
     password: adminToken,
@@ -582,12 +648,13 @@ async function saveProduct() {
       sku:         document.getElementById('mpSku').value.trim(),
       brand:       document.getElementById('mpBrand').value.trim(),
       description: document.getElementById('mpDesc').value.trim(),
-      image_url:   document.getElementById('mpImage').value.trim(),
+      image_url:   imageUrls[0] || '',      /* keep legacy field for compatibility */
+      image_urls:  imageUrls,               /* new multi-image field */
       category:    document.getElementById('mpCategory').value.trim(),
       variants:    editingVariants.filter(v => v.trim()).map(v => ({ name: v.trim() })),
     },
   };
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
   try {
     const res = await callEdge(payload);
     if (res.status === 429) { showToast('Rate limited.', true); return; }
