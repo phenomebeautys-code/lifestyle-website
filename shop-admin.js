@@ -1,14 +1,17 @@
 /* ═══════════════════════════════════════
    SHOP ADMIN — JavaScript
-   Depends on: shop-admin.html structure
 ═══════════════════════════════════════ */
 
-const EDGE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
+const EDGE_URL      = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/shop-admin';
+const SUPA_URL      = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+const SUPA_ANON     = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
+// Adjust this to match your exact products table name in Supabase
+const PRODUCTS_TABLE = 'products';
 
-let allOrders   = [];
-let allProducts = [];
-let activeFilter = 'all';
-let adminToken   = '';
+let allOrders       = [];
+let allProducts     = [];
+let activeFilter    = 'all';
+let adminToken      = '';
 let editingVariants = [];
 
 const BADGE_MAP = {
@@ -23,12 +26,9 @@ const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', report
 document.getElementById('adminDate').textContent =
   new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
 
-// Nav items
 document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
   btn.addEventListener('click', () => { navTo(btn.dataset.page, btn); closeSidebar(); });
 });
-
-// Panel links
 document.querySelectorAll('[data-nav]').forEach(el => {
   el.addEventListener('click', () => {
     const navBtn = document.querySelector(`.nav-item[data-page="${el.dataset.nav}"]`);
@@ -36,8 +36,6 @@ document.querySelectorAll('[data-nav]').forEach(el => {
     if (el.dataset.filter) applyFilter(el.dataset.filter);
   });
 });
-
-// Report cards
 document.querySelectorAll('.report-card[data-nav]').forEach(card => {
   card.addEventListener('click', () => {
     const navBtn = document.querySelector(`.nav-item[data-page="${card.dataset.nav}"]`);
@@ -45,24 +43,16 @@ document.querySelectorAll('.report-card[data-nav]').forEach(card => {
     if (card.dataset.filter) applyFilter(card.dataset.filter);
   });
 });
-
-// Filter buttons
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => applyFilter(btn.dataset.filter, btn));
 });
-
-// Search
 document.getElementById('searchInput').addEventListener('input', () => { renderTable(); renderCards(); });
 document.getElementById('productSearch').addEventListener('input', renderProducts);
-
-// Auth buttons
 document.getElementById('loginBtn').addEventListener('click', login);
 document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 document.getElementById('logoutBtn').addEventListener('click', logout);
 document.getElementById('topbarSignout').addEventListener('click', logout);
 document.getElementById('refreshBtn').addEventListener('click', refreshData);
-
-// Product modal
 document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
 document.getElementById('modalCancelBtn').addEventListener('click', closeProductModal);
 document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
@@ -70,16 +60,14 @@ document.getElementById('addVariantBtn').addEventListener('click', addVariantRow
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
 });
-
-// Hamburger / sidebar
 document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
 
 function toggleSidebar() {
-  const sidebar  = document.getElementById('sidebar');
-  const overlay  = document.getElementById('sidebarOverlay');
+  const sidebar   = document.getElementById('sidebar');
+  const overlay   = document.getElementById('sidebarOverlay');
   const hamburger = document.getElementById('hamburgerBtn');
-  const isOpen   = sidebar.classList.toggle('open');
+  const isOpen    = sidebar.classList.toggle('open');
   overlay.classList.toggle('active', isOpen);
   hamburger.classList.toggle('open', isOpen);
 }
@@ -94,7 +82,6 @@ async function hashToken(pw) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 async function login() {
   const pw  = document.getElementById('pwInput').value;
   const btn = document.getElementById('loginBtn');
@@ -123,14 +110,12 @@ async function login() {
     btn.innerHTML = 'Sign In';
   }
 }
-
 function showLoginError(msg) {
   const el = document.getElementById('loginError');
   el.textContent = msg; el.style.display = 'block';
 }
 function hideLoginError() { document.getElementById('loginError').style.display = 'none'; }
 function logout() { sessionStorage.removeItem('_at_hash'); adminToken = ''; location.reload(); }
-
 function callEdge(body) {
   return fetch(EDGE_URL, {
     method: 'POST',
@@ -174,12 +159,11 @@ function updateStats() {
   const rev = paid.reduce((s, o) => s + Number(o.total_amount), 0);
   const avg = paid.length ? Math.round(rev / paid.length) : 0;
   const pct = allOrders.length ? Math.round((paid.length / allOrders.length) * 100) : 0;
-
-  setText('statTotal',    allOrders.length);
-  setText('statPaid',     paid.length);
-  setText('statPaidPct',  allOrders.length ? pct + '% conversion' : '\u00a0');
-  setText('statRevenue',  'R' + rev.toLocaleString('en-ZA'));
-  setText('statPending',  unpaid.length);
+  setText('statTotal',        allOrders.length);
+  setText('statPaid',         paid.length);
+  setText('statPaidPct',      allOrders.length ? pct + '% conversion' : '\u00a0');
+  setText('statRevenue',      'R' + rev.toLocaleString('en-ZA'));
+  setText('statPending',      unpaid.length);
   setText('payoutRevenue',    'R' + rev.toLocaleString('en-ZA'));
   setText('payoutPaidCount',  paid.length);
   setText('payoutAvg',        'R' + avg.toLocaleString('en-ZA'));
@@ -187,14 +171,12 @@ function updateStats() {
   setText('payoutDelivered',  delivered.length);
   setText('payoutUnpaid',     unpaid.length);
 }
-
 function updateOrdersBadge() {
   const unpaid = allOrders.filter(o => o.payment_status !== 'paid').length;
   const badge  = document.getElementById('navOrdersBadge');
   badge.textContent = unpaid;
   badge.hidden = unpaid === 0;
 }
-
 function updateReports() {
   const paid  = allOrders.filter(o => o.payment_status === 'paid');
   const now   = Date.now();
@@ -202,17 +184,14 @@ function updateReports() {
   const month = paid.filter(o => now - new Date(o.created_at) < 30 * 864e5);
   const wRev  = week.reduce((s, o) => s + Number(o.total_amount), 0);
   const mRev  = month.reduce((s, o) => s + Number(o.total_amount), 0);
-
   setText('repWeekRev',    'R' + wRev.toLocaleString('en-ZA'));
   setText('repWeekCount',  week.length + ' orders');
   setText('repMonthRev',   'R' + mRev.toLocaleString('en-ZA'));
   setText('repMonthCount', month.length + ' orders');
-
   const freq = {};
   paid.forEach(o => (o.items || []).forEach(i => { freq[i.name] = (freq[i.name] || 0) + i.qty; }));
   const top = Object.entries(freq).sort((a, b) => b[1] - a[1])[0];
   setText('repTopProduct', top ? top[0] : '—');
-
   const delivered = paid.filter(o => o.status === 'delivered').length;
   const rate = paid.length ? Math.round((delivered / paid.length) * 100) : 0;
   setText('repDeliveryRate', paid.length ? rate + '%' : '—');
@@ -220,14 +199,12 @@ function updateReports() {
 
 /* ─── RECENT SALES ─────────────────── */
 function renderRecent() {
-  const el = document.getElementById('recentList');
+  const el   = document.getElementById('recentList');
   const list = [...allOrders]
     .filter(o => o.payment_status === 'paid')
     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 6);
-
   if (!list.length) { el.innerHTML = '<div class="recent-empty">No paid orders yet.</div>'; return; }
-
   el.innerHTML = list.map(o => {
     const date     = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
     const items    = Array.isArray(o.items) ? o.items : [];
@@ -254,10 +231,8 @@ function applyFilter(filter, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   const target = btn || document.querySelector(`.filter-btn[data-filter="${filter}"]`);
   if (target) target.classList.add('active');
-  renderTable();
-  renderCards();
+  renderTable(); renderCards();
 }
-
 function getFiltered() {
   const q = (document.getElementById('searchInput').value || '').toLowerCase();
   let orders = allOrders;
@@ -272,7 +247,6 @@ function getFiltered() {
   }
   return orders;
 }
-
 function renderTable() {
   const orders = getFiltered();
   const tbody  = document.getElementById('ordersBody');
@@ -297,7 +271,6 @@ function renderTable() {
     tbody.appendChild(tr);
   });
 }
-
 function renderCards() {
   const orders = getFiltered();
   const el     = document.getElementById('orderCards');
@@ -310,11 +283,9 @@ function renderCards() {
     const items = Array.isArray(o.items) ? o.items : [];
     const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
     const card  = document.createElement('div'); card.className = 'order-card';
-
     const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
     const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
     const sel = makeStatusSelect(o, statusBadge);
-
     card.innerHTML = `
       <div class="oc-top">
         <div>
@@ -323,33 +294,25 @@ function renderCards() {
         </div>
         <div class="oc-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
       </div>`;
-
     const badges = document.createElement('div'); badges.className = 'oc-badges';
     badges.appendChild(payBadge); badges.appendChild(statusBadge);
-
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
     items.forEach((item, i) => {
       if (i > 0) itemsEl.appendChild(document.createElement('br'));
       itemsEl.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
     });
     if (!items.length) itemsEl.textContent = 'No items';
-
-    const footer  = document.createElement('div'); footer.className = 'oc-footer';
-    const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
+    const footer = document.createElement('div'); footer.className = 'oc-footer';
+    const dateEl = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
     footer.appendChild(dateEl); footer.appendChild(sel);
-
     card.appendChild(badges); card.appendChild(itemsEl); card.appendChild(footer);
     el.appendChild(card);
   });
 }
-
 function makeBadge(cls, label) {
   const span = document.createElement('span');
-  span.className = 'badge ' + cls;
-  span.textContent = label;
-  return span;
+  span.className = 'badge ' + cls; span.textContent = label; return span;
 }
-
 function makeStatusSelect(o, statusBadge) {
   const sel = document.createElement('select'); sel.className = 'status-select';
   ['pending', 'processing', 'dispatched', 'delivered'].forEach(v => {
@@ -361,44 +324,33 @@ function makeStatusSelect(o, statusBadge) {
   sel.addEventListener('change', () => updateOrderStatus(o.id, sel.value, statusBadge));
   return sel;
 }
-
 function mkTd(text, style = '') {
   const td = document.createElement('td');
-  if (style) td.style.cssText = style;
-  td.textContent = text;
-  return td;
+  if (style) td.style.cssText = style; td.textContent = text; return td;
 }
 function mkCustomerTd(o) {
   const td = document.createElement('td');
-  [
-    ['font-weight:600;color:var(--accent-strong)', o.customer_name],
-    ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
-    ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
-    ['color:var(--text-muted);font-size:0.71rem;margin-top:2px', o.delivery_address],
+  [['font-weight:600;color:var(--accent-strong)', o.customer_name],
+   ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
+   ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
+   ['color:var(--text-muted);font-size:0.71rem;margin-top:2px', o.delivery_address],
   ].forEach(([style, val]) => {
     const d = document.createElement('div'); d.style.cssText = style; d.textContent = val || ''; td.appendChild(d);
-  });
-  return td;
+  }); return td;
 }
 function mkItemsTd(items) {
   const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
   items.forEach((item, i) => {
     if (i > 0) wrap.appendChild(document.createElement('br'));
     wrap.appendChild(document.createTextNode(`${item.qty}× ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
-  });
-  td.appendChild(wrap); return td;
+  }); td.appendChild(wrap); return td;
 }
 function mkBadgeTd(cls, label) {
-  const td = document.createElement('td');
-  td.appendChild(makeBadge(cls, label));
-  return td;
+  const td = document.createElement('td'); td.appendChild(makeBadge(cls, label)); return td;
 }
 function mkSelectTd(o) {
-  const td = document.createElement('td');
-  td.appendChild(makeStatusSelect(o));
-  return td;
+  const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
 }
-
 async function updateOrderStatus(id, status, badgeEl) {
   try {
     const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
@@ -411,17 +363,59 @@ async function updateOrderStatus(id, status, badgeEl) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── PRODUCTS ─────────────────────── */
+/* ─── PRODUCTS ───────────────────────
+   Fetches directly from Supabase REST API.
+   The edge function may not have get_products wired,
+   so we bypass it and hit the DB directly with the anon key.
+   Write operations (add/update/delete) still go through the edge function.
+────────────────────────────── */
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
     '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
   try {
+    // First try the edge function
     const res = await callEdge({ action: 'get_products', password: adminToken });
-    if (!res.ok) { allProducts = []; renderProducts(); return; }
-    const data = await res.json();
-    allProducts = data.products || [];
-    renderProducts();
+    if (res.ok) {
+      const data = await res.json();
+      // Edge function returned products
+      if (Array.isArray(data.products)) {
+        allProducts = data.products;
+        renderProducts();
+        return;
+      }
+    }
+    // Fallback: query Supabase REST directly
+    await loadProductsFromRest();
   } catch {
+    await loadProductsFromRest();
+  }
+}
+
+async function loadProductsFromRest() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=created_at.desc`,
+      {
+        headers: {
+          'apikey': SUPA_ANON,
+          'Authorization': `Bearer ${SUPA_ANON}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Products REST error:', err);
+      allProducts = [];
+      renderProducts();
+      showToast('Could not load products: ' + res.status, true);
+      return;
+    }
+    const data = await res.json();
+    allProducts = Array.isArray(data) ? data : [];
+    renderProducts();
+  } catch (e) {
+    console.error('Products fetch failed:', e);
     allProducts = [];
     renderProducts();
   }
@@ -430,12 +424,17 @@ async function loadProducts() {
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
-  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q)) : allProducts;
+  const list = q
+    ? allProducts.filter(p =>
+        p.name?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q) ||
+        p.brand?.toLowerCase().includes(q)
+      )
+    : allProducts;
 
   if (!list.length) {
     el.innerHTML = `
       <div class="products-empty" style="grid-column:1/-1">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2;display:block;margin:0 auto 12px"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
         No products yet.<br>
         <button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button>
       </div>`;
@@ -445,26 +444,26 @@ function renderProducts() {
 
   el.innerHTML = '';
   list.forEach(p => {
-    const card = document.createElement('div'); card.className = 'product-card';
-    const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).join(', ');
+    const card     = document.createElement('div'); card.className = 'product-card';
+    const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).filter(Boolean).join(', ');
 
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (p.image_url) {
-      const img = document.createElement('img'); img.src = p.image_url; img.alt = p.name;
-      img.onerror = () => { imgWrap.innerHTML = placeholderSVG(); };
+      const img = document.createElement('img'); img.src = p.image_url; img.alt = p.name || '';
+      img.onerror = () => { imgWrap.innerHTML = noImgSVG(); };
       imgWrap.appendChild(img);
     } else {
-      imgWrap.innerHTML = placeholderSVG();
+      imgWrap.innerHTML = noImgSVG();
     }
 
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
-      ${p.category ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
-      <div class="product-name">${esc(p.name)}</div>
-      ${p.brand ? `<div class="product-brand">${esc(p.brand)}</div>` : ''}
-      ${p.sku   ? `<div class="product-sku">SKU: ${esc(p.sku)}</div>` : ''}
-      ${variants ? `<div class="product-variant">${esc(variants)}</div>` : ''}
-      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
+      ${p.category    ? `<div class="product-cat">${esc(p.category)}</div>`     : ''}
+      <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
+      ${p.brand       ? `<div class="product-brand">${esc(p.brand)}</div>`      : ''}
+      ${p.sku         ? `<div class="product-sku">SKU: ${esc(p.sku)}</div>`    : ''}
+      ${variants      ? `<div class="product-variant">${esc(variants)}</div>`   : ''}
+      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>`: ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
 
     const footer  = document.createElement('div'); footer.className = 'product-card-footer';
@@ -479,36 +478,32 @@ function renderProducts() {
   });
 }
 
-function placeholderSVG() {
-  return `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>`;
+function noImgSVG() {
+  return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 }
 
 /* PRODUCT MODAL */
 function openProductModal(product = null) {
-  document.getElementById('modalTitle').textContent   = product ? 'Edit Product' : 'Add Product';
-  document.getElementById('modalProductId').value     = product?.id || '';
-  document.getElementById('mpName').value             = product?.name || '';
-  document.getElementById('mpPrice').value            = product?.price || '';
-  document.getElementById('mpCost').value             = product?.cost_price || '';
-  document.getElementById('mpSku').value              = product?.sku || '';
-  document.getElementById('mpBrand').value            = product?.brand || '';
-  document.getElementById('mpDesc').value             = product?.description || '';
-  document.getElementById('mpImage').value            = product?.image_url || '';
-  document.getElementById('mpCategory').value         = product?.category || '';
+  document.getElementById('modalTitle').textContent  = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('modalProductId').value    = product?.id || '';
+  document.getElementById('mpName').value            = product?.name || '';
+  document.getElementById('mpPrice').value           = product?.price || '';
+  document.getElementById('mpCost').value            = product?.cost_price || '';
+  document.getElementById('mpSku').value             = product?.sku || '';
+  document.getElementById('mpBrand').value           = product?.brand || '';
+  document.getElementById('mpDesc').value            = product?.description || '';
+  document.getElementById('mpImage').value           = product?.image_url || '';
+  document.getElementById('mpCategory').value        = product?.category || '';
   editingVariants = (product?.variants || []).map(v => (typeof v === 'string' ? v : v.name || ''));
   renderVariantRows();
-  const modal = document.getElementById('productModal');
-  modal.removeAttribute('hidden');
+  document.getElementById('productModal').removeAttribute('hidden');
   document.getElementById('mpName').focus();
 }
-
 function closeProductModal() {
   document.getElementById('productModal').setAttribute('hidden', '');
 }
-
 function renderVariantRows() {
-  const el = document.getElementById('variantsList');
-  el.innerHTML = '';
+  const el = document.getElementById('variantsList'); el.innerHTML = '';
   editingVariants.forEach((v, i) => {
     const row = document.createElement('div'); row.className = 'variant-row';
     const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. Scent: Calm';
@@ -518,20 +513,17 @@ function renderVariantRows() {
     row.appendChild(inp); row.appendChild(rm); el.appendChild(row);
   });
 }
-
 function addVariantRow() {
   editingVariants.push('');
   renderVariantRows();
   const inputs = document.getElementById('variantsList').querySelectorAll('input');
   inputs[inputs.length - 1]?.focus();
 }
-
 async function saveProduct() {
   const btn  = document.getElementById('modalSaveBtn');
   const id   = document.getElementById('modalProductId').value;
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
-
   const payload = {
     action:   id ? 'update_product' : 'add_product',
     password: adminToken,
@@ -548,7 +540,6 @@ async function saveProduct() {
       variants:    editingVariants.filter(v => v.trim()).map(v => ({ name: v.trim() })),
     },
   };
-
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
   try {
     const res = await callEdge(payload);
@@ -561,31 +552,24 @@ async function saveProduct() {
     } else {
       allProducts.unshift(data.product || payload.product);
     }
-    renderProducts();
-    closeProductModal();
+    renderProducts(); closeProductModal();
     showToast(id ? 'Product updated ✓' : 'Product added ✓');
   } catch { showToast('Network error.', true); }
   finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
 }
-
 async function deleteProduct(id, name) {
   if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
   try {
     const res = await callEdge({ action: 'delete_product', password: adminToken, product_id: id });
     if (!res.ok) { showToast('Failed to delete.', true); return; }
     allProducts = allProducts.filter(p => p.id !== id);
-    renderProducts();
-    showToast('Product deleted.');
+    renderProducts(); showToast('Product deleted.');
   } catch { showToast('Network error.', true); }
 }
 
 /* ─── UTILITIES ────────────────────── */
-function setText(id, val) {
-  const el = document.getElementById(id); if (el) el.textContent = val;
-}
-function esc(str) {
-  const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
-}
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 function showToast(msg, isError = false) {
   const t = document.getElementById('adminToast');
   t.textContent = msg;
