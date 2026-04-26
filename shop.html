@@ -406,16 +406,13 @@
     </div>
   </nav>
 
-  <div class="banner" id="cancelBanner">Payment was cancelled — your cart is still saved. Try again when ready.</div>
+  <div class="banner" id="cancelBanner">Payment was cancelled &mdash; your cart is still saved. Try again when ready.</div>
 
   <!-- HERO -->
   <section class="shop-hero section">
     <div class="container">
       <div class="shop-hero-panel">
-        <span class="section-kicker">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-          Curated Skincare &amp; Wax Supplies
-        </span>
+        <span class="section-kicker">Curated Skincare &amp; Wax Supplies</span>
         <h1>The Phenome<br/>Collection</h1>
         <p>Professional-grade products crafted for radiant skin and effortless treatments. Delivered to your door.</p>
         <button class="btn btn-secondary" onclick="openCart()">
@@ -591,24 +588,12 @@
         </div>`;
     }
 
-    /* ─────────────────────────────────────────────────────────
-       buildDesc — renders description with paragraphs + bullets
-       Rules:
-         - Split on \n to get lines
-         - Blank lines = paragraph break
-         - Lines starting with • become <li> inside a <ul>
-         - Inline • within a line (e.g. "Includes: • a • b") are
-           split into separate bullet items automatically
-    ───────────────────────────────────────────────────────── */
     function buildDesc(text) {
       const wrap = document.createElement('div');
       wrap.className = 'product-desc';
       if (!text) return wrap;
 
-      // Split into raw lines
       const rawLines = text.split('\n');
-
-      // Group into paragraph blocks separated by blank lines
       const blocks = [];
       let current = [];
       rawLines.forEach(line => {
@@ -620,21 +605,15 @@
       });
       if (current.length) blocks.push(current);
 
-      // Render each block
-      const PREVIEW_BLOCKS = 2; // show first 2 blocks, collapse the rest
+      const PREVIEW_BLOCKS = 2;
       const allEls = [];
 
       blocks.forEach(block => {
-        // Check if any line in the block contains bullet markers
         const fullText = block.join(' ');
         const hasBullets = fullText.includes('\u2022');
 
         if (hasBullets) {
-          // Split the whole block text on bullet character
-          // e.g. "Includes: • item a • item b" → ["Includes:", "item a", "item b"]
           const parts = fullText.split('\u2022').map(s => s.trim()).filter(Boolean);
-
-          // First part before the first bullet is a lead-in sentence
           const leadIn = parts[0].endsWith(':') || !fullText.trimStart().startsWith('\u2022')
             ? parts.shift()
             : null;
@@ -665,7 +644,6 @@
         }
       });
 
-      // Show first PREVIEW_BLOCKS, hide the rest behind "Read more"
       allEls.forEach((el, i) => {
         if (i >= PREVIEW_BLOCKS) el.style.display = 'none';
         wrap.appendChild(el);
@@ -689,7 +667,6 @@
       return wrap;
     }
 
-    /* ── Carousel ────────────────────────── */
     function buildProductImage(p) {
       const imgs = getImages(p);
       const wrap = document.createElement('div');
@@ -802,7 +779,7 @@
       const priceEl = document.querySelector(`#card-${pid} .product-price`);
       if (!priceEl) return;
       const price = getActivePrice(pid);
-      priceEl.innerHTML = `R${Number(price).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+      priceEl.textContent = `R${Number(price).toLocaleString('en-ZA')}`;
     }
 
     function updateAddButton(pid) {
@@ -926,7 +903,7 @@
         /* ── Price ── */
         const price = document.createElement('div'); price.className = 'product-price';
         const activePrice = getActivePrice(p.id);
-        price.innerHTML = `R${Number(activePrice).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+        price.textContent = `R${Number(activePrice).toLocaleString('en-ZA')}`;
         body.appendChild(price);
 
         const addBtn = document.createElement('button');
