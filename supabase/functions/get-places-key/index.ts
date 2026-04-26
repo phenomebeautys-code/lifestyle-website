@@ -25,55 +25,22 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  try {
-    const supabaseUrl    = Deno.env.get('SUPABASE_URL')!;
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const key = Deno.env.get('GOOGLE_PLACES_API_KEY');
 
-    // Use Accept-Profile header to query the vault schema
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/decrypted_secrets?name=eq.GOOGLE_PLACES_API_KEY&select=decrypted_secret&limit=1`,
-      {
-        headers: {
-          'apikey': serviceRoleKey,
-          'Authorization': `Bearer ${serviceRoleKey}`,
-          'Accept-Profile': 'vault',
-        },
-      }
-    );
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error('Vault REST error:', res.status, body);
-      return new Response(JSON.stringify({ error: 'Key unavailable' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    const rows = await res.json();
-    const key  = rows?.[0]?.decrypted_secret;
-
-    if (!key) {
-      console.error('Vault: secret not found. rows:', JSON.stringify(rows));
-      return new Response(JSON.stringify({ error: 'Key not found' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
-    }
-
-    return new Response(JSON.stringify({ key }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        ...corsHeaders,
-      },
-    });
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+  if (!key) {
+    console.error('GOOGLE_PLACES_API_KEY secret is not set on this function');
+    return new Response(JSON.stringify({ error: 'Key not configured' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
   }
+
+  return new Response(JSON.stringify({ key }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      ...corsHeaders,
+    },
+  });
 });
