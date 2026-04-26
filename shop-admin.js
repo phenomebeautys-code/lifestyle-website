@@ -446,10 +446,10 @@ function closePrintLabel() {
 
 /* ─── PRODUCTS ──────────────────────── */
 
-/* Normalise stored images into an array of up to 3 URLs */
+/* Normalise stored images into an array of up to 5 URLs */
 function getProductImages(p) {
   if (Array.isArray(p.image_urls) && p.image_urls.length) {
-    return p.image_urls.filter(Boolean).slice(0, 3);
+    return p.image_urls.filter(Boolean).slice(0, 5);
   }
   if (p.image_url) return [p.image_url];
   return [];
@@ -627,10 +627,13 @@ function openProductModal(product = null) {
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
 
+  // Populate up to 5 image URL fields
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
   document.getElementById('mpImage2').value = imgs[1] || '';
   document.getElementById('mpImage3').value = imgs[2] || '';
+  document.getElementById('mpImage4').value = imgs[3] || '';
+  document.getElementById('mpImage5').value = imgs[4] || '';
 
   // Normalise variants
   editingVariants = (product?.variants || []).map(v => {
@@ -771,10 +774,13 @@ async function saveProduct() {
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
 
+  // Collect up to 5 image URLs
   const imageUrls = [
     document.getElementById('mpImage1').value.trim(),
     document.getElementById('mpImage2').value.trim(),
     document.getElementById('mpImage3').value.trim(),
+    document.getElementById('mpImage4').value.trim(),
+    document.getElementById('mpImage5').value.trim(),
   ].filter(Boolean);
 
   const cleanSizes = editingSizes
