@@ -185,7 +185,45 @@
     .product-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:10px; }
     .product-tag  { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); }
     .product-name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:var(--accent-strong); }
-    .product-desc { font-size:0.86rem; color:var(--text-soft); line-height:1.65; }
+
+    /* ── Description ─────────────────────── */
+    .product-desc {
+      font-size: 0.86rem;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+    .product-desc p {
+      margin: 0 0 10px;
+    }
+    .product-desc p:last-child {
+      margin-bottom: 0;
+    }
+    .product-desc ul {
+      margin: 4px 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .product-desc ul li::before {
+      content: '\2022';
+      margin-right: 7px;
+      color: var(--accent);
+      font-size: 0.8em;
+    }
+    .desc-toggle {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      font-family: var(--font-body);
+      cursor: pointer;
+      padding: 4px 0 0;
+      text-decoration: underline;
+      display: block;
+    }
+
     .product-price {
       display:inline-flex; align-items:center;
       padding:6px 14px; border-radius:var(--radius-pill);
@@ -453,7 +491,7 @@
               <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
               <a href="https://www.facebook.com/share/1Rz4vLJmpH/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
               <a href="https://www.instagram.com/phenomebeauty" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
-              <a href="https://www.tiktok.com/@phenomebeauty" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
+              <a href="https://www.tiktok.com/@thenomebeauty" target="_blank" rel="noopener noreferrer" aria-label="TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
             </div>
           </div>
         </div>
@@ -474,8 +512,6 @@
     let PRODUCTS = [];
     let cart     = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
 
-    // selVariant[pid] = chosen variant name (string | null)
-    // selSize[pid]    = chosen size object { name, price } | null
     const selVariant = {};
     const selSize    = {};
 
@@ -489,12 +525,9 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         PRODUCTS = await res.json();
         PRODUCTS.forEach(p => {
-          // Default variant: first in-stock one
           const v = normaliseVariants(p.variants);
           const firstAvailable = v.find(x => x.in_stock);
           if (firstAvailable) selVariant[p.id] = firstAvailable.name;
-
-          // Default size: first one (all sizes are always available)
           const sizes = normaliseSizes(p.sizes);
           if (sizes.length) selSize[p.id] = sizes[0];
         });
@@ -505,9 +538,6 @@
       }
     }
 
-    /**
-     * normaliseVariants — always returns [{ name, in_stock }]
-     */
     function normaliseVariants(raw) {
       if (!Array.isArray(raw)) return [];
       return raw
@@ -518,9 +548,6 @@
         .filter(v => v.name);
     }
 
-    /**
-     * normaliseSizes — always returns [{ name, price }]
-     */
     function normaliseSizes(raw) {
       if (!Array.isArray(raw)) return [];
       return raw
@@ -528,11 +555,6 @@
         .filter(s => s.name);
     }
 
-    /**
-     * getActivePrice — returns the price to display / charge.
-     * If a size is selected, use that size's price.
-     * Otherwise fall back to the product's base price.
-     */
     function getActivePrice(pid) {
       const p    = PRODUCTS.find(x => x.id === pid);
       const size = selSize[pid];
@@ -541,7 +563,7 @@
     }
 
     function getImages(p) {
-      if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 3);
+      if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
       if (p.image_url) return [p.image_url];
       return [];
     }
@@ -567,6 +589,104 @@
           <p>Could not load products. Please check your connection and try again.</p>
           <button class="btn btn-secondary" onclick="loadProducts()">Retry</button>
         </div>`;
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       buildDesc — renders description with paragraphs + bullets
+       Rules:
+         - Split on \n to get lines
+         - Blank lines = paragraph break
+         - Lines starting with • become <li> inside a <ul>
+         - Inline • within a line (e.g. "Includes: • a • b") are
+           split into separate bullet items automatically
+    ───────────────────────────────────────────────────────── */
+    function buildDesc(text) {
+      const wrap = document.createElement('div');
+      wrap.className = 'product-desc';
+      if (!text) return wrap;
+
+      // Split into raw lines
+      const rawLines = text.split('\n');
+
+      // Group into paragraph blocks separated by blank lines
+      const blocks = [];
+      let current = [];
+      rawLines.forEach(line => {
+        if (line.trim() === '') {
+          if (current.length) { blocks.push(current); current = []; }
+        } else {
+          current.push(line.trim());
+        }
+      });
+      if (current.length) blocks.push(current);
+
+      // Render each block
+      const PREVIEW_BLOCKS = 2; // show first 2 blocks, collapse the rest
+      const allEls = [];
+
+      blocks.forEach(block => {
+        // Check if any line in the block contains bullet markers
+        const fullText = block.join(' ');
+        const hasBullets = fullText.includes('\u2022');
+
+        if (hasBullets) {
+          // Split the whole block text on bullet character
+          // e.g. "Includes: • item a • item b" → ["Includes:", "item a", "item b"]
+          const parts = fullText.split('\u2022').map(s => s.trim()).filter(Boolean);
+
+          // First part before the first bullet is a lead-in sentence
+          const leadIn = parts[0].endsWith(':') || !fullText.trimStart().startsWith('\u2022')
+            ? parts.shift()
+            : null;
+
+          const blockEl = document.createElement('div');
+
+          if (leadIn) {
+            const p = document.createElement('p');
+            p.textContent = leadIn;
+            blockEl.appendChild(p);
+          }
+
+          if (parts.length) {
+            const ul = document.createElement('ul');
+            parts.forEach(item => {
+              const li = document.createElement('li');
+              li.textContent = item;
+              ul.appendChild(li);
+            });
+            blockEl.appendChild(ul);
+          }
+
+          allEls.push(blockEl);
+        } else {
+          const p = document.createElement('p');
+          p.textContent = block.join(' ');
+          allEls.push(p);
+        }
+      });
+
+      // Show first PREVIEW_BLOCKS, hide the rest behind "Read more"
+      allEls.forEach((el, i) => {
+        if (i >= PREVIEW_BLOCKS) el.style.display = 'none';
+        wrap.appendChild(el);
+      });
+
+      if (allEls.length > PREVIEW_BLOCKS) {
+        const toggle = document.createElement('button');
+        toggle.className = 'desc-toggle';
+        toggle.textContent = 'Read more';
+        let open = false;
+        toggle.addEventListener('click', () => {
+          open = !open;
+          allEls.forEach((el, i) => {
+            if (i >= PREVIEW_BLOCKS) el.style.display = open ? '' : 'none';
+          });
+          toggle.textContent = open ? 'Show less' : 'Read more';
+        });
+        wrap.appendChild(toggle);
+      }
+
+      return wrap;
     }
 
     /* ── Carousel ────────────────────────── */
@@ -678,7 +798,6 @@
       return wrap;
     }
 
-    /* ── Update price display ────────────────── */
     function updatePriceDisplay(pid) {
       const priceEl = document.querySelector(`#card-${pid} .product-price`);
       if (!priceEl) return;
@@ -686,17 +805,13 @@
       priceEl.innerHTML = `R${Number(price).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
     }
 
-    /* ── Update Add to Cart button ──────────── */
     function updateAddButton(pid) {
       const p        = PRODUCTS.find(x => x.id === pid);
       const variants = normaliseVariants(p.variants);
-      const sizes    = normaliseSizes(p.sizes);
       const addBtn   = document.querySelector(`#card-${pid} .btn-add-to-cart`);
       if (!addBtn) return;
 
-      // No variants at all → always purchasable (size selection is optional guard)
       if (!variants.length) {
-        // If sizes exist, a size must be selected (they always are after load)
         addBtn.disabled = false;
         addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Cart`;
         return;
@@ -733,11 +848,10 @@
         const body = document.createElement('div'); body.className = 'product-body';
         const tag  = document.createElement('div'); tag.className  = 'product-tag';  tag.textContent  = p.category || p.brand || '';
         const name = document.createElement('div'); name.className = 'product-name'; name.textContent = p.name;
-        const desc = document.createElement('div'); desc.className = 'product-desc'; desc.textContent = p.description || '';
 
         body.appendChild(tag);
         body.appendChild(name);
-        if (p.description) body.appendChild(desc);
+        if (p.description) body.appendChild(buildDesc(p.description));
 
         /* ── Variants ── */
         if (variants.length) {
@@ -790,7 +904,6 @@
             btn.textContent = s.name;
             btn.setAttribute('title', `R${s.price}`);
 
-            // Default: first size active
             if (idx === 0 && !selSize[p.id]) selSize[p.id] = s;
             if (selSize[p.id] && selSize[p.id].name === s.name) btn.classList.add('active');
 
@@ -833,9 +946,7 @@
     function addToCart(pid) {
       const p        = PRODUCTS.find(x => x.id === pid);
       const variants = normaliseVariants(p.variants);
-      const sizes    = normaliseSizes(p.sizes);
 
-      // Guard: block if selected variant is out of stock
       if (variants.length) {
         const selected = variants.find(v => v.name === selVariant[pid]);
         if (!selected || !selected.in_stock) return;
@@ -846,7 +957,6 @@
       const sizeName  = sizeObj ? sizeObj.name : null;
       const unitPrice = getActivePrice(pid);
 
-      // Cart key includes both variant and size so each combo is a separate line
       const key = [pid, variant, sizeName].filter(Boolean).join('::') || pid;
       const ex  = cart.find(i => i.key === key);
       if (ex) {
