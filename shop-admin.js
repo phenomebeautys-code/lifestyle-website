@@ -11,8 +11,10 @@ let allOrders       = [];
 let allProducts     = [];
 let activeFilter    = 'all';
 let adminToken      = '';
-// editingVariants is now an array of { name: string, in_stock: boolean }
+// editingVariants: [{ name: string, in_stock: boolean }]
 let editingVariants = [];
+// editingSizes: [{ name: string, price: number }]
+let editingSizes    = [];
 
 const BADGE_MAP = {
   pending:    'badge-unpaid',
@@ -57,6 +59,7 @@ document.getElementById('addProductBtn').addEventListener('click', () => openPro
 document.getElementById('modalCancelBtn').addEventListener('click', closeProductModal);
 document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
 document.getElementById('addVariantBtn').addEventListener('click', addVariantRow);
+document.getElementById('addSizeBtn').addEventListener('click', addSizeRow);
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
 });
@@ -89,7 +92,7 @@ async function login() {
   const btn = document.getElementById('loginBtn');
   if (!pw) { showLoginError('Please enter your password.'); return; }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Signing in\u2026';
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
   hideLoginError();
   try {
     const res = await callEdge({ action: 'get_orders', password: pw });
@@ -147,7 +150,7 @@ async function refreshData() {
     const data = await res.json();
     allOrders = data.orders || [];
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    showToast('Refreshed \u2713');
+    showToast('Refreshed ✓');
   } catch { showToast('Network error.', true); }
   finally { btn.disabled = false; }
 }
@@ -304,7 +307,7 @@ function renderCards() {
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
     items.forEach((item, i) => {
       if (i > 0) itemsEl.appendChild(document.createElement('br'));
-      itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
+      itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`));
     });
     if (!items.length) itemsEl.textContent = 'No items';
 
@@ -362,7 +365,9 @@ function mkItemsTd(items) {
   const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
   items.forEach((item, i) => {
     if (i > 0) wrap.appendChild(document.createElement('br'));
-    wrap.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}`));
+    wrap.appendChild(document.createTextNode(
+      `${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`
+    ));
   }); td.appendChild(wrap); return td;
 }
 function mkBadgeTd(cls, label) {
@@ -393,6 +398,7 @@ function printLabel(order) {
   const itemsHTML = items.map(item => `
     <div class="label-item">${item.qty}\u00d7 &nbsp;<strong>${esc(item.name)}</strong></div>
     ${item.variant ? `<div class="label-item-variant">${esc(item.variant)}</div>` : ''}
+    ${item.size    ? `<div class="label-item-variant">Size: ${esc(item.size)}</div>` : ''}
   `).join('');
 
   const area = document.getElementById('printLabelArea');
@@ -507,8 +513,9 @@ function renderProducts() {
   }
   el.innerHTML = '';
   list.forEach(p => {
-    const card     = document.createElement('div'); card.className = 'product-card';
-    // Show variant names with stock status indicator in the admin card
+    const card = document.createElement('div'); card.className = 'product-card';
+
+    // Variant display with stock status
     const variantDisplay = (p.variants || [])
       .map(v => {
         const name    = typeof v === 'string' ? v : (v.name || '');
@@ -517,7 +524,13 @@ function renderProducts() {
       })
       .filter(Boolean)
       .join(', ');
-    const images   = getProductImages(p);
+
+    // Size display
+    const sizeDisplay = normaliseSizes(p.sizes)
+      .map(s => `${s.name} (R${s.price})`)
+      .join(', ');
+
+    const images = getProductImages(p);
 
     /* ── Image carousel ── */
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
@@ -567,12 +580,14 @@ function renderProducts() {
 
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
-      ${p.category       ? `<div class="product-cat">${esc(p.category)}</div>`           : ''}
+      ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>`         : ''}
       <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
-      ${p.brand          ? `<div class="product-brand">${esc(p.brand)}</div>`             : ''}
-      ${variantDisplay   ? `<div class="product-variant">${esc(variantDisplay)}</div>`   : ''}
-      ${p.description    ? `<div class="product-desc">${esc(p.description)}</div>`       : ''}
-      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
+      ${p.brand        ? `<div class="product-brand">${esc(p.brand)}</div>`           : ''}
+      ${variantDisplay ? `<div class="product-variant">${esc(variantDisplay)}</div>` : ''}
+      ${sizeDisplay    ? `<div class="product-variant">Sizes: ${esc(sizeDisplay)}</div>` : ''}
+      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>`     : ''}
+      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>`;
+
     const footer  = document.createElement('div'); footer.className = 'product-card-footer';
     const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => openProductModal(p));
@@ -585,6 +600,19 @@ function renderProducts() {
 }
 function noImgSVG() {
   return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+}
+
+/* ─── SIZES HELPERS ─────────────────── */
+
+/**
+ * normaliseSizes — always returns [{ name: string, price: number }]
+ * Handles missing / null sizes gracefully.
+ */
+function normaliseSizes(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 }))
+    .filter(s => s.name);
 }
 
 /* ─── PRODUCT MODAL ─────────────────── */
@@ -604,13 +632,17 @@ function openProductModal(product = null) {
   document.getElementById('mpImage2').value = imgs[1] || '';
   document.getElementById('mpImage3').value = imgs[2] || '';
 
-  // Normalise existing variants into { name, in_stock } objects
+  // Normalise variants
   editingVariants = (product?.variants || []).map(v => {
     if (typeof v === 'string') return { name: v, in_stock: true };
     return { name: v.name || '', in_stock: v.in_stock !== false };
   }).filter(v => v.name);
 
+  // Normalise sizes
+  editingSizes = normaliseSizes(product?.sizes || []);
+
   renderVariantRows();
+  renderSizeRows();
   document.getElementById('productModal').removeAttribute('hidden');
   document.getElementById('mpName').focus();
 }
@@ -618,10 +650,7 @@ function closeProductModal() {
   document.getElementById('productModal').setAttribute('hidden', '');
 }
 
-/**
- * Renders the variant list inside the modal.
- * Each row: [text input for name] [In Stock toggle] [remove button]
- */
+/* ── Variant rows ── */
 function renderVariantRows() {
   const el = document.getElementById('variantsList');
   el.innerHTML = '';
@@ -631,7 +660,6 @@ function renderVariantRows() {
     row.className = 'variant-row';
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
 
-    // Name input
     const inp = document.createElement('input');
     inp.type        = 'text';
     inp.value       = v.name;
@@ -639,7 +667,6 @@ function renderVariantRows() {
     inp.style.flex  = '1';
     inp.addEventListener('input', () => { editingVariants[i].name = inp.value; });
 
-    // In-stock toggle label + checkbox
     const label = document.createElement('label');
     label.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:0.78rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;user-select:none;';
     label.setAttribute('title', 'Toggle stock availability for this variant');
@@ -661,7 +688,6 @@ function renderVariantRows() {
     label.appendChild(checkbox);
     label.appendChild(stockText);
 
-    // Remove button
     const rm = document.createElement('button');
     rm.className = 'btn-remove-variant';
     rm.innerHTML = '\u00d7';
@@ -676,13 +702,69 @@ function renderVariantRows() {
 }
 
 function addVariantRow() {
-  // New variants default to in_stock: true
   editingVariants.push({ name: '', in_stock: true });
   renderVariantRows();
   const inputs = document.getElementById('variantsList').querySelectorAll('input[type="text"]');
   inputs[inputs.length - 1]?.focus();
 }
 
+/* ── Size rows ── */
+function renderSizeRows() {
+  const el = document.getElementById('sizesList');
+  el.innerHTML = '';
+
+  editingSizes.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+
+    // Size name input
+    const nameInp = document.createElement('input');
+    nameInp.type        = 'text';
+    nameInp.value       = s.name;
+    nameInp.placeholder = 'e.g. 50ml';
+    nameInp.style.flex  = '1';
+    nameInp.addEventListener('input', () => { editingSizes[i].name = nameInp.value; });
+
+    // Price input
+    const priceWrap = document.createElement('div');
+    priceWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+    const pricePrefix = document.createElement('span');
+    pricePrefix.textContent = 'R';
+    pricePrefix.style.cssText = 'font-size:0.82rem;color:var(--text-muted);font-weight:600;';
+    const priceInp = document.createElement('input');
+    priceInp.type        = 'number';
+    priceInp.value       = s.price || '';
+    priceInp.placeholder = '0.00';
+    priceInp.min         = '0';
+    priceInp.step        = '0.01';
+    priceInp.style.cssText = 'width:80px;';
+    priceInp.addEventListener('input', () => { editingSizes[i].price = parseFloat(priceInp.value) || 0; });
+    priceWrap.appendChild(pricePrefix);
+    priceWrap.appendChild(priceInp);
+
+    // Remove button
+    const rm = document.createElement('button');
+    rm.className = 'btn-remove-variant';
+    rm.innerHTML = '\u00d7';
+    rm.type      = 'button';
+    rm.addEventListener('click', () => { editingSizes.splice(i, 1); renderSizeRows(); });
+
+    row.appendChild(nameInp);
+    row.appendChild(priceWrap);
+    row.appendChild(rm);
+    el.appendChild(row);
+  });
+}
+
+function addSizeRow() {
+  editingSizes.push({ name: '', price: 0 });
+  renderSizeRows();
+  const inputs = document.getElementById('sizesList').querySelectorAll('input[type="text"]');
+  inputs[inputs.length - 1]?.focus();
+}
+
+/* ── Save product ── */
 async function saveProduct() {
   const btn  = document.getElementById('modalSaveBtn');
   const id   = document.getElementById('modalProductId').value;
@@ -694,6 +776,10 @@ async function saveProduct() {
     document.getElementById('mpImage2').value.trim(),
     document.getElementById('mpImage3').value.trim(),
   ].filter(Boolean);
+
+  const cleanSizes = editingSizes
+    .filter(s => s.name.trim())
+    .map(s => ({ name: s.name.trim(), price: s.price }));
 
   const payload = {
     action:   id ? 'update_product' : 'add_product',
@@ -709,10 +795,11 @@ async function saveProduct() {
       image_url:   imageUrls[0] || '',
       image_urls:  imageUrls,
       category:    document.getElementById('mpCategory').value.trim(),
-      // Save full { name, in_stock } objects — filters out blank names
       variants:    editingVariants
         .filter(v => v.name.trim())
         .map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
+      // sizes: [{ name, price }] — empty array if none set
+      sizes: cleanSizes,
     },
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
