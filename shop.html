@@ -21,13 +21,12 @@
     }
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.62);
-      z-index: 0;
-      pointer-events: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.62);
+      z-index: 0; pointer-events: none;
     }
     body > * { position: relative; z-index: 1; }
+
     .shop-hero { padding: 18px 0 10px; }
     .shop-hero-panel {
       padding: var(--section-pad);
@@ -35,12 +34,12 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
       border: 1px solid var(--glass-border);
       box-shadow: var(--shadow-lg);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
       text-align: center;
     }
     .shop-hero-panel h1 { font-family: var(--font-display); font-size: clamp(2.8rem,8vw,5rem); line-height:1; color: var(--accent-strong); margin-bottom:12px; }
     .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto 24px; line-height:1.7; }
+
     .cart-float {
       display: inline-flex; align-items: center; gap:8px;
       padding: 10px 20px; border-radius: var(--radius-pill);
@@ -56,12 +55,37 @@
       width:20px; height:20px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
     }
+
     .shop-section { padding: 10px 0 60px; }
     .product-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
       gap: 16px;
     }
+
+    /* ── Skeleton loader ───────────────────────── */
+    .skeleton-card {
+      background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .skeleton-img {
+      width:100%; aspect-ratio:4/3;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skeleton-body { padding:20px; display:flex; flex-direction:column; gap:10px; }
+    .skeleton-line {
+      border-radius:6px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.04) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ── Product card ──────────────────────────── */
     .product-card {
       background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
       border: 1px solid var(--glass-border);
@@ -72,75 +96,69 @@
     }
     .product-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.22); }
 
-    /* ── Product image area ─────────────────── */
+    /* ── Product image area ────────────────────── */
     .product-img {
       width:100%; aspect-ratio:4/3;
       overflow:hidden;
       border-bottom:1px solid var(--glass-border);
       background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
       position: relative;
+      display:flex; align-items:center; justify-content:center;
     }
-    /* Single-image fallback (no carousel) */
     .product-img > img {
       width:100%; height:100%;
       object-fit:cover; object-position:center;
-      display:block;
-      transition: transform 0.4s ease;
+      display:block; transition: transform 0.4s ease;
     }
     .product-card:hover .product-img > img { transform: scale(1.04); }
-
-    /* ── Carousel (multi-image) ─────────────── */
-    .shop-carousel {
-      position: relative; width: 100%; height: 100%; overflow: hidden;
+    .no-img-placeholder {
+      display:flex; align-items:center; justify-content:center;
+      width:100%; height:100%; opacity:0.15;
     }
+
+    /* ── Carousel ──────────────────────────────── */
+    .shop-carousel { position:relative; width:100%; height:100%; overflow:hidden; }
     .shop-carousel-track {
-      display: flex; height: 100%;
+      display:flex; height:100%;
       transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
       will-change: transform;
     }
-    .shop-carousel-slide {
-      min-width: 100%; height: 100%; flex-shrink: 0;
-      overflow: hidden;
-    }
+    .shop-carousel-slide { min-width:100%; height:100%; flex-shrink:0; overflow:hidden; }
     .shop-carousel-slide img {
       width:100%; height:100%;
       object-fit:cover; object-position:center;
-      display:block;
-      transition: transform 0.4s ease;
+      display:block; transition: transform 0.4s ease;
     }
     .product-card:hover .shop-carousel-slide img { transform: scale(1.04); }
-    /* Arrows */
     .shop-carousel-btn {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      background: rgba(4,4,6,0.55); backdrop-filter: blur(6px);
-      border: 1px solid rgba(255,255,255,0.12); color: var(--accent-strong);
-      width: 30px; height: 30px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.15rem; line-height: 1; cursor: pointer;
-      transition: background 0.18s, opacity 0.18s;
-      z-index: 2; padding: 0;
-      opacity: 0; border: none;
+      position:absolute; top:50%; transform:translateY(-50%);
+      background:rgba(4,4,6,0.55); backdrop-filter:blur(6px);
+      color:var(--accent-strong);
+      width:30px; height:30px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.15rem; line-height:1; cursor:pointer;
+      transition:background 0.18s, opacity 0.18s;
+      z-index:2; padding:0; border:none;
+      opacity:0;
     }
-    .shop-carousel:hover .shop-carousel-btn { opacity: 1; }
-    .shop-carousel-prev { left: 7px; }
-    .shop-carousel-next { right: 7px; }
-    .shop-carousel-btn:hover { background: rgba(4,4,6,0.85); }
-    /* Dots */
+    .shop-carousel:hover .shop-carousel-btn { opacity:1; }
+    .shop-carousel-prev { left:7px; }
+    .shop-carousel-next { right:7px; }
+    .shop-carousel-btn:hover { background:rgba(4,4,6,0.85); }
     .shop-carousel-dots {
-      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 5px; z-index: 2;
+      position:absolute; bottom:8px; left:50%; transform:translateX(-50%);
+      display:flex; gap:5px; z-index:2;
     }
     .shop-carousel-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(255,255,255,0.35); border: none; cursor: pointer; padding: 0;
-      transition: background 0.2s, transform 0.2s;
+      width:6px; height:6px; border-radius:50%;
+      background:rgba(255,255,255,0.35); border:none; cursor:pointer; padding:0;
+      transition:background 0.2s, transform 0.2s;
     }
-    .shop-carousel-dot.active {
-      background: var(--accent-strong); transform: scale(1.35);
-    }
+    .shop-carousel-dot.active { background:var(--accent-strong); transform:scale(1.35); }
 
+    /* ── Product body ──────────────────────────── */
     .product-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:10px; }
-    .product-tag { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); }
+    .product-tag  { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); }
     .product-name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:var(--accent-strong); }
     .product-desc { font-size:0.86rem; color:var(--text-soft); line-height:1.65; }
     .product-price {
@@ -158,12 +176,19 @@
       font-size:0.78rem; font-weight:500; color:var(--text-muted);
       cursor:pointer; background:transparent;
       font-family:var(--font-body);
-      transition: background 0.18s, border-color 0.18s, color 0.18s;
+      transition:background 0.18s, border-color 0.18s, color 0.18s;
     }
-    .v-pill:hover { border-color:rgba(255,255,255,0.3); color:var(--text); }
+    .v-pill:hover  { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .v-pill.active { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.10); color:var(--accent-strong); }
 
-    /* ── Cart Drawer ─────────────────────────────── */
+    /* ── Error state ───────────────────────────── */
+    .shop-error {
+      grid-column: 1/-1; text-align:center; padding:48px 24px;
+      color:var(--text-muted);
+    }
+    .shop-error p { margin-bottom:16px; }
+
+    /* ── Cart Drawer ───────────────────────────── */
     .overlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
@@ -173,7 +198,7 @@
     .cart-drawer {
       position:fixed; right:0; top:0; bottom:0;
       width:min(440px,100vw);
-      background: linear-gradient(180deg, rgba(8,8,10,0.97), rgba(4,4,6,0.96));
+      background:linear-gradient(180deg,rgba(8,8,10,0.97),rgba(4,4,6,0.96));
       border-left:1px solid var(--glass-border);
       backdrop-filter:blur(40px);
       z-index:300; display:flex; flex-direction:column;
@@ -200,10 +225,10 @@
       background:rgba(255,255,255,0.04); border:1px solid var(--glass-border);
       border-radius:var(--radius-md); padding:14px;
     }
-    .cart-item-name { font-size:0.9rem; font-weight:600; color:var(--accent-strong); }
+    .cart-item-name    { font-size:0.9rem; font-weight:600; color:var(--accent-strong); }
     .cart-item-variant { font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
-    .cart-item-price { font-size:0.95rem; font-weight:700; color:var(--accent); white-space:nowrap; }
-    .cart-item-qty { display:flex; align-items:center; gap:8px; margin-top:8px; }
+    .cart-item-price   { font-size:0.95rem; font-weight:700; color:var(--accent); white-space:nowrap; }
+    .cart-item-qty     { display:flex; align-items:center; gap:8px; margin-top:8px; }
     .qty-btn {
       background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
       color:var(--text); width:28px; height:28px; border-radius:8px;
@@ -212,11 +237,13 @@
       transition:background 0.18s;
     }
     .qty-btn:hover { background:rgba(255,255,255,0.13); }
-    .qty-num { font-size:0.88rem; font-weight:600; min-width:20px; text-align:center; }
-    .remove-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.78rem; text-decoration:underline; transition:color 0.18s; font-family:var(--font-body); }
+    .qty-num   { font-size:0.88rem; font-weight:600; min-width:20px; text-align:center; }
+    .remove-btn {
+      background:none; border:none; color:var(--text-muted); cursor:pointer;
+      font-size:0.78rem; text-decoration:underline;
+      transition:color 0.18s; font-family:var(--font-body);
+    }
     .remove-btn:hover { color:#f87171; }
-
-    /* ── Cart Footer ── */
     .cart-footer { padding:20px 24px; border-top:1px solid var(--glass-border); display:flex; flex-direction:column; gap:14px; }
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
@@ -290,7 +317,9 @@
   <!-- PRODUCTS -->
   <section class="shop-section">
     <div class="container">
-      <div class="product-grid" id="productGrid"></div>
+      <div class="product-grid" id="productGrid">
+        <!-- skeletons injected by JS while loading -->
+      </div>
     </div>
   </section>
 
@@ -370,67 +399,267 @@
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
 
-    const SCENTS      = ['Balance','Calm','Bloom','Pure'];
-    const WAX_COLOURS = ['Black','White','Pink'];
-    const WAX_TYPES   = ['Gentle Touch','Everyday Smooth','Firm Hold','Pro Strength'];
-    const WAX_SIZES   = ['500g - R260','1kg - R380'];
-    const WAX_SIZE_PRICES = { '500g - R260': 260, '1kg - R380': 380 };
+    /* ── State ─────────────────────────────────── */
+    let PRODUCTS = [];           /* filled by loadProducts() */
+    let cart     = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
+    const selVariant = {};       /* { [productId]: selectedVariantName } */
 
-    /*
-     * To add multiple images to a product, use the `imgs` array (up to 3 URLs).
-     * If only one image is needed, use `img` as before — both are supported.
-     */
-    const PRODUCTS = [
-      { id:'smooth-ritual',     tag:'Body Scrub',          name:'Refine',            desc:'A luxuriously gritty exfoliating scrub that melts away dead skin, leaving you silky-soft and glowing. 250ml.',      price:220, imgs:['https://iili.io/B6voJLv.jpg'], variantLabel:'Scent',       variants:SCENTS },
-      { id:'smooth-veil',       tag:'Body Cream',          name:'Smooth Veil',       desc:'A rich, fast-absorbing body cream that locks in moisture and leaves skin dewy-smooth all day. 200ml.',             price:260, imgs:['https://iili.io/B6e8acv.jpg'], variantLabel:'Scent',       variants:SCENTS },
-      { id:'smooth-ritual-kit', tag:'Bundle - Best Value', name:'Smooth Ritual Kit', desc:'The full glow experience: Smooth Ritual Scrub + Smooth Veil Cream. Pick a scent for each.',                     price:420, imgs:['https://iili.io/B6e8acv.jpg'], variantLabel:'Scrub Scent', variants:SCENTS, variant2Label:'Cream Scent', variants2:SCENTS },
-      { id:'wax-melting-pot',   tag:'Wax Equipment',       name:'Wax Melting Pot',   desc:'Professional-grade electric wax melting pot for smooth, even wax temperatures every session.',                    price:320, imgs:['https://iili.io/B6e8YKJ.jpg'], variantLabel:'Colour',      variants:WAX_COLOURS },
-      { id:'professional-wax',  tag:'Professional Wax',    name:'Professional Wax',  desc:'Premium depilatory wax for professional salon use - clean, smooth, and effective. Choose your type and size.',    price:260, imgs:['https://iili.io/B6e8YKJ.jpg'], variantLabel:'Type',        variants:WAX_TYPES, variant2Label:'Size', variants2:WAX_SIZES, dynamicPrice:WAX_SIZE_PRICES, dynamicPriceKey:'variant2' },
-    ];
+    /* ── Supabase fetch ────────────────────────── */
+    async function loadProducts() {
+      showSkeletons(4);
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?active=eq.true&order=idx.asc`,
+          {
+            headers: {
+              'apikey':        SUPABASE_ANON,
+              'Authorization': `Bearer ${SUPABASE_ANON}`,
+            },
+          }
+        );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        PRODUCTS = await res.json();
 
-    let cart = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
-    const sel1 = {}, sel2 = {};
-    PRODUCTS.forEach(p => { sel1[p.id] = p.variants[0]; if (p.variants2) sel2[p.id] = p.variants2[0]; });
+        /* seed default variant selection */
+        PRODUCTS.forEach(p => {
+          const variants = normaliseVariants(p.variants);
+          if (variants.length) selVariant[p.id] = variants[0];
+        });
 
-    function getProductPrice(p) {
-      if (p.dynamicPrice && p.dynamicPriceKey === 'variant2') return p.dynamicPrice[sel2[p.id]] || p.price;
-      return p.price;
+        renderProducts();
+      } catch (err) {
+        console.error('Failed to load products:', err);
+        showProductError();
+      }
     }
-    function saveCart()          { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
-    function cartKey(pid,v1,v2)  { return v2 ? `${pid}::${v1}::${v2}` : `${pid}::${v1}`; }
 
+    /* variants stored as [{name:"..."}] or ["..."] — normalise to string[] */
+    function normaliseVariants(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.map(v => (typeof v === 'string' ? v : v.name || '')).filter(Boolean);
+    }
+
+    /* images: prefer image_urls[], fall back to image_url string */
+    function getImages(p) {
+      if (Array.isArray(p.image_urls) && p.image_urls.length) {
+        return p.image_urls.filter(Boolean).slice(0, 3);
+      }
+      if (p.image_url) return [p.image_url];
+      return [];
+    }
+
+    /* ── Skeleton ──────────────────────────────── */
+    function showSkeletons(n) {
+      document.getElementById('productGrid').innerHTML = Array.from({ length: n }, () => `
+        <div class="skeleton-card">
+          <div class="skeleton-img"></div>
+          <div class="skeleton-body">
+            <div class="skeleton-line" style="height:10px;width:40%"></div>
+            <div class="skeleton-line" style="height:22px;width:70%"></div>
+            <div class="skeleton-line" style="height:12px;width:90%"></div>
+            <div class="skeleton-line" style="height:12px;width:75%"></div>
+            <div class="skeleton-line" style="height:32px;width:50%;border-radius:99px;margin-top:4px"></div>
+            <div class="skeleton-line" style="height:38px;border-radius:99px;margin-top:4px"></div>
+          </div>
+        </div>`).join('');
+    }
+
+    function showProductError() {
+      document.getElementById('productGrid').innerHTML = `
+        <div class="shop-error">
+          <p>Could not load products. Please check your connection and try again.</p>
+          <button class="btn btn-secondary" onclick="loadProducts()">Retry</button>
+        </div>`;
+    }
+
+    /* ── Build carousel or single image ─────────── */
+    function buildProductImage(p) {
+      const imgs = getImages(p);
+      const wrap = document.createElement('div');
+      wrap.className = 'product-img';
+
+      if (imgs.length > 1) {
+        const carousel = document.createElement('div'); carousel.className = 'shop-carousel';
+        const track    = document.createElement('div'); track.className = 'shop-carousel-track';
+
+        imgs.forEach((url, i) => {
+          const slide = document.createElement('div'); slide.className = 'shop-carousel-slide';
+          const img   = document.createElement('img');
+          img.src = url; img.alt = (p.name || '') + ' ' + (i + 1); img.loading = 'lazy';
+          slide.appendChild(img); track.appendChild(slide);
+        });
+        carousel.appendChild(track);
+
+        let cur = 0;
+        const dots   = document.createElement('div'); dots.className = 'shop-carousel-dots';
+        const dotEls = imgs.map((_, i) => {
+          const d = document.createElement('button');
+          d.className = 'shop-carousel-dot' + (i === 0 ? ' active' : '');
+          d.setAttribute('aria-label', 'Image ' + (i + 1));
+          d.addEventListener('click', e => { e.stopPropagation(); go(i); });
+          dots.appendChild(d); return d;
+        });
+
+        function go(idx) {
+          cur = (idx + imgs.length) % imgs.length;
+          track.style.transform = `translateX(-${cur * 100}%)`;
+          dotEls.forEach((d, i) => d.classList.toggle('active', i === cur));
+        }
+
+        const prev = document.createElement('button');
+        prev.className = 'shop-carousel-btn shop-carousel-prev';
+        prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous');
+        prev.addEventListener('click', e => { e.stopPropagation(); go(cur - 1); });
+
+        const next = document.createElement('button');
+        next.className = 'shop-carousel-btn shop-carousel-next';
+        next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next');
+        next.addEventListener('click', e => { e.stopPropagation(); go(cur + 1); });
+
+        carousel.appendChild(prev);
+        carousel.appendChild(next);
+        carousel.appendChild(dots);
+        wrap.appendChild(carousel);
+
+      } else if (imgs.length === 1) {
+        const img = document.createElement('img');
+        img.src = imgs[0]; img.alt = p.name || ''; img.loading = 'lazy';
+        wrap.appendChild(img);
+
+      } else {
+        wrap.innerHTML = `
+          <div class="no-img-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </div>`;
+      }
+      return wrap;
+    }
+
+    /* ── Render all product cards ────────────────── */
+    function renderProducts() {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+
+      if (!PRODUCTS.length) {
+        grid.innerHTML = '<div class="shop-error"><p>No products available right now. Check back soon!</p></div>';
+        return;
+      }
+
+      PRODUCTS.forEach(p => {
+        const variants = normaliseVariants(p.variants);
+        const card     = document.createElement('div');
+        card.className = 'product-card'; card.id = 'card-' + p.id;
+
+        card.appendChild(buildProductImage(p));
+
+        const body = document.createElement('div'); body.className = 'product-body';
+
+        /* category tag */
+        const tag = document.createElement('div'); tag.className = 'product-tag';
+        tag.textContent = p.category || p.brand || '';
+
+        /* name */
+        const name = document.createElement('div'); name.className = 'product-name';
+        name.textContent = p.name;
+
+        /* description */
+        const desc = document.createElement('div'); desc.className = 'product-desc';
+        desc.textContent = p.description || '';
+
+        body.appendChild(tag);
+        body.appendChild(name);
+        if (p.description) body.appendChild(desc);
+
+        /* variants pills */
+        if (variants.length) {
+          const varWrap   = document.createElement('div');
+          const varLabel  = document.createElement('div'); varLabel.className = 'variant-label'; varLabel.textContent = 'Variant';
+          const pillGroup = document.createElement('div'); pillGroup.className = 'pill-group';
+
+          variants.forEach(v => {
+            const btn = document.createElement('button'); btn.className = 'v-pill';
+            if (v === selVariant[p.id]) btn.classList.add('active');
+            btn.textContent = v;
+            btn.addEventListener('click', () => {
+              selVariant[p.id] = v;
+              pillGroup.querySelectorAll('.v-pill').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+            });
+            pillGroup.appendChild(btn);
+          });
+
+          varWrap.appendChild(varLabel);
+          varWrap.appendChild(pillGroup);
+          body.appendChild(varWrap);
+        }
+
+        /* price */
+        const price = document.createElement('div'); price.className = 'product-price';
+        price.innerHTML = `R${Number(p.price).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+        body.appendChild(price);
+
+        /* add to cart button */
+        const addBtn = document.createElement('button');
+        addBtn.className = 'btn btn-primary';
+        addBtn.style.cssText = 'width:100%;justify-content:center;margin-top:4px';
+        addBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add to Cart`;
+        addBtn.addEventListener('click', () => addToCart(p.id));
+        body.appendChild(addBtn);
+
+        card.appendChild(body);
+        grid.appendChild(card);
+      });
+    }
+
+    /* ── Cart logic ────────────────────────────── */
     function addToCart(pid) {
-      const p  = PRODUCTS.find(x => x.id === pid);
-      const v1 = sel1[pid], v2 = p.variants2 ? sel2[pid] : null;
-      const key = cartKey(pid,v1,v2);
-      const ex  = cart.find(i => i.key === key);
-      const price = getProductPrice(p);
-      if (ex) { ex.qty++; } else {
-        cart.push({ key, productId:pid, name:p.name,
-          variant: v2 ? `${p.variantLabel}: ${v1} / ${p.variant2Label}: ${v2}` : `${p.variantLabel}: ${v1}`,
-          price, qty:1 });
+      const p       = PRODUCTS.find(x => x.id === pid);
+      const variant = selVariant[pid] || null;
+      const key     = variant ? `${pid}::${variant}` : pid;
+      const ex      = cart.find(i => i.key === key);
+      if (ex) {
+        ex.qty++;
+      } else {
+        cart.push({
+          key,
+          productId: pid,
+          name:      p.name,
+          variant:   variant || '',
+          price:     Number(p.price),
+          qty:       1,
+        });
       }
       saveCart(); updateBadge(); renderCart(); openCart();
     }
 
+    function saveCart()         { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
+    function calcSub()          { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
+    function calcTotal()        { return calcSub() + (cart.length ? DELIVERY_FEE : 0); }
     function updateBadge() {
-      const n = cart.reduce((s,i) => s+i.qty, 0);
+      const n = cart.reduce((s, i) => s + i.qty, 0);
       document.getElementById('cartBadge').textContent     = n;
       document.getElementById('heroCartCount').textContent = n;
     }
-    function calcSub()   { return cart.reduce((s,i) => s+i.price*i.qty, 0); }
-    function calcTotal() { return calcSub() + (cart.length ? DELIVERY_FEE : 0); }
 
     function renderCart() {
       const el = document.getElementById('cartItems');
       const ft = document.getElementById('cartFooter');
-      if (!cart.length) { el.innerHTML='<p class="cart-empty">Your cart is empty.</p>'; ft.style.display='none'; return; }
-      ft.style.display='';
-      el.innerHTML = cart.map((item,idx) => `
+      if (!cart.length) {
+        el.innerHTML = '<p class="cart-empty">Your cart is empty.</p>';
+        ft.style.display = 'none'; return;
+      }
+      ft.style.display = '';
+      el.innerHTML = cart.map((item, idx) => `
         <div class="cart-item">
           <div>
-            <div class="cart-item-name">${item.name}</div>
-            <div class="cart-item-variant">${item.variant}</div>
+            <div class="cart-item-name">${esc(item.name)}</div>
+            ${item.variant ? `<div class="cart-item-variant">${esc(item.variant)}</div>` : ''}
             <div class="cart-item-qty">
               <button class="qty-btn" onclick="changeQty(${idx},-1)">&#8722;</button>
               <span class="qty-num">${item.qty}</span>
@@ -438,123 +667,27 @@
               <button class="remove-btn" onclick="removeItem(${idx})">Remove</button>
             </div>
           </div>
-          <div class="cart-item-price">R${item.price*item.qty}</div>
+          <div class="cart-item-price">R${item.price * item.qty}</div>
         </div>`).join('');
       document.getElementById('subtotalDisplay').textContent = `R${calcSub()}`;
       document.getElementById('deliveryDisplay').textContent  = `R${DELIVERY_FEE}`;
       document.getElementById('totalDisplay').textContent     = `R${calcTotal()}`;
     }
 
-    function changeQty(idx,d) { cart[idx].qty+=d; if(cart[idx].qty<=0) cart.splice(idx,1); saveCart();updateBadge();renderCart(); }
-    function removeItem(idx)  { cart.splice(idx,1); saveCart();updateBadge();renderCart(); }
-    function openCart()  { document.getElementById('cartDrawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
+    function changeQty(idx, d) {
+      cart[idx].qty += d;
+      if (cart[idx].qty <= 0) cart.splice(idx, 1);
+      saveCart(); updateBadge(); renderCart();
+    }
+    function removeItem(idx) { cart.splice(idx, 1); saveCart(); updateBadge(); renderCart(); }
+    function openCart()  { document.getElementById('cartDrawer').classList.add('open');    document.getElementById('overlay').classList.add('open'); }
     function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+    function esc(str)    { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
-    /* Build a carousel node or a plain img node depending on image count */
-    function buildProductImage(p) {
-      const imgs = (p.imgs || (p.img ? [p.img] : [])).filter(Boolean).slice(0, 3);
-      const wrap = document.createElement('div');
-      wrap.className = 'product-img';
-
-      if (imgs.length > 1) {
-        const carousel = document.createElement('div'); carousel.className = 'shop-carousel';
-        const track    = document.createElement('div'); track.className = 'shop-carousel-track';
-        imgs.forEach((url, i) => {
-          const slide = document.createElement('div'); slide.className = 'shop-carousel-slide';
-          const img   = document.createElement('img'); img.src = url; img.alt = p.name + ' ' + (i+1); img.loading = 'lazy';
-          slide.appendChild(img); track.appendChild(slide);
-        });
-        carousel.appendChild(track);
-
-        let cur = 0;
-        const dots = document.createElement('div'); dots.className = 'shop-carousel-dots';
-        const dotEls = imgs.map((_, i) => {
-          const d = document.createElement('button'); d.className = 'shop-carousel-dot' + (i===0?' active':'');
-          d.setAttribute('aria-label','Image '+(i+1));
-          d.addEventListener('click', e => { e.stopPropagation(); go(i); });
-          dots.appendChild(d); return d;
-        });
-
-        function go(idx) {
-          cur = (idx + imgs.length) % imgs.length;
-          track.style.transform = `translateX(-${cur*100}%)`;
-          dotEls.forEach((d,i) => d.classList.toggle('active', i===cur));
-        }
-
-        const prev = document.createElement('button'); prev.className = 'shop-carousel-btn shop-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label','Previous');
-        const next = document.createElement('button'); next.className = 'shop-carousel-btn shop-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label','Next');
-        prev.addEventListener('click', e => { e.stopPropagation(); go(cur-1); });
-        next.addEventListener('click', e => { e.stopPropagation(); go(cur+1); });
-
-        carousel.appendChild(prev);
-        carousel.appendChild(next);
-        carousel.appendChild(dots);
-        wrap.appendChild(carousel);
-      } else {
-        const img = document.createElement('img');
-        img.src = imgs[0] || ''; img.alt = p.name; img.loading = 'lazy';
-        wrap.appendChild(img);
-      }
-      return wrap;
-    }
-
-    function renderProducts() {
-      const grid = document.getElementById('productGrid');
-      grid.innerHTML = '';
-      PRODUCTS.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'product-card'; card.id = 'card-' + p.id;
-
-        card.appendChild(buildProductImage(p));
-
-        const pills1 = p.variants.map(v =>
-          `<button class="v-pill ${v===sel1[p.id]?'active':''}" onclick="pickV1('${p.id}','${v}',this)">${v}</button>`
-        ).join('');
-        const pills2 = p.variants2 ? `
-          <div style="margin-top:10px">
-            <div class="variant-label">${p.variant2Label}</div>
-            <div class="pill-group">${p.variants2.map(v=>`<button class="v-pill ${v===sel2[p.id]?'active':''}" onclick="pickV2('${p.id}','${v}',this)">${v}</button>`).join('')}</div>
-          </div>` : '';
-        const displayPrice = p.dynamicPrice ? getProductPrice(p) : p.price;
-
-        const body = document.createElement('div'); body.className = 'product-body';
-        body.innerHTML = `
-          <div class="product-tag">${p.tag}</div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-desc">${p.desc}</div>
-          <div>
-            <div class="variant-label">${p.variantLabel}</div>
-            <div class="pill-group">${pills1}</div>
-            ${pills2}
-          </div>
-          <div class="product-price" id="price-${p.id}">R${displayPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span></div>
-          <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%;justify-content:center;margin-top:4px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add to Cart
-          </button>`;
-        card.appendChild(body);
-        grid.appendChild(card);
-      });
-    }
-
-    function pickV1(pid,val,btn) {
-      sel1[pid]=val;
-      btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active'));
-      btn.classList.add('active');
-    }
-    function pickV2(pid,val,btn) {
-      sel2[pid]=val;
-      btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p=>p.classList.remove('active'));
-      btn.classList.add('active');
-      const prod = PRODUCTS.find(x=>x.id===pid);
-      if (prod && prod.dynamicPrice) {
-        const newPrice = getProductPrice(prod);
-        const priceEl = document.getElementById('price-'+pid);
-        if (priceEl) priceEl.innerHTML = `R${newPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
-      }
-    }
-
-    renderProducts(); renderCart(); updateBadge();
+    /* ── Boot ──────────────────────────────────── */
+    loadProducts();
+    renderCart();
+    updateBadge();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'cancelled') {
