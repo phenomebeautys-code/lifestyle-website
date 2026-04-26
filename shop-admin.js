@@ -11,6 +11,7 @@ let allOrders       = [];
 let allProducts     = [];
 let activeFilter    = 'all';
 let adminToken      = '';
+// editingVariants is now an array of { name: string, in_stock: boolean }
 let editingVariants = [];
 
 const BADGE_MAP = {
@@ -507,13 +508,20 @@ function renderProducts() {
   el.innerHTML = '';
   list.forEach(p => {
     const card     = document.createElement('div'); card.className = 'product-card';
-    const variants = (p.variants || []).map(v => (typeof v === 'string' ? v : v.name)).filter(Boolean).join(', ');
+    // Show variant names with stock status indicator in the admin card
+    const variantDisplay = (p.variants || [])
+      .map(v => {
+        const name    = typeof v === 'string' ? v : (v.name || '');
+        const inStock = typeof v === 'string' ? true : v.in_stock !== false;
+        return name ? (inStock ? name : `${name} \u2716`) : null;
+      })
+      .filter(Boolean)
+      .join(', ');
     const images   = getProductImages(p);
 
     /* ── Image carousel ── */
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (images.length > 1) {
-      /* build a carousel */
       const carousel = document.createElement('div'); carousel.className = 'img-carousel';
       const track    = document.createElement('div'); track.className = 'img-carousel-track';
       images.forEach((url, idx) => {
@@ -525,7 +533,6 @@ function renderProducts() {
       });
       carousel.appendChild(track);
 
-      /* dots */
       const dots = document.createElement('div'); dots.className = 'img-carousel-dots';
       let currentSlide = 0;
       const dotEls = images.map((_, idx) => {
@@ -535,7 +542,6 @@ function renderProducts() {
         dots.appendChild(d); return d;
       });
 
-      /* prev / next arrows */
       const prev = document.createElement('button'); prev.className = 'img-carousel-btn img-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous image');
       const next = document.createElement('button'); next.className = 'img-carousel-btn img-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next image');
 
@@ -561,11 +567,11 @@ function renderProducts() {
 
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
-      ${p.category    ? `<div class="product-cat">${esc(p.category)}</div>`      : ''}
+      ${p.category       ? `<div class="product-cat">${esc(p.category)}</div>`           : ''}
       <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
-      ${p.brand       ? `<div class="product-brand">${esc(p.brand)}</div>`       : ''}
-      ${variants      ? `<div class="product-variant">${esc(variants)}</div>`    : ''}
-      ${p.description ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
+      ${p.brand          ? `<div class="product-brand">${esc(p.brand)}</div>`             : ''}
+      ${variantDisplay   ? `<div class="product-variant">${esc(variantDisplay)}</div>`   : ''}
+      ${p.description    ? `<div class="product-desc">${esc(p.description)}</div>`       : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}</div>`;
     const footer  = document.createElement('div'); footer.className = 'product-card-footer';
     const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
@@ -581,7 +587,7 @@ function noImgSVG() {
   return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 }
 
-/* PRODUCT MODAL */
+/* ─── PRODUCT MODAL ─────────────────── */
 function openProductModal(product = null) {
   document.getElementById('modalTitle').textContent  = product ? 'Edit Product' : 'Add Product';
   document.getElementById('modalProductId').value    = product?.id || '';
@@ -593,13 +599,17 @@ function openProductModal(product = null) {
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
 
-  /* populate image fields — support both old image_url and new image_urls array */
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
   document.getElementById('mpImage2').value = imgs[1] || '';
   document.getElementById('mpImage3').value = imgs[2] || '';
 
-  editingVariants = (product?.variants || []).map(v => (typeof v === 'string' ? v : v.name || ''));
+  // Normalise existing variants into { name, in_stock } objects
+  editingVariants = (product?.variants || []).map(v => {
+    if (typeof v === 'string') return { name: v, in_stock: true };
+    return { name: v.name || '', in_stock: v.in_stock !== false };
+  }).filter(v => v.name);
+
   renderVariantRows();
   document.getElementById('productModal').removeAttribute('hidden');
   document.getElementById('mpName').focus();
@@ -607,30 +617,78 @@ function openProductModal(product = null) {
 function closeProductModal() {
   document.getElementById('productModal').setAttribute('hidden', '');
 }
+
+/**
+ * Renders the variant list inside the modal.
+ * Each row: [text input for name] [In Stock toggle] [remove button]
+ */
 function renderVariantRows() {
-  const el = document.getElementById('variantsList'); el.innerHTML = '';
+  const el = document.getElementById('variantsList');
+  el.innerHTML = '';
+
   editingVariants.forEach((v, i) => {
-    const row = document.createElement('div'); row.className = 'variant-row';
-    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v; inp.placeholder = 'e.g. Scent: Calm';
-    inp.addEventListener('input', () => { editingVariants[i] = inp.value; });
-    const rm  = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
+    const row = document.createElement('div');
+    row.className = 'variant-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+
+    // Name input
+    const inp = document.createElement('input');
+    inp.type        = 'text';
+    inp.value       = v.name;
+    inp.placeholder = 'e.g. Scent: Calm';
+    inp.style.flex  = '1';
+    inp.addEventListener('input', () => { editingVariants[i].name = inp.value; });
+
+    // In-stock toggle label + checkbox
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:0.78rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;user-select:none;';
+    label.setAttribute('title', 'Toggle stock availability for this variant');
+
+    const checkbox = document.createElement('input');
+    checkbox.type    = 'checkbox';
+    checkbox.checked = v.in_stock;
+    checkbox.style.cssText = 'accent-color:var(--accent);width:14px;height:14px;cursor:pointer;';
+    checkbox.addEventListener('change', () => {
+      editingVariants[i].in_stock = checkbox.checked;
+      stockText.textContent = checkbox.checked ? 'In Stock' : 'Out of Stock';
+      stockText.style.color = checkbox.checked ? 'var(--accent)' : '#f87171';
+    });
+
+    const stockText = document.createElement('span');
+    stockText.textContent = v.in_stock ? 'In Stock' : 'Out of Stock';
+    stockText.style.color = v.in_stock ? 'var(--accent)' : '#f87171';
+
+    label.appendChild(checkbox);
+    label.appendChild(stockText);
+
+    // Remove button
+    const rm = document.createElement('button');
+    rm.className = 'btn-remove-variant';
+    rm.innerHTML = '\u00d7';
+    rm.type      = 'button';
     rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
-    row.appendChild(inp); row.appendChild(rm); el.appendChild(row);
+
+    row.appendChild(inp);
+    row.appendChild(label);
+    row.appendChild(rm);
+    el.appendChild(row);
   });
 }
+
 function addVariantRow() {
-  editingVariants.push('');
+  // New variants default to in_stock: true
+  editingVariants.push({ name: '', in_stock: true });
   renderVariantRows();
-  const inputs = document.getElementById('variantsList').querySelectorAll('input');
+  const inputs = document.getElementById('variantsList').querySelectorAll('input[type="text"]');
   inputs[inputs.length - 1]?.focus();
 }
+
 async function saveProduct() {
   const btn  = document.getElementById('modalSaveBtn');
   const id   = document.getElementById('modalProductId').value;
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
 
-  /* collect up to 3 image URLs, filtering empties */
   const imageUrls = [
     document.getElementById('mpImage1').value.trim(),
     document.getElementById('mpImage2').value.trim(),
@@ -648,10 +706,13 @@ async function saveProduct() {
       sku:         document.getElementById('mpSku').value.trim(),
       brand:       document.getElementById('mpBrand').value.trim(),
       description: document.getElementById('mpDesc').value.trim(),
-      image_url:   imageUrls[0] || '',      /* keep legacy field for compatibility */
-      image_urls:  imageUrls,               /* new multi-image field */
+      image_url:   imageUrls[0] || '',
+      image_urls:  imageUrls,
       category:    document.getElementById('mpCategory').value.trim(),
-      variants:    editingVariants.filter(v => v.trim()).map(v => ({ name: v.trim() })),
+      // Save full { name, in_stock } objects — filters out blank names
+      variants:    editingVariants
+        .filter(v => v.name.trim())
+        .map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
     },
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
