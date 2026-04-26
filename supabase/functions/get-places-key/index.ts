@@ -29,13 +29,14 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl    = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-    // Query vault.decrypted_secrets directly via REST using service role
+    // Use Accept-Profile header to query the vault schema
     const res = await fetch(
-      `${supabaseUrl}/rest/v1/vault.decrypted_secrets?name=eq.GOOGLE_PLACES_API_KEY&select=decrypted_secret&limit=1`,
+      `${supabaseUrl}/rest/v1/decrypted_secrets?name=eq.GOOGLE_PLACES_API_KEY&select=decrypted_secret&limit=1`,
       {
         headers: {
           'apikey': serviceRoleKey,
           'Authorization': `Bearer ${serviceRoleKey}`,
+          'Accept-Profile': 'vault',
         },
       }
     );
