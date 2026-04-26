@@ -63,7 +63,7 @@
       gap: 16px;
     }
 
-    /* ── Skeleton loader ───────────────────────── */
+    /* ── Skeleton loader ────────────────────── */
     .skeleton-card {
       background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
       border: 1px solid var(--glass-border);
@@ -85,7 +85,7 @@
     }
     @keyframes shimmer { to { background-position: -200% 0; } }
 
-    /* ── Product card ──────────────────────────── */
+    /* ── Product card ────────────────────── */
     .product-card {
       background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
       border: 1px solid var(--glass-border);
@@ -96,7 +96,7 @@
     }
     .product-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.22); }
 
-    /* ── Product image area ────────────────────── */
+    /* ── Product image area ──────────────── */
     .product-img {
       width: 100%;
       aspect-ratio: 4/3;
@@ -117,7 +117,7 @@
       width:100%; height:100%; opacity:0.15;
     }
 
-    /* ── Carousel ──────────────────────────────── */
+    /* ── Carousel ──────────────────────── */
     .shop-carousel {
       position: relative;
       width: 100%;
@@ -155,7 +155,7 @@
     }
     .product-card:hover .shop-carousel-slide img { transform: scale(1.04); }
 
-    /* ── Glassmorphism dots ────────────────────── */
+    /* ── Glassmorphism dots ──────────────── */
     .shop-carousel-dots {
       position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
       display: flex; gap: 6px; z-index: 2;
@@ -181,7 +181,7 @@
       box-shadow: 0 0 6px rgba(255,255,255,0.35);
     }
 
-    /* ── Product body ──────────────────────────── */
+    /* ── Product body ───────────────────── */
     .product-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:10px; }
     .product-tag  { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); }
     .product-name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:var(--accent-strong); }
@@ -192,11 +192,12 @@
       background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
       color:var(--accent); font-weight:700; font-size:1rem;
       width:fit-content; margin-top:auto;
+      transition: color 0.2s;
     }
     .variant-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
     .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
 
-    /* ── In-stock variant pill ─────────────────── */
+    /* ── In-stock variant pill ────────────── */
     .v-pill {
       padding:5px 13px; border-radius:var(--radius-pill);
       border:1px solid var(--glass-border);
@@ -208,7 +209,7 @@
     .v-pill:hover  { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .v-pill.active { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.10); color:var(--accent-strong); }
 
-    /* ── Out-of-stock variant pill (Shopify pattern) ── */
+    /* ── Out-of-stock variant pill ────────── */
     .v-pill.out-of-stock {
       opacity: 0.38;
       cursor: not-allowed;
@@ -217,7 +218,6 @@
       color: var(--text-muted);
       border-color: rgba(255,255,255,0.10);
     }
-    /* Diagonal strikethrough line */
     .v-pill.out-of-stock::after {
       content: '';
       position: absolute;
@@ -231,7 +231,23 @@
       pointer-events: none;
     }
 
-    /* ── Add to Cart button — out-of-stock state ── */
+    /* ── Size pill (same base style as v-pill) ── */
+    .s-pill {
+      padding:5px 13px; border-radius:var(--radius-pill);
+      border:1px solid var(--glass-border);
+      font-size:0.78rem; font-weight:500; color:var(--text-muted);
+      cursor:pointer; background:transparent;
+      font-family:var(--font-body);
+      transition:background 0.18s, border-color 0.18s, color 0.18s;
+    }
+    .s-pill:hover  { border-color:rgba(255,255,255,0.3); color:var(--text); }
+    .s-pill.active {
+      border-color: var(--accent);
+      background: rgba(255,255,255,0.08);
+      color: var(--accent-strong);
+    }
+
+    /* ── Add to Cart button ──────────────── */
     .btn-add-to-cart:disabled,
     .btn-add-to-cart[disabled] {
       opacity: 0.45;
@@ -239,14 +255,14 @@
       pointer-events: none;
     }
 
-    /* ── Error state ───────────────────────────── */
+    /* ── Error state ───────────────────── */
     .shop-error {
       grid-column: 1/-1; text-align:center; padding:48px 24px;
       color:var(--text-muted);
     }
     .shop-error p { margin-bottom:16px; }
 
-    /* ── Cart Drawer ───────────────────────────── */
+    /* ── Cart Drawer ────────────────────── */
     .overlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,0.65); backdrop-filter:blur(6px);
@@ -457,7 +473,11 @@
 
     let PRODUCTS = [];
     let cart     = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
+
+    // selVariant[pid] = chosen variant name (string | null)
+    // selSize[pid]    = chosen size object { name, price } | null
     const selVariant = {};
+    const selSize    = {};
 
     async function loadProducts() {
       showSkeletons(4);
@@ -469,11 +489,14 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         PRODUCTS = await res.json();
         PRODUCTS.forEach(p => {
+          // Default variant: first in-stock one
           const v = normaliseVariants(p.variants);
-          // Default to the first IN-STOCK variant so the Add to Cart
-          // button is immediately available on page load.
           const firstAvailable = v.find(x => x.in_stock);
           if (firstAvailable) selVariant[p.id] = firstAvailable.name;
+
+          // Default size: first one (all sizes are always available)
+          const sizes = normaliseSizes(p.sizes);
+          if (sizes.length) selSize[p.id] = sizes[0];
         });
         renderProducts();
       } catch (err) {
@@ -483,13 +506,7 @@
     }
 
     /**
-     * normaliseVariants — always returns an array of
-     * { name: string, in_stock: boolean }
-     *
-     * Handles all legacy formats:
-     *   - plain strings            → { name: str, in_stock: true }
-     *   - { name }                 → { name, in_stock: true }
-     *   - { name, in_stock }       → used as-is
+     * normaliseVariants — always returns [{ name, in_stock }]
      */
     function normaliseVariants(raw) {
       if (!Array.isArray(raw)) return [];
@@ -499,6 +516,28 @@
           return { name: v.name || '', in_stock: v.in_stock !== false };
         })
         .filter(v => v.name);
+    }
+
+    /**
+     * normaliseSizes — always returns [{ name, price }]
+     */
+    function normaliseSizes(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw
+        .map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 }))
+        .filter(s => s.name);
+    }
+
+    /**
+     * getActivePrice — returns the price to display / charge.
+     * If a size is selected, use that size's price.
+     * Otherwise fall back to the product's base price.
+     */
+    function getActivePrice(pid) {
+      const p    = PRODUCTS.find(x => x.id === pid);
+      const size = selSize[pid];
+      if (size) return size.price;
+      return Number(p.price) || 0;
     }
 
     function getImages(p) {
@@ -530,7 +569,7 @@
         </div>`;
     }
 
-    /* ── Carousel ─────────────────────────────────── */
+    /* ── Carousel ────────────────────────── */
     function buildProductImage(p) {
       const imgs = getImages(p);
       const wrap = document.createElement('div');
@@ -557,7 +596,6 @@
 
         carousel.appendChild(track);
 
-        /* dots */
         let cur = 0;
         const dotsEl = document.createElement('div');
         dotsEl.className = 'shop-carousel-dots';
@@ -577,7 +615,6 @@
           dotEls.forEach((d, i) => d.classList.toggle('active', i === cur));
         }
 
-        /* Unified pointer-based swipe */
         let startX = 0, startY = 0, curDiffX = 0;
         let active = false, lockedAxis = null;
         const SWIPE_THRESHOLD = 40;
@@ -641,21 +678,31 @@
       return wrap;
     }
 
-    /* ── Update Add to Cart button based on stock state ── */
+    /* ── Update price display ────────────────── */
+    function updatePriceDisplay(pid) {
+      const priceEl = document.querySelector(`#card-${pid} .product-price`);
+      if (!priceEl) return;
+      const price = getActivePrice(pid);
+      priceEl.innerHTML = `R${Number(price).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+    }
+
+    /* ── Update Add to Cart button ──────────── */
     function updateAddButton(pid) {
       const p        = PRODUCTS.find(x => x.id === pid);
       const variants = normaliseVariants(p.variants);
+      const sizes    = normaliseSizes(p.sizes);
       const addBtn   = document.querySelector(`#card-${pid} .btn-add-to-cart`);
       if (!addBtn) return;
 
-      // If the product has no variants at all, it's always purchasable.
+      // No variants at all → always purchasable (size selection is optional guard)
       if (!variants.length) {
+        // If sizes exist, a size must be selected (they always are after load)
         addBtn.disabled = false;
         addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Cart`;
         return;
       }
 
-      const selected = variants.find(v => v.name === selVariant[pid]);
+      const selected  = variants.find(v => v.name === selVariant[pid]);
       const available = selected && selected.in_stock;
 
       addBtn.disabled = !available;
@@ -677,6 +724,8 @@
 
       PRODUCTS.forEach(p => {
         const variants = normaliseVariants(p.variants);
+        const sizes    = normaliseSizes(p.sizes);
+
         const card = document.createElement('div');
         card.className = 'product-card'; card.id = 'card-' + p.id;
         card.appendChild(buildProductImage(p));
@@ -690,9 +739,10 @@
         body.appendChild(name);
         if (p.description) body.appendChild(desc);
 
+        /* ── Variants ── */
         if (variants.length) {
-          const varWrap   = document.createElement('div');
-          const varLabel  = document.createElement('div');
+          const varWrap  = document.createElement('div');
+          const varLabel = document.createElement('div');
           varLabel.className = 'variant-label';
           varLabel.textContent = 'Variant';
           const pillGroup = document.createElement('div');
@@ -704,13 +754,11 @@
             btn.textContent = v.name;
 
             if (!v.in_stock) {
-              // Out-of-stock: visible, strikethrough, not interactive
               btn.classList.add('out-of-stock');
               btn.disabled = true;
               btn.setAttribute('aria-label', v.name + ' — Out of stock');
               btn.setAttribute('title', 'Out of stock');
             } else {
-              // In-stock: selectable
               if (v.name === selVariant[p.id]) btn.classList.add('active');
               btn.addEventListener('click', () => {
                 selVariant[p.id] = v.name;
@@ -727,8 +775,45 @@
           body.appendChild(varWrap);
         }
 
+        /* ── Sizes ── */
+        if (sizes.length) {
+          const sizeWrap  = document.createElement('div');
+          const sizeLabel = document.createElement('div');
+          sizeLabel.className = 'variant-label';
+          sizeLabel.textContent = 'Size';
+          const sizePillGroup = document.createElement('div');
+          sizePillGroup.className = 'pill-group';
+
+          sizes.forEach((s, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 's-pill';
+            btn.textContent = s.name;
+            btn.setAttribute('title', `R${s.price}`);
+
+            // Default: first size active
+            if (idx === 0 && !selSize[p.id]) selSize[p.id] = s;
+            if (selSize[p.id] && selSize[p.id].name === s.name) btn.classList.add('active');
+
+            btn.addEventListener('click', () => {
+              selSize[p.id] = s;
+              sizePillGroup.querySelectorAll('.s-pill').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              updatePriceDisplay(p.id);
+              updateAddButton(p.id);
+            });
+
+            sizePillGroup.appendChild(btn);
+          });
+
+          sizeWrap.appendChild(sizeLabel);
+          sizeWrap.appendChild(sizePillGroup);
+          body.appendChild(sizeWrap);
+        }
+
+        /* ── Price ── */
         const price = document.createElement('div'); price.className = 'product-price';
-        price.innerHTML = `R${Number(p.price).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
+        const activePrice = getActivePrice(p.id);
+        price.innerHTML = `R${Number(activePrice).toLocaleString('en-ZA')} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span>`;
         body.appendChild(price);
 
         const addBtn = document.createElement('button');
@@ -741,14 +826,14 @@
         card.appendChild(body);
         grid.appendChild(card);
 
-        // Set the initial button state based on the default selected variant
         updateAddButton(p.id);
       });
     }
 
     function addToCart(pid) {
-      const p = PRODUCTS.find(x => x.id === pid);
+      const p        = PRODUCTS.find(x => x.id === pid);
       const variants = normaliseVariants(p.variants);
+      const sizes    = normaliseSizes(p.sizes);
 
       // Guard: block if selected variant is out of stock
       if (variants.length) {
@@ -756,11 +841,27 @@
         if (!selected || !selected.in_stock) return;
       }
 
-      const variant = selVariant[pid] || null;
-      const key = variant ? `${pid}::${variant}` : pid;
+      const variant   = selVariant[pid] || null;
+      const sizeObj   = selSize[pid] || null;
+      const sizeName  = sizeObj ? sizeObj.name : null;
+      const unitPrice = getActivePrice(pid);
+
+      // Cart key includes both variant and size so each combo is a separate line
+      const key = [pid, variant, sizeName].filter(Boolean).join('::') || pid;
       const ex  = cart.find(i => i.key === key);
-      if (ex) { ex.qty++; }
-      else { cart.push({ key, productId:pid, name:p.name, variant:variant||'', price:Number(p.price), qty:1 }); }
+      if (ex) {
+        ex.qty++;
+      } else {
+        cart.push({
+          key,
+          productId: pid,
+          name:      p.name,
+          variant:   variant || '',
+          size:      sizeName || '',
+          price:     unitPrice,
+          qty:       1,
+        });
+      }
       saveCart(); updateBadge(); renderCart(); openCart();
     }
 
@@ -778,11 +879,13 @@
       const ft = document.getElementById('cartFooter');
       if (!cart.length) { el.innerHTML = '<p class="cart-empty">Your cart is empty.</p>'; ft.style.display='none'; return; }
       ft.style.display = '';
-      el.innerHTML = cart.map((item,idx) => `
+      el.innerHTML = cart.map((item,idx) => {
+        const meta = [item.variant, item.size ? `Size: ${item.size}` : ''].filter(Boolean).join(' · ');
+        return `
         <div class="cart-item">
           <div>
             <div class="cart-item-name">${esc(item.name)}</div>
-            ${item.variant ? `<div class="cart-item-variant">${esc(item.variant)}</div>` : ''}
+            ${meta ? `<div class="cart-item-variant">${esc(meta)}</div>` : ''}
             <div class="cart-item-qty">
               <button class="qty-btn" onclick="changeQty(${idx},-1)">&#8722;</button>
               <span class="qty-num">${item.qty}</span>
@@ -791,7 +894,8 @@
             </div>
           </div>
           <div class="cart-item-price">R${item.price * item.qty}</div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       document.getElementById('subtotalDisplay').textContent = `R${calcSub()}`;
       document.getElementById('deliveryDisplay').textContent  = `R${DELIVERY_FEE}`;
       document.getElementById('totalDisplay').textContent     = `R${calcTotal()}`;
