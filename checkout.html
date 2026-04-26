@@ -1131,7 +1131,12 @@
       try {
         const res = await fetch(
           'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/get-places-key',
-          { headers: { 'apikey': 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL' } }
+          {
+            headers: {
+              'apikey': 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL',
+              'Authorization': 'Bearer sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL'
+            }
+          }
         );
         const { key } = await res.json();
         if (!key) return;
