@@ -1125,24 +1125,25 @@
     })();
   </script>
 
-  <!--
-    ╬══════════════════════════════════════════════════════════╣
-    ║  Google Places Autocomplete                              ║
-    ║  ───────────────────────────────────────────────────── ║
-    ║  ACTION REQUIRED: Replace YOUR_GOOGLE_PLACES_API_KEY     ║
-    ║  with your actual key from Google Cloud Console.         ║
-    ║                                                          ║
-    ║  Restrict the key to:                                    ║
-    ║    • HTTP referrers: phenomebeauty.co.za/*               ║
-    ║    • APIs: Places API                                    ║
-    ║                                                          ║
-    ║  Free tier: 28,500 requests/month — more than enough     ║
-    ║  for a small e-commerce store.                           ║
-    ╙══════════════════════════════════════════════════════════╜
-  -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_PLACES_API_KEY&libraries=places&callback=initPlaces&loading=async"
-    async defer>
+  <!-- Google Places: key loaded securely from Supabase Edge Function -->
+  <script>
+    (async function loadPlaces() {
+      try {
+        const res = await fetch(
+          'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/get-places-key',
+          { headers: { 'apikey': 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL' } }
+        );
+        const { key } = await res.json();
+        if (!key) return;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initPlaces&loading=async`;
+        s.async = true;
+        s.defer = true;
+        document.head.appendChild(s);
+      } catch (e) {
+        console.warn('Places autocomplete unavailable:', e);
+      }
+    })();
   </script>
 
 </body>
