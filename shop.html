@@ -98,12 +98,13 @@
 
     /* ── Product image area ────────────────────── */
     .product-img {
-      width:100%; aspect-ratio:4/3;
-      overflow:hidden;
-      border-bottom:1px solid var(--glass-border);
+      width: 100%;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      border-bottom: 1px solid var(--glass-border);
       background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
       position: relative;
-      display:flex; align-items:center; justify-content:center;
+      display: flex; align-items: center; justify-content: center;
     }
     .product-img > img {
       width:100%; height:100%;
@@ -118,30 +119,45 @@
 
     /* ── Carousel ──────────────────────────────── */
     .shop-carousel {
-      position: relative; width: 100%; height: 100%;
+      position: relative;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      /* prevent vertical scroll hijack during horizontal swipe */
-      touch-action: pan-y;
+      /* none lets JS decide what to prevent */
+      touch-action: none;
     }
     .shop-carousel-track {
-      display: flex; height: 100%;
+      display: flex;
+      height: 100%;
       transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
       will-change: transform;
+      /* never let the track grow wider than its container */
+      width: 100%;
     }
-    /* disable transition while dragging for instant feel */
     .shop-carousel-track.dragging {
       transition: none;
     }
-    .shop-carousel-slide { min-width:100%; height:100%; flex-shrink:0; overflow:hidden; }
+    .shop-carousel-slide {
+      /* flex-shrink:0 + min-width:100% keeps each slide exactly one panel wide */
+      flex: 0 0 100%;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     .shop-carousel-slide img {
-      width:100%; height:100%;
-      object-fit:cover; object-position:center;
-      display:block; transition: transform 0.4s ease;
-      /* prevent native image drag interfering with swipe */
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      transition: transform 0.4s ease;
+      /* stop browser native image-drag from hijacking swipe */
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+      -webkit-user-select: none;
     }
+    /* only scale on hover for desktop, not during any touch */
     .product-card:hover .shop-carousel-slide img { transform: scale(1.04); }
 
     /* ── Glassmorphism dots ────────────────────── */
@@ -150,7 +166,7 @@
       display: flex; gap: 6px; z-index: 2;
       padding: 5px 10px;
       border-radius: var(--radius-pill);
-      background: rgba(4, 4, 6, 0.45);
+      background: rgba(4,4,6,0.45);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255,255,255,0.10);
@@ -411,12 +427,10 @@
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
     const DELIVERY_FEE  = 80;
 
-    /* ── State ─────────────────────────────────── */
     let PRODUCTS = [];
     let cart     = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
     const selVariant = {};
 
-    /* ── Supabase fetch ────────────────────────── */
     async function loadProducts() {
       showSkeletons(4);
       try {
@@ -448,7 +462,6 @@
       return [];
     }
 
-    /* ── Skeleton ──────────────────────────────── */
     function showSkeletons(n) {
       document.getElementById('productGrid').innerHTML = Array.from({ length: n }, () => `
         <div class="skeleton-card">
@@ -472,86 +485,105 @@
         </div>`;
     }
 
-    /* ── Build carousel (swipe + glass dots, no arrows) ── */
+    /* ── Carousel ─────────────────────────────────── */
     function buildProductImage(p) {
       const imgs = getImages(p);
       const wrap = document.createElement('div');
       wrap.className = 'product-img';
 
       if (imgs.length > 1) {
-        const carousel = document.createElement('div'); carousel.className = 'shop-carousel';
-        const track    = document.createElement('div'); track.className = 'shop-carousel-track';
+        const carousel = document.createElement('div');
+        carousel.className = 'shop-carousel';
+
+        const track = document.createElement('div');
+        track.className = 'shop-carousel-track';
 
         imgs.forEach((url, i) => {
-          const slide = document.createElement('div'); slide.className = 'shop-carousel-slide';
-          const img   = document.createElement('img');
-          img.src = url; img.alt = (p.name || '') + ' ' + (i + 1); img.loading = 'lazy';
-          slide.appendChild(img); track.appendChild(slide);
+          const slide = document.createElement('div');
+          slide.className = 'shop-carousel-slide';
+          const img = document.createElement('img');
+          img.src = url;
+          img.alt = (p.name || '') + ' image ' + (i + 1);
+          img.loading = 'lazy';
+          img.draggable = false;
+          slide.appendChild(img);
+          track.appendChild(slide);
         });
+
         carousel.appendChild(track);
 
-        /* ── Dots ── */
+        /* dots */
         let cur = 0;
-        const dotsEl = document.createElement('div'); dotsEl.className = 'shop-carousel-dots';
+        const dotsEl = document.createElement('div');
+        dotsEl.className = 'shop-carousel-dots';
         const dotEls = imgs.map((_, i) => {
           const d = document.createElement('button');
           d.className = 'shop-carousel-dot' + (i === 0 ? ' active' : '');
           d.setAttribute('aria-label', 'Image ' + (i + 1));
           d.addEventListener('click', e => { e.stopPropagation(); go(i); });
-          dotsEl.appendChild(d); return d;
+          dotsEl.appendChild(d);
+          return d;
         });
         carousel.appendChild(dotsEl);
 
         function go(idx) {
-          cur = (idx + imgs.length) % imgs.length;
+          cur = ((idx % imgs.length) + imgs.length) % imgs.length;
           track.style.transform = `translateX(-${cur * 100}%)`;
           dotEls.forEach((d, i) => d.classList.toggle('active', i === cur));
         }
 
-        /* ── Touch / mouse swipe ── */
-        let startX = 0, startY = 0, diffX = 0, isDragging = false, isHorizontal = null;
+        /* ── Unified pointer-based swipe (works for both touch and mouse) ── */
+        let startX = 0, startY = 0, curDiffX = 0;
+        let active = false, lockedAxis = null;
         const SWIPE_THRESHOLD = 40;
 
-        function onDragStart(x, y) {
-          startX = x; startY = y; diffX = 0;
-          isDragging = true; isHorizontal = null;
-          track.classList.add('dragging');
-        }
-        function onDragMove(x, y) {
-          if (!isDragging) return;
-          const dx = x - startX, dy = y - startY;
-          /* lock axis on first meaningful movement */
-          if (isHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
-            isHorizontal = Math.abs(dx) > Math.abs(dy);
+        carousel.addEventListener('pointerdown', e => {
+          /* only primary button / first touch */
+          if (!e.isPrimary) return;
+          startX = e.clientX;
+          startY = e.clientY;
+          curDiffX = 0;
+          active = true;
+          lockedAxis = null;
+          carousel.setPointerCapture(e.pointerId);
+        });
+
+        carousel.addEventListener('pointermove', e => {
+          if (!active || !e.isPrimary) return;
+          const dx = e.clientX - startX;
+          const dy = e.clientY - startY;
+
+          /* determine axis on first meaningful movement */
+          if (lockedAxis === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+            lockedAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
           }
-          if (!isHorizontal) return;
-          diffX = dx;
-          const offset = cur * 100;
-          track.style.transform = `translateX(calc(-${offset}% + ${diffX}px))`;
-        }
-        function onDragEnd() {
-          if (!isDragging) return;
-          isDragging = false; isHorizontal = null;
+
+          if (lockedAxis !== 'x') return;
+
+          /* prevent page scroll while swiping horizontally */
+          e.preventDefault();
+
+          curDiffX = dx;
+          track.classList.add('dragging');
+          track.style.transform = `translateX(calc(-${cur * 100}% + ${curDiffX}px))`;
+        }, { passive: false });
+
+        function endSwipe() {
+          if (!active) return;
+          active = false;
           track.classList.remove('dragging');
-          if (Math.abs(diffX) > SWIPE_THRESHOLD) {
-            go(diffX < 0 ? cur + 1 : cur - 1);
+          if (lockedAxis === 'x' && Math.abs(curDiffX) > SWIPE_THRESHOLD) {
+            go(curDiffX < 0 ? cur + 1 : cur - 1);
           } else {
             /* snap back */
             track.style.transform = `translateX(-${cur * 100}%)`;
           }
-          diffX = 0;
+          curDiffX = 0;
+          lockedAxis = null;
         }
 
-        /* Touch events */
-        carousel.addEventListener('touchstart',  e => onDragStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-        carousel.addEventListener('touchmove',   e => { onDragMove(e.touches[0].clientX, e.touches[0].clientY); if (isHorizontal) e.preventDefault(); }, { passive: false });
-        carousel.addEventListener('touchend',    () => onDragEnd());
-        carousel.addEventListener('touchcancel', () => onDragEnd());
-
-        /* Mouse drag (desktop) */
-        carousel.addEventListener('mousedown',  e => { onDragStart(e.clientX, e.clientY); e.preventDefault(); });
-        window.addEventListener('mousemove',    e => onDragMove(e.clientX, e.clientY));
-        window.addEventListener('mouseup',      () => onDragEnd());
+        carousel.addEventListener('pointerup',     endSwipe);
+        carousel.addEventListener('pointercancel', endSwipe);
 
         wrap.appendChild(carousel);
 
@@ -559,7 +591,6 @@
         const img = document.createElement('img');
         img.src = imgs[0]; img.alt = p.name || ''; img.loading = 'lazy';
         wrap.appendChild(img);
-
       } else {
         wrap.innerHTML = `
           <div class="no-img-placeholder">
@@ -573,7 +604,6 @@
       return wrap;
     }
 
-    /* ── Render all product cards ────────────────── */
     function renderProducts() {
       const grid = document.getElementById('productGrid');
       grid.innerHTML = '';
@@ -585,21 +615,14 @@
 
       PRODUCTS.forEach(p => {
         const variants = normaliseVariants(p.variants);
-        const card     = document.createElement('div');
+        const card = document.createElement('div');
         card.className = 'product-card'; card.id = 'card-' + p.id;
-
         card.appendChild(buildProductImage(p));
 
         const body = document.createElement('div'); body.className = 'product-body';
-
-        const tag = document.createElement('div'); tag.className = 'product-tag';
-        tag.textContent = p.category || p.brand || '';
-
-        const name = document.createElement('div'); name.className = 'product-name';
-        name.textContent = p.name;
-
-        const desc = document.createElement('div'); desc.className = 'product-desc';
-        desc.textContent = p.description || '';
+        const tag  = document.createElement('div'); tag.className  = 'product-tag';  tag.textContent  = p.category || p.brand || '';
+        const name = document.createElement('div'); name.className = 'product-name'; name.textContent = p.name;
+        const desc = document.createElement('div'); desc.className = 'product-desc'; desc.textContent = p.description || '';
 
         body.appendChild(tag);
         body.appendChild(name);
@@ -630,9 +653,7 @@
         const addBtn = document.createElement('button');
         addBtn.className = 'btn btn-primary';
         addBtn.style.cssText = 'width:100%;justify-content:center;margin-top:4px';
-        addBtn.innerHTML = `
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add to Cart`;
+        addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Cart`;
         addBtn.addEventListener('click', () => addToCart(p.id));
         body.appendChild(addBtn);
 
@@ -641,12 +662,11 @@
       });
     }
 
-    /* ── Cart logic ────────────────────────────── */
     function addToCart(pid) {
-      const p       = PRODUCTS.find(x => x.id === pid);
+      const p = PRODUCTS.find(x => x.id === pid);
       const variant = selVariant[pid] || null;
-      const key     = variant ? `${pid}::${variant}` : pid;
-      const ex      = cart.find(i => i.key === key);
+      const key = variant ? `${pid}::${variant}` : pid;
+      const ex  = cart.find(i => i.key === key);
       if (ex) { ex.qty++; }
       else { cart.push({ key, productId:pid, name:p.name, variant:variant||'', price:Number(p.price), qty:1 }); }
       saveCart(); updateBadge(); renderCart(); openCart();
@@ -691,7 +711,6 @@
     function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
     function esc(str)    { const d=document.createElement('div'); d.textContent=str||''; return d.innerHTML; }
 
-    /* ── Boot ──────────────────────────────────── */
     loadProducts();
     renderCart();
     updateBadge();
