@@ -71,19 +71,74 @@
       transition: transform 0.25s ease, border-color 0.25s ease;
     }
     .product-card:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.22); }
+
+    /* ── Product image area ─────────────────── */
     .product-img {
       width:100%; aspect-ratio:4/3;
       overflow:hidden;
       border-bottom:1px solid var(--glass-border);
       background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+      position: relative;
     }
-    .product-img img {
+    /* Single-image fallback (no carousel) */
+    .product-img > img {
       width:100%; height:100%;
       object-fit:cover; object-position:center;
       display:block;
       transition: transform 0.4s ease;
     }
-    .product-card:hover .product-img img { transform: scale(1.04); }
+    .product-card:hover .product-img > img { transform: scale(1.04); }
+
+    /* ── Carousel (multi-image) ─────────────── */
+    .shop-carousel {
+      position: relative; width: 100%; height: 100%; overflow: hidden;
+    }
+    .shop-carousel-track {
+      display: flex; height: 100%;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      will-change: transform;
+    }
+    .shop-carousel-slide {
+      min-width: 100%; height: 100%; flex-shrink: 0;
+      overflow: hidden;
+    }
+    .shop-carousel-slide img {
+      width:100%; height:100%;
+      object-fit:cover; object-position:center;
+      display:block;
+      transition: transform 0.4s ease;
+    }
+    .product-card:hover .shop-carousel-slide img { transform: scale(1.04); }
+    /* Arrows */
+    .shop-carousel-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(4,4,6,0.55); backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.12); color: var(--accent-strong);
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem; line-height: 1; cursor: pointer;
+      transition: background 0.18s, opacity 0.18s;
+      z-index: 2; padding: 0;
+      opacity: 0; border: none;
+    }
+    .shop-carousel:hover .shop-carousel-btn { opacity: 1; }
+    .shop-carousel-prev { left: 7px; }
+    .shop-carousel-next { right: 7px; }
+    .shop-carousel-btn:hover { background: rgba(4,4,6,0.85); }
+    /* Dots */
+    .shop-carousel-dots {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 5px; z-index: 2;
+    }
+    .shop-carousel-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(255,255,255,0.35); border: none; cursor: pointer; padding: 0;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .shop-carousel-dot.active {
+      background: var(--accent-strong); transform: scale(1.35);
+    }
+
     .product-body { padding:20px; flex:1; display:flex; flex-direction:column; gap:10px; }
     .product-tag { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-muted); }
     .product-name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:var(--accent-strong); }
@@ -161,7 +216,7 @@
     .remove-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.78rem; text-decoration:underline; transition:color 0.18s; font-family:var(--font-body); }
     .remove-btn:hover { color:#f87171; }
 
-    /* ── Cart Footer (no inline form — just totals + checkout CTA) ── */
+    /* ── Cart Footer ── */
     .cart-footer { padding:20px 24px; border-top:1px solid var(--glass-border); display:flex; flex-direction:column; gap:14px; }
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
@@ -242,7 +297,7 @@
   <!-- OVERLAY -->
   <div class="overlay" id="overlay" onclick="closeCart()"></div>
 
-  <!-- CART DRAWER (review only — no inline form) -->
+  <!-- CART DRAWER -->
   <aside class="cart-drawer" id="cartDrawer">
     <div class="drawer-header">
       <h2>Your Cart</h2>
@@ -321,12 +376,16 @@
     const WAX_SIZES   = ['500g - R260','1kg - R380'];
     const WAX_SIZE_PRICES = { '500g - R260': 260, '1kg - R380': 380 };
 
+    /*
+     * To add multiple images to a product, use the `imgs` array (up to 3 URLs).
+     * If only one image is needed, use `img` as before — both are supported.
+     */
     const PRODUCTS = [
-      { id:'smooth-ritual',     tag:'Body Scrub',         name:'Refine',     desc:'A luxuriously gritty exfoliating scrub that melts away dead skin, leaving you silky-soft and glowing. 250ml.',      price:220, img:'https://iili.io/B6voJLv.jpg', variantLabel:'Scent',       variants:SCENTS },
-      { id:'smooth-veil',       tag:'Body Cream',         name:'Smooth Veil',       desc:'A rich, fast-absorbing body cream that locks in moisture and leaves skin dewy-smooth all day. 200ml.',             price:260, img:'https://iili.io/B6e8acv.jpg', variantLabel:'Scent',       variants:SCENTS },
-      { id:'smooth-ritual-kit', tag:'Bundle - Best Value',name:'Smooth Ritual Kit', desc:'The full glow experience: Smooth Ritual Scrub + Smooth Veil Cream. Pick a scent for each.',                     price:420, img:'https://iili.io/B6e8acv.jpg', variantLabel:'Scrub Scent', variants:SCENTS, variant2Label:'Cream Scent', variants2:SCENTS },
-      { id:'wax-melting-pot',   tag:'Wax Equipment',      name:'Wax Melting Pot',   desc:'Professional-grade electric wax melting pot for smooth, even wax temperatures every session.',                    price:320, img:'https://iili.io/B6e8YKJ.jpg', variantLabel:'Colour',      variants:WAX_COLOURS },
-      { id:'professional-wax',  tag:'Professional Wax',   name:'Professional Wax',  desc:'Premium depilatory wax for professional salon use - clean, smooth, and effective. Choose your type and size.', price:260, img:'https://iili.io/B6e8YKJ.jpg', variantLabel:'Type',        variants:WAX_TYPES, variant2Label:'Size', variants2:WAX_SIZES, dynamicPrice:WAX_SIZE_PRICES, dynamicPriceKey:'variant2' },
+      { id:'smooth-ritual',     tag:'Body Scrub',          name:'Refine',            desc:'A luxuriously gritty exfoliating scrub that melts away dead skin, leaving you silky-soft and glowing. 250ml.',      price:220, imgs:['https://iili.io/B6voJLv.jpg'], variantLabel:'Scent',       variants:SCENTS },
+      { id:'smooth-veil',       tag:'Body Cream',          name:'Smooth Veil',       desc:'A rich, fast-absorbing body cream that locks in moisture and leaves skin dewy-smooth all day. 200ml.',             price:260, imgs:['https://iili.io/B6e8acv.jpg'], variantLabel:'Scent',       variants:SCENTS },
+      { id:'smooth-ritual-kit', tag:'Bundle - Best Value', name:'Smooth Ritual Kit', desc:'The full glow experience: Smooth Ritual Scrub + Smooth Veil Cream. Pick a scent for each.',                     price:420, imgs:['https://iili.io/B6e8acv.jpg'], variantLabel:'Scrub Scent', variants:SCENTS, variant2Label:'Cream Scent', variants2:SCENTS },
+      { id:'wax-melting-pot',   tag:'Wax Equipment',       name:'Wax Melting Pot',   desc:'Professional-grade electric wax melting pot for smooth, even wax temperatures every session.',                    price:320, imgs:['https://iili.io/B6e8YKJ.jpg'], variantLabel:'Colour',      variants:WAX_COLOURS },
+      { id:'professional-wax',  tag:'Professional Wax',    name:'Professional Wax',  desc:'Premium depilatory wax for professional salon use - clean, smooth, and effective. Choose your type and size.',    price:260, imgs:['https://iili.io/B6e8YKJ.jpg'], variantLabel:'Type',        variants:WAX_TYPES, variant2Label:'Size', variants2:WAX_SIZES, dynamicPrice:WAX_SIZE_PRICES, dynamicPriceKey:'variant2' },
     ];
 
     let cart = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
@@ -391,8 +450,63 @@
     function openCart()  { document.getElementById('cartDrawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
     function closeCart() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
 
+    /* Build a carousel node or a plain img node depending on image count */
+    function buildProductImage(p) {
+      const imgs = (p.imgs || (p.img ? [p.img] : [])).filter(Boolean).slice(0, 3);
+      const wrap = document.createElement('div');
+      wrap.className = 'product-img';
+
+      if (imgs.length > 1) {
+        const carousel = document.createElement('div'); carousel.className = 'shop-carousel';
+        const track    = document.createElement('div'); track.className = 'shop-carousel-track';
+        imgs.forEach((url, i) => {
+          const slide = document.createElement('div'); slide.className = 'shop-carousel-slide';
+          const img   = document.createElement('img'); img.src = url; img.alt = p.name + ' ' + (i+1); img.loading = 'lazy';
+          slide.appendChild(img); track.appendChild(slide);
+        });
+        carousel.appendChild(track);
+
+        let cur = 0;
+        const dots = document.createElement('div'); dots.className = 'shop-carousel-dots';
+        const dotEls = imgs.map((_, i) => {
+          const d = document.createElement('button'); d.className = 'shop-carousel-dot' + (i===0?' active':'');
+          d.setAttribute('aria-label','Image '+(i+1));
+          d.addEventListener('click', e => { e.stopPropagation(); go(i); });
+          dots.appendChild(d); return d;
+        });
+
+        function go(idx) {
+          cur = (idx + imgs.length) % imgs.length;
+          track.style.transform = `translateX(-${cur*100}%)`;
+          dotEls.forEach((d,i) => d.classList.toggle('active', i===cur));
+        }
+
+        const prev = document.createElement('button'); prev.className = 'shop-carousel-btn shop-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label','Previous');
+        const next = document.createElement('button'); next.className = 'shop-carousel-btn shop-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label','Next');
+        prev.addEventListener('click', e => { e.stopPropagation(); go(cur-1); });
+        next.addEventListener('click', e => { e.stopPropagation(); go(cur+1); });
+
+        carousel.appendChild(prev);
+        carousel.appendChild(next);
+        carousel.appendChild(dots);
+        wrap.appendChild(carousel);
+      } else {
+        const img = document.createElement('img');
+        img.src = imgs[0] || ''; img.alt = p.name; img.loading = 'lazy';
+        wrap.appendChild(img);
+      }
+      return wrap;
+    }
+
     function renderProducts() {
-      document.getElementById('productGrid').innerHTML = PRODUCTS.map(p => {
+      const grid = document.getElementById('productGrid');
+      grid.innerHTML = '';
+      PRODUCTS.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card'; card.id = 'card-' + p.id;
+
+        card.appendChild(buildProductImage(p));
+
         const pills1 = p.variants.map(v =>
           `<button class="v-pill ${v===sel1[p.id]?'active':''}" onclick="pickV1('${p.id}','${v}',this)">${v}</button>`
         ).join('');
@@ -402,28 +516,25 @@
             <div class="pill-group">${p.variants2.map(v=>`<button class="v-pill ${v===sel2[p.id]?'active':''}" onclick="pickV2('${p.id}','${v}',this)">${v}</button>`).join('')}</div>
           </div>` : '';
         const displayPrice = p.dynamicPrice ? getProductPrice(p) : p.price;
-        return `
-          <div class="product-card" id="card-${p.id}">
-            <div class="product-img">
-              <img src="${p.img}" alt="${p.name}" loading="lazy" />
-            </div>
-            <div class="product-body">
-              <div class="product-tag">${p.tag}</div>
-              <div class="product-name">${p.name}</div>
-              <div class="product-desc">${p.desc}</div>
-              <div>
-                <div class="variant-label">${p.variantLabel}</div>
-                <div class="pill-group">${pills1}</div>
-                ${pills2}
-              </div>
-              <div class="product-price" id="price-${p.id}">R${displayPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span></div>
-              <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%;justify-content:center;margin-top:4px">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Add to Cart
-              </button>
-            </div>
-          </div>`;
-      }).join('');
+
+        const body = document.createElement('div'); body.className = 'product-body';
+        body.innerHTML = `
+          <div class="product-tag">${p.tag}</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-desc">${p.desc}</div>
+          <div>
+            <div class="variant-label">${p.variantLabel}</div>
+            <div class="pill-group">${pills1}</div>
+            ${pills2}
+          </div>
+          <div class="product-price" id="price-${p.id}">R${displayPrice} <span style="font-size:0.75rem;font-weight:400;color:var(--text-muted);margin-left:4px">incl. VAT</span></div>
+          <button class="btn btn-primary" onclick="addToCart('${p.id}')" style="width:100%;justify-content:center;margin-top:4px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add to Cart
+          </button>`;
+        card.appendChild(body);
+        grid.appendChild(card);
+      });
     }
 
     function pickV1(pid,val,btn) {
