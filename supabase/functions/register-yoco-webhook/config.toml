@@ -1,0 +1,2 @@
+[functions.register-yoco-webhook]
+verify_jwt = false
