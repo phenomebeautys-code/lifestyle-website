@@ -148,6 +148,9 @@
           <h2>Orders</h2>
           <p>Manage and update all customer orders</p>
         </div>
+        <button class="btn btn-secondary" onclick="exportOrdersCSV()" style="padding:8px 16px;font-size:0.8rem;">
+          &#8675; Export CSV
+        </button>
       </div>
       <div class="filters" role="group" aria-label="Filter orders">
         <button class="filter-btn active" data-filter="all">All</button>
@@ -164,11 +167,11 @@
           <thead>
             <tr>
               <th>Date</th><th>Customer</th><th>Items</th>
-              <th>Total</th><th>Payment</th><th>Status</th><th>Update</th>
+              <th>Total</th><th>Payment</th><th>Delivery</th><th>Status</th><th>Update</th>
             </tr>
           </thead>
           <tbody id="ordersBody">
-            <tr class="empty-row"><td colspan="7"><span class="spinner"></span> Loading…</td></tr>
+            <tr class="empty-row"><td colspan="8"><span class="spinner"></span> Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -231,6 +234,10 @@
         <div class="report-card" data-nav="orders" data-filter="unpaid">
           <div class="report-card-title">Unpaid Orders</div>
           <div class="report-card-desc">Orders awaiting payment confirmation</div>
+        </div>
+        <div class="report-card" onclick="exportOrdersCSV()" style="cursor:pointer">
+          <div class="report-card-title">&#8675; Export Orders</div>
+          <div class="report-card-desc">Download all orders as a CSV file for accounting</div>
         </div>
       </div>
     </section>
