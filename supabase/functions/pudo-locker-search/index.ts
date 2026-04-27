@@ -3,12 +3,14 @@
  * GET ?lat=X&lng=Y          — direct coords (preferred, from Places autocomplete)
  * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
  *
- * Fetches all Pudo lockers from /api/v1/get-lockers, computes Haversine distance,
- * returns the 10 nearest to the user's coords.
+ * Confirmed endpoint: GET https://api-pudo.co.za/api/v1/lockers-data
+ * Authorization: Bearer <PUDO_API_KEY>
+ *
+ * Fetches all lockers, computes Haversine distance, returns 10 nearest.
  *
  * Env vars:
- *  - PUDO_API_KEY          — Pudo merchant API key (customer.pudo.co.za > Settings > API Keys)
- *  - GOOGLE_GEOCODING_KEY  — server-side Google Geocoding API key (no referrer restriction)
+ *  - PUDO_API_KEY          — Pudo/TCG API key (customer.pudo.co.za > Settings > API Keys)
+ *  - GOOGLE_GEOCODING_KEY  — server-side Google Geocoding API key
  */
 
 const ALLOWED_ORIGINS = [
@@ -88,80 +90,79 @@ Deno.serve(async (req: Request) => {
     return respond({ results: [] }, 200, corsHeaders);
   }
 
-  // ── Fetch all Pudo lockers ─────────────────────────────────────────────────
-  // The portal uses /api/v1/ as the base — try get-lockers endpoint
-  const candidates = [
-    'https://api-pudo.co.za/api/v1/get-lockers',
-    'https://api-pudo.co.za/api/v1/lockers',
-    'https://api-pudo.co.za/api/v1/lockers-data',
-  ];
+  // ── Fetch all Pudo lockers from confirmed endpoint ────────────────────────
+  const LOCKERS_URL = 'https://api-pudo.co.za/api/v1/lockers-data';
+  console.log('[pudo-locker-search] Fetching:', LOCKERS_URL);
 
-  let lockers: any[] = [];
-  let successUrl = '';
+  try {
+    const lockersRes = await fetch(LOCKERS_URL, {
+      headers: {
+        'Authorization':  `Bearer ${pudoKey}`,
+        'Accept':         'application/json',
+        'Content-Type':   'application/json',
+        'requested-from': 'portal',
+      },
+    });
 
-  for (const url of candidates) {
-    console.log('[pudo-locker-search] Trying:', url);
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${pudoKey}`,
-          'Content-Type':  'application/json',
-          'Accept':        'application/json',
-          'requested-from': 'portal',
-        },
-      });
-      const text = await res.text();
-      console.log('[pudo-locker-search] Status:', res.status, '| Raw (first 400):', text.slice(0, 400));
+    const rawText = await lockersRes.text();
+    console.log('[pudo-locker-search] Status:', lockersRes.status);
+    console.log('[pudo-locker-search] Raw (first 600):', rawText.slice(0, 600));
 
-      if (res.ok) {
-        const parsed = JSON.parse(text);
-        lockers = Array.isArray(parsed) ? parsed
-          : Array.isArray(parsed.data)    ? parsed.data
-          : Array.isArray(parsed.lockers) ? parsed.lockers
-          : [];
-        successUrl = url;
-        break;
-      }
-    } catch (err) {
-      console.error('[pudo-locker-search] Error trying', url, err);
+    if (!lockersRes.ok) {
+      return respond(
+        { results: [], error: `Pudo API returned ${lockersRes.status}`, raw: rawText.slice(0, 300) },
+        200,
+        corsHeaders
+      );
     }
+
+    let lockers: any[];
+    try {
+      const parsed = JSON.parse(rawText);
+      lockers = Array.isArray(parsed)         ? parsed
+              : Array.isArray(parsed.data)    ? parsed.data
+              : Array.isArray(parsed.lockers) ? parsed.lockers
+              : [];
+    } catch {
+      return respond({ results: [], error: 'Invalid JSON from Pudo API' }, 200, corsHeaders);
+    }
+
+    console.log('[pudo-locker-search] Total lockers:', lockers.length);
+    if (lockers.length > 0) {
+      console.log('[pudo-locker-search] First locker keys:', Object.keys(lockers[0]));
+      console.log('[pudo-locker-search] First locker sample:', JSON.stringify(lockers[0]).slice(0, 400));
+    }
+
+    // Compute distance, sort ascending, return 10 nearest
+    const withDistance = lockers
+      .filter((l: any) => l.latitude && l.longitude)
+      .map((l: any) => ({
+        ...l,
+        _distKm: distanceKm(lat, lng, parseFloat(l.latitude), parseFloat(l.longitude)),
+      }))
+      .sort((a: any, b: any) => a._distKm - b._distKm);
+
+    const results = withDistance.slice(0, 10).map((l: any) => ({
+      id:          l.code ?? l.terminal_id ?? l.id ?? '',
+      name:        l.name ?? '',
+      address:     l.address ?? '',
+      town:        l.place?.town ?? '',
+      postal_code: l.place?.postalCode ?? '',
+      distance_km: Math.round(l._distKm * 10) / 10,
+      opening_hours: (l.openinghours ?? []).map((h: any) => ({
+        day:   h.day?.trim(),
+        open:  h.open_time,
+        close: h.close_time,
+      })),
+    }));
+
+    console.log('[pudo-locker-search] Returning', results.length, 'nearest lockers');
+    return respond({ results }, 200, corsHeaders);
+
+  } catch (err) {
+    console.error('[pudo-locker-search] Unexpected error:', err);
+    return respond({ results: [], error: String(err) }, 200, corsHeaders);
   }
-
-  if (!lockers.length) {
-    return respond({ results: [], error: 'Could not load locker list from any known endpoint', tried: candidates }, 200, corsHeaders);
-  }
-
-  console.log('[pudo-locker-search] Loaded', lockers.length, 'lockers from', successUrl);
-  if (lockers.length > 0) {
-    console.log('[pudo-locker-search] First locker keys:', Object.keys(lockers[0]));
-    console.log('[pudo-locker-search] First locker sample:', JSON.stringify(lockers[0]).slice(0, 400));
-  }
-
-  // Compute distance and return 10 nearest
-  const withDistance = lockers
-    .filter((l: any) => l.latitude && l.longitude)
-    .map((l: any) => ({
-      ...l,
-      _distKm: distanceKm(lat, lng, parseFloat(l.latitude), parseFloat(l.longitude)),
-    }))
-    .sort((a: any, b: any) => a._distKm - b._distKm);
-
-  const results = withDistance.slice(0, 10).map((l: any) => ({
-    id:          l.code ?? l.terminal_id ?? l.id ?? '',
-    name:        l.name ?? l.terminal_name ?? '',
-    address:     l.address ?? '',
-    town:        l.place?.town ?? l.town ?? '',
-    postal_code: l.place?.postalCode ?? l.postal_code ?? '',
-    distance_km: Math.round(l._distKm * 10) / 10,
-    opening_hours: (l.openinghours ?? l.opening_hours ?? []).map((h: any) => ({
-      day:   h.day?.trim(),
-      open:  h.open_time,
-      close: h.close_time,
-    })),
-  }));
-
-  console.log('[pudo-locker-search] Returning', results.length, 'nearest lockers');
-  return respond({ results }, 200, corsHeaders);
 });
 
 function respond(data: unknown, status: number, headers: Record<string, string>) {
