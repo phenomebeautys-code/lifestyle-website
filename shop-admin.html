@@ -36,22 +36,18 @@
 <!-- ADMIN SHELL -->
 <div id="adminUI" aria-hidden="true">
 
-  <!-- MOBILE OVERLAY -->
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar" role="navigation" aria-label="Admin navigation">
     <div class="sidebar-brand">
       <div class="sidebar-brand-name">PhenomeBeauty</div>
       <div class="sidebar-brand-sub">Shop Admin</div>
     </div>
-
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
       <button class="nav-item active" data-page="hub">Hub</button>
       <button class="nav-item" data-page="reports">Reports</button>
     </div>
-
     <div class="sidebar-section">
       <div class="sidebar-section-label">Sales</div>
       <button class="nav-item" data-page="orders">
@@ -59,19 +55,16 @@
         <span class="nav-badge" id="navOrdersBadge" hidden></span>
       </button>
     </div>
-
     <div class="sidebar-section">
       <div class="sidebar-section-label">Manage</div>
       <button class="nav-item" data-page="products">Products</button>
     </div>
-
     <div class="sidebar-footer">
       <a href="index.html" class="sidebar-link">View Site</a>
       <button class="sidebar-link" id="logoutBtn">Sign Out</button>
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <div class="admin-main">
 
     <header class="topbar">
@@ -91,39 +84,16 @@
     <!-- HUB -->
     <section class="page active" id="page-hub" aria-label="Hub">
       <div class="stat-bar">
-        <div class="stat-card">
-          <div class="stat-label">Total Orders</div>
-          <div class="stat-value" id="statTotal">—</div>
-          <div class="stat-sub">All time</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Paid Orders</div>
-          <div class="stat-value gold" id="statPaid">—</div>
-          <div class="stat-sub" id="statPaidPct">&nbsp;</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Revenue</div>
-          <div class="stat-value gold" id="statRevenue">—</div>
-          <div class="stat-sub">From paid orders</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Pending Payment</div>
-          <div class="stat-value" id="statPending">—</div>
-          <div class="stat-sub">Awaiting</div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="statTotal">—</div><div class="stat-sub">All time</div></div>
+        <div class="stat-card"><div class="stat-label">Paid Orders</div><div class="stat-value gold" id="statPaid">—</div><div class="stat-sub" id="statPaidPct">&nbsp;</div></div>
+        <div class="stat-card"><div class="stat-label">Revenue</div><div class="stat-value gold" id="statRevenue">—</div><div class="stat-sub">From paid orders</div></div>
+        <div class="stat-card"><div class="stat-label">Pending Payment</div><div class="stat-value" id="statPending">—</div><div class="stat-sub">Awaiting</div></div>
       </div>
-
       <div class="hub-grid">
         <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Recent Sales</span>
-            <button class="panel-action" data-nav="orders">See all</button>
-          </div>
-          <div class="recent-list" id="recentList">
-            <div class="recent-empty"><span class="spinner"></span></div>
-          </div>
+          <div class="panel-header"><span class="panel-title">Recent Sales</span><button class="panel-action" data-nav="orders">See all</button></div>
+          <div class="recent-list" id="recentList"><div class="recent-empty"><span class="spinner"></span></div></div>
         </div>
-
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Payout Summary</span></div>
           <div class="payout-body">
@@ -144,13 +114,8 @@
     <!-- ORDERS -->
     <section class="page" id="page-orders" aria-label="Orders">
       <div class="page-head">
-        <div>
-          <h2>Orders</h2>
-          <p>Manage and update all customer orders</p>
-        </div>
-        <button class="btn btn-secondary" onclick="exportOrdersCSV()" style="padding:8px 16px;font-size:0.8rem;">
-          &#8675; Export CSV
-        </button>
+        <div><h2>Orders</h2><p>Manage and update all customer orders</p></div>
+        <button class="btn btn-secondary" onclick="exportOrdersCSV()" style="padding:8px 16px;font-size:0.8rem;">&#8675; Export CSV</button>
       </div>
       <div class="filters" role="group" aria-label="Filter orders">
         <button class="filter-btn active" data-filter="all">All</button>
@@ -165,10 +130,7 @@
       <div class="table-wrap" role="region" aria-label="Orders table">
         <table>
           <thead>
-            <tr>
-              <th>Date</th><th>Customer</th><th>Items</th>
-              <th>Total</th><th>Payment</th><th>Delivery</th><th>Status</th><th>Update</th>
-            </tr>
+            <tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Delivery</th><th>Status</th><th>Update</th></tr>
           </thead>
           <tbody id="ordersBody">
             <tr class="empty-row"><td colspan="8"><span class="spinner"></span> Loading…</td></tr>
@@ -181,15 +143,11 @@
     <!-- PRODUCTS -->
     <section class="page" id="page-products" aria-label="Products">
       <div class="page-head">
-        <div>
-          <h2>Products</h2>
-          <p>Add, edit and remove shop products</p>
-        </div>
+        <div><h2>Products</h2><p>Add, edit and remove shop products</p></div>
         <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
       </div>
       <div class="products-toolbar">
-        <input class="search-input" type="search" id="productSearch"
-          placeholder="Search products…" aria-label="Search products" />
+        <input class="search-input" type="search" id="productSearch" placeholder="Search products…" aria-label="Search products" />
       </div>
       <div class="products-grid" id="productsGrid">
         <div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>
@@ -198,47 +156,18 @@
 
     <!-- REPORTS -->
     <section class="page" id="page-reports" aria-label="Reports">
-      <div class="page-head">
-        <div><h2>Reports</h2><p>Shop performance at a glance</p></div>
-      </div>
+      <div class="page-head"><div><h2>Reports</h2><p>Shop performance at a glance</p></div></div>
       <div class="stat-bar">
-        <div class="stat-card">
-          <div class="stat-label">Last 7 Days</div>
-          <div class="stat-value gold" id="repWeekRev">—</div>
-          <div class="stat-sub" id="repWeekCount">— orders</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Last 30 Days</div>
-          <div class="stat-value gold" id="repMonthRev">—</div>
-          <div class="stat-sub" id="repMonthCount">— orders</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Top Product</div>
-          <div class="stat-value" id="repTopProduct" style="font-size:1rem;padding-top:6px">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Delivery Rate</div>
-          <div class="stat-value gold" id="repDeliveryRate">—</div>
-          <div class="stat-sub">Delivered vs Paid</div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Last 7 Days</div><div class="stat-value gold" id="repWeekRev">—</div><div class="stat-sub" id="repWeekCount">— orders</div></div>
+        <div class="stat-card"><div class="stat-label">Last 30 Days</div><div class="stat-value gold" id="repMonthRev">—</div><div class="stat-sub" id="repMonthCount">— orders</div></div>
+        <div class="stat-card"><div class="stat-label">Top Product</div><div class="stat-value" id="repTopProduct" style="font-size:1rem;padding-top:6px">—</div></div>
+        <div class="stat-card"><div class="stat-label">Delivery Rate</div><div class="stat-value gold" id="repDeliveryRate">—</div><div class="stat-sub">Delivered vs Paid</div></div>
       </div>
       <div class="reports-grid">
-        <div class="report-card" data-nav="orders" data-filter="all">
-          <div class="report-card-title">Sales History</div>
-          <div class="report-card-desc">All orders with payment and delivery status</div>
-        </div>
-        <div class="report-card" data-nav="orders" data-filter="dispatched">
-          <div class="report-card-title">Dispatched Orders</div>
-          <div class="report-card-desc">Orders currently out for delivery</div>
-        </div>
-        <div class="report-card" data-nav="orders" data-filter="unpaid">
-          <div class="report-card-title">Unpaid Orders</div>
-          <div class="report-card-desc">Orders awaiting payment confirmation</div>
-        </div>
-        <div class="report-card" onclick="exportOrdersCSV()" style="cursor:pointer">
-          <div class="report-card-title">&#8675; Export Orders</div>
-          <div class="report-card-desc">Download all orders as a CSV file for accounting</div>
-        </div>
+        <div class="report-card" data-nav="orders" data-filter="all"><div class="report-card-title">Sales History</div><div class="report-card-desc">All orders with payment and delivery status</div></div>
+        <div class="report-card" data-nav="orders" data-filter="dispatched"><div class="report-card-title">Dispatched Orders</div><div class="report-card-desc">Orders currently out for delivery</div></div>
+        <div class="report-card" data-nav="orders" data-filter="unpaid"><div class="report-card-title">Unpaid Orders</div><div class="report-card-desc">Orders awaiting payment confirmation</div></div>
+        <div class="report-card" onclick="exportOrdersCSV()" style="cursor:pointer"><div class="report-card-title">&#8675; Export Orders</div><div class="report-card-desc">Download all orders as a CSV file for accounting</div></div>
       </div>
     </section>
 
@@ -251,64 +180,25 @@
     <div class="modal-title" id="modalTitle">Add Product</div>
     <input type="hidden" id="modalProductId" />
     <div class="modal-grid">
+      <div class="modal-field full"><label class="field-label" for="mpName">Product Name</label><input type="text" id="mpName" class="field-input" placeholder="e.g. Lash Serum" /></div>
+      <div class="modal-field"><label class="field-label" for="mpPrice">Base Price (R)</label><input type="number" id="mpPrice" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
+      <div class="modal-field"><label class="field-label" for="mpCost">Cost Price (R)</label><input type="number" id="mpCost" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
+      <div class="modal-field"><label class="field-label" for="mpSku">SKU</label><input type="text" id="mpSku" class="field-input" placeholder="e.g. LSH-001" /></div>
+      <div class="modal-field"><label class="field-label" for="mpBrand">Brand</label><input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpCategory">Category</label><input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpDesc">Description</label><textarea id="mpDesc" class="field-input" rows="3" placeholder="Short product description…"></textarea></div>
+      <div class="modal-field full"><label class="field-label" for="mpImage1">Image 1 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(main)</span></label><input type="url" id="mpImage1" class="field-input" placeholder="https://…" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpImage2">Image 2 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage2" class="field-input" placeholder="https://…" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpImage3">Image 3 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage3" class="field-input" placeholder="https://…" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpImage4">Image 4 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage4" class="field-input" placeholder="https://…" /></div>
+      <div class="modal-field full"><label class="field-label" for="mpImage5">Image 5 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage5" class="field-input" placeholder="https://…" /></div>
       <div class="modal-field full">
-        <label class="field-label" for="mpName">Product Name</label>
-        <input type="text" id="mpName" class="field-input" placeholder="e.g. Lash Serum" />
-      </div>
-      <div class="modal-field">
-        <label class="field-label" for="mpPrice">Base Price (R) <span style="font-weight:400;text-transform:none;letter-spacing:0">(used when no sizes set)</span></label>
-        <input type="number" id="mpPrice" class="field-input" placeholder="0.00" min="0" step="0.01" />
-      </div>
-      <div class="modal-field">
-        <label class="field-label" for="mpCost">Cost Price (R)</label>
-        <input type="number" id="mpCost" class="field-input" placeholder="0.00" min="0" step="0.01" />
-      </div>
-      <div class="modal-field">
-        <label class="field-label" for="mpSku">SKU</label>
-        <input type="text" id="mpSku" class="field-input" placeholder="e.g. LSH-001" />
-      </div>
-      <div class="modal-field">
-        <label class="field-label" for="mpBrand">Brand</label>
-        <input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpCategory">Category</label>
-        <input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpDesc">Description</label>
-        <textarea id="mpDesc" class="field-input" rows="3" placeholder="Short product description…"></textarea>
-      </div>
-      <!-- IMAGE URLS (up to 5) -->
-      <div class="modal-field full">
-        <label class="field-label" for="mpImage1">Image 1 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(main)</span></label>
-        <input type="url" id="mpImage1" class="field-input" placeholder="https://…" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpImage2">Image 2 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-        <input type="url" id="mpImage2" class="field-input" placeholder="https://…" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpImage3">Image 3 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-        <input type="url" id="mpImage3" class="field-input" placeholder="https://…" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpImage4">Image 4 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-        <input type="url" id="mpImage4" class="field-input" placeholder="https://…" />
-      </div>
-      <div class="modal-field full">
-        <label class="field-label" for="mpImage5">Image 5 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
-        <input type="url" id="mpImage5" class="field-input" placeholder="https://…" />
-      </div>
-      <!-- VARIANTS -->
-      <div class="modal-field full">
-        <label class="field-label">Variants <span style="font-weight:400;text-transform:none;letter-spacing:0">(e.g. Scent: Calm)</span></label>
+        <label class="field-label">Variants</label>
         <div class="variants-list" id="variantsList"></div>
         <button class="btn-add-variant" id="addVariantBtn">+ Add variant</button>
       </div>
-      <!-- SIZES (each with its own price) -->
       <div class="modal-field full">
-        <label class="field-label">Sizes &amp; Prices <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional — overrides base price)</span></label>
+        <label class="field-label">Sizes &amp; Prices</label>
         <div class="variants-list" id="sizesList"></div>
         <button class="btn-add-variant" id="addSizeBtn">+ Add size</button>
       </div>
@@ -317,6 +207,18 @@
       <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
       <button class="btn btn-primary" id="modalSaveBtn">Save Product</button>
     </div>
+  </div>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-overlay" id="orderDetailModal" role="dialog" aria-modal="true" aria-labelledby="odTitle" hidden
+     style="align-items:flex-start;padding:24px 16px;overflow-y:auto">
+  <div class="modal" style="max-width:560px;width:100%;margin:auto" id="orderDetailInner">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="modal-title" id="odTitle" style="margin-bottom:0">Order Details</div>
+      <button onclick="closeOrderDetail()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:2px 6px" aria-label="Close">&times;</button>
+    </div>
+    <div id="orderDetailBody"></div>
   </div>
 </div>
 

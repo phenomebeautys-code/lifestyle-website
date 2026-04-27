@@ -12,9 +12,7 @@ let allProducts     = [];
 let activeFilter    = 'all';
 let adminToken      = '';
 let pollTimer       = null;
-// editingVariants: [{ name: string, in_stock: boolean }]
 let editingVariants = [];
-// editingSizes: [{ name: string, price: number }]
 let editingSizes    = [];
 
 const BADGE_MAP = {
@@ -63,6 +61,9 @@ document.getElementById('addVariantBtn').addEventListener('click', addVariantRow
 document.getElementById('addSizeBtn').addEventListener('click', addSizeRow);
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
+});
+document.getElementById('orderDetailModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('orderDetailModal')) closeOrderDetail();
 });
 document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
@@ -145,7 +146,6 @@ function startPolling() {
       if (!res.ok) return;
       const data = await res.json();
       const newOrders = data.orders || [];
-      // Check if any order changed payment_status to 'paid'
       const newlyPaid = newOrders.filter(o => {
         const prev = allOrders.find(x => x.id === o.id);
         return o.payment_status === 'paid' && prev && prev.payment_status !== 'paid';
@@ -155,8 +155,8 @@ function startPolling() {
       if (newlyPaid.length) {
         showToast(`🎉 ${newlyPaid.length} new payment${newlyPaid.length > 1 ? 's' : ''} received!`);
       }
-    } catch { /* silent fail — don't disrupt the UI */ }
-  }, 30000); // poll every 30 seconds
+    } catch { /* silent fail */ }
+  }, 30000);
 }
 function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
@@ -249,7 +249,7 @@ function renderRecent() {
     const itemStr  = items.map(i => i.qty + '\u00d7 ' + i.name).join(', ');
     const initials = (o.customer_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     return `
-      <div class="recent-item">
+      <div class="recent-item" onclick="openOrderDetail('${o.id}')" style="cursor:pointer">
         <div class="ri-avatar">${initials}</div>
         <div class="ri-info">
           <div class="ri-name">${esc(o.customer_name)}</div>
@@ -268,21 +268,9 @@ function getDeliveryLabel(o) {
   const method = o.delivery_method || 'door';
   const meta   = o.delivery_meta || {};
   if (method === 'locker') {
-    const lockerName = meta.locker_name || 'Pudo Locker';
-    return { icon: '📦', label: lockerName, sub: meta.locker_address || '' };
+    return { icon: '📦', label: meta.locker_name || 'Pudo Locker', sub: meta.locker_address || '' };
   }
   return { icon: '🏠', label: 'Door Delivery', sub: o.delivery_address || '' };
-}
-
-function deliveryBadgeHtml(o) {
-  const { icon, label } = getDeliveryLabel(o);
-  const cls = o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched';
-  return `<span class="badge ${cls}" style="font-size:0.68rem">${icon} ${esc(label)}</span>`;
-}
-
-function giftBadgeHtml(o) {
-  if (!o.is_gift) return '';
-  return `<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem">🎁 Gift</span>`;
 }
 
 /* ─── ORDERS TABLE ──────────────────── */
@@ -316,8 +304,9 @@ function renderTable() {
   }
   tbody.innerHTML = '';
   orders.forEach(o => {
-    const tr    = document.createElement('tr');
-    const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const tr   = document.createElement('tr');
+    tr.style.cursor = 'pointer';
+    const date = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
     const items = Array.isArray(o.items) ? o.items : [];
     [
       mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
@@ -329,6 +318,11 @@ function renderTable() {
       mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending'),
       mkSelectTd(o),
     ].forEach(c => tr.appendChild(c));
+    // Click row (but not the status select) to open detail
+    tr.addEventListener('click', e => {
+      if (e.target.closest('select')) return;
+      openOrderDetail(o.id);
+    });
     tbody.appendChild(tr);
   });
 }
@@ -347,8 +341,6 @@ function renderCards() {
     const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
     const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
     const sel = makeStatusSelect(o, statusBadge);
-
-    // Delivery info
     const delivInfo = getDeliveryLabel(o);
 
     card.innerHTML = `
@@ -363,21 +355,15 @@ function renderCards() {
     const badges = document.createElement('div'); badges.className = 'oc-badges';
     badges.appendChild(payBadge);
     badges.appendChild(statusBadge);
-
-    // Delivery badge
     const delivBadge = document.createElement('span');
     delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
     delivBadge.style.cssText = 'font-size:0.68rem';
     delivBadge.textContent = delivInfo.icon + ' ' + delivInfo.label;
     badges.appendChild(delivBadge);
-
-    // Gift badge
     if (o.is_gift) {
-      const giftBadge = document.createElement('span');
-      giftBadge.className = 'badge';
-      giftBadge.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem';
-      giftBadge.textContent = '🎁 Gift';
-      badges.appendChild(giftBadge);
+      const g = document.createElement('span'); g.className = 'badge';
+      g.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem';
+      g.textContent = '🎁 Gift'; badges.appendChild(g);
     }
 
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
@@ -387,12 +373,10 @@ function renderCards() {
     });
     if (!items.length) itemsEl.textContent = 'No items';
 
-    // Delivery address line
     const delivEl = document.createElement('div');
     delivEl.style.cssText = 'font-size:0.74rem;color:var(--text-muted);margin-top:6px;line-height:1.4;';
     delivEl.textContent = delivInfo.sub;
 
-    // Gift message
     let giftEl = null;
     if (o.is_gift && o.gift_message) {
       giftEl = document.createElement('div');
@@ -402,24 +386,24 @@ function renderCards() {
 
     const footer  = document.createElement('div'); footer.className = 'oc-footer';
     const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
-
     const actions = document.createElement('div'); actions.className = 'oc-actions';
-
-    const printBtn = document.createElement('button');
-    printBtn.className = 'btn-print-label';
-    printBtn.textContent = 'Print Label';
-    printBtn.addEventListener('click', () => printLabel(o));
-
-    actions.appendChild(sel);
-    actions.appendChild(printBtn);
-    footer.appendChild(dateEl);
-    footer.appendChild(actions);
+    const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
+    printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
+    actions.appendChild(sel); actions.appendChild(printBtn);
+    footer.appendChild(dateEl); footer.appendChild(actions);
 
     card.appendChild(badges);
     card.appendChild(itemsEl);
     card.appendChild(delivEl);
     if (giftEl) card.appendChild(giftEl);
     card.appendChild(footer);
+
+    // Tap card body (not actions) to open detail
+    card.addEventListener('click', e => {
+      if (e.target.closest('select, button')) return;
+      openOrderDetail(o.id);
+    });
+
     el.appendChild(card);
   });
 }
@@ -472,13 +456,10 @@ function mkDeliveryTd(o) {
   const subDiv = document.createElement('div');
   subDiv.style.cssText = 'font-size:0.7rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
   subDiv.textContent = sub;
-  td.appendChild(nameDiv);
-  td.appendChild(subDiv);
+  td.appendChild(nameDiv); td.appendChild(subDiv);
   if (o.is_gift) {
-    const g = document.createElement('div');
-    g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px';
-    g.textContent = '🎁 Gift order';
-    td.appendChild(g);
+    const g = document.createElement('div'); g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px';
+    g.textContent = '🎁 Gift order'; td.appendChild(g);
   }
   return td;
 }
@@ -495,6 +476,119 @@ async function updateOrderStatus(id, status, badgeEl) {
     updateStats(); renderRecent(); updateReports();
     showToast('Status \u2192 ' + status + ' \u2713');
   } catch { showToast('Network error.', true); }
+}
+
+/* ─── ORDER DETAIL MODAL ────────────── */
+function openOrderDetail(orderId) {
+  const o = allOrders.find(x => x.id === orderId);
+  if (!o) return;
+
+  const items      = Array.isArray(o.items) ? o.items : [];
+  const date       = new Date(o.created_at).toLocaleString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const orderNo    = String(o.id).slice(0, 8).toUpperCase();
+  const delivInfo  = getDeliveryLabel(o);
+  const isPaid     = o.payment_status === 'paid';
+  const paidAt     = o.paid_at ? new Date(o.paid_at).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+
+  const itemsHTML = items.map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--glass-border);gap:12px">
+      <div>
+        <div style="font-weight:600;color:var(--accent-strong)">${esc(item.name)}</div>
+        ${item.variant ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">${esc(item.variant)}</div>` : ''}
+        ${item.size    ? `<div style="font-size:0.75rem;color:var(--text-muted)">Size: ${esc(item.size)}</div>` : ''}
+      </div>
+      <div style="white-space:nowrap;text-align:right">
+        <div style="font-weight:700;color:var(--accent)">R${Number(item.price * item.qty).toLocaleString('en-ZA')}</div>
+        <div style="font-size:0.74rem;color:var(--text-muted)">×${item.qty} @ R${item.price}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('odTitle').textContent = `Order #${orderNo}`;
+  document.getElementById('orderDetailBody').innerHTML = `
+
+    <!-- Customer -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Customer</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--accent-strong);margin-bottom:4px">${esc(o.customer_name)}</div>
+      ${o.customer_email ? `<div style="font-size:0.82rem;color:var(--text-muted)">${esc(o.customer_email)}</div>` : ''}
+      ${o.customer_phone ? `<div style="font-size:0.82rem;color:var(--text-muted)">${esc(o.customer_phone)}</div>` : ''}
+      <div style="font-size:0.76rem;color:var(--text-muted);margin-top:6px">Placed: ${date}</div>
+    </div>
+
+    <!-- Payment & Status badges -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
+      <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${o.status || 'pending'}</span>
+      <span class="badge ${o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched'}" style="font-size:0.74rem">${delivInfo.icon} ${esc(delivInfo.label)}</span>
+      ${o.is_gift ? '<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3)">🎁 Gift</span>' : ''}
+    </div>
+
+    ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px">✓ Payment confirmed ${paidAt}</div>` : ''}
+
+    <!-- Delivery -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Delivery</div>
+      <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px">${delivInfo.icon} ${esc(delivInfo.label)}</div>
+      ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
+    </div>
+
+    <!-- Items -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Items</div>
+      ${itemsHTML || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">No items</div>'}
+      <!-- Totals -->
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+        ${o.subtotal != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Subtotal</span><span>R${Number(o.subtotal).toLocaleString('en-ZA')}</span></div>` : ''}
+        ${o.delivery_fee != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Delivery fee</span><span>R${Number(o.delivery_fee).toLocaleString('en-ZA')}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;border-top:1px solid var(--glass-border);padding-top:8px;margin-top:2px"><span>Total</span><span style="color:var(--accent)">R${Number(o.total_amount).toLocaleString('en-ZA')}</span></div>
+      </div>
+    </div>
+
+    <!-- Gift message -->
+    ${o.is_gift && o.gift_message ? `
+    <div style="background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px">🎁 Gift Message</div>
+      <div style="font-size:0.88rem;font-style:italic;color:var(--text-soft);line-height:1.6">&ldquo;${esc(o.gift_message)}&rdquo;</div>
+    </div>` : (o.is_gift ? '<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px">🎁 Gift order — no message added</div>' : '')}
+
+    <!-- Notes -->
+    ${o.notes ? `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Order Notes</div>
+      <div style="font-size:0.84rem;color:var(--text-soft);line-height:1.5">${esc(o.notes)}</div>
+    </div>` : ''}
+
+    <!-- Update status -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <select id="odStatusSelect" class="status-select" style="flex:1;min-width:140px">
+        ${['pending','processing','dispatched','delivered'].map(v =>
+          `<option value="${v}"${o.status === v ? ' selected' : ''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`
+        ).join('')}
+      </select>
+      <button class="btn btn-primary" style="flex:1;min-width:120px;justify-content:center" onclick="updateFromDetail('${o.id}')">Update Status</button>
+      <button class="btn btn-secondary" style="flex:1;min-width:120px;justify-content:center" onclick="printLabel(allOrders.find(x=>x.id==='${o.id}'))">Print Label</button>
+    </div>`;
+
+  const modal = document.getElementById('orderDetailModal');
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+async function updateFromDetail(orderId) {
+  const status = document.getElementById('odStatusSelect').value;
+  await updateOrderStatus(orderId, status, null);
+  // Refresh the badge row in the modal
+  const o = allOrders.find(x => x.id === orderId);
+  if (o) {
+    const badgesEl = document.querySelector('#orderDetailBody .od-status-badge');
+    if (badgesEl) badgesEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid');
+  }
+  renderTable(); renderCards();
+}
+
+function closeOrderDetail() {
+  document.getElementById('orderDetailModal').setAttribute('hidden', '');
+  document.body.style.overflow = '';
 }
 
 /* ─── CSV EXPORT ────────────────────── */
@@ -525,92 +619,72 @@ function exportOrdersCSV() {
   const csv  = [headers.map(h => `"${h}"`), ...rows].map(r => r.join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const a    = document.createElement('a'); a.href = url;
   a.download = `phenome-orders-${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  a.click(); URL.revokeObjectURL(url);
   showToast('CSV exported ✓');
 }
 
 /* ─── PRINT LABEL ───────────────────── */
 function printLabel(order) {
+  if (!order) return;
   const items   = Array.isArray(order.items) ? order.items : [];
   const date    = new Date(order.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
   const isPaid  = order.payment_status === 'paid';
   const orderNo = String(order.id).slice(0, 8).toUpperCase();
   const delivInfo = getDeliveryLabel(order);
-
   const itemsHTML = items.map(item => `
     <div class="label-item">${item.qty}\u00d7 &nbsp;<strong>${esc(item.name)}</strong></div>
     ${item.variant ? `<div class="label-item-variant">${esc(item.variant)}</div>` : ''}
     ${item.size    ? `<div class="label-item-variant">Size: ${esc(item.size)}</div>` : ''}
   `).join('');
-
   const giftHTML = (order.is_gift && order.gift_message)
     ? `<div class="label-section" style="border-top:1px dashed #ccc;margin-top:10px;padding-top:10px">
          <div class="label-section-title">🎁 Gift Message</div>
          <div style="font-size:0.8rem;font-style:italic;color:#555;line-height:1.5">${esc(order.gift_message)}</div>
        </div>`
     : (order.is_gift ? '<div style="font-size:0.75rem;color:#888;margin-top:6px">🎁 Gift order (no message)</div>' : '');
-
   const area = document.getElementById('printLabelArea');
   area.innerHTML = `
     <div class="label-sheet">
-      <div class="label-header">
-        <div class="label-brand">PhenomeBeauty</div>
-        <div class="label-date">${date}</div>
-      </div>
-
+      <div class="label-header"><div class="label-brand">PhenomeBeauty</div><div class="label-date">${date}</div></div>
       <div class="label-section">
         <div class="label-section-title">Deliver To</div>
         <div class="label-name">${esc(order.customer_name)}</div>
-        ${order.customer_phone   ? `<div class="label-sub">${esc(order.customer_phone)}</div>`   : ''}
-        ${order.customer_email   ? `<div class="label-sub">${esc(order.customer_email)}</div>`   : ''}
+        ${order.customer_phone ? `<div class="label-sub">${esc(order.customer_phone)}</div>` : ''}
+        ${order.customer_email ? `<div class="label-sub">${esc(order.customer_email)}</div>` : ''}
         <div class="label-sub" style="margin-top:4px;font-weight:600">${delivInfo.icon} ${esc(delivInfo.label)}</div>
         ${delivInfo.sub ? `<div class="label-sub">${esc(delivInfo.sub)}</div>` : ''}
       </div>
-
       <hr class="label-divider" />
-
       <div class="label-section">
         <div class="label-section-title">Order #${orderNo}</div>
         ${itemsHTML || '<div class="label-item">No items</div>'}
       </div>
-
       ${giftHTML}
-
       <div class="label-total">
         <span>Total</span>
         <span>R${Number(order.total_amount).toLocaleString('en-ZA')}&nbsp;
           <span class="label-paid-badge">${isPaid ? 'PAID' : 'UNPAID'}</span>
         </span>
       </div>
-
       <button class="label-print-btn" onclick="window.print()">Print</button>
       <button class="label-close-btn" onclick="closePrintLabel()">Close</button>
     </div>`;
-
   area.style.display = 'block';
   document.body.style.overflow = 'hidden';
 }
-
 function closePrintLabel() {
   document.getElementById('printLabelArea').style.display = 'none';
   document.body.style.overflow = '';
 }
 
 /* ─── PRODUCTS ──────────────────────── */
-
-/* Normalise stored images into an array of up to 5 URLs */
 function getProductImages(p) {
-  if (Array.isArray(p.image_urls) && p.image_urls.length) {
-    return p.image_urls.filter(Boolean).slice(0, 5);
-  }
+  if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
   if (p.image_url) return [p.image_url];
   return [];
 }
-
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
     '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading\u2026</div>';
@@ -618,74 +692,37 @@ async function loadProducts() {
     const res = await callEdge({ action: 'get_products', password: adminToken });
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data.products)) {
-        allProducts = data.products;
-        renderProducts();
-        return;
-      }
+      if (Array.isArray(data.products)) { allProducts = data.products; renderProducts(); return; }
     }
     await loadProductsFromRest();
-  } catch {
-    await loadProductsFromRest();
-  }
+  } catch { await loadProductsFromRest(); }
 }
 async function loadProductsFromRest() {
   try {
-    const res = await fetch(
-      `${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=idx.asc`,
-      { headers: { 'apikey': SUPA_ANON, 'Authorization': `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' } }
-    );
-    if (!res.ok) {
-      console.error('Products REST error:', await res.text());
-      allProducts = []; renderProducts();
-      showToast('Could not load products: ' + res.status, true);
-      return;
-    }
-    allProducts = await res.json();
-    renderProducts();
-  } catch (e) {
-    console.error('Products fetch failed:', e);
-    allProducts = []; renderProducts();
-  }
+    const res = await fetch(`${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=idx.asc`,
+      { headers: { 'apikey': SUPA_ANON, 'Authorization': `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' } });
+    if (!res.ok) { allProducts = []; renderProducts(); showToast('Could not load products: ' + res.status, true); return; }
+    allProducts = await res.json(); renderProducts();
+  } catch { allProducts = []; renderProducts(); }
 }
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
-  const list = q
-    ? allProducts.filter(p =>
-        p.name?.toLowerCase().includes(q) ||
-        p.brand?.toLowerCase().includes(q)
-      )
-    : allProducts;
-
+  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q)) : allProducts;
   if (!list.length) {
-    el.innerHTML = `
-      <div class="products-empty" style="grid-column:1/-1">
-        No products yet.<br>
-        <button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button>
-      </div>`;
-    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal());
-    return;
+    el.innerHTML = `<div class="products-empty" style="grid-column:1/-1">No products yet.<br><button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button></div>`;
+    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal()); return;
   }
   el.innerHTML = '';
   list.forEach(p => {
     const card = document.createElement('div'); card.className = 'product-card';
-
-    const variantDisplay = (p.variants || [])
-      .map(v => {
-        const name    = typeof v === 'string' ? v : (v.name || '');
-        const inStock = typeof v === 'string' ? true : v.in_stock !== false;
-        return name ? (inStock ? name : `${name} \u2716`) : null;
-      })
-      .filter(Boolean)
-      .join(', ');
-
-    const sizeDisplay = normaliseSizes(p.sizes)
-      .map(s => `${s.name} (R${s.price})`)
-      .join(', ');
-
+    const variantDisplay = (p.variants || []).map(v => {
+      const name = typeof v === 'string' ? v : (v.name || '');
+      const inStock = typeof v === 'string' ? true : v.in_stock !== false;
+      return name ? (inStock ? name : `${name} \u2716`) : null;
+    }).filter(Boolean).join(', ');
+    const sizeDisplay = normaliseSizes(p.sizes).map(s => `${s.name} (R${s.price})`).join(', ');
     const images = getProductImages(p);
-
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (images.length > 1) {
       const carousel = document.createElement('div'); carousel.className = 'img-carousel';
@@ -693,24 +730,18 @@ function renderProducts() {
       images.forEach((url, idx) => {
         const slide = document.createElement('div'); slide.className = 'img-carousel-slide';
         const img   = document.createElement('img'); img.src = url; img.alt = (p.name || '') + ' ' + (idx + 1);
-        img.onerror = () => { slide.innerHTML = noImgSVG(); };
-        slide.appendChild(img);
-        track.appendChild(slide);
+        img.onerror = () => { slide.innerHTML = noImgSVG(); }; slide.appendChild(img); track.appendChild(slide);
       });
       carousel.appendChild(track);
-
       const dots = document.createElement('div'); dots.className = 'img-carousel-dots';
       let currentSlide = 0;
       const dotEls = images.map((_, idx) => {
         const d = document.createElement('button'); d.className = 'img-carousel-dot' + (idx === 0 ? ' active' : '');
         d.setAttribute('aria-label', 'Image ' + (idx + 1));
-        d.addEventListener('click', () => goToSlide(idx));
-        dots.appendChild(d); return d;
+        d.addEventListener('click', () => goToSlide(idx)); dots.appendChild(d); return d;
       });
-
       const prev = document.createElement('button'); prev.className = 'img-carousel-btn img-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous image');
       const next = document.createElement('button'); next.className = 'img-carousel-btn img-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next image');
-
       function goToSlide(idx) {
         currentSlide = (idx + images.length) % images.length;
         track.style.transform = `translateX(-${currentSlide * 100}%)`;
@@ -718,33 +749,25 @@ function renderProducts() {
       }
       prev.addEventListener('click', () => goToSlide(currentSlide - 1));
       next.addEventListener('click', () => goToSlide(currentSlide + 1));
-
-      carousel.appendChild(prev);
-      carousel.appendChild(next);
-      carousel.appendChild(dots);
+      carousel.appendChild(prev); carousel.appendChild(next); carousel.appendChild(dots);
       imgWrap.appendChild(carousel);
     } else if (images.length === 1) {
       const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
-      img.onerror = () => { imgWrap.innerHTML = noImgSVG(); };
-      imgWrap.appendChild(img);
-    } else {
-      imgWrap.innerHTML = noImgSVG();
-    }
-
+      img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
+    } else { imgWrap.innerHTML = noImgSVG(); }
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
-      ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>`         : ''}
+      ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
       <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
-      ${p.brand        ? `<div class="product-brand">${esc(p.brand)}</div>`           : ''}
+      ${p.brand        ? `<div class="product-brand">${esc(p.brand)}</div>` : ''}
       ${variantDisplay ? `<div class="product-variant">${esc(variantDisplay)}</div>` : ''}
       ${sizeDisplay    ? `<div class="product-variant">Sizes: ${esc(sizeDisplay)}</div>` : ''}
-      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>`     : ''}
+      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>`;
-
-    const footer  = document.createElement('div'); footer.className = 'product-card-footer';
+    const footer = document.createElement('div'); footer.className = 'product-card-footer';
     const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => openProductModal(p));
-    const delBtn  = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
+    const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
     delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
     footer.appendChild(editBtn); footer.appendChild(delBtn);
     card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
@@ -758,9 +781,7 @@ function noImgSVG() {
 /* ─── SIZES HELPERS ─────────────────── */
 function normaliseSizes(raw) {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 }))
-    .filter(s => s.name);
+  return raw.map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 })).filter(s => s.name);
 }
 
 /* ─── PRODUCT MODAL ─────────────────── */
@@ -774,148 +795,81 @@ function openProductModal(product = null) {
   document.getElementById('mpBrand').value           = product?.brand || '';
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
-
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
   document.getElementById('mpImage2').value = imgs[1] || '';
   document.getElementById('mpImage3').value = imgs[2] || '';
   document.getElementById('mpImage4').value = imgs[3] || '';
   document.getElementById('mpImage5').value = imgs[4] || '';
-
   editingVariants = (product?.variants || []).map(v => {
     if (typeof v === 'string') return { name: v, in_stock: true };
     return { name: v.name || '', in_stock: v.in_stock !== false };
   }).filter(v => v.name);
-
   editingSizes = normaliseSizes(product?.sizes || []);
-
-  renderVariantRows();
-  renderSizeRows();
+  renderVariantRows(); renderSizeRows();
   document.getElementById('productModal').removeAttribute('hidden');
   document.getElementById('mpName').focus();
 }
-function closeProductModal() {
-  document.getElementById('productModal').setAttribute('hidden', '');
-}
+function closeProductModal() { document.getElementById('productModal').setAttribute('hidden', ''); }
 
-/* ── Variant rows ── */
 function renderVariantRows() {
-  const el = document.getElementById('variantsList');
-  el.innerHTML = '';
-
+  const el = document.getElementById('variantsList'); el.innerHTML = '';
   editingVariants.forEach((v, i) => {
-    const row = document.createElement('div');
-    row.className = 'variant-row';
+    const row = document.createElement('div'); row.className = 'variant-row';
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
-
-    const inp = document.createElement('input');
-    inp.type        = 'text';
-    inp.value       = v.name;
-    inp.placeholder = 'e.g. Scent: Calm';
-    inp.style.flex  = '1';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v.name; inp.placeholder = 'e.g. Scent: Calm'; inp.style.flex = '1';
     inp.addEventListener('input', () => { editingVariants[i].name = inp.value; });
-
     const label = document.createElement('label');
     label.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:0.78rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;user-select:none;';
-    label.setAttribute('title', 'Toggle stock availability for this variant');
-
-    const checkbox = document.createElement('input');
-    checkbox.type    = 'checkbox';
-    checkbox.checked = v.in_stock;
+    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = v.in_stock;
     checkbox.style.cssText = 'accent-color:var(--accent);width:14px;height:14px;cursor:pointer;';
+    const stockText = document.createElement('span'); stockText.textContent = v.in_stock ? 'In Stock' : 'Out of Stock';
+    stockText.style.color = v.in_stock ? 'var(--accent)' : '#f87171';
     checkbox.addEventListener('change', () => {
       editingVariants[i].in_stock = checkbox.checked;
       stockText.textContent = checkbox.checked ? 'In Stock' : 'Out of Stock';
       stockText.style.color = checkbox.checked ? 'var(--accent)' : '#f87171';
     });
-
-    const stockText = document.createElement('span');
-    stockText.textContent = v.in_stock ? 'In Stock' : 'Out of Stock';
-    stockText.style.color = v.in_stock ? 'var(--accent)' : '#f87171';
-
-    label.appendChild(checkbox);
-    label.appendChild(stockText);
-
-    const rm = document.createElement('button');
-    rm.className = 'btn-remove-variant';
-    rm.innerHTML = '\u00d7';
-    rm.type      = 'button';
+    label.appendChild(checkbox); label.appendChild(stockText);
+    const rm = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
     rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
-
-    row.appendChild(inp);
-    row.appendChild(label);
-    row.appendChild(rm);
-    el.appendChild(row);
+    row.appendChild(inp); row.appendChild(label); row.appendChild(rm); el.appendChild(row);
   });
 }
-
 function addVariantRow() {
-  editingVariants.push({ name: '', in_stock: true });
-  renderVariantRows();
+  editingVariants.push({ name: '', in_stock: true }); renderVariantRows();
   const inputs = document.getElementById('variantsList').querySelectorAll('input[type="text"]');
   inputs[inputs.length - 1]?.focus();
 }
 
-/* ── Size rows ── */
 function renderSizeRows() {
-  const el = document.getElementById('sizesList');
-  el.innerHTML = '';
-
+  const el = document.getElementById('sizesList'); el.innerHTML = '';
   editingSizes.forEach((s, i) => {
-    const row = document.createElement('div');
-    row.className = 'variant-row';
+    const row = document.createElement('div'); row.className = 'variant-row';
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
-
-    const nameInp = document.createElement('input');
-    nameInp.type        = 'text';
-    nameInp.value       = s.name;
-    nameInp.placeholder = 'e.g. 50ml';
-    nameInp.style.flex  = '1';
+    const nameInp = document.createElement('input'); nameInp.type = 'text'; nameInp.value = s.name; nameInp.placeholder = 'e.g. 50ml'; nameInp.style.flex = '1';
     nameInp.addEventListener('input', () => { editingSizes[i].name = nameInp.value; });
-
-    const priceWrap = document.createElement('div');
-    priceWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
-    const pricePrefix = document.createElement('span');
-    pricePrefix.textContent = 'R';
-    pricePrefix.style.cssText = 'font-size:0.82rem;color:var(--text-muted);font-weight:600;';
-    const priceInp = document.createElement('input');
-    priceInp.type        = 'number';
-    priceInp.value       = s.price || '';
-    priceInp.placeholder = '0.00';
-    priceInp.min         = '0';
-    priceInp.step        = '0.01';
-    priceInp.style.cssText = 'width:80px;';
+    const priceWrap = document.createElement('div'); priceWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+    const pricePrefix = document.createElement('span'); pricePrefix.textContent = 'R'; pricePrefix.style.cssText = 'font-size:0.82rem;color:var(--text-muted);font-weight:600;';
+    const priceInp = document.createElement('input'); priceInp.type = 'number'; priceInp.value = s.price || ''; priceInp.placeholder = '0.00'; priceInp.min = '0'; priceInp.step = '0.01'; priceInp.style.cssText = 'width:80px;';
     priceInp.addEventListener('input', () => { editingSizes[i].price = parseFloat(priceInp.value) || 0; });
-    priceWrap.appendChild(pricePrefix);
-    priceWrap.appendChild(priceInp);
-
-    const rm = document.createElement('button');
-    rm.className = 'btn-remove-variant';
-    rm.innerHTML = '\u00d7';
-    rm.type      = 'button';
+    priceWrap.appendChild(pricePrefix); priceWrap.appendChild(priceInp);
+    const rm = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
     rm.addEventListener('click', () => { editingSizes.splice(i, 1); renderSizeRows(); });
-
-    row.appendChild(nameInp);
-    row.appendChild(priceWrap);
-    row.appendChild(rm);
-    el.appendChild(row);
+    row.appendChild(nameInp); row.appendChild(priceWrap); row.appendChild(rm); el.appendChild(row);
   });
 }
-
 function addSizeRow() {
-  editingSizes.push({ name: '', price: 0 });
-  renderSizeRows();
+  editingSizes.push({ name: '', price: 0 }); renderSizeRows();
   const inputs = document.getElementById('sizesList').querySelectorAll('input[type="text"]');
   inputs[inputs.length - 1]?.focus();
 }
 
-/* ── Save product ── */
 async function saveProduct() {
   const btn  = document.getElementById('modalSaveBtn');
   const id   = document.getElementById('modalProductId').value;
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
-
   const imageUrls = [
     document.getElementById('mpImage1').value.trim(),
     document.getElementById('mpImage2').value.trim(),
@@ -923,17 +877,11 @@ async function saveProduct() {
     document.getElementById('mpImage4').value.trim(),
     document.getElementById('mpImage5').value.trim(),
   ].filter(Boolean);
-
-  const cleanSizes = editingSizes
-    .filter(s => s.name.trim())
-    .map(s => ({ name: s.name.trim(), price: s.price }));
-
+  const cleanSizes = editingSizes.filter(s => s.name.trim()).map(s => ({ name: s.name.trim(), price: s.price }));
   const payload = {
-    action:   id ? 'update_product' : 'add_product',
-    password: adminToken,
+    action: id ? 'update_product' : 'add_product', password: adminToken,
     product: {
-      ...(id && { id }),
-      name,
+      ...(id && { id }), name,
       price:       parseFloat(document.getElementById('mpPrice').value)    || 0,
       cost_price:  parseFloat(document.getElementById('mpCost').value)     || 0,
       sku:         document.getElementById('mpSku').value.trim(),
@@ -942,10 +890,8 @@ async function saveProduct() {
       image_url:   imageUrls[0] || '',
       image_urls:  imageUrls,
       category:    document.getElementById('mpCategory').value.trim(),
-      variants:    editingVariants
-        .filter(v => v.name.trim())
-        .map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
-      sizes: cleanSizes,
+      variants:    editingVariants.filter(v => v.name.trim()).map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
+      sizes:       cleanSizes,
     },
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
@@ -957,11 +903,8 @@ async function saveProduct() {
     if (id) {
       const idx = allProducts.findIndex(p => p.id === id);
       if (idx > -1) allProducts[idx] = data.product || allProducts[idx];
-    } else {
-      allProducts.unshift(data.product || payload.product);
-    }
-    renderProducts(); closeProductModal();
-    showToast(id ? 'Product updated \u2713' : 'Product added \u2713');
+    } else { allProducts.unshift(data.product || payload.product); }
+    renderProducts(); closeProductModal(); showToast(id ? 'Product updated \u2713' : 'Product added \u2713');
   } catch { showToast('Network error.', true); }
   finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
 }
