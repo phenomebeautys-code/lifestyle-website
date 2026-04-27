@@ -11,6 +11,7 @@ let allOrders       = [];
 let allProducts     = [];
 let activeFilter    = 'all';
 let adminToken      = '';
+let pollTimer       = null;
 // editingVariants: [{ name: string, in_stock: boolean }]
 let editingVariants = [];
 // editingSizes: [{ name: string, price: number }]
@@ -108,6 +109,7 @@ async function login() {
     ui.removeAttribute('aria-hidden');
     allOrders = data.orders || [];
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+    startPolling();
   } catch {
     showLoginError('Network error. Check your connection.');
   } finally {
@@ -120,13 +122,44 @@ function showLoginError(msg) {
   el.textContent = msg; el.style.display = 'block';
 }
 function hideLoginError() { document.getElementById('loginError').style.display = 'none'; }
-function logout() { sessionStorage.removeItem('_at_hash'); adminToken = ''; location.reload(); }
+function logout() {
+  stopPolling();
+  sessionStorage.removeItem('_at_hash');
+  adminToken = '';
+  location.reload();
+}
 function callEdge(body) {
   return fetch(EDGE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+}
+
+/* ─── AUTO-REFRESH POLLING ──────────── */
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await callEdge({ action: 'get_orders', password: adminToken });
+      if (!res.ok) return;
+      const data = await res.json();
+      const newOrders = data.orders || [];
+      // Check if any order changed payment_status to 'paid'
+      const newlyPaid = newOrders.filter(o => {
+        const prev = allOrders.find(x => x.id === o.id);
+        return o.payment_status === 'paid' && prev && prev.payment_status !== 'paid';
+      });
+      allOrders = newOrders;
+      updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+      if (newlyPaid.length) {
+        showToast(`🎉 ${newlyPaid.length} new payment${newlyPaid.length > 1 ? 's' : ''} received!`);
+      }
+    } catch { /* silent fail — don't disrupt the UI */ }
+  }, 30000); // poll every 30 seconds
+}
+function stopPolling() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
 /* ─── NAVIGATION ────────────────────── */
@@ -230,6 +263,28 @@ function renderRecent() {
   }).join('');
 }
 
+/* ─── DELIVERY HELPERS ──────────────── */
+function getDeliveryLabel(o) {
+  const method = o.delivery_method || 'door';
+  const meta   = o.delivery_meta || {};
+  if (method === 'locker') {
+    const lockerName = meta.locker_name || 'Pudo Locker';
+    return { icon: '📦', label: lockerName, sub: meta.locker_address || '' };
+  }
+  return { icon: '🏠', label: 'Door Delivery', sub: o.delivery_address || '' };
+}
+
+function deliveryBadgeHtml(o) {
+  const { icon, label } = getDeliveryLabel(o);
+  const cls = o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched';
+  return `<span class="badge ${cls}" style="font-size:0.68rem">${icon} ${esc(label)}</span>`;
+}
+
+function giftBadgeHtml(o) {
+  if (!o.is_gift) return '';
+  return `<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem">🎁 Gift</span>`;
+}
+
 /* ─── ORDERS TABLE ──────────────────── */
 function applyFilter(filter, btn) {
   activeFilter = filter;
@@ -256,7 +311,7 @@ function renderTable() {
   const orders = getFiltered();
   const tbody  = document.getElementById('ordersBody');
   if (!orders.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No orders found.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No orders found.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
@@ -270,6 +325,7 @@ function renderTable() {
       mkItemsTd(items),
       mkTd('R' + Number(o.total_amount).toLocaleString('en-ZA'), 'font-weight:700;color:var(--accent);white-space:nowrap'),
       mkBadgeTd(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid'),
+      mkDeliveryTd(o),
       mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending'),
       mkSelectTd(o),
     ].forEach(c => tr.appendChild(c));
@@ -292,6 +348,9 @@ function renderCards() {
     const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
     const sel = makeStatusSelect(o, statusBadge);
 
+    // Delivery info
+    const delivInfo = getDeliveryLabel(o);
+
     card.innerHTML = `
       <div class="oc-top">
         <div>
@@ -302,7 +361,24 @@ function renderCards() {
       </div>`;
 
     const badges = document.createElement('div'); badges.className = 'oc-badges';
-    badges.appendChild(payBadge); badges.appendChild(statusBadge);
+    badges.appendChild(payBadge);
+    badges.appendChild(statusBadge);
+
+    // Delivery badge
+    const delivBadge = document.createElement('span');
+    delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
+    delivBadge.style.cssText = 'font-size:0.68rem';
+    delivBadge.textContent = delivInfo.icon + ' ' + delivInfo.label;
+    badges.appendChild(delivBadge);
+
+    // Gift badge
+    if (o.is_gift) {
+      const giftBadge = document.createElement('span');
+      giftBadge.className = 'badge';
+      giftBadge.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem';
+      giftBadge.textContent = '🎁 Gift';
+      badges.appendChild(giftBadge);
+    }
 
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
     items.forEach((item, i) => {
@@ -310,6 +386,19 @@ function renderCards() {
       itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`));
     });
     if (!items.length) itemsEl.textContent = 'No items';
+
+    // Delivery address line
+    const delivEl = document.createElement('div');
+    delivEl.style.cssText = 'font-size:0.74rem;color:var(--text-muted);margin-top:6px;line-height:1.4;';
+    delivEl.textContent = delivInfo.sub;
+
+    // Gift message
+    let giftEl = null;
+    if (o.is_gift && o.gift_message) {
+      giftEl = document.createElement('div');
+      giftEl.style.cssText = 'font-size:0.74rem;color:#fbbf24;margin-top:6px;font-style:italic;border-left:2px solid rgba(255,200,80,0.4);padding-left:8px;line-height:1.4;';
+      giftEl.textContent = '\u201c' + o.gift_message + '\u201d';
+    }
 
     const footer  = document.createElement('div'); footer.className = 'oc-footer';
     const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
@@ -328,6 +417,8 @@ function renderCards() {
 
     card.appendChild(badges);
     card.appendChild(itemsEl);
+    card.appendChild(delivEl);
+    if (giftEl) card.appendChild(giftEl);
     card.appendChild(footer);
     el.appendChild(card);
   });
@@ -356,7 +447,6 @@ function mkCustomerTd(o) {
   [['font-weight:600;color:var(--accent-strong)', o.customer_name],
    ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
    ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
-   ['color:var(--text-muted);font-size:0.71rem;margin-top:2px', o.delivery_address],
   ].forEach(([style, val]) => {
     const d = document.createElement('div'); d.style.cssText = style; d.textContent = val || ''; td.appendChild(d);
   }); return td;
@@ -373,6 +463,25 @@ function mkItemsTd(items) {
 function mkBadgeTd(cls, label) {
   const td = document.createElement('td'); td.appendChild(makeBadge(cls, label)); return td;
 }
+function mkDeliveryTd(o) {
+  const td = document.createElement('td');
+  const { icon, label, sub } = getDeliveryLabel(o);
+  const nameDiv = document.createElement('div');
+  nameDiv.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text)';
+  nameDiv.textContent = icon + ' ' + label;
+  const subDiv = document.createElement('div');
+  subDiv.style.cssText = 'font-size:0.7rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  subDiv.textContent = sub;
+  td.appendChild(nameDiv);
+  td.appendChild(subDiv);
+  if (o.is_gift) {
+    const g = document.createElement('div');
+    g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px';
+    g.textContent = '🎁 Gift order';
+    td.appendChild(g);
+  }
+  return td;
+}
 function mkSelectTd(o) {
   const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
 }
@@ -388,18 +497,62 @@ async function updateOrderStatus(id, status, badgeEl) {
   } catch { showToast('Network error.', true); }
 }
 
+/* ─── CSV EXPORT ────────────────────── */
+function exportOrdersCSV() {
+  const orders = getFiltered();
+  if (!orders.length) { showToast('No orders to export.', true); return; }
+  const headers = ['Date','Order ID','Customer','Email','Phone','Items','Subtotal','Delivery Fee','Total','Payment','Delivery Method','Delivery Address','Status','Gift','Gift Message'];
+  const rows = orders.map(o => {
+    const items = (o.items || []).map(i => `${i.qty}x ${i.name}${i.variant ? ' ('+i.variant+')' : ''}`).join(' | ');
+    return [
+      new Date(o.created_at).toLocaleDateString('en-ZA'),
+      String(o.id).slice(0,8).toUpperCase(),
+      o.customer_name || '',
+      o.customer_email || '',
+      o.customer_phone || '',
+      items,
+      o.subtotal || '',
+      o.delivery_fee || '',
+      o.total_amount || '',
+      o.payment_status || '',
+      o.delivery_method === 'locker' ? 'Pudo Locker' : 'Door Delivery',
+      o.delivery_address || '',
+      o.status || '',
+      o.is_gift ? 'Yes' : 'No',
+      o.gift_message || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`);
+  });
+  const csv  = [headers.map(h => `"${h}"`), ...rows].map(r => r.join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `phenome-orders-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported ✓');
+}
+
 /* ─── PRINT LABEL ───────────────────── */
 function printLabel(order) {
   const items   = Array.isArray(order.items) ? order.items : [];
   const date    = new Date(order.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
   const isPaid  = order.payment_status === 'paid';
   const orderNo = String(order.id).slice(0, 8).toUpperCase();
+  const delivInfo = getDeliveryLabel(order);
 
   const itemsHTML = items.map(item => `
     <div class="label-item">${item.qty}\u00d7 &nbsp;<strong>${esc(item.name)}</strong></div>
     ${item.variant ? `<div class="label-item-variant">${esc(item.variant)}</div>` : ''}
     ${item.size    ? `<div class="label-item-variant">Size: ${esc(item.size)}</div>` : ''}
   `).join('');
+
+  const giftHTML = (order.is_gift && order.gift_message)
+    ? `<div class="label-section" style="border-top:1px dashed #ccc;margin-top:10px;padding-top:10px">
+         <div class="label-section-title">🎁 Gift Message</div>
+         <div style="font-size:0.8rem;font-style:italic;color:#555;line-height:1.5">${esc(order.gift_message)}</div>
+       </div>`
+    : (order.is_gift ? '<div style="font-size:0.75rem;color:#888;margin-top:6px">🎁 Gift order (no message)</div>' : '');
 
   const area = document.getElementById('printLabelArea');
   area.innerHTML = `
@@ -414,7 +567,8 @@ function printLabel(order) {
         <div class="label-name">${esc(order.customer_name)}</div>
         ${order.customer_phone   ? `<div class="label-sub">${esc(order.customer_phone)}</div>`   : ''}
         ${order.customer_email   ? `<div class="label-sub">${esc(order.customer_email)}</div>`   : ''}
-        ${order.delivery_address ? `<div class="label-sub">${esc(order.delivery_address)}</div>` : ''}
+        <div class="label-sub" style="margin-top:4px;font-weight:600">${delivInfo.icon} ${esc(delivInfo.label)}</div>
+        ${delivInfo.sub ? `<div class="label-sub">${esc(delivInfo.sub)}</div>` : ''}
       </div>
 
       <hr class="label-divider" />
@@ -423,6 +577,8 @@ function printLabel(order) {
         <div class="label-section-title">Order #${orderNo}</div>
         ${itemsHTML || '<div class="label-item">No items</div>'}
       </div>
+
+      ${giftHTML}
 
       <div class="label-total">
         <span>Total</span>
@@ -515,7 +671,6 @@ function renderProducts() {
   list.forEach(p => {
     const card = document.createElement('div'); card.className = 'product-card';
 
-    // Variant display with stock status
     const variantDisplay = (p.variants || [])
       .map(v => {
         const name    = typeof v === 'string' ? v : (v.name || '');
@@ -525,14 +680,12 @@ function renderProducts() {
       .filter(Boolean)
       .join(', ');
 
-    // Size display
     const sizeDisplay = normaliseSizes(p.sizes)
       .map(s => `${s.name} (R${s.price})`)
       .join(', ');
 
     const images = getProductImages(p);
 
-    /* ── Image carousel ── */
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (images.length > 1) {
       const carousel = document.createElement('div'); carousel.className = 'img-carousel';
@@ -603,11 +756,6 @@ function noImgSVG() {
 }
 
 /* ─── SIZES HELPERS ─────────────────── */
-
-/**
- * normaliseSizes — always returns [{ name: string, price: number }]
- * Handles missing / null sizes gracefully.
- */
 function normaliseSizes(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -627,7 +775,6 @@ function openProductModal(product = null) {
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
 
-  // Populate up to 5 image URL fields
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
   document.getElementById('mpImage2').value = imgs[1] || '';
@@ -635,13 +782,11 @@ function openProductModal(product = null) {
   document.getElementById('mpImage4').value = imgs[3] || '';
   document.getElementById('mpImage5').value = imgs[4] || '';
 
-  // Normalise variants
   editingVariants = (product?.variants || []).map(v => {
     if (typeof v === 'string') return { name: v, in_stock: true };
     return { name: v.name || '', in_stock: v.in_stock !== false };
   }).filter(v => v.name);
 
-  // Normalise sizes
   editingSizes = normaliseSizes(product?.sizes || []);
 
   renderVariantRows();
@@ -721,7 +866,6 @@ function renderSizeRows() {
     row.className = 'variant-row';
     row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
 
-    // Size name input
     const nameInp = document.createElement('input');
     nameInp.type        = 'text';
     nameInp.value       = s.name;
@@ -729,7 +873,6 @@ function renderSizeRows() {
     nameInp.style.flex  = '1';
     nameInp.addEventListener('input', () => { editingSizes[i].name = nameInp.value; });
 
-    // Price input
     const priceWrap = document.createElement('div');
     priceWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
     const pricePrefix = document.createElement('span');
@@ -746,7 +889,6 @@ function renderSizeRows() {
     priceWrap.appendChild(pricePrefix);
     priceWrap.appendChild(priceInp);
 
-    // Remove button
     const rm = document.createElement('button');
     rm.className = 'btn-remove-variant';
     rm.innerHTML = '\u00d7';
@@ -774,7 +916,6 @@ async function saveProduct() {
   const name = document.getElementById('mpName').value.trim();
   if (!name) { showToast('Product name is required.', true); return; }
 
-  // Collect up to 5 image URLs
   const imageUrls = [
     document.getElementById('mpImage1').value.trim(),
     document.getElementById('mpImage2').value.trim(),
@@ -804,7 +945,6 @@ async function saveProduct() {
       variants:    editingVariants
         .filter(v => v.name.trim())
         .map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
-      // sizes: [{ name, price }] — empty array if none set
       sizes: cleanSizes,
     },
   };
