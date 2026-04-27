@@ -1,0 +1,2 @@
+[functions.pudo-create-shipment]
+verify_jwt = false
