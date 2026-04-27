@@ -243,7 +243,6 @@
       border-bottom: 1px solid var(--glass-border);
       gap: 8px;
     }
-    /* Left zone: back / continue shopping */
     .drawer-back-btn {
       display: inline-flex;
       align-items: center;
@@ -263,7 +262,6 @@
     }
     .drawer-back-btn:hover { color: var(--accent-strong); transform: translateX(-3px); }
     .drawer-back-btn svg { flex-shrink: 0; }
-    /* Centre zone: title */
     .drawer-header h2 {
       font-family: var(--font-display);
       font-size: 1.4rem;
@@ -271,7 +269,6 @@
       text-align: center;
       margin: 0;
     }
-    /* Right zone: close X */
     .close-btn {
       justify-self: end;
       width:36px; height:36px; border-radius:50%;
@@ -285,14 +282,13 @@
     .cart-items { flex:1; overflow-y:auto; padding:16px 24px; display:flex; flex-direction:column; gap:10px; }
     .cart-empty { text-align:center; padding:48px 0; color:var(--text-muted); font-size:0.9rem; }
 
-    /* ── Cart item with image ────────────── */
+    /* ── Cart item ─────────────────────── */
     .cart-item {
       display: flex; gap: 12px; align-items: flex-start;
       background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
       border-radius: var(--radius-md); padding: 12px; transition: border-color 0.2s;
     }
     .cart-item:hover { border-color: rgba(255,255,255,0.14); }
-
     .cart-item-thumb {
       flex-shrink: 0; width: 72px; height: 72px;
       border-radius: 10px; overflow: hidden;
@@ -301,7 +297,6 @@
     }
     .cart-item-thumb img { width:100%; height:100%; object-fit:cover; object-position:center; display:block; }
     .cart-item-thumb-placeholder { opacity: 0.2; }
-
     .cart-item-info { flex: 1; min-width: 0; }
     .cart-item-name    { font-size:0.9rem; font-weight:600; color:var(--accent-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .cart-item-variant { font-size:0.78rem; color:var(--text-muted); margin-top:2px; }
@@ -332,6 +327,13 @@
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
     .total-row.grand span:last-child { color:var(--accent); }
+    .delivery-note {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: right;
+      margin-top: -6px;
+    }
     .secure-note { text-align:center; font-size:0.75rem; color:var(--text-muted); }
 
     /* ── Continue shopping (footer) ─────── */
@@ -379,7 +381,6 @@
 
     @media (max-width: 768px) {
       body.has-cart-items { padding-bottom: var(--mobile-bar-h); }
-
       body.has-cart-items .cart-drawer { bottom: var(--mobile-bar-h); }
 
       .mobile-cart-bar {
@@ -489,12 +490,9 @@
   <!-- CART DRAWER -->
   <aside class="cart-drawer" id="cartDrawer">
 
-    <!-- Header: ← Continue Shopping | Your Cart | ✕ -->
     <div class="drawer-header">
       <button class="drawer-back-btn" onclick="closeCart()" aria-label="Continue shopping">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Continue Shopping
       </button>
       <h2>Your Cart</h2>
@@ -505,19 +503,15 @@
 
     <div class="cart-footer" id="cartFooter" style="display:none">
       <div style="display:flex;flex-direction:column;gap:6px">
-        <div class="total-row"><span>Subtotal</span><span id="subtotalDisplay">R0</span></div>
-        <div class="total-row"><span>Delivery</span><span id="deliveryDisplay">R80</span></div>
-        <div class="total-row grand"><span>Total</span><span id="totalDisplay">R0</span></div>
+        <div class="total-row grand"><span>Subtotal</span><span id="subtotalDisplay">R0</span></div>
+        <p class="delivery-note">Delivery calculated at checkout</p>
       </div>
       <a href="checkout.html" class="btn btn-primary" style="width:100%;justify-content:center;text-align:center;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Proceed to Checkout
       </a>
-      <!-- Secondary escape: continue shopping from the footer too -->
       <button class="continue-shopping" onclick="closeCart()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"/>
-        </svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Continue Shopping
       </button>
       <p class="secure-note">&#128274; Secured by Yoco &mdash; card payments accepted</p>
@@ -587,7 +581,6 @@
   <script>
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
-    const DELIVERY_FEE  = 80;
 
     let PRODUCTS = [];
     let cart     = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
@@ -888,9 +881,8 @@
       saveCart(); updateBadge(); renderCart(); openCart();
     }
 
-    function saveCart()  { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
-    function calcSub()   { return cart.reduce((s,i) => s + i.price * i.qty, 0); }
-    function calcTotal() { return calcSub() + (cart.length ? DELIVERY_FEE : 0); }
+    function saveCart() { localStorage.setItem('phenome_cart', JSON.stringify(cart)); }
+    function calcSub()  { return cart.reduce((s,i) => s + i.price * i.qty, 0); }
 
     function updateBadge() {
       const n = cart.reduce((s,i) => s + i.qty, 0);
@@ -933,9 +925,7 @@
         qtyRow.appendChild(minusBtn); qtyRow.appendChild(qtyNum); qtyRow.appendChild(plusBtn); qtyRow.appendChild(removeBtn);
         info.appendChild(qtyRow); row.appendChild(info); el.appendChild(row);
       });
-      document.getElementById('subtotalDisplay').textContent = `R${calcSub()}`;
-      document.getElementById('deliveryDisplay').textContent  = `R${DELIVERY_FEE}`;
-      document.getElementById('totalDisplay').textContent     = `R${calcTotal()}`;
+      document.getElementById('subtotalDisplay').textContent = `R${calcSub().toLocaleString('en-ZA')}`;
     }
 
     function updateMobileCartBar() {
@@ -963,7 +953,7 @@
       }
       const itemWord = totalQty === 1 ? 'item' : 'items';
       countEl.textContent = `${totalQty} ${itemWord} in cart`;
-      totalEl.textContent = `R${calcTotal().toLocaleString('en-ZA')}`;
+      totalEl.textContent = `R${calcSub().toLocaleString('en-ZA')}`;
     }
 
     function changeQty(idx,d) { cart[idx].qty+=d; if(cart[idx].qty<=0) cart.splice(idx,1); saveCart();updateBadge();renderCart(); }
