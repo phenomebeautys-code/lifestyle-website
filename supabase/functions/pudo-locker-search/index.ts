@@ -3,8 +3,9 @@
  * GET ?lat=X&lng=Y          — direct coords (preferred, from Places autocomplete)
  * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
  *
- * Fetches ALL lockers from /lockers-data, then sorts by distance to user coords
- * and returns the 10 closest.
+ * The Pudo API (api-pudo.co.za) has NO locker browse endpoint.
+ * Locker data lives at the TCG Locker API: api-docs.tcglocker.co.za/lockers-data
+ * We fetch all lockers, compute Haversine distance, return the 10 nearest.
  *
  * Env vars:
  *  - PUDO_API_KEY          — Pudo merchant API key (customer.pudo.co.za > Settings > API Keys)
@@ -16,7 +17,7 @@ const ALLOWED_ORIGINS = [
   'https://phenomebeauty.co.za',
 ];
 
-/** Haversine distance in km between two lat/lng points */
+/** Haversine distance in km */
 function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -56,13 +57,13 @@ Deno.serve(async (req: Request) => {
 
   let lat: number, lng: number;
 
-  // ── Path A: lat/lng passed directly ──────────────────────────────────────
+  // ── Path A: lat/lng passed directly ───────────────────────────────────
   if (latParam && lngParam) {
     lat = parseFloat(latParam);
     lng = parseFloat(lngParam);
     console.log('[pudo-locker-search] Using direct coords:', lat, lng);
 
-  // ── Path B: geocode the text query ───────────────────────────────────────
+  // ── Path B: geocode the text query ────────────────────────────────────
   } else if (query) {
     if (!geocodeKey) {
       return respond({ results: [], error: 'GOOGLE_GEOCODING_KEY not configured' }, 200, corsHeaders);
@@ -88,12 +89,14 @@ Deno.serve(async (req: Request) => {
     return respond({ results: [] }, 200, corsHeaders);
   }
 
-  // ── Fetch all Pudo lockers and filter by distance ────────────────────────
+  // ── Fetch all Pudo lockers from TCG Locker API ───────────────────────────
+  // Note: api-pudo.co.za has NO locker browse endpoint.
+  // Locker data is served by api-docs.tcglocker.co.za which shares the same API key.
   try {
-    const pudoUrl = 'https://api-pudo.co.za/lockers-data';
-    console.log('[pudo-locker-search] Fetching:', pudoUrl);
+    const lockersUrl = 'https://api-docs.tcglocker.co.za/lockers-data';
+    console.log('[pudo-locker-search] Fetching lockers from:', lockersUrl);
 
-    const pudoRes = await fetch(pudoUrl, {
+    const lockersRes = await fetch(lockersUrl, {
       headers: {
         'Authorization': `Bearer ${pudoKey}`,
         'Content-Type':  'application/json',
@@ -101,13 +104,13 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-    const rawText = await pudoRes.text();
-    console.log('[pudo-locker-search] Status:', pudoRes.status);
-    console.log('[pudo-locker-search] Raw (first 600):', rawText.slice(0, 600));
+    const rawText = await lockersRes.text();
+    console.log('[pudo-locker-search] Status:', lockersRes.status);
+    console.log('[pudo-locker-search] Raw (first 800):', rawText.slice(0, 800));
 
-    if (!pudoRes.ok) {
+    if (!lockersRes.ok) {
       return respond(
-        { results: [], error: `Pudo API returned ${pudoRes.status}`, raw: rawText.slice(0, 300) },
+        { results: [], error: `TCG Locker API returned ${lockersRes.status}`, raw: rawText.slice(0, 300) },
         200,
         corsHeaders
       );
@@ -118,12 +121,15 @@ Deno.serve(async (req: Request) => {
       const parsed = JSON.parse(rawText);
       lockers = Array.isArray(parsed) ? parsed : (parsed.data ?? parsed.lockers ?? []);
     } catch {
-      return respond({ results: [], error: 'Invalid JSON from Pudo API' }, 200, corsHeaders);
+      return respond({ results: [], error: 'Invalid JSON from TCG Locker API' }, 200, corsHeaders);
     }
 
-    console.log('[pudo-locker-search] Total lockers:', lockers.length);
+    console.log('[pudo-locker-search] Total lockers fetched:', lockers.length);
+    if (lockers.length > 0) {
+      console.log('[pudo-locker-search] First locker sample:', JSON.stringify(lockers[0]).slice(0, 300));
+    }
 
-    // Calculate distance for each locker and sort ascending
+    // Compute distance and sort ascending
     const withDistance = lockers
       .filter((l: any) => l.latitude && l.longitude)
       .map((l: any) => ({
