@@ -1,10 +1,13 @@
 /**
  * pudo-locker-search
- * GET ?lat=X&lng=Y          — direct coords from Places autocomplete (preferred)
+ * GET ?lat=X&lng=Y          — direct coords (preferred, from Places autocomplete)
  * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
  *
+ * Uses The Courier Guy Locker API (api-pudo.co.za/terminals) to find nearby
+ * Pudo locker points. Auth: Bearer YOUR_PUDO_API_KEY
+ *
  * Env vars:
- *  - PUDO_API_KEY          — Pudo merchant API key (from customer.pudo.co.za Settings > API Keys)
+ *  - PUDO_API_KEY          — Pudo merchant API key (customer.pudo.co.za > Settings > API Keys)
  *  - GOOGLE_GEOCODING_KEY  — server-side Google Geocoding API key (no referrer restriction)
  */
 
@@ -41,13 +44,13 @@ Deno.serve(async (req: Request) => {
 
   let lat: number, lng: number;
 
-  // ── Path A: lat/lng passed directly from Places autocomplete ──────────────
+  // ── Path A: lat/lng passed directly ────────────────────────────────────────
   if (latParam && lngParam) {
     lat = parseFloat(latParam);
     lng = parseFloat(lngParam);
     console.log('[pudo-locker-search] Using direct coords:', lat, lng);
 
-  // ── Path B: geocode the text query ────────────────────────────────────────
+  // ── Path B: geocode the text query ─────────────────────────────────────────
   } else if (query) {
     if (!geocodeKey) {
       return respond({ results: [], error: 'GOOGLE_GEOCODING_KEY not configured' }, 200, corsHeaders);
@@ -73,11 +76,12 @@ Deno.serve(async (req: Request) => {
     return respond({ results: [] }, 200, corsHeaders);
   }
 
-  // ── Find nearest Pudo lockers ─────────────────────────────────────────────
+  // ── Find nearest Pudo/TCG lockers via /terminals ───────────────────────────
+  // The Pudo API exposes terminals (lockers) at /terminals?lat=X&lng=Y
+  // Returns an array sorted by distance ascending.
   try {
-    // Pudo service-points endpoint — returns lockers sorted by distance when lat/lng provided
-    const pudoUrl = `https://api-pudo.co.za/service-points?lat=${lat}&lng=${lng}&type=locker`;
-    console.log('[pudo-locker-search] Pudo URL:', pudoUrl);
+    const pudoUrl = `https://api-pudo.co.za/terminals?lat=${lat}&lng=${lng}`;
+    console.log('[pudo-locker-search] Terminals URL:', pudoUrl);
 
     const pudoRes  = await fetch(pudoUrl, {
       headers: {
@@ -86,12 +90,17 @@ Deno.serve(async (req: Request) => {
         'Accept':        'application/json',
       },
     });
+
     const rawText = await pudoRes.text();
-    console.log('[pudo-locker-search] Pudo status:', pudoRes.status);
-    console.log('[pudo-locker-search] Pudo raw:', rawText.slice(0, 800));
+    console.log('[pudo-locker-search] Status:', pudoRes.status);
+    console.log('[pudo-locker-search] Raw (first 600):', rawText.slice(0, 600));
 
     if (!pudoRes.ok) {
-      return respond({ results: [], error: `Pudo API ${pudoRes.status}`, raw: rawText.slice(0, 200) }, 200, corsHeaders);
+      return respond(
+        { results: [], error: `Pudo API returned ${pudoRes.status}`, raw: rawText.slice(0, 300) },
+        200,
+        corsHeaders
+      );
     }
 
     let data: any;
@@ -99,29 +108,35 @@ Deno.serve(async (req: Request) => {
       return respond({ results: [], error: 'Invalid JSON from Pudo API' }, 200, corsHeaders);
     }
 
+    // Log shape for debugging
     console.log('[pudo-locker-search] data type:', Array.isArray(data) ? 'array' : typeof data);
-    console.log('[pudo-locker-search] data keys:', Array.isArray(data) ? 'N/A' : Object.keys(data));
+    if (!Array.isArray(data)) {
+      console.log('[pudo-locker-search] top-level keys:', Object.keys(data));
+    }
 
-    // Pudo may return array directly or nested under a key
-    const points: any[] =
-      Array.isArray(data)                  ? data :
-      Array.isArray(data.service_points)   ? data.service_points :
-      Array.isArray(data.results)          ? data.results :
-      Array.isArray(data.data)             ? data.data :
-      Array.isArray(data.locations)        ? data.locations : [];
+    // Normalise: the API may return array directly or nested
+    const terminals: any[] =
+      Array.isArray(data)              ? data :
+      Array.isArray(data.terminals)    ? data.terminals :
+      Array.isArray(data.results)      ? data.results :
+      Array.isArray(data.data)         ? data.data : [];
 
-    console.log('[pudo-locker-search] lockers found:', points.length);
-    if (points.length > 0) console.log('[pudo-locker-search] first locker:', JSON.stringify(points[0]).slice(0, 400));
+    console.log('[pudo-locker-search] terminals found:', terminals.length);
+    if (terminals.length > 0) {
+      console.log('[pudo-locker-search] first terminal keys:', Object.keys(terminals[0]));
+      console.log('[pudo-locker-search] first terminal:', JSON.stringify(terminals[0]).slice(0, 400));
+    }
 
-    const results = points.slice(0, 10).map((p: any) => ({
-      id:      p.terminal_id ?? p.id ?? p.service_point_id ?? '',
-      name:    p.name ?? p.terminal_name ?? p.lockerName ?? '',
+    const results = terminals.slice(0, 10).map((t: any) => ({
+      id:      t.terminal_id  ?? t.id   ?? '',
+      name:    t.name         ?? t.terminal_name ?? t.lockerName ?? '',
       address: [
-        p.street_address ?? p.address?.street_address ?? p.street ?? '',
-        p.local_area     ?? p.address?.local_area     ?? p.suburb ?? '',
-        p.city           ?? p.address?.city           ?? '',
-        p.code           ?? p.address?.code           ?? p.postal_code ?? '',
+        t.street_address ?? t.address?.street_address ?? t.street    ?? '',
+        t.local_area     ?? t.address?.local_area     ?? t.suburb    ?? '',
+        t.city           ?? t.address?.city           ?? '',
+        t.code           ?? t.address?.code           ?? t.postal_code ?? '',
       ].filter(Boolean).join(', '),
+      distance_km: t.distance_km ?? t.distance ?? null,
     }));
 
     return respond({ results }, 200, corsHeaders);
