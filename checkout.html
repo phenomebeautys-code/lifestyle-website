@@ -170,6 +170,7 @@
     .locker-item.selected-locker { background: rgba(255,255,255,0.09); border-left: 2px solid rgba(255,255,255,0.5); }
     .locker-item-name { font-size: 0.87rem; font-weight: 600; color: var(--accent-strong); }
     .locker-item-addr { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .locker-item-dist { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
     .locker-item-select {
       font-size: 0.75rem; color: var(--accent); font-weight: 600;
       background: none; border: 1px solid rgba(255,255,255,0.15);
@@ -582,15 +583,15 @@
               <input type="radio" name="delivery_method" value="door" checked />
               <div class="delivery-option-icon">&#127968;</div>
               <div class="delivery-option-title">Door Delivery</div>
-              <div class="delivery-option-price">R99</div>
-              <div class="delivery-option-desc">Delivered straight to your address. 2–4 business days.</div>
+              <div class="delivery-option-price" id="door-price-display">R99</div>
+              <div class="delivery-option-desc">Delivered straight to your address. Includes 12% fuel surcharge. 2–4 business days.</div>
               <div class="delivery-option-check"></div>
             </label>
             <label class="delivery-option" id="opt-locker" onclick="selectDelivery('locker')">
               <input type="radio" name="delivery_method" value="locker" />
               <div class="delivery-option-icon">&#128230;</div>
               <div class="delivery-option-title">Pudo Locker</div>
-              <div class="delivery-option-price">R70</div>
+              <div class="delivery-option-price" id="locker-price-display">R59</div>
               <div class="delivery-option-desc">Collect from a nearby Pudo locker at your convenience. 2–3 business days.</div>
               <div class="delivery-option-check"></div>
             </label>
@@ -839,13 +840,35 @@
     const ORIGIN        = 'https://www.phenomebeauty.co.za';
     const DRAFT_KEY     = 'phenome_checkout_draft';
 
-    const DELIVERY_FEES = { door: 99, locker: 70 };
+    // ─────────────────────────────────────────────────────────────────
+    // Pudo delivery fees — exact rates, VAT inclusive, no markup.
+    // Based on S-size box (60x41x8cm, max 5kg) — covers all current products.
+    //
+    // Effective 1 October 2025 (Pudo pricing):
+    //   Locker-to-Locker : R59.00
+    //   Locker-to-Door   : R88.48  +12% fuel surcharge (from 1 Apr 2026) = R99.10 → R99
+    //
+    // Update these values if Pudo changes their pricing.
+    // ─────────────────────────────────────────────────────────────────
+    const DELIVERY_FEES = {
+      locker: 59,   // Locker-to-Locker, S-size, exact Pudo rate
+      door:   99,   // Locker-to-Door S-size R88.48 + 12% fuel surcharge = R99.10, rounded down
+    };
+
     let selectedDelivery = 'door';
     let selectedLocker   = null; // { id, name, address }
 
     // Lat/lng captured from Places autocomplete on the locker search input
     let lockerSearchLat = null;
     let lockerSearchLng = null;
+
+    // Sync price labels in the delivery option cards
+    function updateDeliveryPriceLabels() {
+      const doorEl   = document.getElementById('door-price-display');
+      const lockerEl = document.getElementById('locker-price-display');
+      if (doorEl)   doorEl.textContent   = `R${DELIVERY_FEES.door}`;
+      if (lockerEl) lockerEl.textContent = `R${DELIVERY_FEES.locker}`;
+    }
 
     const PRODUCT_IMGS = {
       'smooth-ritual':     'https://iili.io/B6e8cSR.png',
@@ -890,7 +913,6 @@
       results.classList.add('show');
 
       try {
-        // Build URL — prefer exact coords from Places, fall back to text query
         let apiUrl;
         if (hasCoords) {
           apiUrl = `${SUPABASE_URL}/functions/v1/pudo-locker-search?lat=${lockerSearchLat}&lng=${lockerSearchLng}`;
@@ -915,6 +937,7 @@
               <div>
                 <div class="locker-item-name">${esc(l.name)}</div>
                 <div class="locker-item-addr">${esc(l.address)}</div>
+                ${l.distance_km != null ? `<div class="locker-item-dist">${l.distance_km} km away</div>` : ''}
               </div>
               <button class="locker-item-select"
                 onclick="event.stopPropagation();selectLocker('${escAttr(l.id)}','${escAttr(l.name)}','${escAttr(l.address)}')">
@@ -952,7 +975,6 @@
     document.getElementById('f-locker-search').addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); searchLockers(); }
     });
-    // Clear stored coords if user manually edits the locker search input
     document.getElementById('f-locker-search').addEventListener('input', () => {
       lockerSearchLat = null; lockerSearchLng = null;
       const hint = document.getElementById('lockerPlacesHint');
@@ -1065,14 +1087,10 @@
       setTimeout(() => nudge.classList.remove('show'), 260);
     }
 
-    /* ═ Google Places Autocomplete ══════════════
-     * Attaches to BOTH the door street input AND the locker search input.
-     * For the locker input, we also capture lat/lng for direct coord search.
-     */
+    /* ═ Google Places Autocomplete ══════════════ */
     function initPlaces() {
       if (!window.google) return;
 
-      // ── Door delivery address autocomplete ──
       const streetInput = document.getElementById('f-street');
       if (streetInput) {
         const acStreet = new google.maps.places.Autocomplete(streetInput, {
@@ -1104,7 +1122,6 @@
         });
       }
 
-      // ── Locker search autocomplete — captures lat/lng ──
       const lockerInput = document.getElementById('f-locker-search');
       if (lockerInput) {
         const acLocker = new google.maps.places.Autocomplete(lockerInput, {
@@ -1118,10 +1135,8 @@
           if (place.geometry && place.geometry.location) {
             lockerSearchLat = place.geometry.location.lat();
             lockerSearchLng = place.geometry.location.lng();
-            // Show the green hint and auto-trigger search
             const hint = document.getElementById('lockerPlacesHint');
             if (hint) hint.style.display = 'flex';
-            // Auto-search once address is selected from dropdown
             searchLockers();
           }
         });
@@ -1130,6 +1145,7 @@
 
     /* ═ Init ════════════════════════════════════ */
     (function init() {
+      updateDeliveryPriceLabels();
       if (!cart.length) {
         document.getElementById('checkoutContent').style.display = 'none';
         document.getElementById('emptyState').style.display = 'flex';
@@ -1257,7 +1273,7 @@
           </div>
           <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price * item.qty}</div>
         </div>`).join('');
-      const deliveryLabel = selectedDelivery === 'locker' ? 'Pudo Locker Collection' : 'Door Delivery';
+      const deliveryLabel = selectedDelivery === 'locker' ? 'Pudo Locker Collection' : 'Door Delivery (incl. fuel surcharge)';
       document.getElementById('rv-delivery-label').textContent = deliveryLabel;
       document.getElementById('rv-subtotal').textContent = `R${calcSub()}`;
       document.getElementById('rv-delivery').textContent = `R${getDeliveryFee()}`;
