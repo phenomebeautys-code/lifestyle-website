@@ -119,39 +119,20 @@
 
     /* ── Carousel ──────────────────────── */
     .shop-carousel {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      touch-action: none;
+      position: relative; width: 100%; height: 100%;
+      overflow: hidden; touch-action: none;
     }
     .shop-carousel-track {
-      display: flex;
-      height: 100%;
+      display: flex; height: 100%;
       transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-      will-change: transform;
-      width: 100%;
+      will-change: transform; width: 100%;
     }
-    .shop-carousel-track.dragging {
-      transition: none;
-    }
-    .shop-carousel-slide {
-      flex: 0 0 100%;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
+    .shop-carousel-track.dragging { transition: none; }
+    .shop-carousel-slide { flex: 0 0 100%; width: 100%; height: 100%; overflow: hidden; }
     .shop-carousel-slide img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display: block;
-      transition: transform 0.4s ease;
-      pointer-events: none;
-      user-select: none;
-      -webkit-user-drag: none;
-      -webkit-user-select: none;
+      width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
+      transition: transform 0.4s ease; pointer-events: none;
+      user-select: none; -webkit-user-drag: none; -webkit-user-select: none;
     }
     .product-card:hover .shop-carousel-slide img { transform: scale(1.04); }
 
@@ -159,26 +140,19 @@
     .shop-carousel-dots {
       position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
       display: flex; gap: 6px; z-index: 2;
-      padding: 5px 10px;
-      border-radius: var(--radius-pill);
-      background: rgba(4,4,6,0.45);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.10);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+      padding: 5px 10px; border-radius: var(--radius-pill);
+      background: rgba(4,4,6,0.45); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 2px 12px rgba(0,0,0,0.35);
     }
     .shop-carousel-dot {
       width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(255,255,255,0.30);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.30); border: 1px solid rgba(255,255,255,0.15);
       cursor: pointer; padding: 0;
       transition: background 0.22s, transform 0.22s, border-color 0.22s;
     }
     .shop-carousel-dot.active {
-      background: var(--accent-strong);
-      border-color: var(--accent-strong);
-      transform: scale(1.4);
-      box-shadow: 0 0 6px rgba(255,255,255,0.35);
+      background: var(--accent-strong); border-color: var(--accent-strong);
+      transform: scale(1.4); box-shadow: 0 0 6px rgba(255,255,255,0.35);
     }
 
     /* ── Product body ───────────────────── */
@@ -187,21 +161,11 @@
     .product-name { font-family:var(--font-display); font-size:1.5rem; line-height:1.1; color:var(--accent-strong); }
 
     /* ── Description ─────────────────────── */
-    .product-desc {
-      font-size: 0.86rem;
-      color: var(--text-soft);
-      line-height: 1.7;
-    }
+    .product-desc { font-size: 0.86rem; color: var(--text-soft); line-height: 1.7; }
     .product-desc p { margin: 0 0 10px; }
     .product-desc p:last-child { margin-bottom: 0; }
-    .product-desc ul {
-      margin: 4px 0 0; padding: 0; list-style: none;
-      display: flex; flex-direction: column; gap: 4px;
-    }
-    .product-desc ul li::before {
-      content: '\2022'; margin-right: 7px;
-      color: var(--accent); font-size: 0.8em;
-    }
+    .product-desc ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .product-desc ul li::before { content: '\2022'; margin-right: 7px; color: var(--accent); font-size: 0.8em; }
     .desc-toggle {
       background: none; border: none; color: var(--text-muted);
       font-size: 0.78rem; font-family: var(--font-body);
@@ -213,18 +177,15 @@
       padding:6px 14px; border-radius:var(--radius-pill);
       background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
       color:var(--accent); font-weight:700; font-size:1rem;
-      width:fit-content; margin-top:auto;
-      transition: color 0.2s;
+      width:fit-content; margin-top:auto; transition: color 0.2s;
     }
     .variant-label { font-size:0.72rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
     .pill-group { display:flex; flex-wrap:wrap; gap:6px; }
 
     .v-pill {
-      padding:5px 13px; border-radius:var(--radius-pill);
-      border:1px solid var(--glass-border);
-      font-size:0.78rem; font-weight:500; color:var(--text-muted);
-      cursor:pointer; background:transparent; font-family:var(--font-body);
-      transition:background 0.18s, border-color 0.18s, color 0.18s;
+      padding:5px 13px; border-radius:var(--radius-pill); border:1px solid var(--glass-border);
+      font-size:0.78rem; font-weight:500; color:var(--text-muted); cursor:pointer; background:transparent;
+      font-family:var(--font-body); transition:background 0.18s, border-color 0.18s, color 0.18s;
     }
     .v-pill:hover  { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .v-pill.active { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.10); color:var(--accent-strong); }
@@ -239,11 +200,9 @@
     }
 
     .s-pill {
-      padding:5px 13px; border-radius:var(--radius-pill);
-      border:1px solid var(--glass-border);
-      font-size:0.78rem; font-weight:500; color:var(--text-muted);
-      cursor:pointer; background:transparent; font-family:var(--font-body);
-      transition:background 0.18s, border-color 0.18s, color 0.18s;
+      padding:5px 13px; border-radius:var(--radius-pill); border:1px solid var(--glass-border);
+      font-size:0.78rem; font-weight:500; color:var(--text-muted); cursor:pointer; background:transparent;
+      font-family:var(--font-body); transition:background 0.18s, border-color 0.18s, color 0.18s;
     }
     .s-pill:hover  { border-color:rgba(255,255,255,0.3); color:var(--text); }
     .s-pill.active { border-color: var(--accent); background: rgba(255,255,255,0.08); color: var(--accent-strong); }
@@ -270,19 +229,54 @@
       border-left:1px solid var(--glass-border);
       backdrop-filter:blur(40px);
       z-index:300; display:flex; flex-direction:column;
-      transform:translateX(100%); transition:transform 0.35s cubic-bezier(.4,0,.2,1), bottom 0.35s cubic-bezier(.4,0,.2,1);
+      transform:translateX(100%);
+      transition:transform 0.35s cubic-bezier(.4,0,.2,1), bottom 0.35s cubic-bezier(.4,0,.2,1);
     }
     .cart-drawer.open { transform:translateX(0); }
 
+    /* ── Drawer header — three-zone layout ── */
     .drawer-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:20px 24px; border-bottom:1px solid var(--glass-border);
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--glass-border);
+      gap: 8px;
     }
-    .drawer-header h2 { font-family:var(--font-display); font-size:1.6rem; color:var(--accent-strong); }
+    /* Left zone: back / continue shopping */
+    .drawer-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      padding: 6px 0;
+      letter-spacing: 0.02em;
+      transition: color 0.2s, transform 0.2s;
+      white-space: nowrap;
+      justify-self: start;
+    }
+    .drawer-back-btn:hover { color: var(--accent-strong); transform: translateX(-3px); }
+    .drawer-back-btn svg { flex-shrink: 0; }
+    /* Centre zone: title */
+    .drawer-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      color: var(--accent-strong);
+      text-align: center;
+      margin: 0;
+    }
+    /* Right zone: close X */
     .close-btn {
-      width:38px; height:38px; border-radius:50%;
+      justify-self: end;
+      width:36px; height:36px; border-radius:50%;
       background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
-      color:var(--text-muted); cursor:pointer; font-size:18px;
+      color:var(--text-muted); cursor:pointer; font-size:16px;
       display:flex; align-items:center; justify-content:center;
       transition:background 0.2s, color 0.2s;
     }
@@ -295,8 +289,7 @@
     .cart-item {
       display: flex; gap: 12px; align-items: flex-start;
       background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-      border-radius: var(--radius-md); padding: 12px;
-      transition: border-color 0.2s;
+      border-radius: var(--radius-md); padding: 12px; transition: border-color 0.2s;
     }
     .cart-item:hover { border-color: rgba(255,255,255,0.14); }
 
@@ -341,6 +334,33 @@
     .total-row.grand span:last-child { color:var(--accent); }
     .secure-note { text-align:center; font-size:0.75rem; color:var(--text-muted); }
 
+    /* ── Continue shopping (footer) ─────── */
+    .continue-shopping {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      padding: 10px 20px;
+      width: 100%;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .continue-shopping:hover {
+      border-color: rgba(255,255,255,0.28);
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+    }
+    .continue-shopping svg { flex-shrink: 0; transition: transform 0.2s; }
+    .continue-shopping:hover svg { transform: translateX(-3px); }
+
     .banner {
       margin:16px 0 0; padding:12px 16px; border-radius:var(--radius-md);
       background:rgba(248,113,113,0.08); border:1px solid rgba(248,113,113,0.22);
@@ -354,47 +374,28 @@
     /* ═══════════════════════════════════════════
        STICKY MOBILE CART BAR
     ═══════════════════════════════════════════ */
-
-    /* The bar height token — one place to change */
     :root { --mobile-bar-h: 68px; }
-
     .mobile-cart-bar { display: none; }
 
     @media (max-width: 768px) {
-
-      /* Page body gets bottom padding so the last product card
-         is never hidden under the bar */
       body.has-cart-items { padding-bottom: var(--mobile-bar-h); }
 
-      /* KEY FIX: when the bar is visible, shrink the cart drawer
-         upward so its footer / checkout button is fully visible
-         and never sits behind the sticky bar.
-         The transition on .cart-drawer includes `bottom` so the
-         movement is animated and doesn’t snap. */
-      body.has-cart-items .cart-drawer {
-        bottom: var(--mobile-bar-h);
-      }
+      body.has-cart-items .cart-drawer { bottom: var(--mobile-bar-h); }
 
       .mobile-cart-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
+        display: flex; align-items: center; justify-content: space-between;
+        position: fixed; bottom: 0; left: 0; right: 0;
         height: var(--mobile-bar-h);
-        z-index: 400;
-        padding: 0 20px;
+        z-index: 400; padding: 0 20px;
         background: linear-gradient(135deg, rgba(10,10,14,0.96), rgba(4,4,6,0.98));
         border-top: 1px solid var(--glass-border);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
+        backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
         box-shadow: 0 -4px 32px rgba(0,0,0,0.55);
         transform: translateY(100%);
         transition: transform 0.35s cubic-bezier(.4,0,.2,1);
       }
       .mobile-cart-bar.visible { transform: translateY(0); }
 
-      /* Thumbnail stack — up to 3 product images */
       .mobile-cart-thumbs { display: flex; align-items: center; }
       .mobile-cart-thumb {
         width: 40px; height: 40px; border-radius: 8px; overflow: hidden;
@@ -407,21 +408,14 @@
       .mobile-cart-thumb-more {
         width: 40px; height: 40px; border-radius: 8px;
         background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12);
-        margin-left: -10px;
-        display: flex; align-items: center; justify-content: center;
+        margin-left: -10px; display: flex; align-items: center; justify-content: center;
         font-size: 0.7rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
       }
-
-      .mobile-cart-info {
-        flex: 1; padding: 0 14px;
-        display: flex; flex-direction: column;
-      }
+      .mobile-cart-info { flex: 1; padding: 0 14px; display: flex; flex-direction: column; }
       .mobile-cart-count { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
       .mobile-cart-total { font-size: 1rem; font-weight: 700; color: var(--accent-strong); line-height: 1.1; }
-
       .mobile-cart-cta {
-        flex-shrink: 0;
-        display: flex; align-items: center; gap: 6px;
+        flex-shrink: 0; display: flex; align-items: center; gap: 6px;
         padding: 10px 18px; border-radius: var(--radius-pill);
         background: var(--accent, #e8c97e); color: #000;
         font-size: 0.82rem; font-weight: 700;
@@ -494,11 +488,21 @@
 
   <!-- CART DRAWER -->
   <aside class="cart-drawer" id="cartDrawer">
+
+    <!-- Header: ← Continue Shopping | Your Cart | ✕ -->
     <div class="drawer-header">
+      <button class="drawer-back-btn" onclick="closeCart()" aria-label="Continue shopping">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Continue Shopping
+      </button>
       <h2>Your Cart</h2>
-      <button class="close-btn" onclick="closeCart()">&#x2715;</button>
+      <button class="close-btn" onclick="closeCart()" aria-label="Close cart">&#x2715;</button>
     </div>
+
     <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty.</p></div>
+
     <div class="cart-footer" id="cartFooter" style="display:none">
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="total-row"><span>Subtotal</span><span id="subtotalDisplay">R0</span></div>
@@ -509,6 +513,13 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         Proceed to Checkout
       </a>
+      <!-- Secondary escape: continue shopping from the footer too -->
+      <button class="continue-shopping" onclick="closeCart()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        Continue Shopping
+      </button>
       <p class="secure-note">&#128274; Secured by Yoco &mdash; card payments accepted</p>
     </div>
   </aside>
@@ -668,16 +679,13 @@
       wrap.className = 'product-desc';
       if (!text) return wrap;
       const rawLines = text.split('\n');
-      const blocks = [];
-      let current = [];
+      const blocks = []; let current = [];
       rawLines.forEach(line => {
-        if (line.trim() === '') {
-          if (current.length) { blocks.push(current); current = []; }
-        } else { current.push(line.trim()); }
+        if (line.trim() === '') { if (current.length) { blocks.push(current); current = []; } }
+        else { current.push(line.trim()); }
       });
       if (current.length) blocks.push(current);
-      const PREVIEW_BLOCKS = 2;
-      const allEls = [];
+      const PREVIEW_BLOCKS = 2; const allEls = [];
       blocks.forEach(block => {
         const fullText = block.join(' ');
         const hasBullets = fullText.includes('\u2022');
@@ -692,15 +700,12 @@
             blockEl.appendChild(ul);
           }
           allEls.push(blockEl);
-        } else {
-          const p = document.createElement('p'); p.textContent = block.join(' '); allEls.push(p);
-        }
+        } else { const p = document.createElement('p'); p.textContent = block.join(' '); allEls.push(p); }
       });
       allEls.forEach((el, i) => { if (i >= PREVIEW_BLOCKS) el.style.display = 'none'; wrap.appendChild(el); });
       if (allEls.length > PREVIEW_BLOCKS) {
         const toggle = document.createElement('button');
-        toggle.className = 'desc-toggle'; toggle.textContent = 'Read more';
-        let open = false;
+        toggle.className = 'desc-toggle'; toggle.textContent = 'Read more'; let open = false;
         toggle.addEventListener('click', () => {
           open = !open;
           allEls.forEach((el, i) => { if (i >= PREVIEW_BLOCKS) el.style.display = open ? '' : 'none'; });
@@ -713,8 +718,7 @@
 
     function buildProductImage(p) {
       const imgs = getImages(p);
-      const wrap = document.createElement('div');
-      wrap.className = 'product-img';
+      const wrap = document.createElement('div'); wrap.className = 'product-img';
       if (imgs.length > 1) {
         const carousel = document.createElement('div'); carousel.className = 'shop-carousel';
         const track = document.createElement('div'); track.className = 'shop-carousel-track';
@@ -752,8 +756,7 @@
           const dx = e.clientX - startX; const dy = e.clientY - startY;
           if (lockedAxis === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) lockedAxis = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
           if (lockedAxis !== 'x') return;
-          e.preventDefault(); curDiffX = dx;
-          track.classList.add('dragging');
+          e.preventDefault(); curDiffX = dx; track.classList.add('dragging');
           track.style.transform = `translateX(calc(-${cur * 100}% + ${curDiffX}px))`;
         }, { passive: false });
         function endSwipe() {
@@ -792,11 +795,9 @@
       const selected = variants.find(v => v.name === selVariant[pid]);
       const available = selected && selected.in_stock;
       addBtn.disabled = !available;
-      if (available) {
-        addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Cart`;
-      } else {
-        addBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Out of Stock`;
-      }
+      addBtn.innerHTML = available
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add to Cart`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> Out of Stock`;
     }
 
     function renderProducts() {
@@ -882,12 +883,8 @@
       const imageUrl  = getFirstImage(p);
       const key = [pid, variant, sizeName].filter(Boolean).join('::') || pid;
       const ex  = cart.find(i => i.key === key);
-      if (ex) {
-        ex.qty++;
-        if (!ex.imageUrl && imageUrl) ex.imageUrl = imageUrl;
-      } else {
-        cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, imageUrl: imageUrl || '' });
-      }
+      if (ex) { ex.qty++; if (!ex.imageUrl && imageUrl) ex.imageUrl = imageUrl; }
+      else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, imageUrl: imageUrl || '' });
       saveCart(); updateBadge(); renderCart(); openCart();
     }
 
@@ -903,13 +900,10 @@
     }
 
     function buildCartThumb(imageUrl, altText, size) {
-      const thumb = document.createElement('div');
-      thumb.className = 'cart-item-thumb';
+      const thumb = document.createElement('div'); thumb.className = 'cart-item-thumb';
       thumb.style.width = size + 'px'; thumb.style.height = size + 'px';
       if (imageUrl) {
-        const img = document.createElement('img');
-        img.src = imageUrl; img.alt = altText || ''; img.loading = 'lazy';
-        thumb.appendChild(img);
+        const img = document.createElement('img'); img.src = imageUrl; img.alt = altText || ''; img.loading = 'lazy'; thumb.appendChild(img);
       } else {
         thumb.innerHTML = `<div class="cart-item-thumb-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`;
       }
@@ -920,8 +914,7 @@
       const el = document.getElementById('cartItems');
       const ft = document.getElementById('cartFooter');
       if (!cart.length) { el.innerHTML = '<p class="cart-empty">Your cart is empty.</p>'; ft.style.display = 'none'; return; }
-      ft.style.display = '';
-      el.innerHTML = '';
+      ft.style.display = ''; el.innerHTML = '';
       cart.forEach((item, idx) => {
         const meta = [item.variant, item.size ? `Size: ${item.size}` : ''].filter(Boolean).join(' · ');
         const row = document.createElement('div'); row.className = 'cart-item';
@@ -946,21 +939,15 @@
     }
 
     function updateMobileCartBar() {
-      const bar      = document.getElementById('mobileCartBar');
+      const bar = document.getElementById('mobileCartBar');
       const thumbsEl = document.getElementById('mobileCartThumbs');
       const countEl  = document.getElementById('mobileCartCount');
       const totalEl  = document.getElementById('mobileCartTotal');
       const totalQty = cart.reduce((s,i) => s + i.qty, 0);
-      if (!totalQty) {
-        bar.classList.remove('visible');
-        document.body.classList.remove('has-cart-items');
-        return;
-      }
-      document.body.classList.add('has-cart-items');
-      bar.classList.add('visible');
+      if (!totalQty) { bar.classList.remove('visible'); document.body.classList.remove('has-cart-items'); return; }
+      document.body.classList.add('has-cart-items'); bar.classList.add('visible');
       thumbsEl.innerHTML = '';
-      const MAX_THUMBS = 3;
-      const unique = [];
+      const MAX_THUMBS = 3; const unique = [];
       cart.forEach(item => { if (unique.length < MAX_THUMBS) unique.push(item); });
       unique.forEach(item => {
         const thumb = document.createElement('div'); thumb.className = 'mobile-cart-thumb';
