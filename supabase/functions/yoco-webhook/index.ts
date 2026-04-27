@@ -1,7 +1,12 @@
 /**
  * yoco-webhook  (PhenomeBeauty shop)
  * Receives Yoco `payment.succeeded` events via Svix webhook delivery.
- * On success → marks shop_order as paid → fires pudo-create-shipment for locker orders.
+ * On success → marks shop_order as paid → fires pudo-create-shipment.
+ *
+ * pudo-create-shipment now handles BOTH:
+ *   delivery_method = 'locker'  →  L2L (Locker to Locker)
+ *   delivery_method = 'door'    →  L2D (Locker to Door)
+ * PhenomeBeauty always drops at a locker — no collection needed.
  *
  * Register in Yoco dashboard:
  *   https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/yoco-webhook
@@ -50,15 +55,15 @@ Deno.serve(async (req: Request) => {
   }
 
   // Read raw bytes (needed for signature verification)
-  const rawBytes   = new Uint8Array(await req.arrayBuffer());
-  const bodyText   = new TextDecoder().decode(rawBytes);
+  const rawBytes = new Uint8Array(await req.arrayBuffer());
+  const bodyText = new TextDecoder().decode(rawBytes);
 
   // Log all headers in dev for debugging
   const allHeaders: Record<string, string> = {};
   req.headers.forEach((v, k) => { allHeaders[k] = v; });
   console.log('[yoco-webhook] headers:', JSON.stringify(allHeaders));
 
-  // ── Parse body ──────────────────────────────────────────────────────────────
+  // ── Parse body ────────────────────────────────────────────────────────────
   let body: any;
   try {
     body = JSON.parse(bodyText);
@@ -69,20 +74,18 @@ Deno.serve(async (req: Request) => {
   const { type, payload } = body;
   console.log('[yoco-webhook] event type:', type);
 
-  // ── Resolve order_id from metadata ──────────────────────────────────────────
-  // Yoco puts our metadata under payload.metadata
-  const orderId     = payload?.metadata?.order_id   ?? null;
-  const checkoutId  = payload?.id ?? payload?.checkoutId ?? null;
-
+  // ── Resolve order_id from metadata ───────────────────────────────────────
+  const orderId    = payload?.metadata?.order_id ?? null;
+  const checkoutId = payload?.id ?? payload?.checkoutId ?? null;
   console.log('[yoco-webhook] order_id:', orderId, '| checkoutId:', checkoutId);
 
-  // ── Supabase client ──────────────────────────────────────────────────────────
+  // ── Supabase client ───────────────────────────────────────────────────────
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // ── Verify Svix signature ────────────────────────────────────────────────────
+  // ── Verify Svix signature ─────────────────────────────────────────────────
   const svixSig       = req.headers.get('svix-signature') ?? '';
   const svixTimestamp = req.headers.get('svix-timestamp') ?? '';
   const webhookSecret = Deno.env.get('YOCO_WEBHOOK_SECRET') ?? '';
@@ -98,13 +101,13 @@ Deno.serve(async (req: Request) => {
     console.warn('[yoco-webhook] No signature header or secret — skipping verification');
   }
 
-  // ── Ignore non-payment events ────────────────────────────────────────────────
+  // ── Ignore non-payment events ─────────────────────────────────────────────
   if (type !== 'payment.succeeded') {
     console.log('[yoco-webhook] Ignoring event type:', type);
     return respond({ received: true, processed: false }, 200);
   }
 
-  // ── Require order_id ────────────────────────────────────────────────────────
+  // ── Require order_id ─────────────────────────────────────────────────────
   if (!orderId) {
     // Fallback: try to find order by yoco_checkout_id
     if (checkoutId) {
@@ -121,7 +124,7 @@ Deno.serve(async (req: Request) => {
     return respond({ error: 'No order_id in metadata' }, 422);
   }
 
-  // ── Fetch current order state ────────────────────────────────────────────────
+  // ── Fetch current order state ─────────────────────────────────────────────
   const { data: order, error: fetchErr } = await supabase
     .from('shop_orders')
     .select('id, delivery_method, pudo_shipment_id, payment_status')
@@ -143,13 +146,13 @@ async function processPayment(
   yocoCheckoutId: string | null,
   order: { id: string; delivery_method: string; pudo_shipment_id: string | null; payment_status: string },
 ) {
-  // ── Duplicate guard ──────────────────────────────────────────────────────────
+  // ── Duplicate guard ───────────────────────────────────────────────────────
   if (order.payment_status === 'paid') {
     console.log('[yoco-webhook] Duplicate webhook — order already paid:', orderId);
     return respond({ received: true, already_paid: true }, 200);
   }
 
-  // ── Mark as paid (atomic: only updates if still unpaid) ─────────────────────
+  // ── Mark as paid (atomic: only updates if still unpaid) ───────────────────
   const { data: updated, error: updateErr } = await supabase
     .from('shop_orders')
     .update({
@@ -158,7 +161,7 @@ async function processPayment(
       yoco_checkout_id: yocoCheckoutId,
     })
     .eq('id', orderId)
-    .eq('payment_status', 'unpaid')   // atomic duplicate guard
+    .eq('payment_status', 'unpaid')  // atomic duplicate guard
     .select('id, delivery_method, pudo_shipment_id');
 
   if (updateErr) {
@@ -173,10 +176,18 @@ async function processPayment(
 
   console.log(`[yoco-webhook] Order ${orderId} marked as paid ✓`);
 
-  // ── Fire Pudo shipment creation for locker orders ────────────────────────────
+  // ── Fire Pudo shipment for ALL delivery methods ───────────────────────────
+  // pudo-create-shipment handles both 'locker' (L2L) and 'door' (L2D)
+  // PhenomeBeauty drops at a locker in both cases — no collection needed
   const confirmedOrder = updated[0];
-  if (confirmedOrder.delivery_method === 'locker' && !confirmedOrder.pudo_shipment_id) {
+  const shouldCreateShipment = (
+    ['locker', 'door'].includes(confirmedOrder.delivery_method) &&
+    !confirmedOrder.pudo_shipment_id
+  );
+
+  if (shouldCreateShipment) {
     try {
+      console.log(`[yoco-webhook] Firing pudo-create-shipment for order ${orderId} | method=${confirmedOrder.delivery_method}`);
       const pudoRes = await fetch(
         `${Deno.env.get('SUPABASE_URL')}/functions/v1/pudo-create-shipment`,
         {
@@ -191,14 +202,17 @@ async function processPayment(
       );
       const pudoBody = await pudoRes.json();
       if (!pudoRes.ok) {
-        console.error('[yoco-webhook] Pudo shipment creation failed:', pudoBody);
+        // Non-fatal — order is paid, shipment can be retried from admin
+        console.error('[yoco-webhook] pudo-create-shipment failed:', pudoBody);
       } else {
-        console.log(`[yoco-webhook] Pudo shipment created: tracking=${pudoBody.tracking_ref}`);
+        console.log(`[yoco-webhook] Pudo shipment created ✓ | type=${pudoBody.delivery_type} | tracking=${pudoBody.tracking_ref}`);
       }
     } catch (err) {
-      // Non-fatal — order is paid, shipment can be retried manually from admin
+      // Non-fatal — do not fail the webhook response
       console.error('[yoco-webhook] Error calling pudo-create-shipment:', err);
     }
+  } else {
+    console.log(`[yoco-webhook] Skipping shipment creation | method=${confirmedOrder.delivery_method} | already_exists=${!!confirmedOrder.pudo_shipment_id}`);
   }
 
   return respond({ received: true, processed: true, order_id: orderId }, 200);
