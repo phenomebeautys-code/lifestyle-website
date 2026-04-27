@@ -654,11 +654,16 @@
           <!-- ── LOCKER FIELDS ── -->
           <div id="locker-fields" style="display:none">
             <div class="field-group">
-              <label class="field-label">Find a Pudo Locker</label>
+              <label class="field-label">Find a Pudo Locker Near You</label>
               <div class="locker-search-row">
-                <input class="field-input" id="f-locker-search" type="text" placeholder="Search by suburb or address&hellip;" />
+                <input class="field-input" id="f-locker-search" type="text"
+                  placeholder="Start typing your suburb or address&hellip;" autocomplete="off" />
                 <button class="locker-search-btn" id="lockerSearchBtn" onclick="searchLockers()">Search</button>
               </div>
+              <span class="places-hint" id="lockerPlacesHint" style="display:none">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#34d399"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="color:#34d399">Address recognised</span>&nbsp;&mdash; click Search to find nearby lockers
+              </span>
               <span class="field-error" id="err-locker">Please select a Pudo locker.</span>
             </div>
             <div class="locker-results" id="lockerResults"></div>
@@ -838,6 +843,10 @@
     let selectedDelivery = 'door';
     let selectedLocker   = null; // { id, name, address }
 
+    // Lat/lng captured from Places autocomplete on the locker search input
+    let lockerSearchLat = null;
+    let lockerSearchLng = null;
+
     const PRODUCT_IMGS = {
       'smooth-ritual':     'https://iili.io/B6e8cSR.png',
       'smooth-veil':       'https://iili.io/B6e8acv.jpg',
@@ -849,9 +858,9 @@
     let cart = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
     let currentStep = 1;
 
-    const calcSub   = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const calcSub        = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
     const getDeliveryFee = () => cart.length ? DELIVERY_FEES[selectedDelivery] : 0;
-    const calcTotal = () => calcSub() + getDeliveryFee();
+    const calcTotal      = () => calcSub() + getDeliveryFee();
 
     /* ═ Delivery method toggle ══════════════════ */
     function selectDelivery(method) {
@@ -865,24 +874,39 @@
       renderSummary(); renderMobileSummary();
     }
 
-    /* ═ Locker search ═══════════════════════════ */
+    /* ═ Locker search ═══════════════════════════
+     * Priority: lat/lng from Places autocomplete → fallback to ?q= text
+     */
     async function searchLockers() {
-      const query = document.getElementById('f-locker-search').value.trim();
-      if (!query) return;
+      const query   = document.getElementById('f-locker-search').value.trim();
+      const hasCoords = lockerSearchLat !== null && lockerSearchLng !== null;
+      if (!query && !hasCoords) return;
+
       const btn     = document.getElementById('lockerSearchBtn');
       const results = document.getElementById('lockerResults');
-      btn.disabled  = true;
+      btn.disabled    = true;
       btn.textContent = 'Searching...';
-      results.innerHTML = '<div class="locker-loading">Searching for lockers...</div>';
+      results.innerHTML = '<div class="locker-loading">Finding nearby lockers...</div>';
       results.classList.add('show');
+
       try {
-        const res = await fetch(
-          `${SUPABASE_URL}/functions/v1/pudo-locker-search?q=${encodeURIComponent(query)}`,
-          { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
-        );
+        // Build URL — prefer exact coords from Places, fall back to text query
+        let apiUrl;
+        if (hasCoords) {
+          apiUrl = `${SUPABASE_URL}/functions/v1/pudo-locker-search?lat=${lockerSearchLat}&lng=${lockerSearchLng}`;
+        } else {
+          apiUrl = `${SUPABASE_URL}/functions/v1/pudo-locker-search?q=${encodeURIComponent(query)}`;
+        }
+
+        const res  = await fetch(apiUrl, {
+          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+        });
         const data = await res.json();
         const lockers = data.results || [];
-        if (!lockers.length) {
+
+        if (data.error && !lockers.length) {
+          results.innerHTML = `<div class="locker-empty">${esc(data.error)}</div>`;
+        } else if (!lockers.length) {
           results.innerHTML = '<div class="locker-empty">No lockers found near that area. Try a nearby suburb.</div>';
         } else {
           results.innerHTML = lockers.map(l => `
@@ -892,7 +916,8 @@
                 <div class="locker-item-name">${esc(l.name)}</div>
                 <div class="locker-item-addr">${esc(l.address)}</div>
               </div>
-              <button class="locker-item-select" onclick="event.stopPropagation();selectLocker('${escAttr(l.id)}','${escAttr(l.name)}','${escAttr(l.address)}')">
+              <button class="locker-item-select"
+                onclick="event.stopPropagation();selectLocker('${escAttr(l.id)}','${escAttr(l.name)}','${escAttr(l.address)}')">
                 Select
               </button>
             </div>`).join('');
@@ -900,7 +925,7 @@
       } catch(e) {
         results.innerHTML = '<div class="locker-empty">Could not load lockers. Please try again.</div>';
       }
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Search';
     }
 
@@ -912,6 +937,9 @@
       document.getElementById('lockerSelectedDisplay').classList.add('show');
       document.getElementById('err-locker').classList.remove('show');
       document.getElementById('f-locker-search').value = '';
+      const hint = document.getElementById('lockerPlacesHint');
+      if (hint) hint.style.display = 'none';
+      lockerSearchLat = null; lockerSearchLng = null;
       saveDraft();
     }
 
@@ -921,9 +949,14 @@
       document.getElementById('f-locker-search').focus();
     }
 
-    // Allow pressing Enter to search lockers
     document.getElementById('f-locker-search').addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); searchLockers(); }
+    });
+    // Clear stored coords if user manually edits the locker search input
+    document.getElementById('f-locker-search').addEventListener('input', () => {
+      lockerSearchLat = null; lockerSearchLng = null;
+      const hint = document.getElementById('lockerPlacesHint');
+      if (hint) hint.style.display = 'none';
     });
 
     /* ═ Gift toggle ═════════════════════════════ */
@@ -994,10 +1027,7 @@
         }
         if (d['delivery_method']) selectDelivery(d['delivery_method']);
         if (d['selected_locker']) {
-          try {
-            const l = JSON.parse(d['selected_locker']);
-            selectLocker(l.id, l.name, l.address);
-          } catch(e) {}
+          try { const l = JSON.parse(d['selected_locker']); selectLocker(l.id, l.name, l.address); } catch(e) {}
         }
         return found;
       } catch(e) { return false; }
@@ -1035,37 +1065,67 @@
       setTimeout(() => nudge.classList.remove('show'), 260);
     }
 
-    /* ═ Google Places Autocomplete ══════════════ */
+    /* ═ Google Places Autocomplete ══════════════
+     * Attaches to BOTH the door street input AND the locker search input.
+     * For the locker input, we also capture lat/lng for direct coord search.
+     */
     function initPlaces() {
+      if (!window.google) return;
+
+      // ── Door delivery address autocomplete ──
       const streetInput = document.getElementById('f-street');
-      if (!streetInput || !window.google) return;
-      const ac = new google.maps.places.Autocomplete(streetInput, {
-        componentRestrictions: { country: 'za' },
-        fields: ['address_components'],
-        types: ['address']
-      });
-      streetInput.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
-      ac.addListener('place_changed', function() {
-        const place = ac.getPlace();
-        const comps = place.address_components || [];
-        function get(type, prefer_short) {
-          const c = comps.find(c => c.types.includes(type));
-          return c ? (prefer_short ? c.short_name : c.long_name) : '';
-        }
-        streetInput.value = [get('street_number'), get('route')].filter(Boolean).join(' ');
-        document.getElementById('f-suburb').value = get('sublocality_level_1') || get('sublocality') || get('neighborhood') || get('locality');
-        document.getElementById('f-city').value   = get('locality') || get('administrative_area_level_2');
-        document.getElementById('f-postal').value = get('postal_code', true);
-        const province = get('administrative_area_level_1');
-        const sel = document.getElementById('f-province');
-        const opt = [...sel.options].find(o => o.value.toLowerCase() === province.toLowerCase() || province.toLowerCase().includes(o.value.toLowerCase()));
-        if (opt) sel.value = opt.value;
-        const hint = document.getElementById('placesHint');
-        if (hint) hint.style.display = 'none';
-        saveDraft();
-        ['f-street','f-suburb','f-city','f-postal'].forEach(id => document.getElementById(id).classList.remove('error'));
-        ['err-street','err-suburb','err-city','err-postal'].forEach(id => document.getElementById(id).classList.remove('show'));
-      });
+      if (streetInput) {
+        const acStreet = new google.maps.places.Autocomplete(streetInput, {
+          componentRestrictions: { country: 'za' },
+          fields: ['address_components'],
+          types: ['address']
+        });
+        streetInput.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+        acStreet.addListener('place_changed', function() {
+          const place = acStreet.getPlace();
+          const comps = place.address_components || [];
+          function get(type, short) {
+            const c = comps.find(c => c.types.includes(type));
+            return c ? (short ? c.short_name : c.long_name) : '';
+          }
+          streetInput.value = [get('street_number'), get('route')].filter(Boolean).join(' ');
+          document.getElementById('f-suburb').value = get('sublocality_level_1') || get('sublocality') || get('neighborhood') || get('locality');
+          document.getElementById('f-city').value   = get('locality') || get('administrative_area_level_2');
+          document.getElementById('f-postal').value = get('postal_code', true);
+          const province = get('administrative_area_level_1');
+          const sel = document.getElementById('f-province');
+          const opt = [...sel.options].find(o => o.value.toLowerCase() === province.toLowerCase() || province.toLowerCase().includes(o.value.toLowerCase()));
+          if (opt) sel.value = opt.value;
+          const hint = document.getElementById('placesHint');
+          if (hint) hint.style.display = 'none';
+          saveDraft();
+          ['f-street','f-suburb','f-city','f-postal'].forEach(id => document.getElementById(id).classList.remove('error'));
+          ['err-street','err-suburb','err-city','err-postal'].forEach(id => document.getElementById(id).classList.remove('show'));
+        });
+      }
+
+      // ── Locker search autocomplete — captures lat/lng ──
+      const lockerInput = document.getElementById('f-locker-search');
+      if (lockerInput) {
+        const acLocker = new google.maps.places.Autocomplete(lockerInput, {
+          componentRestrictions: { country: 'za' },
+          fields: ['geometry', 'formatted_address'],
+          types: ['geocode']
+        });
+        lockerInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLockers(); } });
+        acLocker.addListener('place_changed', function() {
+          const place = acLocker.getPlace();
+          if (place.geometry && place.geometry.location) {
+            lockerSearchLat = place.geometry.location.lat();
+            lockerSearchLng = place.geometry.location.lng();
+            // Show the green hint and auto-trigger search
+            const hint = document.getElementById('lockerPlacesHint');
+            if (hint) hint.style.display = 'flex';
+            // Auto-search once address is selected from dropdown
+            searchLockers();
+          }
+        });
+      }
     }
 
     /* ═ Init ════════════════════════════════════ */
@@ -1216,12 +1276,12 @@
       const btn = document.getElementById('payBtn');
       btn.disabled = true;
       document.getElementById('coLoading').classList.add('show');
-      const name     = document.getElementById('f-name').value.trim();
-      const email    = document.getElementById('f-email').value.trim();
-      const phone    = document.getElementById('f-phone').value.trim();
-      const notes    = document.getElementById('f-notes').value.trim();
-      const isGift   = document.getElementById('f-is-gift').checked;
-      const giftMsg  = document.getElementById('f-gift-message').value.trim();
+      const name    = document.getElementById('f-name').value.trim();
+      const email   = document.getElementById('f-email').value.trim();
+      const phone   = document.getElementById('f-phone').value.trim();
+      const notes   = document.getElementById('f-notes').value.trim();
+      const isGift  = document.getElementById('f-is-gift').checked;
+      const giftMsg = document.getElementById('f-gift-message').value.trim();
 
       let deliveryAddress, deliveryMeta;
       if (selectedDelivery === 'locker' && selectedLocker) {
@@ -1293,9 +1353,9 @@
         setTimeout(() => {
           const el = document.getElementById('alert-3');
           if (el) {
-            el.style.background = 'rgba(251,191,36,0.08)';
+            el.style.background  = 'rgba(251,191,36,0.08)';
             el.style.borderColor = 'rgba(251,191,36,0.28)';
-            el.style.color = '#fbbf24';
+            el.style.color       = '#fbbf24';
             el.textContent = 'Payment was cancelled - no charge was made. Review your order and try again.';
             el.classList.add('show');
           }
