@@ -1,0 +1,2 @@
+[functions.pudo-locker-search]
+verify_jwt = false
