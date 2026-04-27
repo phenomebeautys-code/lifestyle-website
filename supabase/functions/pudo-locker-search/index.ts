@@ -4,8 +4,8 @@
  * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
  *
  * Env vars:
- *  - PUDO_API_KEY          — Shiplogic / Pudo merchant API key
- *  - GOOGLE_GEOCODING_KEY  — server key (no referrer restriction) for Geocoding API
+ *  - PUDO_API_KEY          — Pudo merchant API key (from customer.pudo.co.za Settings > API Keys)
+ *  - GOOGLE_GEOCODING_KEY  — server-side Google Geocoding API key (no referrer restriction)
  */
 
 const ALLOWED_ORIGINS = [
@@ -27,7 +27,7 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const params = new URL(req.url).searchParams;
+  const params   = new URL(req.url).searchParams;
   const latParam = params.get('lat');
   const lngParam = params.get('lng');
   const query    = (params.get('q') ?? '').trim();
@@ -41,13 +41,13 @@ Deno.serve(async (req: Request) => {
 
   let lat: number, lng: number;
 
-  // ── Path A: lat/lng passed directly from Places autocomplete ─────────────
+  // ── Path A: lat/lng passed directly from Places autocomplete ──────────────
   if (latParam && lngParam) {
     lat = parseFloat(latParam);
     lng = parseFloat(lngParam);
     console.log('[pudo-locker-search] Using direct coords:', lat, lng);
 
-  // ── Path B: geocode the text query ─────────────────────────────────
+  // ── Path B: geocode the text query ────────────────────────────────────────
   } else if (query) {
     if (!geocodeKey) {
       return respond({ results: [], error: 'GOOGLE_GEOCODING_KEY not configured' }, 200, corsHeaders);
@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
       );
       const geoData = await geoRes.json();
       if (geoData.status !== 'OK' || !geoData.results?.length) {
-        console.error('[pudo-locker-search] Geocoding failed:', geoData.status, geoData.error_message ?? '');
+        console.error('[pudo-locker-search] Geocoding failed:', geoData.status);
         return respond({ results: [], error: `Could not locate "${query}"` }, 200, corsHeaders);
       }
       lat = geoData.results[0].geometry.location.lat;
@@ -73,46 +73,54 @@ Deno.serve(async (req: Request) => {
     return respond({ results: [] }, 200, corsHeaders);
   }
 
-  // ── Find nearest lockers via Shiplogic ──────────────────────────────
+  // ── Find nearest Pudo lockers ─────────────────────────────────────────────
   try {
-    const slUrl = `https://api.shiplogic.com/pickup-points?type=locker&lat=${lat}&lng=${lng}&order_closest=true`;
-    console.log('[pudo-locker-search] Shiplogic URL:', slUrl);
+    // Pudo service-points endpoint — returns lockers sorted by distance when lat/lng provided
+    const pudoUrl = `https://api-pudo.co.za/service-points?lat=${lat}&lng=${lng}&type=locker`;
+    console.log('[pudo-locker-search] Pudo URL:', pudoUrl);
 
-    const slRes   = await fetch(slUrl, {
-      headers: { 'Authorization': `Bearer ${pudoKey}`, 'Content-Type': 'application/json' },
+    const pudoRes  = await fetch(pudoUrl, {
+      headers: {
+        'Authorization': `Bearer ${pudoKey}`,
+        'Content-Type':  'application/json',
+        'Accept':        'application/json',
+      },
     });
-    const rawText = await slRes.text();
-    console.log('[pudo-locker-search] Shiplogic status:', slRes.status);
-    console.log('[pudo-locker-search] Shiplogic raw:', rawText.slice(0, 800));
+    const rawText = await pudoRes.text();
+    console.log('[pudo-locker-search] Pudo status:', pudoRes.status);
+    console.log('[pudo-locker-search] Pudo raw:', rawText.slice(0, 800));
 
-    if (!slRes.ok) {
-      return respond({ results: [], error: `Shiplogic ${slRes.status}`, raw: rawText.slice(0, 200) }, 200, corsHeaders);
+    if (!pudoRes.ok) {
+      return respond({ results: [], error: `Pudo API ${pudoRes.status}`, raw: rawText.slice(0, 200) }, 200, corsHeaders);
     }
 
     let data: any;
     try { data = JSON.parse(rawText); } catch {
-      return respond({ results: [], error: 'Invalid JSON from Shiplogic' }, 200, corsHeaders);
+      return respond({ results: [], error: 'Invalid JSON from Pudo API' }, 200, corsHeaders);
     }
 
-    console.log('[pudo-locker-search] data keys:', Object.keys(data));
+    console.log('[pudo-locker-search] data type:', Array.isArray(data) ? 'array' : typeof data);
+    console.log('[pudo-locker-search] data keys:', Array.isArray(data) ? 'N/A' : Object.keys(data));
 
+    // Pudo may return array directly or nested under a key
     const points: any[] =
-      Array.isArray(data)           ? data :
-      Array.isArray(data.results)   ? data.results :
-      Array.isArray(data.data)      ? data.data :
-      Array.isArray(data.locations) ? data.locations : [];
+      Array.isArray(data)                  ? data :
+      Array.isArray(data.service_points)   ? data.service_points :
+      Array.isArray(data.results)          ? data.results :
+      Array.isArray(data.data)             ? data.data :
+      Array.isArray(data.locations)        ? data.locations : [];
 
     console.log('[pudo-locker-search] lockers found:', points.length);
-    if (points.length > 0) console.log('[pudo-locker-search] first:', JSON.stringify(points[0]).slice(0, 400));
+    if (points.length > 0) console.log('[pudo-locker-search] first locker:', JSON.stringify(points[0]).slice(0, 400));
 
-    const results = points.map((p: any) => ({
-      id:      p.id ?? p.pickup_point_id ?? p.terminal_id ?? '',
-      name:    p.name ?? p.lockerName ?? '',
+    const results = points.slice(0, 10).map((p: any) => ({
+      id:      p.terminal_id ?? p.id ?? p.service_point_id ?? '',
+      name:    p.name ?? p.terminal_name ?? p.lockerName ?? '',
       address: [
-        p.address?.street_address ?? p.street ?? '',
-        p.address?.local_area     ?? p.suburb ?? '',
-        p.address?.city           ?? p.city   ?? '',
-        p.address?.code           ?? p.postal_code ?? '',
+        p.street_address ?? p.address?.street_address ?? p.street ?? '',
+        p.local_area     ?? p.address?.local_area     ?? p.suburb ?? '',
+        p.city           ?? p.address?.city           ?? '',
+        p.code           ?? p.address?.code           ?? p.postal_code ?? '',
       ].filter(Boolean).join(', '),
     }));
 
