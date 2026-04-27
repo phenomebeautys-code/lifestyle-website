@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register Yoco Webhook — Admin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #0a0a0a;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #e5e5e5;
+      padding: 20px;
+    }
+    .card {
+      width: 100%; max-width: 480px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 40px;
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    h1 { font-size: 1.4rem; color: #fff; }
+    p  { font-size: 0.85rem; color: #888; line-height: 1.6; }
+    label { font-size: 0.8rem; color: #aaa; display: block; margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #fff; font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus { border-color: rgba(255,255,255,0.3); }
+    button {
+      padding: 14px;
+      background: #c9a96e;
+      color: #000;
+      border: none; border-radius: 8px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    button:hover  { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .result {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 0.8rem;
+      line-height: 1.8;
+      word-break: break-all;
+      display: none;
+    }
+    .result.success { border-color: #4caf50; color: #a5d6a7; }
+    .result.error   { border-color: #f44336; color: #ef9a9a; }
+    .secret-box {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid #c9a96e;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #c9a96e;
+      word-break: break-all;
+      display: none;
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid #c9a96e;
+      color: #c9a96e;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: none;
+    }
+    .copy-btn:hover { background: rgba(201,169,110,0.1); opacity: 1; }
+    .step {
+      font-size: 0.82rem;
+      color: #aaa;
+      line-height: 1.8;
+      display: none;
+    }
+    .step strong { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔗 Register Yoco Webhook</h1>
+    <p>One-time setup. Registers the payment webhook with Yoco and returns the signing secret. Run this once after deploying.</p>
+
+    <div>
+      <label for="adminKey">Admin Key</label>
+      <input type="password" id="adminKey" placeholder="Enter your ADMIN_REGISTER_KEY" />
+    </div>
+
+    <button id="registerBtn" onclick="registerWebhook()">Register Webhook</button>
+
+    <div class="result" id="result"></div>
+
+    <div id="secretWrap">
+      <label>Webhook Signing Secret (copy this)</label>
+      <div class="secret-box" id="secretBox"></div>
+      <button class="copy-btn" id="copyBtn" onclick="copySecret()">📋 Copy Secret</button>
+    </div>
+
+    <div class="step" id="nextStep">
+      <strong>Next step:</strong> Go to<br>
+      <strong>Supabase → Edge Functions → yoco-webhook → Secrets</strong><br>
+      Add a new secret:<br>
+      Key: <strong>YOCO_WEBHOOK_SECRET</strong><br>
+      Value: <em>(paste the secret above)</em>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+
+    async function registerWebhook() {
+      const adminKey = document.getElementById('adminKey').value.trim();
+      const btn      = document.getElementById('registerBtn');
+      const result   = document.getElementById('result');
+
+      if (!adminKey) {
+        showResult('error', 'Please enter your admin key.');
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Registering…';
+      result.style.display = 'none';
+      document.getElementById('secretBox').style.display  = 'none';
+      document.getElementById('copyBtn').style.display    = 'none';
+      document.getElementById('nextStep').style.display   = 'none';
+
+      try {
+        const res = await fetch(
+          SUPABASE_URL + '/functions/v1/register-yoco-webhook',
+          {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ admin_key: adminKey }),
+          }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          showResult('error', 'Error ' + res.status + ': ' + (data.error || JSON.stringify(data)));
+        } else {
+          showResult('success',
+            '✅ Webhook registered!\n' +
+            'Webhook ID: ' + data.webhook_id
+          );
+          const secretBox = document.getElementById('secretBox');
+          secretBox.textContent  = data.webhook_secret;
+          secretBox.style.display = 'block';
+          document.getElementById('copyBtn').style.display  = 'inline-block';
+          document.getElementById('nextStep').style.display = 'block';
+        }
+      } catch (err) {
+        showResult('error', 'Network error: ' + err.message);
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = 'Register Webhook';
+      }
+    }
+
+    function showResult(type, msg) {
+      const el = document.getElementById('result');
+      el.className     = 'result ' + type;
+      el.textContent   = msg;
+      el.style.display = 'block';
+    }
+
+    function copySecret() {
+      const secret = document.getElementById('secretBox').textContent;
+      navigator.clipboard.writeText(secret).then(function() {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(function() { btn.textContent = '📋 Copy Secret'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
