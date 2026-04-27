@@ -1,15 +1,11 @@
 /**
  * pudo-locker-search
- * GET ?q=suburb+or+address
+ * GET ?lat=X&lng=Y          — direct coords from Places autocomplete (preferred)
+ * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
  *
- * Flow:
- *  1. Geocode the query to lat/lng using Google Maps Geocoding API
- *  2. Call Shiplogic pickup-points with lat/lng + order_closest=true
- *  3. Return the 20 nearest Pudo lockers
- *
- * Env vars required:
- *  - PUDO_API_KEY           — Shiplogic / Pudo merchant API key
- *  - GOOGLE_PLACES_API_KEY  — reused from get-places-key secret
+ * Env vars:
+ *  - PUDO_API_KEY          — Shiplogic / Pudo merchant API key
+ *  - GOOGLE_GEOCODING_KEY  — server key (no referrer restriction) for Geocoding API
  */
 
 const ALLOWED_ORIGINS = [
@@ -31,58 +27,66 @@ Deno.serve(async (req: Request) => {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
 
-  const url   = new URL(req.url);
-  const query = (url.searchParams.get('q') ?? '').trim();
+  const params = new URL(req.url).searchParams;
+  const latParam = params.get('lat');
+  const lngParam = params.get('lng');
+  const query    = (params.get('q') ?? '').trim();
 
-  if (!query) {
+  const pudoKey    = Deno.env.get('PUDO_API_KEY')         ?? '';
+  const geocodeKey = Deno.env.get('GOOGLE_GEOCODING_KEY') ?? '';
+
+  if (!pudoKey) {
+    return respond({ results: [], error: 'PUDO_API_KEY not configured' }, 200, corsHeaders);
+  }
+
+  let lat: number, lng: number;
+
+  // ── Path A: lat/lng passed directly from Places autocomplete ─────────────
+  if (latParam && lngParam) {
+    lat = parseFloat(latParam);
+    lng = parseFloat(lngParam);
+    console.log('[pudo-locker-search] Using direct coords:', lat, lng);
+
+  // ── Path B: geocode the text query ─────────────────────────────────
+  } else if (query) {
+    if (!geocodeKey) {
+      return respond({ results: [], error: 'GOOGLE_GEOCODING_KEY not configured' }, 200, corsHeaders);
+    }
+    console.log('[pudo-locker-search] Geocoding query:', query);
+    try {
+      const geoRes  = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query + ', South Africa')}&components=country:ZA&key=${geocodeKey}`
+      );
+      const geoData = await geoRes.json();
+      if (geoData.status !== 'OK' || !geoData.results?.length) {
+        console.error('[pudo-locker-search] Geocoding failed:', geoData.status, geoData.error_message ?? '');
+        return respond({ results: [], error: `Could not locate "${query}"` }, 200, corsHeaders);
+      }
+      lat = geoData.results[0].geometry.location.lat;
+      lng = geoData.results[0].geometry.location.lng;
+      console.log('[pudo-locker-search] Geocoded to:', lat, lng);
+    } catch (err) {
+      console.error('[pudo-locker-search] Geocoding error:', err);
+      return respond({ results: [], error: 'Geocoding failed' }, 200, corsHeaders);
+    }
+  } else {
     return respond({ results: [] }, 200, corsHeaders);
   }
 
-  const pudoKey   = Deno.env.get('PUDO_API_KEY')          ?? '';
-  const googleKey = Deno.env.get('GOOGLE_PLACES_API_KEY') ?? '';
-
-  if (!pudoKey) {
-    console.error('[pudo-locker-search] PUDO_API_KEY not set');
-    return respond({ results: [], error: 'PUDO_API_KEY not configured' }, 200, corsHeaders);
-  }
-  if (!googleKey) {
-    console.error('[pudo-locker-search] GOOGLE_PLACES_API_KEY not set');
-    return respond({ results: [], error: 'GOOGLE_PLACES_API_KEY not configured' }, 200, corsHeaders);
-  }
-
+  // ── Find nearest lockers via Shiplogic ──────────────────────────────
   try {
-    // ── Step 1: Geocode the query to lat/lng ────────────────────────────
-    const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query + ', South Africa')}&key=${googleKey}&components=country:ZA`;
-    console.log('[pudo-locker-search] Geocoding:', query);
+    const slUrl = `https://api.shiplogic.com/pickup-points?type=locker&lat=${lat}&lng=${lng}&order_closest=true`;
+    console.log('[pudo-locker-search] Shiplogic URL:', slUrl);
 
-    const geoRes  = await fetch(geocodeUrl);
-    const geoData = await geoRes.json();
-
-    if (geoData.status !== 'OK' || !geoData.results?.length) {
-      console.error('[pudo-locker-search] Geocoding failed:', geoData.status, geoData.error_message ?? '');
-      return respond({ results: [], error: `Could not locate "${query}" on the map` }, 200, corsHeaders);
-    }
-
-    const { lat, lng } = geoData.results[0].geometry.location;
-    console.log('[pudo-locker-search] Geocoded to:', lat, lng);
-
-    // ── Step 2: Find nearest Pudo lockers via Shiplogic ─────────────────
-    const shiplogicUrl = `https://api.shiplogic.com/pickup-points?type=locker&lat=${lat}&lng=${lng}&order_closest=true`;
-    console.log('[pudo-locker-search] Shiplogic URL:', shiplogicUrl);
-
-    const slRes = await fetch(shiplogicUrl, {
-      headers: {
-        'Authorization': `Bearer ${pudoKey}`,
-        'Content-Type':  'application/json',
-      },
+    const slRes   = await fetch(slUrl, {
+      headers: { 'Authorization': `Bearer ${pudoKey}`, 'Content-Type': 'application/json' },
     });
-
     const rawText = await slRes.text();
     console.log('[pudo-locker-search] Shiplogic status:', slRes.status);
     console.log('[pudo-locker-search] Shiplogic raw:', rawText.slice(0, 800));
 
     if (!slRes.ok) {
-      return respond({ results: [], error: `Shiplogic API ${slRes.status}`, raw: rawText.slice(0, 200) }, 200, corsHeaders);
+      return respond({ results: [], error: `Shiplogic ${slRes.status}`, raw: rawText.slice(0, 200) }, 200, corsHeaders);
     }
 
     let data: any;
@@ -92,18 +96,16 @@ Deno.serve(async (req: Request) => {
 
     console.log('[pudo-locker-search] data keys:', Object.keys(data));
 
-    const pickupPoints: any[] =
+    const points: any[] =
       Array.isArray(data)           ? data :
       Array.isArray(data.results)   ? data.results :
       Array.isArray(data.data)      ? data.data :
       Array.isArray(data.locations) ? data.locations : [];
 
-    console.log('[pudo-locker-search] lockers found:', pickupPoints.length);
-    if (pickupPoints.length > 0) {
-      console.log('[pudo-locker-search] first locker:', JSON.stringify(pickupPoints[0]).slice(0, 400));
-    }
+    console.log('[pudo-locker-search] lockers found:', points.length);
+    if (points.length > 0) console.log('[pudo-locker-search] first:', JSON.stringify(points[0]).slice(0, 400));
 
-    const results = pickupPoints.map((p: any) => ({
+    const results = points.map((p: any) => ({
       id:      p.id ?? p.pickup_point_id ?? p.terminal_id ?? '',
       name:    p.name ?? p.lockerName ?? '',
       address: [
