@@ -29,13 +29,16 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const pudoKey = Deno.env.get('PUDO_API_KEY')!;
+    // PUDO_API_KEY is the Shiplogic/TCG API key from your Pudo merchant account
+    const apiKey = Deno.env.get('PUDO_API_KEY')!;
 
+    // Official endpoint per TCG Locker API docs (August 2025)
+    // https://thecourierguy.co.za/wp-content/uploads/2025/08/The-Courier-Guy-Locker-API-docs.pdf
     const res = await fetch(
-      `https://api.shiplogic.com/pickup-points?type=locker&search=${encodeURIComponent(query)}&limit=10`,
+      `https://api.shiplogic.com/pickup-points?type=locker&search=${encodeURIComponent(query)}`,
       {
         headers: {
-          'Authorization': `Bearer ${pudoKey}`,
+          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
       }
@@ -43,24 +46,27 @@ Deno.serve(async (req: Request) => {
 
     if (!res.ok) {
       const body = await res.text();
-      console.error('Pudo API error:', res.status, body);
-      return new Response(JSON.stringify({ results: [] }), {
+      console.error('Shiplogic pickup-points error:', res.status, body);
+      return new Response(JSON.stringify({ results: [], error: `API ${res.status}` }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
 
     const data = await res.json();
-    const pickupPoints = data.results || data.pickup_points || data || [];
 
-    const results = (Array.isArray(pickupPoints) ? pickupPoints : []).map((p: any) => ({
-      id:      p.id || p.code || p.terminal_id || '',
-      name:    p.name || p.description || '',
+    // Shiplogic returns { results: [...] } — each item has: id, name, address object
+    const pickupPoints: any[] = Array.isArray(data.results) ? data.results : [];
+
+    const results = pickupPoints.map((p: any) => ({
+      // id is used as the delivery_pickup_point_id when creating shipments
+      id:      p.id ?? p.pickup_point_id ?? '',
+      name:    p.name ?? '',
       address: [
-        p.address?.street_address || p.street_address || '',
-        p.address?.local_area     || p.local_area     || '',
-        p.address?.city           || p.city           || '',
-        p.address?.code           || p.postal_code    || '',
+        p.address?.street_address ?? '',
+        p.address?.local_area     ?? '',
+        p.address?.city           ?? '',
+        p.address?.code           ?? '',
       ].filter(Boolean).join(', '),
     }));
 
@@ -68,8 +74,9 @@ Deno.serve(async (req: Request) => {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...corsHeaders },
     });
+
   } catch (err) {
-    console.error('Unexpected error:', err);
+    console.error('Unexpected error in pudo-locker-search:', err);
     return new Response(JSON.stringify({ results: [] }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
