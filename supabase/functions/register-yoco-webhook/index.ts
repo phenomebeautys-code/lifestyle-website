@@ -1,55 +1,60 @@
 /**
  * register-yoco-webhook
  * One-time call that registers the yoco-webhook endpoint with Yoco's API
- * and saves the returned signing secret as YOCO_WEBHOOK_SECRET.
+ * and returns the signing secret to save as YOCO_WEBHOOK_SECRET.
  *
  * POST body: { admin_key: string }
- *   admin_key — must match ADMIN_REGISTER_KEY env var (simple auth for single-tenant)
- *
- * On success, saves the whsec_ secret to the shop_config table and logs it
- * so you can copy it into Supabase Edge Function secrets.
- *
- * Call once from Hoppscotch / Postman / fetch after deploying.
+ *   admin_key — must match ADMIN_REGISTER_KEY env var
  */
 
 const WEBHOOK_FUNCTION_URL =
   'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/yoco-webhook';
 
+const ALLOWED_ORIGINS = [
+  'https://www.phenomebeauty.co.za',
+  'https://phenomebeauty.co.za',
+];
+
 Deno.serve(async (req: Request) => {
+  const origin = req.headers.get('origin') ?? '';
+  const corsHeaders: Record<string, string> = {
+    'Access-Control-Allow-Origin':  ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, Authorization',
+  };
+
+  // ── Preflight ─────────────────────────────────────────────────────────────
   if (req.method === 'OPTIONS') {
-    return respond(null, 204);
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   if (req.method !== 'POST') {
-    return respond({ error: 'Method not allowed' }, 405);
+    return respond({ error: 'Method not allowed' }, 405, corsHeaders);
   }
 
-  // ── Simple admin guard ─────────────────────────────────────────────────────
-  // Not multi-tenant — protect with a simple pre-shared key you set in secrets.
+  // ── Admin guard ───────────────────────────────────────────────────────────
   let body: { admin_key?: string };
   try {
     body = await req.json();
   } catch {
-    return respond({ error: 'Invalid JSON body' }, 400);
+    return respond({ error: 'Invalid JSON body' }, 400, corsHeaders);
   }
 
-  const adminKey         = Deno.env.get('ADMIN_REGISTER_KEY') ?? '';
-  const yocoSecretKey    = Deno.env.get('YOCO_SECRET_KEY') ?? '';
+  const adminKey      = Deno.env.get('ADMIN_REGISTER_KEY') ?? '';
+  const yocoSecretKey = Deno.env.get('YOCO_SECRET_KEY')    ?? '';
 
   if (!adminKey) {
-    return respond({ error: 'ADMIN_REGISTER_KEY env var not set' }, 500);
+    return respond({ error: 'ADMIN_REGISTER_KEY env var not set' }, 500, corsHeaders);
   }
-
   if (body.admin_key !== adminKey) {
-    return respond({ error: 'Forbidden' }, 403);
+    return respond({ error: 'Forbidden' }, 403, corsHeaders);
   }
-
   if (!yocoSecretKey) {
-    return respond({ error: 'YOCO_SECRET_KEY env var not set' }, 500);
+    return respond({ error: 'YOCO_SECRET_KEY env var not set' }, 500, corsHeaders);
   }
 
-  // ── Register webhook with Yoco ───────────────────────────────────────────────
-  console.log('[register-yoco-webhook] Registering webhook URL:', WEBHOOK_FUNCTION_URL);
+  // ── Register webhook with Yoco ────────────────────────────────────────────
+  console.log('[register-yoco-webhook] Registering:', WEBHOOK_FUNCTION_URL);
 
   const yocoRes = await fetch('https://payments.yoco.com/api/webhooks', {
     method: 'POST',
@@ -67,40 +72,35 @@ Deno.serve(async (req: Request) => {
   console.log('[register-yoco-webhook] Yoco response:', yocoRes.status, JSON.stringify(yocoData));
 
   if (!yocoRes.ok) {
-    return respond({ error: 'Yoco registration failed', detail: yocoData }, yocoRes.status);
+    return respond({ error: 'Yoco registration failed', detail: yocoData }, yocoRes.status, corsHeaders);
   }
 
   const webhookId     = yocoData.id     ?? null;
   const webhookSecret = yocoData.secret ?? null;
 
   if (!webhookSecret) {
-    console.error('[register-yoco-webhook] Yoco did not return a secret:', yocoData);
-    return respond({ error: 'Yoco did not return a webhook secret', raw: yocoData }, 500);
+    console.error('[register-yoco-webhook] No secret in Yoco response:', yocoData);
+    return respond({ error: 'Yoco did not return a webhook secret', raw: yocoData }, 500, corsHeaders);
   }
 
-  // ── Log clearly so you can copy the secret ─────────────────────────────────────
-  // The secret is returned here AND in the response body below.
-  // Copy it into: Supabase → Edge Functions → yoco-webhook → Secrets → YOCO_WEBHOOK_SECRET
-  console.log('==========================================================');
-  console.log('WEBHOOK REGISTERED SUCCESSFULLY');
+  console.log('================================================');
+  console.log('WEBHOOK REGISTERED ✓');
   console.log('webhook_id    :', webhookId);
   console.log('webhook_secret:', webhookSecret);
-  console.log('ACTION REQUIRED: Add the secret above to Supabase secrets');
-  console.log('  Key:   YOCO_WEBHOOK_SECRET');
-  console.log('  Value:', webhookSecret);
-  console.log('==========================================================');
+  console.log('Save as: YOCO_WEBHOOK_SECRET in yoco-webhook secrets');
+  console.log('================================================');
 
   return respond({
     success:        true,
     webhook_id:     webhookId,
     webhook_secret: webhookSecret,
-    next_step:      'Copy webhook_secret into Supabase Edge Function secret: YOCO_WEBHOOK_SECRET',
-  }, 200);
+    next_step:      'Copy webhook_secret → Supabase → Edge Functions → yoco-webhook → Secrets → YOCO_WEBHOOK_SECRET',
+  }, 200, corsHeaders);
 });
 
-function respond(data: unknown, status = 200) {
-  return new Response(data === null ? '' : JSON.stringify(data), {
+function respond(data: unknown, status: number, corsHeaders: Record<string, string>) {
+  return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...corsHeaders },
   });
 }
