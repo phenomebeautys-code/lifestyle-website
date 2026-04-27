@@ -1,11 +1,12 @@
 /**
  * pudo-create-shipment
- * Called internally after Yoco payment confirms (payment_status = 'paid').
+ * Called after Yoco payment confirms (payment_status = 'paid').
  * Only fires for orders where delivery_method = 'locker'.
  *
  * POST body: { order_id: string }
  *
- * Docs: https://thecourierguy.co.za/wp-content/uploads/2025/08/The-Courier-Guy-Locker-API-docs.pdf
+ * Uses the TCG Locker API (api-tcg.co.za) — Door to Locker (D2L)
+ * delivery_address.terminal_id = customer's chosen locker (e.g. "CG63")
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -16,48 +17,58 @@ const ALLOWED_ORIGINS = [
 ];
 
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': ALLOWED_ORIGINS[0],
+  'Access-Control-Allow-Origin':  ALLOWED_ORIGINS[0],
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'apikey, authorization, content-type',
 };
 
-// Locker-to-Locker ECO service level code per TCG Locker API docs
-const SERVICE_LEVEL_CODE = 'KIOSK';
+// Door to Locker Extra Small — per TCG Locker API docs
+const SERVICE_LEVEL_CODE = 'D2LXS - ECO';
 
-// Generic collection point ID — PhenomeBeauty drops at any Pudo locker
-const COLLECTION_POINT_ID = 'CG0000';
-const COLLECTION_POINT_PROVIDER = 'tcg-locker';
-const DELIVERY_POINT_PROVIDER   = 'tcg-locker';
+// PhenomeBeauty collection address (Cape Town)
+const COLLECTION_ADDRESS = {
+  type:            'business',
+  company:         'PhenomeBeauty',
+  street_address:  'Cape Town',
+  local_area:      'Cape Town',
+  suburb:          'Cape Town',
+  city:            'Cape Town',
+  code:            '8000',
+  zone:            'WC',
+  country:         'South Africa',
+  entered_address: 'Cape Town, Western Cape, South Africa',
+};
+
+const COLLECTION_CONTACT = {
+  name:          'PhenomeBeauty',
+  email:         'hello@phenomebeauty.co.za',
+  mobile_number: '+27745115725',
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
-
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405);
   }
 
   let body: { order_id?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: 'Invalid JSON body' }, 400);
-  }
+  try { body = await req.json(); }
+  catch { return json({ error: 'Invalid JSON body' }, 400); }
 
   const { order_id } = body;
   if (!order_id) return json({ error: 'order_id is required' }, 400);
 
-  // ── Supabase admin client (service role for reading full order) ──────────
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // ── Fetch order ──────────────────────────────────────────────────────────
+  // ── Fetch order ───────────────────────────────────────────────────────────
   const { data: order, error: orderErr } = await supabase
     .from('shop_orders')
-    .select('id, customer_name, customer_email, customer_phone, delivery_method, delivery_meta, items, total_amount, pudo_shipment_id')
+    .select('id, customer_name, customer_email, customer_phone, delivery_method, delivery_meta, items, pudo_shipment_id')
     .eq('id', order_id)
     .single();
 
@@ -65,91 +76,64 @@ Deno.serve(async (req: Request) => {
     console.error('Order fetch error:', orderErr);
     return json({ error: 'Order not found' }, 404);
   }
-
-  // ── Guard: only locker orders ────────────────────────────────────────────
   if (order.delivery_method !== 'locker') {
     return json({ skipped: true, reason: 'Not a locker order' }, 200);
   }
-
-  // ── Guard: already created ───────────────────────────────────────────────
   if (order.pudo_shipment_id) {
     return json({ skipped: true, reason: 'Shipment already created', pudo_shipment_id: order.pudo_shipment_id }, 200);
   }
 
   const meta = order.delivery_meta as {
-    locker_id: string;
-    locker_name: string;
+    locker_id:      string;  // terminal_id e.g. "CG63"
+    locker_name:    string;
     locker_address: string;
   };
 
   if (!meta?.locker_id) {
-    return json({ error: 'delivery_meta.locker_id is missing on this order' }, 422);
+    return json({ error: 'delivery_meta.locker_id missing on order' }, 422);
   }
 
-  // ── Build parcel description from items ──────────────────────────────────
   const items: any[] = Array.isArray(order.items) ? order.items : [];
   const parcelDescription = items.map((i: any) => `${i.name} x${i.qty}`).join(', ') || 'Beauty products';
 
-  // ── Build Shiplogic shipment payload ─────────────────────────────────────
-  // Per TCG Locker API docs — Locker to Locker
+  // ── Build D2L payload for TCG API ───────────────────────────────────────
   const payload = {
-    service_level_code: SERVICE_LEVEL_CODE,
-    special_instructions: '',
-    customer_reference: order.id,
+    service_level_code:  SERVICE_LEVEL_CODE,
+    collection_address:  COLLECTION_ADDRESS,
+    collection_contact:  COLLECTION_CONTACT,
 
-    // Sender (PhenomeBeauty drops at any Pudo locker)
-    collection_address: {
-      type:                   'business',
-      company:                'PhenomeBeauty',
-      street_address:         'Cape Town',  // Required field — actual drop-off is determined by the locker
-      local_area:             'Cape Town',
-      city:                   'Cape Town',
-      code:                   '8000',
-      country_code:           'ZA',
-    },
-    collection_contact: {
-      name:  'PhenomeBeauty',
-      email: 'hello@phenomebeauty.co.za',
-      mobile_number: '+27745115725',
-    },
-    collection_pickup_point_id:       COLLECTION_POINT_ID,
-    collection_pickup_point_provider: COLLECTION_POINT_PROVIDER,
-
-    // Recipient (customer's chosen locker)
+    // terminal_id tells TCG which locker to deliver to
     delivery_address: {
-      type:         'residential',
-      street_address: meta.locker_address,
-      local_area:     '',
-      city:           'Cape Town',
-      code:           '8000',
-      country_code:   'ZA',
+      terminal_id: meta.locker_id,
     },
     delivery_contact: {
       name:          order.customer_name,
       email:         order.customer_email,
-      mobile_number: order.customer_phone?.replace(/\s/g, '') || '',
+      mobile_number: (order.customer_phone ?? '').replace(/\s/g, ''),
     },
-    delivery_pickup_point_id:       meta.locker_id,
-    delivery_pickup_point_provider: DELIVERY_POINT_PROVIDER,
 
-    // Parcel — default to XS (typical beauty product, ≤2kg)
     parcels: [
       {
-        submitted_length_cm: 17,
-        submitted_width_cm:  8,
-        submitted_height_cm: 8,
-        submitted_weight_kg: 0.5,
-        description:         parcelDescription,
+        submitted_length_cm:  17,
+        submitted_width_cm:   8,
+        submitted_height_cm:  8,
+        submitted_weight_kg:  0.5,
+        parcel_description:   parcelDescription,
+        alternative_tracking_reference: '',
       },
     ],
+
+    opt_in_rates:            [],
+    opt_in_time_based_rates: [],
   };
 
-  // ── Call Shiplogic API ────────────────────────────────────────────────────
-  const pudoKey = Deno.env.get('PUDO_API_KEY')!;
+  // ── Call TCG Locker API ─────────────────────────────────────────────────
+  const pudoKey = Deno.env.get('PUDO_API_KEY') ?? '';
+  console.log('[pudo-create-shipment] Creating D2L shipment for order:', order_id, '| locker:', meta.locker_id);
 
   let shipmentData: any;
   try {
-    const res = await fetch('https://api.shiplogic.com/shipments', {
+    const res = await fetch('https://api-tcg.co.za/shipments', {
       method:  'POST',
       headers: {
         'Authorization': `Bearer ${pudoKey}`,
@@ -159,47 +143,38 @@ Deno.serve(async (req: Request) => {
     });
 
     const responseText = await res.text();
+    console.log('[pudo-create-shipment] TCG response status:', res.status);
+    console.log('[pudo-create-shipment] TCG response:', responseText.slice(0, 1000));
 
     if (!res.ok) {
-      console.error('Shiplogic create shipment error:', res.status, responseText);
-      // Save the error so it can be retried manually from the admin dashboard
-      await supabase.from('shop_orders').update({
-        pudo_error: `${res.status}: ${responseText}`,
-      }).eq('id', order_id);
-      return json({ error: 'Shiplogic API error', detail: responseText }, 502);
+      await supabase.from('shop_orders')
+        .update({ pudo_error: `${res.status}: ${responseText}` })
+        .eq('id', order_id);
+      return json({ error: 'TCG API error', detail: responseText }, 502);
     }
 
     shipmentData = JSON.parse(responseText);
   } catch (err) {
-    console.error('Network error calling Shiplogic:', err);
-    return json({ error: 'Network error calling Shiplogic' }, 502);
+    console.error('[pudo-create-shipment] Network error:', err);
+    return json({ error: 'Network error calling TCG API' }, 502);
   }
 
-  // ── Save tracking reference back to the order ────────────────────────────
-  const trackingRef = shipmentData?.tracking_reference
-    || shipmentData?.short_tracking_reference
-    || shipmentData?.id
-    || null;
+  // ── Save tracking ref ─────────────────────────────────────────────────────
+  const trackingRef = shipmentData?.custom_tracking_reference
+    ?? shipmentData?.tracking_reference
+    ?? shipmentData?.id
+    ?? null;
+  const shipmentId = shipmentData?.id ?? null;
 
-  const shipmentId = shipmentData?.id || null;
-
-  const { error: updateErr } = await supabase.from('shop_orders').update({
-    pudo_shipment_id:    shipmentId,
-    pudo_tracking_ref:   trackingRef,
-    pudo_error:          null,
+  await supabase.from('shop_orders').update({
+    pudo_shipment_id:  shipmentId,
+    pudo_tracking_ref: trackingRef,
+    pudo_error:        null,
   }).eq('id', order_id);
 
-  if (updateErr) {
-    console.error('Failed to save tracking ref to order:', updateErr);
-  }
+  console.log(`[pudo-create-shipment] ✓ Order ${order_id}: shipment=${shipmentId}, tracking=${trackingRef}`);
 
-  console.log(`Pudo shipment created for order ${order_id}: shipment=${shipmentId}, tracking=${trackingRef}`);
-
-  return json({
-    success:       true,
-    shipment_id:   shipmentId,
-    tracking_ref:  trackingRef,
-  }, 201);
+  return json({ success: true, shipment_id: shipmentId, tracking_ref: trackingRef }, 201);
 });
 
 function json(data: unknown, status = 200) {
