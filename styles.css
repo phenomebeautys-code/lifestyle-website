@@ -9,7 +9,14 @@
     padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+    scroll-behavior: smooth;
+    /* Ensures html always fills the full dynamic viewport
+       so fixed pseudo-elements on html cover iOS rubber-band areas */
+    min-height: 100%;
+    min-height: 100dvh;
+    height: 100%;
+}
 
 :root {
     --font-display: 'Abril Fatface', Georgia, serif;
@@ -44,6 +51,7 @@ body {
     color: var(--text);
     background: #000000;
     min-height: 100vh;
+    min-height: 100dvh;   /* Dynamic viewport — accounts for iOS URL bar */
     line-height: 1.65;
     overflow-x: hidden;
 }
