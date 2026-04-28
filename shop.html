@@ -11,28 +11,47 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* BACKGROUND — cross-platform (iOS Safari + Android Chrome) */
+    /* ═══════════════════════════════════════════════════════
+       FULL-BLEED BACKGROUND — iPhone 15 / iOS Safari proof
+       Fix 1: html must have height:100% so fixed children
+               have a real stacking root (WebKit requirement)
+       Fix 2: z-index:-1 (not -2) — iOS Safari drops -2
+               pseudo-elements below its own paint layer
+       Fix 3: body background MUST be transparent so the
+               fixed html::before shows through on overscroll
+    ═══════════════════════════════════════════════════════ */
+    html {
+      height: 100%;
+      min-height: 100%;
+      min-height: 100dvh;
+    }
+
     html::before {
       content: '';
       position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0; /* inset:0 fallback for older WebKit */
       inset: 0;
-      z-index: -2;
+      z-index: -1;                            /* FIX: was -2, Safari drops it */
       pointer-events: none;
       background-image: url('https://iili.io/B6eQM6N.png');
       background-size: cover;
-      background-position: center top;
+      background-position: center center;
       background-repeat: no-repeat;
+      background-attachment: scroll;          /* 'fixed' breaks on iOS — scroll is correct with position:fixed */
     }
+
     html::after {
       content: '';
       position: fixed;
+      top: 0; right: 0; bottom: 0; left: 0;
       inset: 0;
-      z-index: -2;
+      z-index: -1;                            /* FIX: was -2 */
       pointer-events: none;
       background: rgba(0, 0, 0, 0.62);
     }
+
     body {
-      background: #0a0a0a;
+      background: transparent;               /* FIX: was #0a0a0a — opaque body hides html::before on overscroll */
     }
 
     .shop-hero { padding: 18px 0 10px; }
@@ -340,20 +359,14 @@
 
     /* ═══════════════════════════════════════════════════════
        STICKY BOTTOM CART BAR
-       KEY FIX: display:none by default — guarantees invisibility
-       on ALL browsers including iOS Safari before JS runs.
-       JS switches to display:flex only when cart has items.
-       padding-bottom on body also only applied when bar is active.
     ═══════════════════════════════════════════════════════ */
     :root { --cart-bar-h: 72px; }
 
-    /* body padding ONLY when bar is active — set via JS class */
     body.cart-bar-active {
       padding-bottom: var(--cart-bar-h);
     }
 
     .sticky-cart-bar {
-      /* HIDDEN BY DEFAULT — display:none is bulletproof on iOS Safari */
       display: none;
       align-items: center;
       justify-content: space-between;
@@ -366,10 +379,8 @@
       border-top: 1px solid var(--glass-border);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       box-shadow: 0 -4px 32px rgba(0,0,0,0.55);
-      /* Slide-in animation when shown */
       animation: none;
     }
-    /* JS adds .visible class — switches to flex and plays slide-up */
     .sticky-cart-bar.visible {
       display: flex;
       animation: cartBarSlideUp 0.35s cubic-bezier(.4,0,.2,1) forwards;
@@ -502,8 +513,7 @@
     </div>
   </aside>
 
-  <!-- STICKY BOTTOM CART BAR (all screen sizes) -->
-  <!-- No 'visible' class in HTML — JS adds it only when cart has items -->
+  <!-- STICKY BOTTOM CART BAR -->
   <div class="sticky-cart-bar" id="stickyCartBar" role="complementary" aria-label="Cart summary" aria-hidden="true">
     <div class="scb-thumbs" id="scbThumbs"></div>
     <div class="scb-info">
@@ -921,14 +931,12 @@
       const totalQty = cart.reduce((s,i) => s + i.qty, 0);
 
       if (!totalQty) {
-        /* Truly hide — remove class AND let CSS display:none take over */
         bar.classList.remove('visible');
         bar.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('cart-bar-active');
         return;
       }
 
-      /* Show bar */
       bar.classList.add('visible');
       bar.setAttribute('aria-hidden', 'false');
       document.body.classList.add('cart-bar-active');
