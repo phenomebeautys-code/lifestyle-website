@@ -809,17 +809,17 @@ function noImgSVG() {
 /* ─── REORDER MODE ────────────────────────────── */
 function toggleReorderMode() {
   isReorderMode = !isReorderMode;
-  const btn  = document.getElementById('reorderBtn');
-  const hint = document.getElementById('reorderHint');
+  const btn    = document.getElementById('reorderBtn');
+  const hint   = document.getElementById('reorderHint');
   const search = document.getElementById('productSearch');
   if (isReorderMode) {
-    btn.textContent = '\u2713 Done Reordering';
+    btn.innerHTML = '&#10003; Done Reordering';
     btn.classList.add('btn-primary');
     btn.classList.remove('btn-secondary');
     hint.style.display = 'flex';
     search.style.display = 'none';
   } else {
-    btn.textContent = '\u8645 Reorder';
+    btn.innerHTML = '&#8597; Reorder';
     btn.classList.remove('btn-primary');
     btn.classList.add('btn-secondary');
     hint.style.display = 'none';
@@ -844,32 +844,13 @@ function onDragLeave(e) {
 async function onDrop(e) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
-  const grid     = document.getElementById('productsGrid');
-  const cards    = [...grid.querySelectorAll('.product-card')];
-  const dropIdx  = cards.indexOf(e.currentTarget);
+  const grid    = document.getElementById('productsGrid');
+  const cards   = [...grid.querySelectorAll('.product-card')];
+  const dropIdx = cards.indexOf(e.currentTarget);
   if (dragSrcIdx === null || dragSrcIdx === dropIdx) return;
 
-  // Reorder allProducts array to match new visual order
-  const q = (document.getElementById('productSearch')?.value || '').toLowerCase();
-  const visibleList = q
-    ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q))
-    : [...allProducts];
-
-  const moved = visibleList.splice(dragSrcIdx, 1)[0];
-  visibleList.splice(dropIdx, 0, moved);
-
-  // Rebuild allProducts preserving any hidden (filtered) items
-  if (!q) {
-    allProducts = visibleList;
-  } else {
-    // Replace visible items back into allProducts in their new order
-    let vi = 0;
-    allProducts = allProducts.map(p => {
-      const inVisible = visibleList.find(v => v.id === p.id);
-      return inVisible || p;
-    });
-    allProducts = visibleList; // safe since no filter active in reorder mode
-  }
+  const moved = allProducts.splice(dragSrcIdx, 1)[0];
+  allProducts.splice(dropIdx, 0, moved);
 
   dragSrcIdx = null;
   renderProducts();
@@ -886,7 +867,7 @@ async function saveProductOrder() {
     const res = await callEdge({ action: 'reorder_products', password: adminToken, order });
     if (!res.ok) { showToast('Failed to save order.', true); return; }
     allProducts.forEach((p, i) => { p.idx = i; });
-    showToast('Order saved \u2713');
+    showToast('Order saved ✓');
   } catch { showToast('Network error saving order.', true); }
 }
 
@@ -1016,7 +997,7 @@ async function saveProduct() {
       const idx = allProducts.findIndex(p => p.id === id);
       if (idx > -1) allProducts[idx] = data.product || allProducts[idx];
     } else { allProducts.unshift(data.product || payload.product); }
-    renderProducts(); closeProductModal(); showToast(id ? 'Product updated \u2713' : 'Product added \u2713');
+    renderProducts(); closeProductModal(); showToast(id ? 'Product updated ✓' : 'Product added ✓');
   } catch { showToast('Network error.', true); }
   finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
 }
