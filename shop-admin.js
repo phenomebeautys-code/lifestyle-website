@@ -14,6 +14,8 @@ let adminToken      = '';
 let pollTimer       = null;
 let editingVariants = [];
 let editingSizes    = [];
+let isReorderMode   = false;
+let dragSrcIdx      = null;
 
 const BADGE_MAP = {
   pending:    'badge-unpaid',
@@ -23,7 +25,7 @@ const BADGE_MAP = {
 };
 const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
 
-/* ─── INIT ──────────────────────────── */
+/* ─── INIT ─────────────────────────────────────── */
 document.getElementById('adminDate').textContent =
   new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
 
@@ -59,6 +61,7 @@ document.getElementById('modalCancelBtn').addEventListener('click', closeProduct
 document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
 document.getElementById('addVariantBtn').addEventListener('click', addVariantRow);
 document.getElementById('addSizeBtn').addEventListener('click', addSizeRow);
+document.getElementById('reorderBtn').addEventListener('click', toggleReorderMode);
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
 });
@@ -84,7 +87,7 @@ function closeSidebar() {
   document.body.classList.remove('sidebar-open');
 }
 
-/* ─── AUTH ──────────────────────────── */
+/* ─── AUTH ─────────────────────────────────────── */
 async function hashToken(pw) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -137,7 +140,7 @@ function callEdge(body) {
   });
 }
 
-/* ─── AUTO-REFRESH POLLING ──────────── */
+/* ─── AUTO-REFRESH POLLING ────────────────────── */
 function startPolling() {
   stopPolling();
   pollTimer = setInterval(async () => {
@@ -162,7 +165,7 @@ function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
-/* ─── NAVIGATION ────────────────────── */
+/* ─── NAVIGATION ──────────────────────────────── */
 function navTo(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -172,7 +175,7 @@ function navTo(page, btn) {
   if (page === 'products') loadProducts();
 }
 
-/* ─── REFRESH ───────────────────────── */
+/* ─── REFRESH ──────────────────────────────────── */
 async function refreshData() {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
@@ -188,7 +191,7 @@ async function refreshData() {
   finally { btn.disabled = false; }
 }
 
-/* ─── STATS ─────────────────────────── */
+/* ─── STATS ────────────────────────────────────── */
 function updateStats() {
   const paid       = allOrders.filter(o => o.payment_status === 'paid');
   const unpaid     = allOrders.filter(o => o.payment_status !== 'paid');
@@ -235,7 +238,7 @@ function updateReports() {
   setText('repDeliveryRate', paid.length ? rate + '%' : '\u2014');
 }
 
-/* ─── RECENT SALES ──────────────────── */
+/* ─── RECENT SALES ────────────────────────────── */
 function renderRecent() {
   const el   = document.getElementById('recentList');
   const list = [...allOrders]
@@ -263,7 +266,7 @@ function renderRecent() {
   }).join('');
 }
 
-/* ─── DELIVERY HELPERS ──────────────── */
+/* ─── DELIVERY HELPERS ────────────────────────── */
 function getDeliveryLabel(o) {
   const method = o.delivery_method || 'door';
   const meta   = o.delivery_meta || {};
@@ -273,7 +276,7 @@ function getDeliveryLabel(o) {
   return { icon: '🏠', label: 'Door Delivery', sub: o.delivery_address || '' };
 }
 
-/* ─── ORDERS TABLE ──────────────────── */
+/* ─── ORDERS TABLE ────────────────────────────── */
 function applyFilter(filter, btn) {
   activeFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -318,7 +321,6 @@ function renderTable() {
       mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending'),
       mkSelectTd(o),
     ].forEach(c => tr.appendChild(c));
-    // Click row (but not the status select) to open detail
     tr.addEventListener('click', e => {
       if (e.target.closest('select')) return;
       openOrderDetail(o.id);
@@ -398,7 +400,6 @@ function renderCards() {
     if (giftEl) card.appendChild(giftEl);
     card.appendChild(footer);
 
-    // Tap card body (not actions) to open detail
     card.addEventListener('click', e => {
       if (e.target.closest('select, button')) return;
       openOrderDetail(o.id);
@@ -478,7 +479,7 @@ async function updateOrderStatus(id, status, badgeEl) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── ORDER DETAIL MODAL ────────────── */
+/* ─── ORDER DETAIL MODAL ─────────────────────── */
 function openOrderDetail(orderId) {
   const o = allOrders.find(x => x.id === orderId);
   if (!o) return;
@@ -577,7 +578,6 @@ function openOrderDetail(orderId) {
 async function updateFromDetail(orderId) {
   const status = document.getElementById('odStatusSelect').value;
   await updateOrderStatus(orderId, status, null);
-  // Refresh the badge row in the modal
   const o = allOrders.find(x => x.id === orderId);
   if (o) {
     const badgesEl = document.querySelector('#orderDetailBody .od-status-badge');
@@ -591,7 +591,7 @@ function closeOrderDetail() {
   document.body.style.overflow = '';
 }
 
-/* ─── CSV EXPORT ────────────────────── */
+/* ─── CSV EXPORT ──────────────────────────────── */
 function exportOrdersCSV() {
   const orders = getFiltered();
   if (!orders.length) { showToast('No orders to export.', true); return; }
@@ -625,7 +625,7 @@ function exportOrdersCSV() {
   showToast('CSV exported ✓');
 }
 
-/* ─── PRINT LABEL ───────────────────── */
+/* ─── PRINT LABEL ─────────────────────────────── */
 function printLabel(order) {
   if (!order) return;
   const items   = Array.isArray(order.items) ? order.items : [];
@@ -679,7 +679,7 @@ function closePrintLabel() {
   document.body.style.overflow = '';
 }
 
-/* ─── PRODUCTS ──────────────────────── */
+/* ─── PRODUCTS ───────────────────────────────────── */
 function getProductImages(p) {
   if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
   if (p.image_url) return [p.image_url];
@@ -687,7 +687,7 @@ function getProductImages(p) {
 }
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
-    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading\u2026</div>';
+    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
   try {
     const res = await callEdge({ action: 'get_products', password: adminToken });
     if (res.ok) {
@@ -715,7 +715,19 @@ function renderProducts() {
   }
   el.innerHTML = '';
   list.forEach(p => {
-    const card = document.createElement('div'); card.className = 'product-card';
+    const card = document.createElement('div');
+    card.className = 'product-card' + (isReorderMode ? ' reorder-mode' : '');
+    card.dataset.productId = p.id;
+
+    if (isReorderMode) {
+      card.draggable = true;
+      card.addEventListener('dragstart', onDragStart);
+      card.addEventListener('dragover',  onDragOver);
+      card.addEventListener('dragleave', onDragLeave);
+      card.addEventListener('drop',      onDrop);
+      card.addEventListener('dragend',   onDragEnd);
+    }
+
     const variantDisplay = (p.variants || []).map(v => {
       const name = typeof v === 'string' ? v : (v.name || '');
       const inStock = typeof v === 'string' ? true : v.in_stock !== false;
@@ -755,6 +767,15 @@ function renderProducts() {
       const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
     } else { imgWrap.innerHTML = noImgSVG(); }
+
+    if (isReorderMode) {
+      const handle = document.createElement('div');
+      handle.className = 'drag-handle';
+      handle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>';
+      handle.title = 'Drag to reorder';
+      imgWrap.appendChild(handle);
+    }
+
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
       ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
@@ -765,11 +786,18 @@ function renderProducts() {
       ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>`;
     const footer = document.createElement('div'); footer.className = 'product-card-footer';
-    const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
-    editBtn.addEventListener('click', () => openProductModal(p));
-    const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
-    delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
-    footer.appendChild(editBtn); footer.appendChild(delBtn);
+    if (!isReorderMode) {
+      const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => openProductModal(p));
+      const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
+      footer.appendChild(editBtn); footer.appendChild(delBtn);
+    } else {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'font-size:0.72rem;color:var(--text-muted);text-align:center;padding:4px 0;';
+      hint.textContent = 'Drag to reorder';
+      footer.appendChild(hint);
+    }
     card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
     el.appendChild(card);
   });
@@ -778,13 +806,97 @@ function noImgSVG() {
   return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 }
 
-/* ─── SIZES HELPERS ─────────────────── */
+/* ─── REORDER MODE ────────────────────────────── */
+function toggleReorderMode() {
+  isReorderMode = !isReorderMode;
+  const btn  = document.getElementById('reorderBtn');
+  const hint = document.getElementById('reorderHint');
+  const search = document.getElementById('productSearch');
+  if (isReorderMode) {
+    btn.textContent = '\u2713 Done Reordering';
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-secondary');
+    hint.style.display = 'flex';
+    search.style.display = 'none';
+  } else {
+    btn.textContent = '\u8645 Reorder';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    hint.style.display = 'none';
+    search.style.display = '';
+  }
+  renderProducts();
+}
+
+function onDragStart(e) {
+  dragSrcIdx = [...e.currentTarget.parentElement.children].indexOf(e.currentTarget);
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+async function onDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const grid     = document.getElementById('productsGrid');
+  const cards    = [...grid.querySelectorAll('.product-card')];
+  const dropIdx  = cards.indexOf(e.currentTarget);
+  if (dragSrcIdx === null || dragSrcIdx === dropIdx) return;
+
+  // Reorder allProducts array to match new visual order
+  const q = (document.getElementById('productSearch')?.value || '').toLowerCase();
+  const visibleList = q
+    ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q))
+    : [...allProducts];
+
+  const moved = visibleList.splice(dragSrcIdx, 1)[0];
+  visibleList.splice(dropIdx, 0, moved);
+
+  // Rebuild allProducts preserving any hidden (filtered) items
+  if (!q) {
+    allProducts = visibleList;
+  } else {
+    // Replace visible items back into allProducts in their new order
+    let vi = 0;
+    allProducts = allProducts.map(p => {
+      const inVisible = visibleList.find(v => v.id === p.id);
+      return inVisible || p;
+    });
+    allProducts = visibleList; // safe since no filter active in reorder mode
+  }
+
+  dragSrcIdx = null;
+  renderProducts();
+  await saveProductOrder();
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.product-card').forEach(c => c.classList.remove('drag-over'));
+}
+
+async function saveProductOrder() {
+  const order = allProducts.map((p, i) => ({ id: p.id, idx: i }));
+  try {
+    const res = await callEdge({ action: 'reorder_products', password: adminToken, order });
+    if (!res.ok) { showToast('Failed to save order.', true); return; }
+    allProducts.forEach((p, i) => { p.idx = i; });
+    showToast('Order saved \u2713');
+  } catch { showToast('Network error saving order.', true); }
+}
+
+/* ─── SIZES HELPERS ─────────────────────────────── */
 function normaliseSizes(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 })).filter(s => s.name);
 }
 
-/* ─── PRODUCT MODAL ─────────────────── */
+/* ─── PRODUCT MODAL ────────────────────────────── */
 function openProductModal(product = null) {
   document.getElementById('modalTitle').textContent  = product ? 'Edit Product' : 'Add Product';
   document.getElementById('modalProductId').value    = product?.id || '';
@@ -894,7 +1006,7 @@ async function saveProduct() {
       sizes:       cleanSizes,
     },
   };
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
   try {
     const res = await callEdge(payload);
     if (res.status === 429) { showToast('Rate limited.', true); return; }
@@ -918,7 +1030,7 @@ async function deleteProduct(id, name) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── UTILITIES ─────────────────────── */
+/* ─── UTILITIES ─────────────────────────────────── */
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 function showToast(msg, isError = false) {

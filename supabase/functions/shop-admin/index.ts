@@ -65,6 +65,7 @@ Deno.serve(async (req: Request) => {
     status?: string;
     product?: Record<string, unknown>;
     product_id?: string;
+    order?: Array<{ id: string; idx: number }>;
   };
   try { body = await req.json(); } catch {
     return json({ error: 'Invalid JSON' }, 400, cors);
@@ -134,7 +135,6 @@ Deno.serve(async (req: Request) => {
     const p = body.product;
     if (!p || !p.name) return json({ error: 'Missing product name' }, 400, cors);
 
-    // Determine next idx value
     const { data: existing } = await supabase
       .from('products')
       .select('idx')
@@ -209,6 +209,21 @@ Deno.serve(async (req: Request) => {
       .eq('id', product_id);
 
     if (error) return json({ error: error.message }, 500, cors);
+    return json({ ok: true }, 200, cors);
+  }
+
+  /* ── reorder_products ─────────────────────────────────── */
+  if (action === 'reorder_products') {
+    const order = body.order;
+    if (!Array.isArray(order) || !order.length) return json({ error: 'Missing order array' }, 400, cors);
+
+    const updates = order.map(({ id, idx }) =>
+      supabase.from('products').update({ idx }).eq('id', id)
+    );
+    const results = await Promise.all(updates);
+    const failed  = results.find(r => r.error);
+    if (failed?.error) return json({ error: failed.error.message }, 500, cors);
+
     return json({ ok: true }, 200, cors);
   }
 
