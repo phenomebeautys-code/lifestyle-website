@@ -5,19 +5,20 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ── ADMIN BACKGROUND ──────────────────── */
-/*
-  background-attachment:fixed is intentionally avoided:
-  iOS Safari does not support it properly and renders the image
-  at viewport size regardless of scroll, causing a zoomed/cropped look.
-  Instead we use a pseudo-element that is position:fixed so the image
-  stays put while the page scrolls, which works cross-browser.
-*/
+/* ── ADMIN BACKGROUND ──────────────────────────
+   Two-layer approach:
+   body::before  = the photo, position:fixed, cover
+   body::after   = the solid dark scrim, position:fixed, full bleed
+
+   Keeping them separate avoids background-blend-mode quirks
+   (darken skips dark image areas → ghost/untinted bottom) and
+   avoids background-attachment:fixed which iOS Safari ignores.
+────────────────────────────────────────────── */
 body {
   background: #040406;
-  /* no background-image here — handled by ::before below */
 }
 
+/* Layer 1: background photo */
 body::before {
   content: '';
   position: fixed;
@@ -26,16 +27,21 @@ body::before {
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  /* Dark scrim layered on top of the image */
-  background-color: rgba(4, 4, 6, 0.82);
-  /* Use background-blend-mode so both the image and the scrim colour
-     are expressed in a single stacking context on the pseudo-element */
-  background-blend-mode: darken;
   z-index: 0;
   pointer-events: none;
 }
 
-/* Ensure all admin content sits above the background */
+/* Layer 2: dark scrim — sits on top of the photo, covers the entire viewport uniformly */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 4, 6, 0.82);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* All admin content must sit above both background layers (z-index > 0) */
 #loginWrap,
 #adminUI,
 .admin-toast,
@@ -254,7 +260,6 @@ body::before {
 .search-input {
   background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text);
   border-radius: 10px; padding: 8px 14px;
-  /* 16px prevents iOS auto-zoom */
   font-size: 16px; font-family: var(--font-body);
   outline: none; width: 230px; transition: border-color 0.2s;
 }
@@ -366,7 +371,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .img-carousel-slide img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
-/* Prev / Next arrow buttons */
 .img-carousel-btn {
   position: absolute; top: 50%; transform: translateY(-50%);
   background: rgba(4,4,6,0.55); backdrop-filter: blur(6px);
@@ -375,14 +379,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem; line-height: 1; cursor: pointer;
   transition: background 0.18s, opacity 0.18s;
-  z-index: 2; padding: 0;
-  opacity: 0;
+  z-index: 2; padding: 0; opacity: 0;
 }
 .img-carousel:hover .img-carousel-btn { opacity: 1; }
 .img-carousel-prev { left: 6px; }
 .img-carousel-next { right: 6px; }
 .img-carousel-btn:hover { background: rgba(4,4,6,0.85); }
-/* Dot indicators */
 .img-carousel-dots {
   position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 5px; z-index: 2;
@@ -586,11 +588,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
   body.sidebar-open { overflow: hidden; }
 
-  /* On mobile, bias the bg image toward the top so the subject
-     stays visible even on narrow portrait screens */
-  body::before {
-    background-position: center top;
-  }
+  /* Shift image focus to the top on portrait screens */
+  body::before { background-position: center top; }
 }
 @media (max-width: 640px) {
   .stat-bar { grid-template-columns: 1fr 1fr; gap: 10px; }
