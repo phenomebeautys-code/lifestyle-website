@@ -12,43 +12,41 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     /*
-      Two-layer background — same pattern as shop-admin.css:
-      body::before = photo (position:fixed, cover) — no background-attachment:fixed
-      body::after  = solid dark scrim (position:fixed, full bleed)
+      Background approach: a real <div id="shop-bg"> inserted as the FIRST child of <body>.
 
-      background-attachment:fixed is NOT used because iOS Safari ignores it
-      and instead renders the image at viewport size regardless of scroll,
-      causing the zoomed/blown-out look and misaligned scrim edges.
+      Why NOT pseudo-elements:
+        - styles.css already defines body::before (radial gradient) and body::after would
+          conflict with section/footer/nav z-index:1 rules in the same stylesheet.
+        - A real div lives outside that system entirely — no z-index wars.
+
+      Why NOT background-attachment:fixed on body:
+        - iOS Safari ignores it completely, causing the image to render at viewport
+          size and appear zoomed/blown-out.
+
+      The div uses position:fixed + inset:0 so it fills the viewport on all devices,
+      stays put during scroll, and covers every screen size with background-size:cover.
     */
-    body {
-      background: #0a0a0a;
-    }
+    body { background: #0a0a0a; }
 
-    /* Layer 1 — background photo */
-    body::before {
-      content: '';
+    #shop-bg {
       position: fixed;
+      inset: 0;
+      z-index: -1;          /* sits behind everything including z-index:0/1 elements */
+      pointer-events: none;
+    }
+    #shop-bg-img {
+      position: absolute;
       inset: 0;
       background-image: url('https://iili.io/B6eQM6N.png');
       background-size: cover;
       background-position: center top;
       background-repeat: no-repeat;
-      z-index: 0;
-      pointer-events: none;
     }
-
-    /* Layer 2 — uniform dark scrim over the entire viewport */
-    body::after {
-      content: '';
-      position: fixed;
+    #shop-bg-scrim {
+      position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.62);
-      z-index: 1;
-      pointer-events: none;
     }
-
-    /* All page content must sit above both background layers */
-    body > * { position: relative; z-index: 2; }
 
     .shop-hero { padding: 18px 0 10px; }
     .shop-hero-panel {
@@ -452,6 +450,12 @@
   </style>
 </head>
 <body>
+
+  <!-- BACKGROUND: real div, z-index:-1, stays behind everything -->
+  <div id="shop-bg" aria-hidden="true">
+    <div id="shop-bg-img"></div>
+    <div id="shop-bg-scrim"></div>
+  </div>
 
   <!-- NAVBAR -->
   <nav class="navbar" id="navbar">
