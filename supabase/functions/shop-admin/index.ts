@@ -134,9 +134,19 @@ Deno.serve(async (req: Request) => {
     const p = body.product;
     if (!p || !p.name) return json({ error: 'Missing product name' }, 400, cors);
 
+    // Determine next idx value
+    const { data: existing } = await supabase
+      .from('products')
+      .select('idx')
+      .order('idx', { ascending: false })
+      .limit(1)
+      .single();
+    const nextIdx = existing ? (Number(existing.idx) + 1) : 0;
+
     const { data, error } = await supabase
       .from('products')
       .insert({
+        id:          crypto.randomUUID(),
         name:        p.name,
         price:       p.price       ?? 0,
         cost_price:  p.cost_price  ?? 0,
@@ -149,6 +159,7 @@ Deno.serve(async (req: Request) => {
         variants:    p.variants    ?? [],
         sizes:       p.sizes       ?? [],
         active:      true,
+        idx:         nextIdx,
       })
       .select()
       .single();
