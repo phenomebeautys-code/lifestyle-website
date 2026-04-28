@@ -5,10 +5,29 @@
    3. Active nav link on scroll
    4. Scroll reveal with force-check on load
    5. Smooth scroll with nav offset
+   6. iOS device detection → .ios-device on <html>
 ============================================== */
 
 (function () {
     "use strict";
+
+    /* ------------------------------------------
+       6. iOS device detection
+       Adds .ios-device to <html> so CSS can apply
+       the top/bottom viewport edge fade exclusively
+       on iPhones and iPads.
+       Detection logic: userAgent check for iPhone/iPad/iPod
+       combined with maxTouchPoints > 1 to catch iPadOS
+       (which reports itself as Mac in modern Safari).
+    ------------------------------------------ */
+    (function detectIOS() {
+        const ua = navigator.userAgent;
+        const isClassicIOS = /iPhone|iPad|iPod/i.test(ua);
+        const isIPadOS = /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+        if (isClassicIOS || isIPadOS) {
+            document.documentElement.classList.add("ios-device");
+        }
+    })();
 
     /* ------------------------------------------
        Refs
