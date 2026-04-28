@@ -119,6 +119,50 @@ body::before {
     z-index: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   iOS VIEWPORT EDGE FADE
+   ─────────────────────────────────────────────────────────────
+   iOS Safari uses a fixed viewport box. As the user scrolls,
+   content hits the hard top/bottom viewport edges abruptly.
+   This pair of pseudo-elements sits on top of the background
+   image (z-index: 1, same layer as body content but pointer-
+   events: none so it never blocks clicks) and fades the top
+   and bottom edges to #0a0a0e (matching html background-color).
+   This makes scrolling content appear to dissolve into black
+   at both edges, blending seamlessly with the iOS chrome.
+
+   We target iOS specifically using the -webkit-overflow-scrolling
+   media query trick combined with supports(). The safest, most
+   broadly-supported approach is a dedicated class added by JS
+   (see script.js), but as a pure-CSS fallback we also apply it
+   via the iOS-specific @supports selector below.
+
+   The .ios-device class is toggled onto <html> by script.js.
+═══════════════════════════════════════════════════════════════ */
+
+/* JS-driven class — script.js adds .ios-device to <html> */
+html.ios-device #bg-image::before,
+html.ios-device #bg-image::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+html.ios-device #bg-image::before {
+    top: 0;
+    height: 18vh;
+    background: linear-gradient(to bottom, #0a0a0e 0%, transparent 100%);
+}
+
+html.ios-device #bg-image::after {
+    bottom: 0;
+    height: 18vh;
+    background: linear-gradient(to top, #0a0a0e 0%, transparent 100%);
+}
+
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
