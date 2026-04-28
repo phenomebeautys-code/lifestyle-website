@@ -11,23 +11,36 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* ── Background: scrolls with content ── */
-    body {
+    /*
+      BACKGROUND — cross-platform technique:
+      html::before  = the image layer, position:fixed so it fills viewport
+                      and never scrolls. Works on iOS Safari + Android Chrome
+                      unlike background-attachment:fixed on body/html.
+      html::after   = dark scrim, also fixed, also behind everything.
+      Both use z-index:-2 so they sit behind styles.css z-index:0/1 elements.
+      body fallback = solid colour shown while image loads or if it fails.
+    */
+    html::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events: none;
       background-image: url('https://iili.io/B6eQM6N.png');
       background-size: cover;
       background-position: center top;
       background-repeat: no-repeat;
-      background-attachment: scroll;
-      background-color: #0a0a0a;
     }
-    /* Scrim overlay via body::after so it also scrolls */
-    body::after {
+    html::after {
       content: '';
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.62);
-      z-index: -1;
+      z-index: -2;
       pointer-events: none;
+      background: rgba(0, 0, 0, 0.62);
+    }
+    body {
+      background: #0a0a0a; /* fallback only */
     }
 
     .shop-hero { padding: 18px 0 10px; }
@@ -248,34 +261,20 @@
       gap: 8px;
     }
     .drawer-back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      padding: 6px 0;
-      letter-spacing: 0.02em;
-      transition: color 0.2s, transform 0.2s;
-      white-space: nowrap;
-      justify-self: start;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: none; color: var(--text-muted);
+      font-size: 0.8rem; font-weight: 600; font-family: var(--font-body);
+      cursor: pointer; padding: 6px 0; letter-spacing: 0.02em;
+      transition: color 0.2s, transform 0.2s; white-space: nowrap; justify-self: start;
     }
     .drawer-back-btn:hover { color: var(--accent-strong); transform: translateX(-3px); }
     .drawer-back-btn svg { flex-shrink: 0; }
     .drawer-header h2 {
-      font-family: var(--font-display);
-      font-size: 1.4rem;
-      color: var(--accent-strong);
-      text-align: center;
-      margin: 0;
+      font-family: var(--font-display); font-size: 1.4rem;
+      color: var(--accent-strong); text-align: center; margin: 0;
     }
     .close-btn {
-      justify-self: end;
-      width:36px; height:36px; border-radius:50%;
+      justify-self: end; width:36px; height:36px; border-radius:50%;
       background:rgba(255,255,255,0.06); border:1px solid var(--glass-border);
       color:var(--text-muted); cursor:pointer; font-size:16px;
       display:flex; align-items:center; justify-content:center;
@@ -294,8 +293,7 @@
     }
     .cart-item:hover { border-color: rgba(255,255,255,0.14); }
     .cart-item-thumb {
-      flex-shrink: 0; width: 72px; height: 72px;
-      border-radius: 10px; overflow: hidden;
+      flex-shrink: 0; width: 72px; height: 72px; border-radius: 10px; overflow: hidden;
       background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
       display: flex; align-items: center; justify-content: center;
     }
@@ -324,46 +322,24 @@
 
     /* ── Cart footer ── */
     .cart-footer {
-      padding: 20px 24px;
-      border-top: 1px solid var(--glass-border);
+      padding: 20px 24px; border-top: 1px solid var(--glass-border);
       display: flex; flex-direction: column; gap: 14px;
     }
     .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
     .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
     .total-row.grand span:last-child { color:var(--accent); }
-    .delivery-note {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-style: italic;
-      text-align: right;
-      margin-top: -6px;
-    }
+    .delivery-note { font-size: 0.75rem; color: var(--text-muted); font-style: italic; text-align: right; margin-top: -6px; }
     .secure-note { text-align:center; font-size:0.75rem; color:var(--text-muted); }
 
     /* ── Continue shopping ── */
     .continue-shopping {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: none;
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-pill);
-      color: var(--text-muted);
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      padding: 10px 20px;
-      width: 100%;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
-      letter-spacing: 0.02em;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill);
+      color: var(--text-muted); font-size: 0.82rem; font-weight: 600; font-family: var(--font-body);
+      cursor: pointer; padding: 10px 20px; width: 100%;
+      transition: border-color 0.2s, color 0.2s, background 0.2s; letter-spacing: 0.02em;
     }
-    .continue-shopping:hover {
-      border-color: rgba(255,255,255,0.28);
-      color: var(--text);
-      background: rgba(255,255,255,0.04);
-    }
+    .continue-shopping:hover { border-color: rgba(255,255,255,0.28); color: var(--text); background: rgba(255,255,255,0.04); }
     .continue-shopping svg { flex-shrink: 0; transition: transform 0.2s; }
     .continue-shopping:hover svg { transform: translateX(-3px); }
 
@@ -381,8 +357,6 @@
        STICKY BOTTOM CART BAR — all screen sizes
     ═══════════════════════════════════════════ */
     :root { --cart-bar-h: 72px; }
-
-    /* Give the page breathing room so content isn't hidden behind the bar */
     body { padding-bottom: var(--cart-bar-h); }
 
     .sticky-cart-bar {
@@ -394,7 +368,6 @@
       border-top: 1px solid var(--glass-border);
       backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       box-shadow: 0 -4px 32px rgba(0,0,0,0.55);
-      /* Hidden by default, slides up when cart has items */
       transform: translateY(100%);
       transition: transform 0.35s cubic-bezier(.4,0,.2,1);
     }
@@ -415,11 +388,9 @@
       margin-left: -10px; display: flex; align-items: center; justify-content: center;
       font-size: 0.7rem; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
     }
-
     .scb-info { flex: 1; padding: 0 16px; display: flex; flex-direction: column; gap: 2px; }
     .scb-count { font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; }
     .scb-total { font-size: 1.05rem; font-weight: 700; color: var(--accent-strong); line-height: 1.1; }
-
     .scb-cta {
       flex-shrink: 0; display: flex; align-items: center; gap: 8px;
       padding: 12px 22px; border-radius: var(--radius-pill);
@@ -432,7 +403,6 @@
     .scb-cta:hover  { opacity: 0.88; }
     .scb-cta:active { opacity: 0.75; transform: scale(0.97); }
 
-    /* On desktop, hide thumbs since there's plenty of room for text info */
     @media (min-width: 769px) {
       .scb-thumbs { display: none; }
       .scb-info { padding-left: 0; }
@@ -508,9 +478,7 @@
       <h2>Your Cart</h2>
       <button class="close-btn" onclick="closeCart()" aria-label="Close cart">&#x2715;</button>
     </div>
-
     <div class="cart-items" id="cartItems"><p class="cart-empty">Your cart is empty.</p></div>
-
     <div class="cart-footer" id="cartFooter" style="display:none">
       <div style="display:flex;flex-direction:column;gap:6px">
         <div class="total-row grand"><span>Subtotal</span><span id="subtotalDisplay">R0</span></div>
