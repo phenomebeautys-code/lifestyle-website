@@ -46,6 +46,8 @@ function unauthorized(cors: Record<string, string>) {
   return json({ error: 'Unauthorized' }, 401, cors);
 }
 
+const VALID_AVAILABILITY = ['available', 'unavailable', 'coming_soon'];
+
 /* ── Main handler ───────────────────────────────────────── */
 Deno.serve(async (req: Request) => {
   const cors = corsHeaders(req);
@@ -143,23 +145,28 @@ Deno.serve(async (req: Request) => {
       .single();
     const nextIdx = existing ? (Number(existing.idx) + 1) : 0;
 
+    const availability = VALID_AVAILABILITY.includes(p.availability as string)
+      ? p.availability
+      : 'available';
+
     const { data, error } = await supabase
       .from('products')
       .insert({
-        id:          crypto.randomUUID(),
-        name:        p.name,
-        price:       p.price       ?? 0,
-        cost_price:  p.cost_price  ?? 0,
-        sku:         p.sku         ?? '',
-        brand:       p.brand       ?? '',
-        description: p.description ?? '',
-        image_url:   p.image_url   ?? '',
-        image_urls:  p.image_urls  ?? [],
-        category:    p.category    ?? '',
-        variants:    p.variants    ?? [],
-        sizes:       p.sizes       ?? [],
-        active:      true,
-        idx:         nextIdx,
+        id:           crypto.randomUUID(),
+        name:         p.name,
+        price:        p.price        ?? 0,
+        cost_price:   p.cost_price   ?? 0,
+        sku:          p.sku          ?? '',
+        brand:        p.brand        ?? '',
+        description:  p.description  ?? '',
+        image_url:    p.image_url    ?? '',
+        image_urls:   p.image_urls   ?? [],
+        category:     p.category     ?? '',
+        variants:     p.variants     ?? [],
+        sizes:        p.sizes        ?? [],
+        active:       true,
+        availability: availability,
+        idx:          nextIdx,
       })
       .select()
       .single();
@@ -174,21 +181,26 @@ Deno.serve(async (req: Request) => {
     if (!p || !p.id)   return json({ error: 'Missing product id' }, 400, cors);
     if (!p.name)       return json({ error: 'Missing product name' }, 400, cors);
 
+    const availability = VALID_AVAILABILITY.includes(p.availability as string)
+      ? p.availability
+      : 'available';
+
     const { data, error } = await supabase
       .from('products')
       .update({
-        name:        p.name,
-        price:       p.price       ?? 0,
-        cost_price:  p.cost_price  ?? 0,
-        sku:         p.sku         ?? '',
-        brand:       p.brand       ?? '',
-        description: p.description ?? '',
-        image_url:   p.image_url   ?? '',
-        image_urls:  p.image_urls  ?? [],
-        category:    p.category    ?? '',
-        variants:    p.variants    ?? [],
-        sizes:       p.sizes       ?? [],
-        active:      p.active      ?? true,
+        name:         p.name,
+        price:        p.price        ?? 0,
+        cost_price:   p.cost_price   ?? 0,
+        sku:          p.sku          ?? '',
+        brand:        p.brand        ?? '',
+        description:  p.description  ?? '',
+        image_url:    p.image_url    ?? '',
+        image_urls:   p.image_urls   ?? [],
+        category:     p.category     ?? '',
+        variants:     p.variants     ?? [],
+        sizes:        p.sizes        ?? [],
+        active:       p.active       ?? true,
+        availability: availability,
       })
       .eq('id', p.id)
       .select()
