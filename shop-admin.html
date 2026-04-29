@@ -193,6 +193,17 @@
       <div class="modal-field"><label class="field-label" for="mpSku">SKU</label><input type="text" id="mpSku" class="field-input" placeholder="e.g. LSH-001" /></div>
       <div class="modal-field"><label class="field-label" for="mpBrand">Brand</label><input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" /></div>
       <div class="modal-field full"><label class="field-label" for="mpCategory">Category</label><input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" /></div>
+
+      <!-- ── AVAILABILITY ── -->
+      <div class="modal-field full">
+        <label class="field-label" for="mpAvailability">Availability</label>
+        <select id="mpAvailability" class="field-input" style="cursor:pointer;">
+          <option value="available">✅ Available — on sale, add to cart enabled</option>
+          <option value="coming_soon">🕐 Coming Soon — visible but not purchasable</option>
+          <option value="unavailable">🚫 Not Available — hidden from shop</option>
+        </select>
+      </div>
+
       <div class="modal-field full"><label class="field-label" for="mpDesc">Description</label><textarea id="mpDesc" class="field-input" rows="3" placeholder="Short product description…"></textarea></div>
       <div class="modal-field full"><label class="field-label" for="mpImage1">Image 1 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(main)</span></label><input type="url" id="mpImage1" class="field-input" placeholder="https://…" /></div>
       <div class="modal-field full"><label class="field-label" for="mpImage2">Image 2 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage2" class="field-input" placeholder="https://…" /></div>

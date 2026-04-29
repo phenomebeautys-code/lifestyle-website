@@ -269,11 +269,16 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   border-radius: 40px; font-size: 0.67rem; font-weight: 700;
   letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid; white-space: nowrap;
 }
-.badge-paid       { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.25);  color: #4ade80; }
-.badge-unpaid     { background: rgba(251,191,36,0.08);  border-color: rgba(251,191,36,0.25);  color: #fbbf24; }
-.badge-processing { background: rgba(99,179,237,0.08);  border-color: rgba(99,179,237,0.25);  color: #63b3ed; }
-.badge-dispatched { background: rgba(245,243,239,0.08); border-color: rgba(245,243,239,0.2);  color: var(--accent-strong); }
-.badge-delivered  { background: rgba(74,222,128,0.12);  border-color: rgba(74,222,128,0.3);   color: #4ade80; }
+.badge-paid         { background: rgba(74,222,128,0.08);   border-color: rgba(74,222,128,0.25);   color: #4ade80; }
+.badge-unpaid       { background: rgba(251,191,36,0.08);   border-color: rgba(251,191,36,0.25);   color: #fbbf24; }
+.badge-processing   { background: rgba(99,179,237,0.08);   border-color: rgba(99,179,237,0.25);   color: #63b3ed; }
+.badge-dispatched   { background: rgba(245,243,239,0.08);  border-color: rgba(245,243,239,0.2);   color: var(--accent-strong); }
+.badge-delivered    { background: rgba(74,222,128,0.12);   border-color: rgba(74,222,128,0.3);    color: #4ade80; }
+
+/* ── AVAILABILITY BADGES ─────────────── */
+.badge-available    { background: rgba(74,222,128,0.08);   border-color: rgba(74,222,128,0.25);   color: #4ade80; }
+.badge-coming-soon  { background: rgba(99,179,237,0.10);   border-color: rgba(99,179,237,0.28);   color: #63b3ed; }
+.badge-unavailable  { background: rgba(248,113,113,0.08);  border-color: rgba(248,113,113,0.25);  color: #f87171; }
 
 .items-mini   { font-size: 0.74rem; color: var(--text-muted); line-height: 1.85; }
 .status-select {
@@ -328,12 +333,32 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   backdrop-filter: blur(12px);
 }
 .product-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+/* Dim unavailable products in the admin grid */
+.product-card.prod-unavailable { opacity: 0.5; }
+.product-card.prod-unavailable:hover { opacity: 0.75; }
+
 .product-img-wrap {
   width: 100%; aspect-ratio: 4/3; background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   position: relative;
 }
 .product-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Availability ribbon on the image (admin card) */
+.prod-avail-ribbon {
+  position: absolute; top: 10px; left: 10px; z-index: 3;
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+.prod-avail-ribbon.ribbon-coming-soon {
+  background: rgba(99,179,237,0.18); border: 1px solid rgba(99,179,237,0.35); color: #63b3ed;
+}
+.prod-avail-ribbon.ribbon-unavailable {
+  background: rgba(248,113,113,0.18); border: 1px solid rgba(248,113,113,0.35); color: #f87171;
+}
 
 /* ── IMAGE CAROUSEL ────────────────── */
 .img-carousel {
