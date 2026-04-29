@@ -679,6 +679,19 @@ function closePrintLabel() {
   document.body.style.overflow = '';
 }
 
+/* ─── AVAILABILITY HELPERS ──────────────────────── */
+const AVAILABILITY_LABELS = {
+  available:   null,
+  coming_soon: 'Coming Soon',
+  unavailable: 'Not Available',
+};
+
+function availabilityBadgeHTML(avail) {
+  const label = AVAILABILITY_LABELS[avail];
+  if (!label) return '';
+  return `<span class="product-avail-badge">${label}</span>`;
+}
+
 /* ─── PRODUCTS ───────────────────────────────────── */
 function getProductImages(p) {
   if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
@@ -767,6 +780,15 @@ function renderProducts() {
       const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
     } else { imgWrap.innerHTML = noImgSVG(); }
+
+    /* ── availability badge overlay on image ── */
+    const avail = p.availability || 'available';
+    if (avail !== 'available') {
+      const badge = document.createElement('span');
+      badge.className = 'product-avail-badge';
+      badge.textContent = AVAILABILITY_LABELS[avail] || avail;
+      imgWrap.appendChild(badge);
+    }
 
     if (isReorderMode) {
       const handle = document.createElement('div');
@@ -888,6 +910,8 @@ function openProductModal(product = null) {
   document.getElementById('mpBrand').value           = product?.brand || '';
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
+  /* ── availability ── */
+  document.getElementById('mpAvailability').value    = product?.availability || 'available';
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
   document.getElementById('mpImage2').value = imgs[1] || '';
@@ -975,16 +999,17 @@ async function saveProduct() {
     action: id ? 'update_product' : 'add_product', password: adminToken,
     product: {
       ...(id && { id }), name,
-      price:       parseFloat(document.getElementById('mpPrice').value)    || 0,
-      cost_price:  parseFloat(document.getElementById('mpCost').value)     || 0,
-      sku:         document.getElementById('mpSku').value.trim(),
-      brand:       document.getElementById('mpBrand').value.trim(),
-      description: document.getElementById('mpDesc').value.trim(),
-      image_url:   imageUrls[0] || '',
-      image_urls:  imageUrls,
-      category:    document.getElementById('mpCategory').value.trim(),
-      variants:    editingVariants.filter(v => v.name.trim()).map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
-      sizes:       cleanSizes,
+      price:        parseFloat(document.getElementById('mpPrice').value)    || 0,
+      cost_price:   parseFloat(document.getElementById('mpCost').value)     || 0,
+      sku:          document.getElementById('mpSku').value.trim(),
+      brand:        document.getElementById('mpBrand').value.trim(),
+      description:  document.getElementById('mpDesc').value.trim(),
+      image_url:    imageUrls[0] || '',
+      image_urls:   imageUrls,
+      category:     document.getElementById('mpCategory').value.trim(),
+      availability: document.getElementById('mpAvailability').value || 'available',
+      variants:     editingVariants.filter(v => v.name.trim()).map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
+      sizes:        cleanSizes,
     },
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
