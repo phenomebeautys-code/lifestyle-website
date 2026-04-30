@@ -6,10 +6,19 @@
    4. Scroll reveal with force-check on load
    5. Smooth scroll with nav offset
    6. iOS device detection → .ios-device on <html>
+   7. Footer year — always reflects current year
 ============================================== */
 
 (function () {
     "use strict";
+
+    /* ------------------------------------------
+       7. Footer year
+       Keeps the copyright year in the footer
+       current without manual updates each year.
+    ------------------------------------------ */
+    var yearEl = document.getElementById("footer-year");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
 
     /* ------------------------------------------
        6. iOS device detection
