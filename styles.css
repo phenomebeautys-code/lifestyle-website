@@ -61,6 +61,13 @@ html {
    shows through — including during iOS rubber-band overscroll.
    A solid body background is what causes the white (or color)
    bars at the top and bottom on iPhone.
+
+   padding-top: env(safe-area-inset-top) ensures that on iOS
+   (with viewport-fit=cover) the body content starts below the
+   status bar safe area. On Android and desktop this resolves
+   to 0 so there is no visual change on those platforms.
+   This is the fix for shop.html content appearing under the
+   iOS status bar / Safari black bar.
 ═══════════════════════════════════════════════════════════════ */
 body {
     font-family: var(--font-body);
@@ -72,6 +79,8 @@ body {
     overflow-x: hidden;
     position: relative;
     z-index: 1;
+    /* ── iOS safe area: push content below status bar on all pages ── */
+    padding-top: env(safe-area-inset-top);
 }
 
 /* ═══════════════════════════════════════════════════════════════
