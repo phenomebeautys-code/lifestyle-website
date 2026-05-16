@@ -12,6 +12,10 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* ── Shop-page-only variables (do NOT re-declare :root to avoid
+       overriding the safe-area padding-top set in styles.css body rule) ── */
+    :root { --cart-bar-h: 72px; }
+
     .shop-hero { padding: 18px 0 10px; }
     .shop-hero-panel {
       padding: var(--section-pad);
@@ -346,8 +350,6 @@
     /* ═══════════════════════════════════════════════════════
        STICKY BOTTOM CART BAR
     ═══════════════════════════════════════════════════════ */
-    :root { --cart-bar-h: 72px; }
-
     body.cart-bar-active {
       padding-bottom: var(--cart-bar-h);
     }
@@ -416,9 +418,6 @@
 
   <!-- ═══════════════════════════════════════════════════════
        FULL-BLEED BACKGROUND LAYER — iOS Safari proof
-       Using real divs instead of pseudo-elements avoids
-       the WebKit z-index painting bug entirely.
-       Both layers sit at z-index:0, body content at z-index:1.
   ═══════════════════════════════════════════════════════ -->
   <div id="bg-image" aria-hidden="true"></div>
   <div id="bg-overlay" aria-hidden="true"></div>
@@ -453,7 +452,10 @@
     </div>
   </nav>
 
-  <div class="banner" id="cancelBanner">Payment was cancelled &mdash; your cart is still saved. Try again when ready.</div>
+  <!-- CANCELLATION BANNER — lives below nav in normal flow -->
+  <div class="container">
+    <div class="banner" id="cancelBanner">Payment was cancelled &mdash; your cart is still saved. Try again when ready.</div>
+  </div>
 
   <!-- HERO -->
   <section class="shop-hero section">
