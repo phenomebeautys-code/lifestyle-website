@@ -11,49 +11,6 @@
   <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* ═══════════════════════════════════════════════════════
-       FULL-BLEED BACKGROUND — iPhone 15 / iOS Safari proof
-       Fix 1: html must have height:100% so fixed children
-               have a real stacking root (WebKit requirement)
-       Fix 2: z-index:-1 (not -2) — iOS Safari drops -2
-               pseudo-elements below its own paint layer
-       Fix 3: body background MUST be transparent so the
-               fixed html::before shows through on overscroll
-    ═══════════════════════════════════════════════════════ */
-    html {
-      height: 100%;
-      min-height: 100%;
-      min-height: 100dvh;
-    }
-
-    html::before {
-      content: '';
-      position: fixed;
-      top: 0; right: 0; bottom: 0; left: 0; /* inset:0 fallback for older WebKit */
-      inset: 0;
-      z-index: -1;                            /* FIX: was -2, Safari drops it */
-      pointer-events: none;
-      background-image: url('https://iili.io/B6eQM6N.png');
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      background-attachment: scroll;          /* 'fixed' breaks on iOS — scroll is correct with position:fixed */
-    }
-
-    html::after {
-      content: '';
-      position: fixed;
-      top: 0; right: 0; bottom: 0; left: 0;
-      inset: 0;
-      z-index: -1;                            /* FIX: was -2 */
-      pointer-events: none;
-      background: rgba(0, 0, 0, 0.62);
-    }
-
-    body {
-      background: transparent;               /* FIX: was #0a0a0a — opaque body hides html::before on overscroll */
-    }
-
     .shop-hero { padding: 18px 0 10px; }
     .shop-hero-panel {
       padding: var(--section-pad);
@@ -455,6 +412,15 @@
   </style>
 </head>
 <body>
+
+  <!-- ═══════════════════════════════════════════════════════
+       FULL-BLEED BACKGROUND LAYER — iOS Safari proof
+       Using real divs instead of pseudo-elements avoids
+       the WebKit z-index painting bug entirely.
+       Both layers sit at z-index:0, body content at z-index:1.
+  ═══════════════════════════════════════════════════════ -->
+  <div id="bg-image" aria-hidden="true"></div>
+  <div id="bg-overlay" aria-hidden="true"></div>
 
   <!-- NAVBAR -->
   <nav class="navbar" id="navbar">
