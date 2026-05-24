@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0e" />
-  <title>Checkout — PhenomeBeauty</title>
+  <title>Checkout &#8212; PhenomeBeauty</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -193,6 +193,9 @@
     .locker-item-size-warn { margin-top: 5px; font-size: .77rem; color: #ffd7a6; display: flex; align-items: center; gap: 5px; }
     .box-size-loading { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-muted); font-family: var(--font-body); }
     .box-size-ring { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); border-top-color: var(--accent); animation: spin .7s linear infinite; display: inline-block; vertical-align: -3px; }
+    .locker-size-note { padding: 8px 12px; border-radius: 10px; font-size: .8rem; line-height: 1.5; }
+    .locker-size-note--confirmed { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); color: #d8fff0; }
+    .locker-size-note--unknown { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #ffe0ad; }
     .exit-nudge {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-100%);
       z-index: 999; background: rgba(10,10,14,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -208,6 +211,12 @@
     .exit-nudge strong { color: var(--accent-strong); }
     .exit-nudge-actions { display: flex; gap: 8px; }
     .mobile-summary-bar { display: none; }
+    .mobile-summary-body { overflow: hidden; max-height: 0; transition: max-height .3s ease; padding: 0 4px; }
+    .mobile-summary-body.open { max-height: 600px; }
+    .mobile-summary-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: none; border: none; cursor: pointer; padding: 0; color: var(--text); font-family: var(--font-body); }
+    .mobile-summary-copy { display: grid; gap: 2px; text-align: left; }
+    .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
+    .mobile-summary-copy strong { font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); }
     .toast {
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 18px; z-index: 50;
@@ -239,10 +248,7 @@
     @media (max-width: 1080px) {
       .co-layout { grid-template-columns: 1fr; }
       .co-aside  { position: relative; top: auto; display: none; }
-      .mobile-summary-bar { display: flex; position: sticky; bottom: 12px; z-index: 30; margin-top: 16px; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; border-radius: 20px; background: rgba(4,4,6,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); }
-      .mobile-summary-copy { display: grid; gap: 2px; }
-      .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
-      .mobile-summary-copy strong { font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); }
+      .mobile-summary-bar { display: flex; flex-direction: column; position: sticky; bottom: 12px; z-index: 30; margin-top: 16px; padding: 13px 16px; border-radius: 20px; background: rgba(4,4,6,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); gap: 0; }
     }
     @media (max-width: 760px) {
       .co-wrap { padding: 0 14px 50px; }
@@ -283,10 +289,10 @@
 
   <!-- Exit-intent nudge (Step 3 only) -->
   <div class="exit-nudge" id="exitNudge" role="alert" aria-live="polite">
-    <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet — go back and tap <strong>Pay</strong> to complete it.</p>
+    <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet &#8212; go back and tap <strong>Pay</strong> to complete it.</p>
     <div class="exit-nudge-actions">
-      <button class="primary-btn" style="padding:9px 16px;font-size:.84rem;" onclick="dismissExitNudge(true)">Complete payment</button>
-      <button class="ghost-btn" style="padding:9px 14px;font-size:.84rem;" onclick="dismissExitNudge(false)">Dismiss</button>
+      <button class="primary-btn" style="padding:9px 16px;font-size:.84rem;" onclick="dismissNudge()">Complete payment</button>
+      <button class="ghost-btn" style="padding:9px 14px;font-size:.84rem;" onclick="dismissNudge()">Dismiss</button>
     </div>
   </div>
 
@@ -300,13 +306,19 @@
       </div>
     </div>
 
-    <div class="co-layout" id="checkoutLayout">
-      <div class="co-stack">
+    <div class="co-layout" id="coLayout">
+      <div class="co-stack" id="checkoutContent">
         <section class="co-card" style="margin-top:24px;">
-          <div class="co-steps" id="stepsBar"></div>
+          <div class="co-steps" id="stepsBar">
+            <div class="step-pill active" id="breadcrumb-1"><span class="step-num">1</span> Contact</div>
+            <span class="step-arrow" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="step-pill" id="breadcrumb-2"><span class="step-num">2</span> Delivery</div>
+            <span class="step-arrow" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+            <div class="step-pill" id="breadcrumb-3"><span class="step-num">3</span> Review &amp; Pay</div>
+          </div>
 
           <!-- Step 1: Contact -->
-          <div class="step active" id="step1">
+          <div class="step active" id="panel-1">
             <div class="step-tag">Step 1</div>
             <h2 class="step-title">Contact details</h2>
             <p class="step-copy">We'll use these for your order confirmation, delivery updates and payment notifications.</p>
@@ -336,22 +348,22 @@
           </div>
 
           <!-- Step 2: Delivery -->
-          <div class="step" id="step2">
+          <div class="step" id="panel-2">
             <div class="step-tag">Step 2</div>
-            <h2 class="step-title">Delivery method</h2>
+            <h2 class="step-title">Delivery method<span id="deliveryMethodLabel" style="font-size:.8rem;font-family:var(--font-body);font-weight:400;color:var(--text-muted);"></span></h2>
             <p class="step-copy">Choose how you'd like to receive your order.</p>
             <div class="delivery-grid">
-              <button type="button" class="delivery-card selected" id="delivery-door" onclick="selectDelivery('door')">
+              <button type="button" class="delivery-card selected" id="opt-door" onclick="selectDelivery('door')">
                 <span class="delivery-chip"></span>
                 <h3>Door delivery</h3>
                 <p>Delivered to your address with standard local courier service. Ideal if you want the simplest hand-off.</p>
-                <span class="delivery-price">R99</span>
+                <span class="delivery-price" id="door-price-display">R99</span>
               </button>
-              <button type="button" class="delivery-card" id="delivery-locker" onclick="selectDelivery('locker')">
+              <button type="button" class="delivery-card" id="opt-locker" onclick="selectDelivery('locker')">
                 <span class="delivery-chip"></span>
                 <h3>Pudo locker</h3>
                 <p>Collect from a nearby locker when it suits you. Great for flexible pickup and secure collection windows.</p>
-                <span class="delivery-price">R59</span>
+                <span class="delivery-price" id="locker-price-display">R59</span>
               </button>
             </div>
             <div class="delivery-meta">
@@ -359,7 +371,7 @@
                 <strong id="deliveryMetaTitle">Door delivery selected</strong>
                 <p id="deliveryMetaText">Enter your address and we'll estimate a delivery window based on business days and local holidays.</p>
               </div>
-              <div class="delivery-window" id="deliveryWindow">Estimating&hellip;</div>
+              <div class="delivery-window" id="deliveryWindow"><span id="deliveryDateText2">Estimating&hellip;</span></div>
             </div>
 
             <!-- Door fields -->
@@ -369,6 +381,7 @@
                   <label for="f-street">Street address</label>
                   <input id="f-street" type="text" autocomplete="street-address" placeholder="Street address" />
                   <div class="error-text" id="err-street">Please enter your street address.</div>
+                  <div id="placesHint" style="display:none;font-size:.78rem;color:var(--text-muted);margin-top:4px;">Start typing and select from the suggestions to auto-fill your address.</div>
                 </div>
               </div>
               <div class="field-grid" style="margin-top:16px;">
@@ -393,6 +406,12 @@
                   <div class="error-text" id="err-province">Please enter your province.</div>
                 </div>
               </div>
+              <div class="field-grid one" style="margin-top:16px;">
+                <div class="field">
+                  <label for="f-notes">Order notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+                  <textarea id="f-notes" placeholder="Any special notes for your order&hellip;"></textarea>
+                </div>
+              </div>
             </div>
 
             <!-- Locker fields -->
@@ -400,19 +419,29 @@
               <div class="search-wrap">
                 <div class="field-grid one">
                   <div class="field">
-                    <label for="lockerQuery">Search for a locker</label>
-                    <input id="lockerQuery" type="text" placeholder="Enter an address, suburb or landmark" />
+                    <label for="f-locker-search">Search for a locker</label>
+                    <input id="f-locker-search" type="text" placeholder="Enter an address, suburb or landmark" />
                   </div>
                 </div>
                 <div class="search-actions">
-                  <button type="button" class="primary-btn" style="padding:11px 18px;" onclick="searchLockers()">Search lockers</button>
+                  <button type="button" class="primary-btn" id="lockerSearchBtn" style="padding:11px 18px;" onclick="searchLockers()">Search</button>
                   <button type="button" class="mini-btn" onclick="useMyLocation()">Use my location</button>
+                </div>
+                <div id="lockerPlacesHint" style="display:none;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted);padding:6px 0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                  Location detected &#8212; searching nearby lockers&hellip;
                 </div>
                 <input type="hidden" id="lockerSearchLat" />
                 <input type="hidden" id="lockerSearchLng" />
                 <div id="lockerSizeNotice"></div>
                 <div class="locker-results" id="lockerResults"></div>
-                <div id="lockerSelectedDisplay"></div>
+                <div id="lockerSelectedDisplay" class="locker-selected" style="display:none;">
+                  <strong id="lockerSelectedName"></strong>
+                  <p id="lockerSelectedAddr"></p>
+                  <div id="lockerSelectedSizeNote" class="locker-size-note" style="display:none;margin-top:6px;font-size:.82rem;"></div>
+                  <button type="button" class="chip-btn" style="margin-top:10px;" onclick="clearLockerSelection()">Change locker</button>
+                </div>
+                <div class="error-text" id="err-locker">Please select a Pudo locker.</div>
               </div>
             </div>
 
@@ -432,6 +461,23 @@
               </div>
             </div>
 
+            <div class="toggle-row" id="giftToggleRow" style="margin-top:18px;" onclick="toggleGift()">
+              <div class="toggle-copy">
+                <h4>This is a gift</h4>
+                <p>Add a personalised message to include with the order.</p>
+              </div>
+              <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
+              <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
+            </div>
+            <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
+              <div style="padding-top:14px;">
+                <div class="field">
+                  <label for="f-gift-message">Gift message</label>
+                  <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
+                </div>
+              </div>
+            </div>
+
             <div class="nav-actions">
               <button class="ghost-btn" onclick="goStep(1)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
               <button class="primary-btn" onclick="goStep(3)" style="display:inline-flex;align-items:center;gap:6px;">Review order <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
@@ -439,15 +485,36 @@
           </div>
 
           <!-- Step 3: Review -->
-          <div class="step" id="step3">
+          <div class="step" id="panel-3">
             <div class="step-tag">Step 3</div>
             <h2 class="step-title">Review &amp; pay</h2>
             <p class="step-copy">Check your details before we redirect you to Yoco to complete payment securely.</p>
-            <div class="review-panel" id="reviewPanel"></div>
-            <div class="alert" id="payAlert"></div>
+            <div class="review-panel" id="reviewItems">
+            </div>
+            <div class="review-panel" style="margin-top:16px;display:grid;gap:10px;">
+              <div class="done-block">
+                <h4>Contact</h4>
+                <p id="done-contact-val"></p>
+              </div>
+              <div class="done-block">
+                <h4>Delivery</h4>
+                <p id="done-delivery-val"></p>
+                <p style="margin-top:4px;font-size:.82rem;color:var(--text-muted);">Est. <span id="rv-delivery-date"></span></p>
+              </div>
+              <div class="done-block" style="display:grid;gap:6px;">
+                <div class="review-line"><span id="rv-delivery-label">Delivery</span><span id="rv-delivery"></span></div>
+                <div class="review-line"><span>Subtotal</span><span id="rv-subtotal"></span></div>
+                <div class="review-line" style="font-weight:800;font-size:1rem;color:var(--accent-strong);border-top:1px solid var(--glass-border);padding-top:8px;margin-top:4px;"><span>Total</span><span id="rv-total"></span></div>
+              </div>
+              <div class="done-block" id="giftReviewBlock" style="display:none;">
+                <h4>Gift message</h4>
+                <p id="giftReviewBody"></p>
+              </div>
+            </div>
+            <div class="alert" id="alert-3"></div>
             <div class="nav-actions">
               <button class="ghost-btn" onclick="goStep(2)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
-              <button class="primary-btn" id="payBtn" onclick="submitOrder()" style="display:inline-flex;align-items:center;gap:6px;">Pay now <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+              <button class="primary-btn" id="payBtn" onclick="handlePay()" style="display:inline-flex;align-items:center;gap:6px;">Pay R<span id="payBtnTotal">0</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
             </div>
           </div>
 
@@ -460,44 +527,83 @@
           <div>
             <h2>Your order</h2>
             <p id="itemCountLabel">0 items in your cart</p>
+            <p id="done-contact-val-2" style="font-size:.8rem;color:var(--text-muted);margin-top:2px;"></p>
           </div>
           <button class="mini-btn" onclick="window.location.href='index.html'">Edit cart</button>
         </div>
-        <div class="summary-rows" id="sidebarItems"></div>
-        <div class="co-totals">
-          <div class="total-row"><span>Subtotal</span><span id="sidebarSubtotal">R0</span></div>
-          <div class="total-row"><span>Delivery</span><span id="sidebarDelivery">R0</span></div>
-          <div class="total-row grand"><span>Total</span><span id="sidebarTotal">R0</span></div>
-        </div>
+        <div class="summary-rows" id="summaryItems"></div>
+        <div class="co-totals" id="summaryTotals"></div>
       </aside>
     </div>
 
     <!-- Mobile summary bar -->
-    <div class="mobile-summary-bar" id="mobileSummaryBar">
-      <div class="mobile-summary-copy">
-        <span id="mobileSummaryCount">0 items</span>
-        <strong id="mobileSummaryTotal">R0</strong>
-      </div>
-      <div class="secure-badge" style="padding:8px 12px;">
-        <span class="secure-dot"></span> Secure via Yoco
+    <div class="mobile-summary-bar" id="mobileSummary">
+      <button class="mobile-summary-toggle" onclick="toggleMobileSummary()" aria-label="Toggle order summary">
+        <div class="mobile-summary-copy">
+          <span>Order total</span>
+          <strong id="msTotalDisplay">R0</strong>
+        </div>
+        <svg id="msChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition:transform .2s ease"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="mobile-summary-body" id="mobileSummaryBody">
+        <div id="mobileItems"></div>
+        <div id="mobileTotals"></div>
       </div>
     </div>
 
   </div>
 
   <!-- Loading overlay -->
-  <div class="loading" id="loadingOverlay">
+  <div class="loading" id="coLoading">
     <div class="loading-card">
       <div class="loading-ring"></div>
-      <h3>Saving your order&hellip;</h3>
-      <p>Please don't close this page. You'll be redirected to Yoco to complete payment securely.</p>
+      <h3>Processing your order</h3>
+      <p id="loadingMsg">Please wait&hellip;</p>
     </div>
   </div>
 
   <!-- Toast -->
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="toast" id="coToast">Your details have been restored.</div>
 
   <script src="checkout.js"></script>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&libraries=places&callback=initAutocomplete" async defer></script>
+
+  <script>
+    function toggleSpecial() {
+      const btn  = document.getElementById('specialToggle');
+      const wrap = document.getElementById('specialFieldWrap');
+      if (!btn || !wrap) return;
+      btn.classList.toggle('on');
+      wrap.style.display = btn.classList.contains('on') ? '' : 'none';
+      if (btn.classList.contains('on')) document.getElementById('f-special')?.focus();
+    }
+
+    function useMyLocation() {
+      if (!navigator.geolocation) return;
+      const btn = document.getElementById('lockerSearchBtn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Locating...'; }
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          window.lockerSearchLat = pos.coords.latitude;
+          window.lockerSearchLng = pos.coords.longitude;
+          searchLockers();
+        },
+        function() {
+          if (btn) { btn.disabled = false; btn.textContent = 'Search'; }
+        }
+      );
+    }
+
+    // Gift reveal accordion via max-height
+    document.addEventListener('DOMContentLoaded', function() {
+      const reveal = document.getElementById('giftReveal');
+      if (!reveal) return;
+      var obs = new MutationObserver(function() {
+        reveal.style.maxHeight = reveal.classList.contains('open')
+          ? reveal.scrollHeight + 'px' : '0';
+      });
+      obs.observe(reveal, { attributes: true, attributeFilter: ['class'] });
+    });
+  </script>
+
 </body>
 </html>
