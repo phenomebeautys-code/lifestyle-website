@@ -34,9 +34,19 @@ function deliveryFee() {
 /* -- Cart helpers --------------------------------------------------------- */
 function loadCart() {
   try {
-    const raw = sessionStorage.getItem('pb_cart') || localStorage.getItem('pb_cart') || '[]';
+    const raw = sessionStorage.getItem('pb_cart')
+             || localStorage.getItem('pb_cart')
+             || localStorage.getItem('phenome_cart')
+             || '[]';
     cart = JSON.parse(raw);
     if (!Array.isArray(cart)) cart = [];
+    // Migrate legacy key and normalise imageUrl -> image
+    cart = cart.map(item => {
+      if (item.imageUrl && !item.image) { item.image = item.imageUrl; delete item.imageUrl; }
+      return item;
+    });
+    localStorage.setItem('pb_cart', JSON.stringify(cart));
+    localStorage.removeItem('phenome_cart');
   } catch(e) { cart = []; }
 }
 
@@ -221,7 +231,6 @@ function renderDeliveryDate() {
   const now    = new Date();
   const hour   = now.getHours();
   const cutoff = 13; // 1 pm
-  const day    = now.getDay(); // 0=Sun
 
   // Business days to add
   let add = deliveryMethod === 'locker' ? 2 : 3;
