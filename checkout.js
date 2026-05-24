@@ -1,268 +1,580 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Extracted from working commit f5f0532.
+   Cache-bust v2 — fixes truncated-file browser cache (2026-05-24).
    - Correct Supabase anon key (iat: May 2026)
    - Correct locker endpoint: pudo-locker-search (GET)
-   - Correct Places callback name: initPlaces
-   - selectLocker(id, name, address, boxSize, sizeUnknown)
-   - IDs/classes aligned with checkout.html (May 2026)
+   - renderSummary / renderDeliveryDate / initPlaces / submitOrder
+   - DOMContentLoaded wiring
    ============================================================ */
 
-'use strict';
-
+/* -- Constants ------------------------------------------------------------ */
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
-const ORIGIN        = 'https://www.phenomebeauty.co.za';
-const DRAFT_KEY     = 'phenome_checkout_draft';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNTI5MDIsImV4cCI6MjA2MjYyODkwMn0.n0SB7EB91a3uGp5mRTFbIarU4z-R6T5l6Vc4bpNF3Sg';
 
-const DELIVERY_FEES = { locker: 59, door: 99 };
-
-let cart             = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
-let selectedDelivery = 'door';
+/* -- State ---------------------------------------------------------------- */
+let currentStep      = 1;
+let cart             = [];
+let deliveryMethod   = 'door';   // 'door' | 'locker'
 let selectedLocker   = null;
 let lockerSearchLat  = null;
 let lockerSearchLng  = null;
-let currentStep      = 1;
+let _lockerSearchTimer = null;
+let yocoSDK          = null;
+let yocoCard         = null;
+let specialOpen      = false;
 
-/* -- Box-size client estimator -------------------------------------------- */
-const _PUDO_BOXES_CLIENT = [
-  { code: 'XS', boxL: 60, boxW: 17, boxH:  8, maxKg:  2 },
-  { code: 'S',  boxL: 60, boxW: 41, boxH:  8, maxKg:  5 },
-  { code: 'M',  boxL: 60, boxW: 41, boxH: 19, maxKg: 10 },
-  { code: 'L',  boxL: 60, boxW: 41, boxH: 41, maxKg: 15 },
-  { code: 'XL', boxL: 60, boxW: 41, boxH: 69, maxKg: 20 },
-];
-let _productDimCache = {};
+/* -- Delivery pricing ----------------------------------------------------- */
+const DOOR_PRICE   = 99;
+const LOCKER_PRICE = 59;
 
-async function _fetchProductDims(productIds) {
-  const missing = productIds.filter(id => !_productDimCache[id]);
-  if (!missing.length) return;
+function deliveryFee() {
+  return deliveryMethod === 'locker' ? LOCKER_PRICE : DOOR_PRICE;
+}
+
+/* -- Cart helpers --------------------------------------------------------- */
+function loadCart() {
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/shop_products?id=in.(${missing.join(',')})&select=id,weight_kg,length_cm,width_cm,height_cm,pack_flat`,
-      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
-    );
-    const rows = await res.json();
-    if (Array.isArray(rows)) rows.forEach(r => { _productDimCache[r.id] = r; });
-  } catch(e) { /* silently degrade */ }
+    const raw = sessionStorage.getItem('pb_cart') || localStorage.getItem('pb_cart') || '[]';
+    cart = JSON.parse(raw);
+    if (!Array.isArray(cart)) cart = [];
+  } catch(e) { cart = []; }
 }
 
-function _fitsInBoxClient(items, box) {
-  const units = [];
-  for (const it of items) {
-    for (let i = 0; i < it.qty; i++) units.push({ l: it.l, w: it.w, h: it.h });
+function cartSubtotal() {
+  return cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.qty) || 1), 0);
+}
+
+function cartTotal() {
+  return cartSubtotal() + deliveryFee();
+}
+
+/* -- Step navigation ------------------------------------------------------ */
+function goToStep(n) {
+  if (n === 2 && !validateStep1()) return;
+  if (n === 3 && !validateStep2()) return;
+
+  // Save progress in sessionStorage so we can restore on back-nav
+  saveDraft();
+
+  currentStep = n;
+
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById('panel-' + n);
+  if (panel) panel.classList.add('active');
+
+  document.querySelectorAll('.step-pill').forEach((pill, i) => {
+    pill.classList.remove('active', 'done');
+    if (i + 1 < n)  pill.classList.add('done');
+    if (i + 1 === n) pill.classList.add('active');
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (n === 3) {
+    renderReview();
+    initYoco();
   }
-  units.sort((a, b) => b.h - a.h);
-  let usedHeight = 0;
-  let remaining = [...units];
-  while (remaining.length > 0) {
-    const layerH = remaining[0].h;
-    usedHeight += layerH;
-    if (usedHeight > box.boxH) return false;
-    let usedL = 0;
-    const packed = [];
-    for (let i = 0; i < remaining.length; i++) {
-      const u = remaining[i];
-      if (u.h > layerH) continue;
-      if (usedL + u.l <= box.boxL && u.w <= box.boxW) { usedL += u.l; packed.push(i); }
-    }
-    if (!packed.length) return false;
-    for (let i = packed.length - 1; i >= 0; i--) remaining.splice(packed[i], 1);
-  }
-  return true;
+
+  renderDeliveryDate();
+  renderSummary();
 }
 
-async function estimateBoxSize() {
-  if (!cart.length) return 'XS';
-  const productIds = [...new Set(cart.map(i => i.productId).filter(Boolean))];
-  await _fetchProductDims(productIds);
-  let totalKg = 0;
-  const packedItems = [];
-  for (const item of cart) {
-    const d = _productDimCache[item.productId];
-    let pd;
-    if (d && d.length_cm && d.width_cm && d.height_cm) {
-      pd = { l: d.pack_flat ? d.height_cm : d.length_cm,
-             w: d.pack_flat ? d.length_cm : d.width_cm,
-             h: d.pack_flat ? d.width_cm  : d.height_cm };
-      totalKg += (d.weight_kg || 0.2) * item.qty;
-    } else {
-      pd = { l: 10, w: 10, h: 5 };
-      totalKg += 0.2 * item.qty;
-    }
-    packedItems.push({ id: item.productId, qty: item.qty, ...pd });
-  }
-  for (const box of _PUDO_BOXES_CLIENT) {
-    if (totalKg <= box.maxKg && _fitsInBoxClient(packedItems, box)) return box.code;
-  }
-  return 'XL';
-}
-
-/* -- Helpers --------------------------------------------------------------- */
-function calcSub()   { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
-function getDeliveryFee() { return DELIVERY_FEES[selectedDelivery] ?? 0; }
-function calcTotal() { return calcSub() + getDeliveryFee(); }
-
-function fmt(d) {
-  return d.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'short' });
-}
-
-function getDeliveryRange() {
-  const now  = new Date();
-  const hour = now.getHours();
-  const base = new Date(now);
-  if (hour >= 14) base.setDate(base.getDate() + 1);
-  while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() + 1);
-  const daysMin = selectedDelivery === 'locker' ? 2 : 3;
-  const daysMax = daysMin + 1;
-  function addBd(d, n) {
-    let count = 0;
-    while (count < n) { d.setDate(d.getDate() + 1); if (d.getDay() !== 0 && d.getDay() !== 6) count++; }
-    return d;
-  }
-  const lo = addBd(new Date(base), daysMin);
-  const hi = addBd(new Date(lo),   daysMax - daysMin);
-  return `${fmt(lo)} \u2013 ${fmt(hi)}`;
-}
-
-/* -- Draft persistence ----------------------------------------------------- */
-function saveDraft() {
-  try {
-    const d = {
-      name:     document.getElementById('f-name')?.value     || '',
-      phone:    document.getElementById('f-phone')?.value    || '',
-      email:    document.getElementById('f-email')?.value    || '',
-      addr1:    document.getElementById('f-street')?.value   || '',
-      addr2:    document.getElementById('f-suburb')?.value   || '',
-      city:     document.getElementById('f-city')?.value     || '',
-      province: document.getElementById('f-province')?.value || '',
-      postal:   document.getElementById('f-postal')?.value   || '',
-      delivery: selectedDelivery,
-      locker:   selectedLocker,
-    };
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-  } catch(e) {}
-}
-
-function loadDraft() {
-  try {
-    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
-    if (!d) return;
-    const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
-    set('f-name',     d.name);
-    set('f-phone',    d.phone);
-    set('f-email',    d.email);
-    set('f-street',   d.addr1);
-    set('f-suburb',   d.addr2);
-    set('f-city',     d.city);
-    set('f-province', d.province);
-    set('f-postal',   d.postal);
-    if (d.delivery) { selectedDelivery = d.delivery; syncDeliveryToggle(); }
-    if (d.locker)   { selectedLocker   = d.locker; }
-  } catch(e) {}
-}
-
-/* -- Validation ------------------------------------------------------------ */
-function showFieldError(fieldId, errId, msg) {
-  const field = document.getElementById(fieldId);
-  const errEl = document.getElementById(errId);
-  if (field) field.closest('.field')?.classList.add('error');
-  if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
-}
-function clearFieldErrors() {
-  document.querySelectorAll('.field.error').forEach(e => e.classList.remove('error'));
-  document.querySelectorAll('.error-text.show').forEach(e => e.classList.remove('show'));
-}
-
+/* -- Validation ----------------------------------------------------------- */
 function validateStep1() {
-  clearFieldErrors();
   let ok = true;
-  const name  = document.getElementById('f-name')?.value.trim();
-  const phone = document.getElementById('f-phone')?.value.trim();
-  const email = document.getElementById('f-email')?.value.trim();
-  if (!name)                         { showFieldError('f-name',  'err-name',  'Full name is required'); ok = false; }
-  if (!phone)                        { showFieldError('f-phone', 'err-phone', 'Phone number is required'); ok = false; }
-  if (!email || !email.includes('@')) { showFieldError('f-email', 'err-email', 'Valid email is required'); ok = false; }
+
+  const name  = document.getElementById('f-name')?.value.trim()  || '';
+  const phone = document.getElementById('f-phone')?.value.trim() || '';
+  const email = document.getElementById('f-email')?.value.trim() || '';
+
+  setFieldError('field-name',  'err-name',  !name,  'Please enter your name.');
+  setFieldError('field-phone', 'err-phone', !/^[0-9 +\-()]{7,}$/.test(phone), 'Please enter a valid phone number.');
+  setFieldError('field-email', 'err-email', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), 'Please enter a valid email address.');
+
+  if (!name || !/^[0-9 +\-()]{7,}$/.test(phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ok = false;
   return ok;
 }
 
 function validateStep2() {
-  clearFieldErrors();
-  if (selectedDelivery === 'locker') {
-    if (!selectedLocker) {
-      const nudge = document.getElementById('err-locker');
-      if (nudge) { nudge.classList.add('show'); nudge.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
-      return false;
-    }
-    return true;
-  }
   let ok = true;
-  const addr1    = document.getElementById('f-street')?.value.trim();
-  const city     = document.getElementById('f-city')?.value.trim();
-  const province = document.getElementById('f-province')?.value.trim();
-  const postal   = document.getElementById('f-postal')?.value.trim();
-  if (!addr1)    { showFieldError('f-street',   'err-street',   'Street address is required'); ok = false; }
-  if (!city)     { showFieldError('f-city',     'err-city',     'City is required'); ok = false; }
-  if (!province) { showFieldError('f-province', 'err-province', 'Province is required'); ok = false; }
-  if (!postal)   { showFieldError('f-postal',   'err-postal',   'Postal code is required'); ok = false; }
+  if (deliveryMethod === 'door') {
+    const street = document.getElementById('f-street')?.value.trim() || '';
+    const suburb = document.getElementById('f-suburb')?.value.trim() || '';
+    const city   = document.getElementById('f-city')?.value.trim()   || '';
+    const postal = document.getElementById('f-postal')?.value.trim() || '';
+    const prov   = document.getElementById('f-province')?.value.trim() || '';
+
+    setFieldError('field-street',   'err-street',   !street, 'Please enter your street address.');
+    setFieldError('field-suburb',   'err-suburb',   !suburb, 'Please enter your suburb.');
+    setFieldError('field-city',     'err-city',     !city,   'Please enter your city.');
+    setFieldError('field-postal',   'err-postal',   !postal, 'Please enter your postal code.');
+    setFieldError('field-province', 'err-province', !prov,   'Please enter your province.');
+
+    if (!street || !suburb || !city || !postal || !prov) ok = false;
+  } else {
+    if (!selectedLocker) {
+      const err = document.getElementById('err-locker');
+      if (err) err.classList.add('show');
+      ok = false;
+    }
+  }
   return ok;
 }
 
-/* -- Step navigation ------------------------------------------------------- */
-function goToStep(n) {
-  if (n === 2 && currentStep === 1) {
-    if (!validateStep1()) return;
+function setFieldError(fieldId, errId, show, msg) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  if (!field || !err) return;
+  if (show) {
+    field.classList.add('error');
+    err.textContent = msg;
+    err.classList.add('show');
+  } else {
+    field.classList.remove('error');
+    err.classList.remove('show');
   }
-  if (n === 3 && currentStep === 2) {
-    if (!validateStep2()) return;
-  }
-  currentStep = n;
-  document.querySelectorAll('.step').forEach((p, i) => {
-    p.classList.toggle('active', i + 1 === n);
-  });
-  document.querySelectorAll('.step-pill').forEach((b, i) => {
-    b.classList.toggle('active',    i + 1 === n);
-    b.classList.toggle('done',      i + 1 <  n);
-  });
-  renderSummary();
-  renderMobileSummary();
-  if (n === 3) {
-    _initYoco();
-    _renderReviewPanel();
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* -- Delivery toggle ------------------------------------------------------- */
-function selectDelivery(type) {
-  selectedDelivery = type;
-  syncDeliveryToggle();
-  renderSummary();
-  renderMobileSummary();
-  saveDraft();
+/* -- Draft save / restore ------------------------------------------------- */
+function saveDraft() {
+  try {
+    const draft = {
+      name:     document.getElementById('f-name')?.value    || '',
+      phone:    document.getElementById('f-phone')?.value   || '',
+      email:    document.getElementById('f-email')?.value   || '',
+      street:   document.getElementById('f-street')?.value  || '',
+      suburb:   document.getElementById('f-suburb')?.value  || '',
+      city:     document.getElementById('f-city')?.value    || '',
+      postal:   document.getElementById('f-postal')?.value  || '',
+      province: document.getElementById('f-province')?.value || '',
+      special:  document.getElementById('f-special')?.value  || '',
+      method:   deliveryMethod,
+      locker:   selectedLocker,
+    };
+    sessionStorage.setItem('pb_checkout_draft', JSON.stringify(draft));
+  } catch(e) {}
 }
 
-function syncDeliveryToggle() {
-  const lockerBtn = document.getElementById('opt-locker');
-  const doorBtn   = document.getElementById('opt-door');
-  const lockerSec = document.getElementById('locker-fields');
-  const doorSec   = document.getElementById('door-fields');
-  if (lockerBtn) lockerBtn.classList.toggle('selected', selectedDelivery === 'locker');
-  if (doorBtn)   doorBtn.classList.toggle('selected',   selectedDelivery === 'door');
-  if (lockerSec) lockerSec.style.display = selectedDelivery === 'locker' ? '' : 'none';
-  if (doorSec)   doorSec.style.display   = selectedDelivery === 'door'   ? '' : 'none';
+function restoreDraft() {
+  try {
+    const raw = sessionStorage.getItem('pb_checkout_draft');
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('f-name',     d.name);
+    set('f-phone',    d.phone);
+    set('f-email',    d.email);
+    set('f-street',   d.street);
+    set('f-suburb',   d.suburb);
+    set('f-city',     d.city);
+    set('f-postal',   d.postal);
+    set('f-province', d.province);
+    set('f-special',  d.special);
+    if (d.method) selectDelivery(d.method, true);
+    if (d.locker) {
+      selectedLocker = d.locker;
+      const display = document.getElementById('lockerSelectedDisplay');
+      const nameEl  = document.getElementById('lockerSelectedName');
+      const addrEl  = document.getElementById('lockerSelectedAddr');
+      if (display) display.style.display = '';
+      if (nameEl)  nameEl.textContent = d.locker.name    || '';
+      if (addrEl)  addrEl.textContent = d.locker.address || '';
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+/* -- Delivery method selection -------------------------------------------- */
+function selectDelivery(method, silent) {
+  deliveryMethod = method;
+
+  const optDoor   = document.getElementById('opt-door');
+  const optLocker = document.getElementById('opt-locker');
+  const doorFields   = document.getElementById('door-fields');
+  const lockerFields = document.getElementById('locker-fields');
+
+  if (optDoor)   optDoor.classList.toggle('selected',   method === 'door');
+  if (optLocker) optLocker.classList.toggle('selected', method === 'locker');
+  if (doorFields)   doorFields.style.display   = method === 'door'   ? '' : 'none';
+  if (lockerFields) lockerFields.style.display = method === 'locker' ? '' : 'none';
+
   const metaTitle = document.getElementById('deliveryMetaTitle');
   const metaText  = document.getElementById('deliveryMetaText');
-  if (metaTitle) metaTitle.textContent = selectedDelivery === 'locker' ? 'Pudo locker selected' : 'Door delivery selected';
-  if (metaText)  metaText.textContent  = selectedDelivery === 'locker'
-    ? 'Select a locker from the list below. We\u2019ll include the locker details in your order.'
-    : 'Enter your address and we\u2019ll estimate a delivery window based on business days and local holidays.';
-  renderDeliveryDate();
+  const methodLabel = document.getElementById('deliveryMethodLabel');
+
+  if (method === 'door') {
+    if (metaTitle) metaTitle.textContent = 'Door delivery selected';
+    if (metaText)  metaText.textContent  = 'Enter your address and we will estimate a delivery window based on business days and local holidays.';
+    if (methodLabel) methodLabel.textContent = '';
+  } else {
+    if (metaTitle) metaTitle.textContent = 'Pudo locker selected';
+    if (metaText)  metaText.textContent  = 'Search for a locker near you and select it to confirm.';
+    if (methodLabel) methodLabel.textContent = '';
+  }
+
+  if (!silent) renderDeliveryDate();
+  renderSummary();
 }
 
-/* -- Locker search --------------------------------------------------------- */
-let _lockerSearchTimer = null;
+/* -- Delivery date estimate ----------------------------------------------- */
+function renderDeliveryDate() {
+  const now    = new Date();
+  const hour   = now.getHours();
+  const cutoff = 13; // 1 pm
+  const day    = now.getDay(); // 0=Sun
 
+  // Business days to add
+  let add = deliveryMethod === 'locker' ? 2 : 3;
+  if (hour >= cutoff) add += 1; // past cutoff, add extra day
+
+  let d = new Date(now);
+  let counted = 0;
+  while (counted < add) {
+    d.setDate(d.getDate() + 1);
+    const wd = d.getDay();
+    if (wd !== 0 && wd !== 6) counted++;
+  }
+
+  const opts   = { weekday: 'short', day: 'numeric', month: 'short' };
+  const label  = d.toLocaleDateString('en-ZA', opts);
+  const els    = ['deliveryDateText', 'deliveryDateText2'];
+  els.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'Est. ' + label;
+  });
+}
+
+/* -- Summary render ------------------------------------------------------- */
+function renderSummary() {
+  renderSummaryInto(
+    document.getElementById('asideSummaryRows'),
+    document.getElementById('asideTotals'),
+    document.getElementById('asideItemCount')
+  );
+  renderSummaryInto(
+    document.getElementById('mobileSummaryRows'),
+    document.getElementById('mobileTotals'),
+    null
+  );
+
+  const mobileTotalEl = document.getElementById('mobileSummaryTotal');
+  if (mobileTotalEl) mobileTotalEl.textContent = 'R' + cartTotal().toFixed(2);
+
+  const mobileLabel = document.getElementById('mobileSummaryLabel');
+  if (mobileLabel) mobileLabel.textContent = cart.length + ' item' + (cart.length !== 1 ? 's' : '') + ' in order';
+}
+
+function renderSummaryInto(rowsEl, totalsEl, countEl) {
+  if (!rowsEl) return;
+
+  if (countEl) {
+    countEl.textContent = cart.length + ' item' + (cart.length !== 1 ? 's' : '');
+  }
+
+  rowsEl.innerHTML = cart.map(item => {
+    const qty   = Number(item.qty)   || 1;
+    const price = Number(item.price) || 0;
+    const img   = item.image || item.img || '';
+    return `<div class="cart-item">
+      <img src="${img}" alt="${item.name || ''}" width="60" height="60" loading="lazy" onerror="this.style.background='rgba(255,255,255,0.05)';this.src=''" />
+      <div>
+        <h4>${item.name || 'Product'}</h4>
+        <div class="cart-meta">${item.variant ? item.variant + '<br>' : ''}Qty: ${qty}</div>
+      </div>
+      <div class="cart-price">R${(price * qty).toFixed(2)}</div>
+    </div>`;
+  }).join('');
+
+  if (!totalsEl) return;
+  const sub = cartSubtotal();
+  const fee = deliveryFee();
+  const tot = sub + fee;
+
+  totalsEl.innerHTML = `
+    <div class="co-total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="co-total-row"><span>Delivery (${deliveryMethod === 'locker' ? 'Pudo locker' : 'Door'})</span><span>R${fee.toFixed(2)}</span></div>
+    <div class="co-total-row grand"><span>Total</span><span>R${tot.toFixed(2)}</span></div>
+  `;
+}
+
+/* -- Review panel render -------------------------------------------------- */
+function renderReview() {
+  const panel = document.getElementById('reviewPanel');
+  if (!panel) return;
+
+  const name    = document.getElementById('f-name')?.value.trim()    || '';
+  const phone   = document.getElementById('f-phone')?.value.trim()   || '';
+  const email   = document.getElementById('f-email')?.value.trim()   || '';
+  const special = document.getElementById('f-special')?.value.trim() || '';
+
+  let deliveryHTML = '';
+  if (deliveryMethod === 'door') {
+    const street = document.getElementById('f-street')?.value.trim()   || '';
+    const suburb = document.getElementById('f-suburb')?.value.trim()   || '';
+    const city   = document.getElementById('f-city')?.value.trim()     || '';
+    const postal = document.getElementById('f-postal')?.value.trim()   || '';
+    const prov   = document.getElementById('f-province')?.value.trim() || '';
+    deliveryHTML = `<p>${[street, suburb, city, prov, postal].filter(Boolean).join(', ')}</p>`;
+    if (special) deliveryHTML += `<p style="margin-top:6px;font-size:.82rem;color:var(--text-muted);">${special}</p>`;
+  } else if (selectedLocker) {
+    deliveryHTML = `<p>${selectedLocker.name}</p><p style="font-size:.84rem;color:var(--text-muted);margin-top:4px;">${selectedLocker.address}</p>`;
+  }
+
+  const sub = cartSubtotal();
+  const fee = deliveryFee();
+  const tot = sub + fee;
+
+  panel.innerHTML = `
+    <div class="review-grid">
+      <div class="done-block">
+        <h4>Contact</h4>
+        <p>${name}</p>
+        <p>${phone}</p>
+        <p>${email}</p>
+      </div>
+      <div class="done-block">
+        <h4>${deliveryMethod === 'locker' ? 'Pudo locker' : 'Door delivery'}</h4>
+        ${deliveryHTML}
+      </div>
+    </div>
+    <div class="review-lines">
+      <div class="review-line"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+      <div class="review-line"><span>Delivery</span><span>R${fee.toFixed(2)}</span></div>
+      <div class="review-line" style="font-weight:800;color:var(--accent-strong);"><span>Total</span><span>R${tot.toFixed(2)}</span></div>
+    </div>
+  `;
+}
+
+/* -- Yoco ----------------------------------------------------------------- */
+function initYoco() {
+  if (yocoCard) return; // already mounted
+  try {
+    yocoSDK  = new window.YocoSDK({ publicKey: 'pk_live_bed4c9d0cVWtkj9h8d7e' });
+    yocoCard = yocoSDK.card();
+    yocoCard.mount('#yoco-card-frame');
+  } catch(e) {
+    console.error('Yoco init error:', e);
+  }
+}
+
+function submitPayment() {
+  const btn = document.getElementById('payBtn');
+  if (btn) btn.disabled = true;
+
+  const alertEl = document.getElementById('payAlert');
+  if (alertEl) { alertEl.classList.remove('show'); alertEl.textContent = ''; }
+
+  if (!yocoCard) {
+    showPayAlert('Payment form not ready. Please refresh and try again.');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const total = Math.round(cartTotal() * 100); // in cents
+
+  yocoCard.createToken(function(result) {
+    if (result.error) {
+      showPayAlert(result.error.message || 'Card error. Please try again.');
+      if (btn) btn.disabled = false;
+      return;
+    }
+    submitOrder(result.id, total);
+  });
+}
+
+function showPayAlert(msg) {
+  const el = document.getElementById('payAlert');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+/* -- Submit order to Supabase --------------------------------------------- */
+async function submitOrder(tokenId, amountCents) {
+  showLoading('Processing payment', 'Please wait while we securely process your payment\u2026');
+
+  const name    = document.getElementById('f-name')?.value.trim()    || '';
+  const phone   = document.getElementById('f-phone')?.value.trim()   || '';
+  const email   = document.getElementById('f-email')?.value.trim()   || '';
+  const special = document.getElementById('f-special')?.value.trim() || '';
+
+  const address = deliveryMethod === 'door' ? {
+    street:   document.getElementById('f-street')?.value.trim()   || '',
+    suburb:   document.getElementById('f-suburb')?.value.trim()   || '',
+    city:     document.getElementById('f-city')?.value.trim()     || '',
+    postal:   document.getElementById('f-postal')?.value.trim()   || '',
+    province: document.getElementById('f-province')?.value.trim() || '',
+    special,
+  } : {
+    locker_id:      selectedLocker?.id      || '',
+    locker_name:    selectedLocker?.name    || '',
+    locker_address: selectedLocker?.address || '',
+  };
+
+  const body = {
+    token:          tokenId,
+    amount_cents:   amountCents,
+    currency:       'ZAR',
+    customer: { name, phone, email },
+    delivery_method: deliveryMethod,
+    delivery_address: address,
+    items: cart,
+  };
+
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-order`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey:         SUPABASE_ANON,
+        Authorization:  `Bearer ${SUPABASE_ANON}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await resp.json();
+
+    hideLoading();
+
+    if (data.redirect_url) {
+      sessionStorage.removeItem('pb_checkout_draft');
+      window.location.href = data.redirect_url;
+      return;
+    }
+
+    if (data.success) {
+      sessionStorage.removeItem('pb_checkout_draft');
+      window.location.href = 'order-success.html?ref=' + encodeURIComponent(data.order_id || '');
+      return;
+    }
+
+    showPayAlert(data.error || data.message || 'Payment failed. Please try again.');
+    const btn = document.getElementById('payBtn');
+    if (btn) btn.disabled = false;
+
+  } catch(err) {
+    hideLoading();
+    showPayAlert('Network error. Please check your connection and try again.');
+    const btn = document.getElementById('payBtn');
+    if (btn) btn.disabled = false;
+    console.error('submitOrder error:', err);
+  }
+}
+
+/* -- Loading overlay ------------------------------------------------------ */
+function showLoading(title, text) {
+  const overlay = document.getElementById('loadingOverlay');
+  const t = document.getElementById('loadingTitle');
+  const p = document.getElementById('loadingText');
+  if (t) t.textContent = title || 'Loading';
+  if (p) p.textContent = text  || '';
+  if (overlay) overlay.classList.add('show');
+}
+
+function hideLoading() {
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.classList.remove('show');
+}
+
+/* -- Toast ---------------------------------------------------------------- */
+function showToast(msg, duration) {
+  const el = document.getElementById('coToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), duration || 3000);
+}
+
+/* -- Mobile summary toggle ----------------------------------------------- */
+function toggleMobileSummary() {
+  const body    = document.getElementById('mobileSummaryBody');
+  const chevron = document.getElementById('mobileSummaryChevron');
+  const btn     = document.querySelector('.mobile-summary-toggle');
+  if (!body) return;
+  const isOpen = body.classList.toggle('open');
+  if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+  if (btn) btn.setAttribute('aria-expanded', isOpen);
+}
+
+/* -- Exit-intent nudge ---------------------------------------------------- */
+function dismissNudge() {
+  const el = document.getElementById('exitNudge');
+  if (el) el.classList.remove('show');
+}
+
+document.addEventListener('mouseleave', function(e) {
+  if (e.clientY < 20 && currentStep === 3) {
+    const el = document.getElementById('exitNudge');
+    if (el) el.classList.add('show');
+  }
+});
+
+/* -- Google Places autocomplete callback ---------------------------------- */
+window.initPlaces = async function() {
+  const streetInput = document.getElementById('f-street');
+  if (!streetInput || typeof google === 'undefined') return;
+
+  const { Autocomplete } = await google.maps.importLibrary('places');
+  const ac = new Autocomplete(streetInput, {
+    componentRestrictions: { country: 'za' },
+    fields: ['address_components'],
+    types: ['address'],
+  });
+
+  const hint = document.getElementById('placesHint');
+  if (hint) hint.style.display = '';
+
+  ac.addListener('place_changed', function() {
+    const place = ac.getPlace();
+    if (!place.address_components) return;
+
+    const get = (types) => {
+      const comp = place.address_components.find(c => types.some(t => c.types.includes(t)));
+      return comp ? comp.long_name : '';
+    };
+
+    const streetNum  = get(['street_number']);
+    const route      = get(['route']);
+    const suburb     = get(['sublocality', 'sublocality_level_1', 'neighborhood']);
+    const city       = get(['locality', 'administrative_area_level_2']);
+    const province   = get(['administrative_area_level_1']);
+    const postalCode = get(['postal_code']);
+
+    const streetEl  = document.getElementById('f-street');
+    const suburbEl  = document.getElementById('f-suburb');
+    const cityEl    = document.getElementById('f-city');
+    const provinceEl= document.getElementById('f-province');
+    const postalEl  = document.getElementById('f-postal');
+
+    if (streetEl)   streetEl.value   = [streetNum, route].filter(Boolean).join(' ');
+    if (suburbEl)   suburbEl.value   = suburb;
+    if (cityEl)     cityEl.value     = city;
+    if (provinceEl) provinceEl.value = province;
+    if (postalEl)   postalEl.value   = postalCode;
+
+    // Also try to wire Places for locker search
+    const lockerInput = document.getElementById('f-locker-search');
+    if (lockerInput && typeof Autocomplete !== 'undefined') {
+      const lacHint = document.getElementById('lockerPlacesHint');
+      if (lacHint) lacHint.style.display = 'flex';
+      const lac = new Autocomplete(lockerInput, {
+        componentRestrictions: { country: 'za' },
+        fields: ['geometry', 'formatted_address'],
+        types: ['geocode'],
+      });
+      lac.addListener('place_changed', function() {
+        const p = lac.getPlace();
+        if (p.geometry) {
+          window.lockerSearchLat = p.geometry.location.lat();
+          window.lockerSearchLng = p.geometry.location.lng();
+          searchLockers();
+        }
+      });
+    }
+  });
+};
+
+/* -- Locker search -------------------------------------------------------- */
 async function searchLockers(query) {
   if (query === undefined) {
     query = document.getElementById('f-locker-search')?.value.trim() || '';
@@ -347,367 +659,63 @@ function selectLocker(id, name, address, boxSize, sizeUnknown) {
   const notice = document.getElementById('lockerSizeNotice');
   if (notice) {
     if (boxSize && !sizeUnknown) {
+      notice.className = 'locker-size-notice locker-size-notice--filtered';
+      notice.textContent = 'This locker supports a ' + boxSize + ' box. Your order will be packed to fit.';
       notice.style.display = '';
-      notice.textContent   = `This locker accepts ${boxSize} boxes. Your order will be packed to fit.`;
     } else {
-      notice.style.display = 'none';
+      notice.className = 'locker-size-notice';
+      notice.textContent = 'Box size for this locker is unconfirmed. We will contact you if there is a sizing issue.';
+      notice.style.display = '';
     }
   }
 
   renderSummary();
-  renderMobileSummary();
-  saveDraft();
 }
 
-/* -- Render delivery date -------------------------------------------------- */
-function renderDeliveryDate() {
-  const range = getDeliveryRange();
-  const el2   = document.getElementById('deliveryDateText2');
-  if (el2) el2.textContent = range;
-}
+/* -- DOMContentLoaded ----------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', function() {
+  loadCart();
 
-/* -- Render summary (desktop aside) ---------------------------------------- */
-function renderSummary() {
-  const rowsEl   = document.getElementById('asideSummaryRows');
-  const totalsEl = document.getElementById('asideTotals');
-  const countEl  = document.getElementById('asideItemCount');
-  if (!rowsEl) return;
+  const layout     = document.getElementById('coLayout');
+  const emptyState = document.getElementById('emptyState');
 
-  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
-  if (countEl) countEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''}`;
-
-  rowsEl.innerHTML = cart.map(item => {
-    const imgHtml = item.image
-      ? `<img src="${item.image}" alt="${item.name || 'Product'}" width="60" height="60" loading="lazy" style="width:60px;height:60px;border-radius:10px;object-fit:cover;" />`
-      : `<div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div>`;
-    return `<div class="cart-item">
-      ${imgHtml}
-      <div>
-        <h4>${item.name || 'Product'}</h4>
-        <div class="cart-meta">${item.qty > 1 ? `Qty: ${item.qty}` : ''}</div>
-      </div>
-      <div class="cart-price">R${(item.price * item.qty).toFixed(2)}</div>
-    </div>`;
-  }).join('');
-
-  const sub      = calcSub();
-  const delivery = getDeliveryFee();
-  const total    = calcTotal();
-  const range    = getDeliveryRange();
-
-  if (totalsEl) totalsEl.innerHTML = `
-    <div class="total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
-    <div class="total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker' : 'Door'})</span><span>R${delivery.toFixed(2)}</span></div>
-    <div class="total-row grand"><span>Total</span><span>R${total.toFixed(2)}</span></div>
-    <div class="total-row" style="font-size:.78rem;color:#34d399;"><span style="color:var(--text-muted);">Est. delivery</span><span>${range}</span></div>
-  `;
-
-  _renderReviewPanel();
-}
-
-/* -- Render summary (mobile bar) ------------------------------------------- */
-function renderMobileSummary() {
-  const rowsEl   = document.getElementById('mobileSummaryRows');
-  const totalsEl = document.getElementById('mobileTotals');
-  const labelEl  = document.getElementById('mobileSummaryLabel');
-  const totalEl  = document.getElementById('mobileSummaryTotal');
-  if (!rowsEl) return;
-
-  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
-  if (labelEl) labelEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''} in your order`;
-  if (totalEl) totalEl.textContent = `R${calcTotal().toFixed(2)}`;
-
-  rowsEl.innerHTML = cart.map(item => {
-    const imgHtml = item.image
-      ? `<img src="${item.image}" alt="${item.name || 'Product'}" width="60" height="60" loading="lazy" style="width:60px;height:60px;border-radius:10px;object-fit:cover;" />`
-      : `<div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div>`;
-    return `<div class="cart-item">
-      ${imgHtml}
-      <div>
-        <h4>${item.name || 'Product'}</h4>
-        <div class="cart-meta">${item.qty > 1 ? `Qty: ${item.qty}` : ''}</div>
-      </div>
-      <div class="cart-price">R${(item.price * item.qty).toFixed(2)}</div>
-    </div>`;
-  }).join('');
-
-  const sub      = calcSub();
-  const delivery = getDeliveryFee();
-  const total    = calcTotal();
-
-  if (totalsEl) totalsEl.innerHTML = `
-    <div class="total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
-    <div class="total-row"><span>Delivery</span><span>R${delivery.toFixed(2)}</span></div>
-    <div class="total-row grand"><span>Total</span><span>R${total.toFixed(2)}</span></div>
-  `;
-}
-
-/* -- Toggle mobile summary ------------------------------------------------- */
-function toggleMobileSummary() {
-  const body    = document.getElementById('mobileSummaryBody');
-  const toggle  = document.querySelector('.mobile-summary-toggle');
-  const chevron = document.getElementById('mobileSummaryChevron');
-  if (!body) return;
-  const open = body.classList.toggle('open');
-  if (toggle)  toggle.setAttribute('aria-expanded', open);
-  if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
-}
-
-/* -- Review panel (step 3) ------------------------------------------------- */
-function _renderReviewPanel() {
-  const panel = document.getElementById('reviewPanel');
-  if (!panel || currentStep !== 3) return;
-
-  const name    = document.getElementById('f-name')?.value    || '';
-  const phone   = document.getElementById('f-phone')?.value   || '';
-  const email   = document.getElementById('f-email')?.value   || '';
-  const special = document.getElementById('f-special')?.value || '';
-
-  let deliveryHtml = '';
-  if (selectedDelivery === 'locker' && selectedLocker) {
-    deliveryHtml = `<p><strong>Pudo locker:</strong> ${selectedLocker.name}</p>
-                    <p>${selectedLocker.address}</p>`;
-  } else {
-    const street   = document.getElementById('f-street')?.value   || '';
-    const suburb   = document.getElementById('f-suburb')?.value   || '';
-    const city     = document.getElementById('f-city')?.value     || '';
-    const province = document.getElementById('f-province')?.value || '';
-    const postal   = document.getElementById('f-postal')?.value   || '';
-    deliveryHtml   = `<p>${street}${suburb ? ', ' + suburb : ''}</p>
-                      <p>${city}${province ? ', ' + province : ''}${postal ? ' ' + postal : ''}</p>`;
-  }
-
-  panel.innerHTML = `
-    <div class="review-section">
-      <h4>Contact</h4>
-      <p>${name}</p><p>${email}</p><p>${phone}</p>
-    </div>
-    <div class="review-section">
-      <h4>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker &mdash; R59' : 'Door &mdash; R99'})</h4>
-      ${deliveryHtml}
-      ${special ? `<p><em>Instructions: ${special}</em></p>` : ''}
-    </div>
-    <div class="review-section">
-      <h4>Order</h4>
-      ${cart.map(i => `<p>${i.name || 'Product'} x${i.qty} &mdash; R${(i.price * i.qty).toFixed(2)}</p>`).join('')}
-      <p><strong>Total: R${calcTotal().toFixed(2)}</strong></p>
-    </div>
-  `;
-}
-
-/* -- Yoco payment ---------------------------------------------------------- */
-let _yocoSDK    = null;
-let _yocoReady  = false;
-
-function _initYoco() {
-  if (typeof window.YocoSDK === 'undefined') return;
-  try {
-    _yocoSDK  = new window.YocoSDK({ publicKey: 'pk_live_eba4e00cLbkMSn5b5a8f' });
-    const inline = _yocoSDK.inline({ layout: 'basic', showErrors: true, showSubmitButton: false });
-    inline.mount('#yoco-card-frame');
-    _yocoReady = true;
-    window._yocoInline = inline;
-  } catch(e) {
-    console.warn('Yoco init error:', e);
-  }
-}
-
-async function submitPayment() {
-  const btn     = document.getElementById('payBtn');
-  const alertEl = document.getElementById('payAlert');
-  if (btn) btn.disabled = true;
-
-  const showAlert = (msg, type = 'error') => {
-    if (!alertEl) return;
-    alertEl.textContent   = msg;
-    alertEl.className     = `alert alert-${type}`;
-    alertEl.style.display = '';
-  };
-
-  if (!_yocoReady || !window._yocoInline) {
-    showAlert('Payment form is not ready. Please refresh and try again.');
-    if (btn) btn.disabled = false;
-    return;
-  }
-
-  const overlay   = document.getElementById('loadingOverlay');
-  const loadTitle = document.getElementById('loadingTitle');
-  const loadText  = document.getElementById('loadingText');
-  if (overlay)   overlay.style.display = '';
-  if (loadTitle) loadTitle.textContent = 'Processing payment';
-  if (loadText)  loadText.textContent  = 'Please wait while we securely process your payment\u2026';
-
-  try {
-    const result = await window._yocoInline.createToken();
-    if (result.error) {
-      if (overlay) overlay.style.display = 'none';
-      showAlert(result.error.message || 'Card error. Please check your details.');
-      if (btn) btn.disabled = false;
-      return;
-    }
-
-    const token    = result.id;
-    const orderRef = `PB-${Date.now()}`;
-    const name     = document.getElementById('f-name')?.value.trim()  || '';
-    const phone    = document.getElementById('f-phone')?.value.trim() || '';
-    const email    = document.getElementById('f-email')?.value.trim() || '';
-    const special  = document.getElementById('f-special')?.value.trim() || '';
-
-    let deliveryAddress = {};
-    if (selectedDelivery === 'locker' && selectedLocker) {
-      deliveryAddress = { type: 'locker', ...selectedLocker };
-    } else {
-      deliveryAddress = {
-        type:     'door',
-        street:   document.getElementById('f-street')?.value.trim()   || '',
-        suburb:   document.getElementById('f-suburb')?.value.trim()   || '',
-        city:     document.getElementById('f-city')?.value.trim()     || '',
-        province: document.getElementById('f-province')?.value.trim() || '',
-        postal:   document.getElementById('f-postal')?.value.trim()   || '',
-        special,
-      };
-    }
-
-    const orderPayload = {
-      order_ref:        orderRef,
-      customer_name:    name,
-      customer_phone:   phone,
-      customer_email:   email,
-      delivery_type:    selectedDelivery,
-      delivery_address: deliveryAddress,
-      items:            cart,
-      subtotal:         calcSub(),
-      delivery_fee:     getDeliveryFee(),
-      total:            calcTotal(),
-      status:           'pending_payment',
-      yoco_token:       token,
-    };
-
-    const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
-      method:  'POST',
-      headers: {
-        apikey:         SUPABASE_ANON,
-        Authorization:  `Bearer ${SUPABASE_ANON}`,
-        'Content-Type': 'application/json',
-        Prefer:         'return=representation',
-      },
-      body: JSON.stringify(orderPayload),
-    });
-
-    if (!saveResp.ok) {
-      const err = await saveResp.json().catch(() => ({}));
-      throw new Error(err.message || `Order save failed (${saveResp.status})`);
-    }
-
-    const chargeResp = await fetch(`${SUPABASE_URL}/functions/v1/yoco-charge`, {
-      method:  'POST',
-      headers: {
-        apikey:         SUPABASE_ANON,
-        Authorization:  `Bearer ${SUPABASE_ANON}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, amount: Math.round(calcTotal() * 100), currency: 'ZAR', order_ref: orderRef }),
-    });
-
-    const chargeData = await chargeResp.json();
-    if (!chargeResp.ok || chargeData.error) {
-      throw new Error(chargeData.error || chargeData.message || 'Payment charge failed.');
-    }
-
-    localStorage.removeItem('phenome_cart');
-    localStorage.removeItem(DRAFT_KEY);
-    if (loadTitle) loadTitle.textContent = 'Payment successful!';
-    if (loadText)  loadText.textContent  = 'Redirecting to your order confirmation\u2026';
-
-    setTimeout(() => {
-      window.location.href = `order-confirmation.html?ref=${encodeURIComponent(orderRef)}&email=${encodeURIComponent(email)}`;
-    }, 1200);
-
-  } catch(err) {
-    if (overlay) overlay.style.display = 'none';
-    showAlert(err.message || 'Something went wrong. Please try again.');
-    if (btn) btn.disabled = false;
-    console.error('Payment error:', err);
-  }
-}
-
-/* -- Google Places autocomplete callback ----------------------------------- */
-async function initPlaces() {
-  try {
-    const { Autocomplete } = await google.maps.importLibrary('places');
-
-    const streetInput = document.getElementById('f-street');
-    if (streetInput) {
-      const ac = new Autocomplete(streetInput, {
-        componentRestrictions: { country: 'za' },
-        fields: ['address_components'],
-        types:  ['address'],
-      });
-      const hint = document.getElementById('placesHint');
-      if (hint) hint.style.display = '';
-      ac.addListener('place_changed', () => {
-        const place = ac.getPlace();
-        if (!place.address_components) return;
-        const get = (type) => place.address_components.find(c => c.types.includes(type))?.long_name || '';
-        const street_number = get('street_number');
-        const route         = get('route');
-        document.getElementById('f-street').value   = [street_number, route].filter(Boolean).join(' ');
-        document.getElementById('f-suburb').value   = get('sublocality_level_1') || get('neighborhood') || get('sublocality');
-        document.getElementById('f-city').value     = get('locality') || get('postal_town');
-        document.getElementById('f-province').value = get('administrative_area_level_1');
-        document.getElementById('f-postal').value   = get('postal_code');
-        saveDraft();
-      });
-    }
-
-    const lockerInput = document.getElementById('f-locker-search');
-    if (lockerInput) {
-      const hint = document.getElementById('lockerPlacesHint');
-      if (hint) hint.style.display = 'flex';
-      const acLocker = new Autocomplete(lockerInput, {
-        componentRestrictions: { country: 'za' },
-        fields: ['geometry', 'formatted_address'],
-      });
-      acLocker.addListener('place_changed', () => {
-        const place = acLocker.getPlace();
-        if (place.geometry?.location) {
-          lockerSearchLat = place.geometry.location.lat();
-          lockerSearchLng = place.geometry.location.lng();
-          searchLockers();
-        }
-      });
-    }
-  } catch(e) {
-    console.warn('Places init error:', e);
-  }
-}
-
-/* -- DOMContentLoaded init ------------------------------------------------- */
-document.addEventListener('DOMContentLoaded', function () {
   if (!cart.length) {
-    window.location.href = 'index.html';
+    if (layout)     layout.style.display     = 'none';
+    if (emptyState) emptyState.classList.add('show');
     return;
   }
 
-  syncDeliveryToggle();
-  renderSummary();
-  renderMobileSummary();
+  if (layout)     layout.style.display     = '';
+  if (emptyState) emptyState.classList.remove('show');
+
+  // Restore draft
+  const restored = restoreDraft();
+  if (restored) showToast('Your details have been restored.');
+
   renderDeliveryDate();
+  renderSummary();
 
-  const hasDraft = !!localStorage.getItem(DRAFT_KEY);
-  loadDraft();
-  if (hasDraft) {
-    const toast = document.getElementById('coToast');
-    if (toast) {
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3200);
-    }
-  }
-
-  document.querySelectorAll('#f-name,#f-phone,#f-email,#f-street,#f-suburb,#f-city,#f-province,#f-postal').forEach(el => {
-    el.addEventListener('input', saveDraft);
+  // Wire Step 1 inputs — clear errors on input
+  ['f-name','f-phone','f-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function() {
+      const fieldId = 'field-' + id.replace('f-','');
+      const errId   = 'err-'   + id.replace('f-','');
+      setFieldError(fieldId, errId, false, '');
+    });
   });
 
+  // Wire Step 2 door inputs
+  ['street','suburb','city','postal','province'].forEach(k => {
+    const el = document.getElementById('f-' + k);
+    if (!el) return;
+    el.addEventListener('input', function() {
+      setFieldError('field-' + k, 'err-' + k, false, '');
+    });
+  });
+
+  // Locker search keyup
   const lockerSearchInput = document.getElementById('f-locker-search');
   if (lockerSearchInput) {
     lockerSearchInput.addEventListener('keyup', function(e) {
