@@ -2,262 +2,563 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0e" />
   <title>Checkout — PhenomeBeauty</title>
   <meta name="robots" content="noindex,nofollow" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
   <style>
+    /* ── Checkout-specific overrides on top of styles.css ── */
+
+    /* Re-use the shop's ok/error/warn semantic colours */
     :root {
-      --bg: #0b0b0f;
-      --panel: #12121a;
-      --card: #161823;
-      --muted: #8b8f9b;
-      --text: #f5f7fb;
-      --accent: #f2c14e;
-      --accent-2: #ffdd87;
-      --ok: #34d399;
+      --ok:   #34d399;
       --warn: #f59e0b;
-      --error: #ef4444;
-      --line: rgba(255,255,255,0.08);
-      --shadow: 0 12px 40px rgba(0,0,0,0.45);
-      --radius-xl: 28px;
-      --radius-lg: 20px;
-      --radius-md: 14px;
-      --radius-sm: 10px;
-      --container: 1180px;
+      --err:  #ef4444;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:radial-gradient(circle at top,#171827 0%,#0b0b0f 45%,#08080b 100%);color:var(--text);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;min-height:100%}
-    a{color:inherit;text-decoration:none}
-    button,input,textarea,select{font:inherit}
-    img{max-width:100%;display:block}
-    .wrap{max-width:var(--container);margin:0 auto;padding:24px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0}
-    .brand{display:flex;align-items:center;gap:14px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-    .brand img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.14)}
-    .brand small{display:block;font-size:.72rem;color:var(--muted);letter-spacing:.16em;margin-top:2px}
-    .secure-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:999px;background:rgba(255,255,255,0.03);font-size:.84rem;color:var(--muted)}
-    .secure-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 6px rgba(52,211,153,0.12)}
 
-    .layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
-    .stack{display:grid;gap:18px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015));border:1px solid var(--line);border-radius:var(--radius-xl);box-shadow:var(--shadow)}
-    .checkout-card{padding:28px 28px 24px}
-    .summary-card{padding:22px;position:sticky;top:20px}
-    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(242,193,78,0.12);border:1px solid rgba(242,193,78,0.25);border-radius:999px;color:var(--accent-2);font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    h1{margin:16px 0 10px;font-size:clamp(2rem,4vw,3.2rem);line-height:1.02;letter-spacing:-0.04em}
-    .intro{margin:0;color:#c8ccda;max-width:56ch;line-height:1.7}
-    .intro strong{color:#fff}
-    .promise-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
-    .promise{padding:14px 16px;border-radius:18px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06)}
-    .promise b{display:block;font-size:.92rem;margin-bottom:4px}
-    .promise span{font-size:.84rem;color:var(--muted);line-height:1.5}
-
-    .steps{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:8px 0 22px}
-    .step-pill{display:inline-flex;align-items:center;gap:10px;padding:12px 15px;border-radius:999px;border:1px solid rgba(255,255,255,0.08);color:var(--muted);background:rgba(255,255,255,0.02);font-size:.88rem;font-weight:600}
-    .step-pill.active{background:rgba(242,193,78,0.12);color:var(--accent-2);border-color:rgba(242,193,78,0.34)}
-    .step-pill.done{color:#d5f8e7;border-color:rgba(52,211,153,0.24);background:rgba(52,211,153,0.08)}
-    .step-num{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,0.08);font-size:.78rem}
-    .step-pill.active .step-num{background:rgba(242,193,78,0.18)}
-    .step-pill.done .step-num{background:rgba(52,211,153,0.18)}
-    .step-arrow{opacity:.35}
-
-    .step{display:none;animation:fade .26s ease}
-    .step.active{display:block}
-    @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-    .step-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:22px}
-    .step-title{margin:0;font-size:1.45rem;letter-spacing:-0.03em}
-    .step-copy{margin:8px 0 0;color:var(--muted);line-height:1.6;max-width:52ch}
-    .step-tag{font-size:.82rem;color:var(--accent-2);font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-
-    .field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-    .field-grid.one{grid-template-columns:1fr}
-    .field-grid.contact{grid-template-columns:1.2fr .8fr}
-    .field{display:grid;gap:8px}
-    .field label{font-size:.87rem;font-weight:600;color:#ecedf3}
-    .field .hint{font-size:.78rem;color:var(--muted)}
-    .field input,.field textarea,.field select{
-      width:100%;padding:15px 16px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);
-      background:rgba(8,8,12,0.5);color:var(--text);outline:none;transition:border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    /* ── Page shell ── */
+    .co-wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
     }
-    .field textarea{min-height:116px;resize:vertical}
-    .field input::placeholder,.field textarea::placeholder{color:#7c8192}
-    .field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(242,193,78,0.55);box-shadow:0 0 0 4px rgba(242,193,78,0.13)}
-    .field.error input,.field.error textarea,.field.error select{border-color:rgba(239,68,68,0.65);box-shadow:0 0 0 4px rgba(239,68,68,0.12)}
-    .error-text{font-size:.78rem;color:#ffb4b4;display:none}
-    .error-text.show{display:block}
 
-    .delivery-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:20px}
-    .delivery-card{padding:18px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);cursor:pointer;transition:.18s ease;position:relative;overflow:hidden}
-    .delivery-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.16)}
-    .delivery-card.selected{border-color:rgba(242,193,78,0.5);box-shadow:0 0 0 1px rgba(242,193,78,0.2) inset;background:linear-gradient(180deg,rgba(242,193,78,0.15),rgba(255,255,255,0.03))}
-    .delivery-card h3{margin:0 0 8px;font-size:1rem}
-    .delivery-card p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.55}
-    .delivery-price{display:inline-flex;align-items:center;margin-top:14px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,0.06);font-weight:700;font-size:.84rem}
-    .delivery-chip{position:absolute;top:14px;right:14px;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,0.35)}
-    .delivery-card.selected .delivery-chip{border-color:var(--accent);background:var(--accent)}
-
-    .delivery-meta{margin-top:16px;padding:16px;border-radius:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap}
-    .delivery-meta strong{display:block;margin-bottom:6px}
-    .delivery-meta p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.55}
-    .delivery-window{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.18);color:#d8fff0;font-size:.82rem;font-weight:700}
-
-    .divider{height:1px;background:var(--line);margin:20px 0}
-
-    .toggle-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px;border-radius:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)}
-    .toggle-copy h4{margin:0 0 4px;font-size:.98rem}
-    .toggle-copy p{margin:0;color:var(--muted);font-size:.86rem;line-height:1.55}
-    .switch{position:relative;width:58px;height:34px;border-radius:999px;background:#34384a;border:none;padding:0;cursor:pointer;transition:background .18s ease}
-    .switch::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .18s ease;box-shadow:0 6px 14px rgba(0,0,0,0.25)}
-    .switch.on{background:#d9a72c}
-    .switch.on::after{transform:translateX(24px)}
-
-    .nav-actions{display:flex;justify-content:space-between;gap:16px;margin-top:28px;align-items:center;flex-wrap:wrap}
-    .ghost-btn,.primary-btn,.mini-btn,.chip-btn{
-      appearance:none;border:none;border-radius:999px;padding:14px 22px;font-weight:700;letter-spacing:-0.01em;cursor:pointer;transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease
+    /* ── Layout grid ── */
+    .co-layout {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) 380px;
+      gap: 28px;
+      align-items: start;
+      margin-top: 24px;
     }
-    .ghost-btn{background:rgba(255,255,255,0.05);color:#eef0f7;border:1px solid rgba(255,255,255,0.08)}
-    .ghost-btn:hover{transform:translateY(-1px)}
-    .primary-btn{background:linear-gradient(135deg,#f6d676,#f2c14e 60%,#c78e10);color:#17120a;box-shadow:0 12px 26px rgba(242,193,78,0.22)}
-    .primary-btn:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(242,193,78,0.26)}
-    .primary-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
-    .mini-btn{padding:10px 14px;font-size:.84rem;background:rgba(255,255,255,0.05);color:#eef0f7;border:1px solid rgba(255,255,255,0.08)}
-    .chip-btn{padding:10px 12px;font-size:.82rem;background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid rgba(255,255,255,0.06)}
+    .co-stack { display: grid; gap: 18px; }
 
-    .summary-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
-    .summary-title h2{margin:0;font-size:1.2rem;letter-spacing:-0.03em}
-    .summary-title p{margin:6px 0 0;color:var(--muted);font-size:.86rem;line-height:1.5}
-    .summary-rows{display:grid;gap:14px}
-    .cart-item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05)}
-    .cart-item img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#11131a}
-    .cart-item h4{margin:0 0 5px;font-size:.95rem}
-    .cart-meta{font-size:.78rem;color:var(--muted);line-height:1.45}
-    .cart-price{text-align:right;font-size:.9rem;font-weight:700}
-    .totals{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:grid;gap:10px}
-    .total-row{display:flex;justify-content:space-between;gap:10px;color:#d4d7e3;font-size:.92rem}
-    .total-row.muted{color:var(--muted)}
-    .total-row.grand{font-size:1.08rem;font-weight:800;color:#fff;padding-top:8px}
-    .summary-foot{margin-top:18px;padding:14px;border-radius:18px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.16);color:#d8fff0;font-size:.86rem;line-height:1.6}
-    .summary-foot strong{display:block;margin-bottom:6px;color:#fff}
-
-    .done-card{display:grid;gap:16px}
-    .done-block{padding:18px;border-radius:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)}
-    .done-block h4{margin:0 0 8px;font-size:.95rem;color:#fff}
-    .done-block p,.done-block li{margin:0;color:var(--muted);line-height:1.6;font-size:.9rem}
-    .review-lines{display:grid;gap:10px;margin-top:14px}
-    .review-line{display:flex;justify-content:space-between;gap:12px;font-size:.9rem;color:#dfe3ef}
-    .review-note{margin-top:14px;padding:14px;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);font-size:.88rem;color:var(--muted);line-height:1.6}
-    .alert{display:none;margin-top:18px;padding:14px 16px;border-radius:16px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.25);color:#ffd7d7;font-size:.86rem;line-height:1.55}
-    .alert.show{display:block}
-    .alert.warn{background:rgba(245,158,11,0.12);border-color:rgba(245,158,11,0.24);color:#ffe0ad}
-
-    .empty-state{display:none;padding:42px;border-radius:var(--radius-xl);border:1px dashed rgba(255,255,255,0.14);background:rgba(255,255,255,0.02);text-align:center}
-    .empty-state.show{display:block}
-    .empty-state h2{margin:16px 0 10px;font-size:1.8rem}
-    .empty-state p{margin:0 auto;color:var(--muted);max-width:42ch;line-height:1.65}
-
-    .search-wrap{display:grid;gap:12px}
-    .search-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .locker-results{display:grid;gap:12px;margin-top:16px}
-    .locker-item{padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.025);display:grid;gap:8px}
-    .locker-item-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
-    .locker-item h4{margin:0;font-size:.96rem}
-    .locker-item p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.55}
-    .locker-badges{display:flex;gap:8px;flex-wrap:wrap}
-    .locker-tag{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.06);font-size:.75rem;color:#dfe2eb}
-    .locker-cta{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
-    .locker-selected{margin-top:14px;padding:16px;border-radius:18px;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.18)}
-    .locker-selected strong{display:block;margin-bottom:6px}
-    .locker-selected p{margin:0;color:#d8fff0;font-size:.86rem;line-height:1.55}
-    .locker-size-notice{margin-top:12px;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);font-size:.84rem;color:#dfe3ef;line-height:1.55}
-    .locker-size-notice--filtered{border-color:rgba(52,211,153,0.22);background:rgba(52,211,153,0.08);color:#d8fff0}
-    .locker-item-size-warn{margin-top:6px;font-size:.78rem;color:#ffd7a6;display:flex;align-items:center;gap:6px}
-
-    .review-panel{padding:18px;border-radius:22px;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.06);display:grid;gap:14px}
-    .review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-
-    .mobile-summary-bar{display:none}
-
-    .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;background:#131620;border:1px solid rgba(255,255,255,0.09);color:#fff;padding:12px 16px;border-radius:999px;box-shadow:var(--shadow);font-size:.84rem;opacity:0;pointer-events:none;transition:.22s ease}
-    .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px)}
-
-    .loading{position:fixed;inset:0;background:rgba(6,6,10,0.72);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:80;padding:24px}
-    .loading.show{display:flex}
-    .loading-card{width:min(100%,420px);padding:28px;border-radius:28px;background:linear-gradient(180deg,#181a27,#10111a);border:1px solid rgba(255,255,255,0.08);box-shadow:var(--shadow);text-align:center}
-    .loading-ring{width:54px;height:54px;border-radius:50%;margin:0 auto 18px;border:3px solid rgba(255,255,255,0.08);border-top-color:var(--accent);animation:spin .85s linear infinite}
-    .loading-card h3{margin:0 0 10px;font-size:1.2rem}
-    .loading-card p{margin:0;color:var(--muted);line-height:1.6}
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    @media (max-width: 1080px){
-      .layout{grid-template-columns:1fr}
-      .summary-card{position:relative;top:auto;display:none}
-      .mobile-summary-bar{display:flex;position:sticky;bottom:12px;z-index:30;margin-top:18px;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border-radius:20px;background:rgba(12,12,18,0.92);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.08);box-shadow:var(--shadow)}
-      .mobile-summary-copy{display:grid;gap:2px}
-      .mobile-summary-copy span{font-size:.75rem;color:var(--muted)}
-      .mobile-summary-copy strong{font-size:1rem}
+    /* ── Glass cards ── */
+    .co-card {
+      background: linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
+      border: 1px solid var(--glass-border);
+      border-radius: 28px;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      padding: 28px;
     }
-    @media (max-width: 760px){
-      .wrap{padding:18px}
-      .checkout-card,.summary-card{padding:20px}
-      .promise-grid,.delivery-grid,.field-grid,.field-grid.contact,.review-grid{grid-template-columns:1fr}
-      .topbar{flex-direction:column;align-items:flex-start}
-      .step-head{flex-direction:column}
-      .steps{gap:10px}
-      .step-pill{width:100%;justify-content:flex-start}
-      .nav-actions{flex-direction:column-reverse;align-items:stretch}
-      .ghost-btn,.primary-btn{width:100%}
-      .secure-badge{width:100%;justify-content:center}
+    .co-aside {
+      padding: 22px;
+      position: sticky;
+      top: 100px;
+    }
+
+    /* ── Hero section ── */
+    .co-hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-family: var(--font-body);
+    }
+    .co-hero-title {
+      margin: 14px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(2rem,4vw,3rem);
+      line-height: 1.05;
+      color: var(--accent-strong);
+    }
+    .co-hero-copy {
+      margin: 0 0 24px;
+      color: var(--text-soft);
+      max-width: 56ch;
+      line-height: 1.7;
+      font-size: .95rem;
+    }
+    .co-promise-grid {
+      display: grid;
+      grid-template-columns: repeat(3,minmax(0,1fr));
+      gap: 14px;
+    }
+    .co-promise {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid var(--glass-border);
+    }
+    .co-promise b {
+      display: block;
+      font-size: .9rem;
+      color: var(--accent-strong);
+      margin-bottom: 4px;
+      font-family: var(--font-body);
+    }
+    .co-promise span { font-size: .84rem; color: var(--text-soft); line-height: 1.5; }
+
+    /* ── Step breadcrumb ── */
+    .co-steps {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.02);
+      font-size: .85rem;
+      font-weight: 600;
+      font-family: var(--font-body);
+    }
+    .step-pill.active {
+      background: rgba(255,255,255,0.10);
+      color: var(--accent-strong);
+      border-color: rgba(255,255,255,0.28);
+    }
+    .step-pill.done {
+      color: #d5f8e7;
+      border-color: rgba(52,211,153,0.24);
+      background: rgba(52,211,153,0.08);
+    }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: rgba(255,255,255,0.07);
+      font-size: .76rem;
+    }
+    .step-pill.active .step-num { background: rgba(255,255,255,0.15); }
+    .step-pill.done  .step-num { background: rgba(52,211,153,0.18); }
+    .step-arrow { opacity: .35; font-size: .9rem; color: var(--text-muted); }
+
+    /* ── Step panels ── */
+    .step { display: none; animation: co-fade .26s ease; }
+    .step.active { display: block; }
+    @keyframes co-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+    .step-tag {
+      font-size: .75rem; font-weight: 700;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent);
+      font-family: var(--font-body);
+    }
+    .step-title {
+      margin: 6px 0 0;
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--accent-strong);
+    }
+    .step-copy { margin: 8px 0 22px; color: var(--text-soft); line-height: 1.65; font-size: .9rem; }
+
+    /* ── Form fields ── */
+    .field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+    .field-grid.one { grid-template-columns: 1fr; }
+    .field-grid.contact { grid-template-columns: 1.2fr .8fr; }
+    .field { display: grid; gap: 7px; }
+    .field label { font-size: .85rem; font-weight: 600; color: var(--text); font-family: var(--font-body); }
+    .field .hint { font-size: .77rem; color: var(--text-muted); line-height: 1.5; }
+    .field input,.field textarea,.field select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      background: rgba(4,4,6,0.45);
+      color: var(--text);
+      outline: none;
+      font-family: var(--font-body);
+      font-size: .93rem;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .field textarea { min-height: 110px; resize: vertical; }
+    .field input::placeholder,.field textarea::placeholder { color: var(--text-muted); }
+    .field input:focus,.field textarea:focus,.field select:focus {
+      border-color: rgba(255,255,255,0.4);
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.07);
+    }
+    .field.error input,.field.error textarea,.field.error select {
+      border-color: rgba(239,68,68,0.6);
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.10);
+    }
+    .error-text { font-size: .78rem; color: #ffb4b4; display: none; }
+    .error-text.show { display: block; }
+
+    /* ── Delivery cards ── */
+    .delivery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-bottom: 18px; }
+    .delivery-card {
+      padding: 18px; border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer; transition: .18s ease;
+      position: relative; overflow: hidden;
+      text-align: left;
+    }
+    .delivery-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
+    .delivery-card.selected {
+      border-color: rgba(255,255,255,0.38);
+      background: linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04));
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.10) inset;
+    }
+    .delivery-card h3 { margin: 0 0 6px; font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); font-weight: 700; }
+    .delivery-card p  { margin: 0; color: var(--text-soft); font-size: .86rem; line-height: 1.55; }
+    .delivery-price {
+      display: inline-flex; align-items: center;
+      margin-top: 12px; padding: 7px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--glass-border);
+      font-weight: 700; font-size: .84rem;
+      color: var(--accent);
+    }
+    .delivery-chip {
+      position: absolute; top: 14px; right: 14px;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .delivery-card.selected .delivery-chip { border-color: var(--accent-strong); background: var(--accent-strong); }
+
+    .delivery-meta {
+      margin-top: 14px; padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+      display: flex; justify-content: space-between;
+      gap: 14px; align-items: flex-start; flex-wrap: wrap;
+    }
+    .delivery-meta strong { display: block; margin-bottom: 5px; color: var(--accent-strong); font-family: var(--font-body); }
+    .delivery-meta p { margin: 0; color: var(--text-soft); font-size: .88rem; line-height: 1.55; }
+    .delivery-window {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 13px; border-radius: var(--radius-pill);
+      background: rgba(52,211,153,0.08);
+      border: 1px solid rgba(52,211,153,0.18);
+      color: #d8fff0; font-size: .8rem; font-weight: 700;
+      white-space: nowrap;
+      font-family: var(--font-body);
+    }
+
+    .co-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
+
+    /* ── Gift toggle ── */
+    .toggle-row {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 14px; padding: 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border);
+    }
+    .toggle-copy h4 { margin: 0 0 3px; font-size: .95rem; color: var(--accent-strong); font-family: var(--font-body); }
+    .toggle-copy p  { margin: 0; color: var(--text-soft); font-size: .84rem; line-height: 1.5; }
+    .switch {
+      position: relative; width: 56px; height: 32px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.10);
+      border: 1px solid var(--glass-border);
+      padding: 0; cursor: pointer;
+      transition: background .18s ease;
+      flex-shrink: 0;
+    }
+    .switch::after {
+      content: ""; position: absolute;
+      top: 3px; left: 3px;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #fff; transition: transform .18s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .switch.on { background: var(--accent); border-color: var(--accent); }
+    .switch.on::after { transform: translateX(24px); }
+
+    /* ── Nav actions ── */
+    .nav-actions {
+      display: flex; justify-content: space-between;
+      gap: 14px; margin-top: 26px;
+      align-items: center; flex-wrap: wrap;
+    }
+    .ghost-btn {
+      appearance: none; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 13px 22px;
+      font-weight: 700; font-family: var(--font-body);
+      letter-spacing: -.01em; cursor: pointer;
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      transition: background .18s ease, transform .18s ease;
+    }
+    .ghost-btn:hover { background: rgba(255,255,255,0.10); transform: translateY(-1px); }
+    .primary-btn {
+      appearance: none; border: none;
+      border-radius: var(--radius-pill);
+      padding: 13px 26px;
+      font-weight: 700; font-family: var(--font-body);
+      letter-spacing: -.01em; cursor: pointer;
+      background: var(--accent-strong);
+      color: #111;
+      box-shadow: 0 8px 24px rgba(255,255,255,0.10);
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(255,255,255,0.14); }
+    .primary-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .mini-btn {
+      appearance: none; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 9px 14px; font-size: .84rem;
+      font-family: var(--font-body); font-weight: 600;
+      background: rgba(255,255,255,0.05); color: var(--text); cursor: pointer;
+      transition: background .18s ease;
+    }
+    .mini-btn:hover { background: rgba(255,255,255,0.10); }
+    .chip-btn {
+      appearance: none; border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 9px 13px; font-size: .8rem;
+      font-family: var(--font-body); font-weight: 600;
+      background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer;
+      transition: background .18s ease;
+    }
+    .chip-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* ── Order summary aside ── */
+    .summary-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    .summary-title h2 { margin: 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--accent-strong); }
+    .summary-title p  { margin: 5px 0 0; color: var(--text-soft); font-size: .84rem; }
+    .summary-rows { display: grid; gap: 12px; }
+    .cart-item {
+      display: grid; grid-template-columns: 60px 1fr auto;
+      gap: 12px; align-items: center;
+      padding: 12px; border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+    }
+    .cart-item img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
+    .cart-item h4  { margin: 0 0 4px; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); }
+    .cart-meta     { font-size: .76rem; color: var(--text-muted); line-height: 1.45; }
+    .cart-price    { text-align: right; font-size: .88rem; font-weight: 700; color: var(--accent); }
+    .co-totals     { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--glass-border); display: grid; gap: 8px; }
+    .total-row     { display: flex; justify-content: space-between; gap: 10px; color: var(--text-soft); font-size: .9rem; font-family: var(--font-body); }
+    .total-row.grand { font-size: 1.05rem; font-weight: 800; color: var(--accent-strong); padding-top: 6px; }
+    .summary-foot {
+      margin-top: 16px; padding: 14px;
+      border-radius: 14px;
+      background: rgba(52,211,153,0.08);
+      border: 1px solid rgba(52,211,153,0.16);
+      color: #d8fff0; font-size: .84rem; line-height: 1.6;
+      font-family: var(--font-body);
+    }
+    .summary-foot strong { display: block; margin-bottom: 5px; color: #fff; }
+
+    /* ── Secure badge ── */
+    .secure-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.04);
+      font-size: .82rem; color: var(--text-muted);
+      font-family: var(--font-body);
+    }
+    .secure-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 0 5px rgba(52,211,153,0.12);
+      flex-shrink: 0;
+    }
+
+    /* ── Review panel ── */
+    .review-panel { display: grid; gap: 14px; }
+    .review-grid  { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+    .done-block   { padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); }
+    .done-block h4 { margin: 0 0 8px; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); font-weight: 700; }
+    .done-block p,.done-block li { margin: 0; color: var(--text-soft); line-height: 1.6; font-size: .88rem; }
+    .review-lines { display: grid; gap: 9px; margin-top: 12px; }
+    .review-line  { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; color: var(--text); font-family: var(--font-body); }
+    .review-note  { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); font-size: .86rem; color: var(--text-soft); line-height: 1.6; }
+
+    /* ── Alerts ── */
+    .alert { display: none; margin-top: 16px; padding: 13px 16px; border-radius: 14px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ffd7d7; font-size: .86rem; line-height: 1.55; font-family: var(--font-body); }
+    .alert.show { display: block; }
+    .alert.warn { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.24); color: #ffe0ad; }
+
+    /* ── Empty state ── */
+    .empty-state { display: none; padding: 42px; border-radius: 28px; border: 1px dashed var(--glass-border); background: rgba(255,255,255,0.02); text-align: center; }
+    .empty-state.show { display: block; }
+    .empty-state h2 { margin: 14px 0 8px; font-family: var(--font-display); font-size: 1.8rem; color: var(--accent-strong); }
+    .empty-state p  { margin: 0 auto; color: var(--text-soft); max-width: 42ch; line-height: 1.65; }
+
+    /* ── Locker UI ── */
+    .search-wrap { display: grid; gap: 12px; }
+    .search-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .locker-results { display: grid; gap: 12px; margin-top: 14px; }
+    .locker-item { padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); display: grid; gap: 8px; }
+    .locker-item-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+    .locker-item h4 { margin: 0; font-size: .94rem; color: var(--accent-strong); font-family: var(--font-body); }
+    .locker-item p  { margin: 0; color: var(--text-soft); font-size: .83rem; line-height: 1.5; }
+    .locker-badges  { display: flex; gap: 6px; flex-wrap: wrap; }
+    .locker-tag { padding: 5px 10px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); font-size: .74rem; color: var(--text); }
+    .locker-cta { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .locker-selected { margin-top: 12px; padding: 14px; border-radius: 14px; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.18); }
+    .locker-selected strong { display: block; margin-bottom: 5px; color: #fff; font-family: var(--font-body); }
+    .locker-selected p { margin: 0; color: #d8fff0; font-size: .84rem; line-height: 1.55; }
+    .locker-size-notice { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); font-size: .83rem; color: var(--text); line-height: 1.55; font-family: var(--font-body); }
+    .locker-size-notice--filtered { border-color: rgba(52,211,153,0.22); background: rgba(52,211,153,0.08); color: #d8fff0; }
+    .locker-item-size-warn { margin-top: 5px; font-size: .77rem; color: #ffd7a6; display: flex; align-items: center; gap: 5px; }
+
+    /* ── Mobile summary bar ── */
+    .mobile-summary-bar { display: none; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 18px; z-index: 50;
+      background: rgba(12,12,18,0.92);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      color: var(--text); padding: 11px 16px;
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-lg);
+      font-size: .84rem; font-family: var(--font-body);
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s ease, transform .22s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+    /* ── Loading overlay ── */
+    .loading {
+      position: fixed; inset: 0;
+      background: rgba(4,4,6,0.75);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 80; padding: 24px;
+    }
+    .loading.show { display: flex; }
+    .loading-card {
+      width: min(100%, 400px); padding: 28px;
+      border-radius: 28px;
+      background: linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      text-align: center;
+    }
+    .loading-ring {
+      width: 52px; height: 52px; border-radius: 50%;
+      margin: 0 auto 18px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: var(--accent-strong);
+      animation: spin .85s linear infinite;
+    }
+    .loading-card h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.3rem; color: var(--accent-strong); }
+    .loading-card p  { margin: 0; color: var(--text-soft); line-height: 1.6; font-size: .9rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 1080px) {
+      .co-layout { grid-template-columns: 1fr; }
+      .co-aside  { position: relative; top: auto; display: none; }
+      .mobile-summary-bar {
+        display: flex; position: sticky; bottom: 12px; z-index: 30;
+        margin-top: 16px; align-items: center; justify-content: space-between;
+        gap: 14px; padding: 13px 16px; border-radius: 20px;
+        background: rgba(4,4,6,0.88);
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-lg);
+      }
+      .mobile-summary-copy { display: grid; gap: 2px; }
+      .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
+      .mobile-summary-copy strong { font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); }
+    }
+    @media (max-width: 760px) {
+      .co-wrap { padding: 0 14px 50px; }
+      .co-card  { padding: 20px; border-radius: 20px; }
+      .co-promise-grid,.delivery-grid,.field-grid,.field-grid.contact,.review-grid { grid-template-columns: 1fr; }
+      .nav-actions { flex-direction: column-reverse; align-items: stretch; }
+      .ghost-btn,.primary-btn { width: 100%; text-align: center; }
+      .secure-badge { width: 100%; justify-content: center; margin-top: 8px; }
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <a class="brand" href="shop.html">
-        <img src="assets/logo.png" alt="PhenomeBeauty logo" />
-        <div>
-          PhenomeBeauty
-          <small>Secure Checkout</small>
-        </div>
-      </a>
-      <div class="secure-badge"><span class="secure-dot"></span> Protected payment powered by Yoco</div>
-    </div>
 
-    <section class="checkout-card card" id="heroCard">
-      <span class="eyebrow">Final step</span>
-      <h1>Complete your order with confidence.</h1>
-      <p class="intro">Your cart is reserved for the next few minutes while you complete checkout. We’ll capture your delivery details, confirm your order summary, then send you to our secure payment partner to finish payment.</p>
-      <div class="promise-grid">
-        <div class="promise"><b>Fast checkout</b><span>Three guided steps with your progress saved while you move between sections.</span></div>
-        <div class="promise"><b>Flexible delivery</b><span>Choose door delivery or a nearby Pudo locker that suits your order size.</span></div>
-        <div class="promise"><b>Secure payment</b><span>We save your order first, then redirect you to Yoco to complete payment safely.</span></div>
+  <!-- shared background from styles.css -->
+  <div id="bg-image"></div>
+  <div id="bg-overlay"></div>
+
+  <!-- shared pill navbar from styles.css -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <img src="assets/phenome-logo.png" alt="PhenomeBeauty" height="36" />
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#contact">Contact</a>
+      </div>
+      <div class="secure-badge">
+        <span class="secure-dot"></span> Secure checkout via Yoco
+      </div>
+    </div>
+  </nav>
+
+  <div class="co-wrap">
+
+    <!-- ── Hero ── -->
+    <section class="co-card" id="heroCard" style="margin-top: 24px;">
+      <span class="co-hero-eyebrow">Final step</span>
+      <h1 class="co-hero-title">Complete your order.</h1>
+      <p class="co-hero-copy">Your cart is reserved while you complete checkout. We'll capture your delivery details, confirm your order summary, then redirect you to our secure payment partner.</p>
+      <div class="co-promise-grid">
+        <div class="co-promise">
+          <b>Fast checkout</b>
+          <span>Three guided steps with your progress saved as you move between sections.</span>
+        </div>
+        <div class="co-promise">
+          <b>Flexible delivery</b>
+          <span>Choose door delivery or a nearby Pudo locker that suits your order size.</span>
+        </div>
+        <div class="co-promise">
+          <b>Secure payment</b>
+          <span>We save your order first, then redirect you to Yoco to complete payment safely.</span>
+        </div>
       </div>
     </section>
 
-    <div class="empty-state card" id="emptyState">
+    <!-- ── Empty state ── -->
+    <div class="co-card empty-state" id="emptyState" style="margin-top:18px;">
       <h2>Your cart is empty</h2>
-      <p>Add a few products before checking out. Once you have something you love, come back here and we’ll guide you through delivery and payment.</p>
-      <div style="margin-top:20px"><a class="primary-btn" href="shop.html" style="display:inline-flex;align-items:center;justify-content:center">Back to shop</a></div>
+      <p>Add a few products before checking out. Once you have something you love, come back here and we'll guide you through delivery and payment.</p>
+      <div style="margin-top:20px">
+        <a class="primary-btn" href="shop.html" style="display:inline-flex;align-items:center;justify-content:center;">← Back to shop</a>
+      </div>
     </div>
 
-    <div class="layout" id="checkoutLayout">
-      <div class="stack">
-        <section class="checkout-card card">
-          <div class="steps" id="stepsBar"></div>
+    <!-- ── Main checkout layout ── -->
+    <div class="co-layout" id="checkoutLayout">
+      <div class="co-stack">
+        <section class="co-card">
+          <div class="co-steps" id="stepsBar"></div>
 
+          <!-- Step 1: Contact -->
           <div class="step active" id="step1">
-            <div class="step-head">
-              <div>
-                <div class="step-tag">Step 1</div>
-                <h2 class="step-title">Contact details</h2>
-                <p class="step-copy">We’ll use these details for your order confirmation, delivery communication and payment updates.</p>
-              </div>
-            </div>
+            <div class="step-tag">Step 1</div>
+            <h2 class="step-title">Contact details</h2>
+            <p class="step-copy">We'll use these for your order confirmation, delivery updates and payment notifications.</p>
 
             <div class="field-grid contact">
               <div class="field" id="field-name">
@@ -272,7 +573,7 @@
               </div>
             </div>
 
-            <div class="field-grid one" style="margin-top:18px">
+            <div class="field-grid one" style="margin-top:16px;">
               <div class="field" id="field-email">
                 <label for="f-email">Email address</label>
                 <input id="f-email" type="email" autocomplete="email" placeholder="you@example.com" />
@@ -281,19 +582,16 @@
             </div>
 
             <div class="nav-actions">
-              <a class="ghost-btn" href="shop.html">Return to cart</a>
-              <button class="primary-btn" onclick="goStep(2)">Continue to delivery</button>
+              <a class="ghost-btn" href="shop.html">← Return to cart</a>
+              <button class="primary-btn" onclick="goStep(2)">Continue to delivery →</button>
             </div>
           </div>
 
+          <!-- Step 2: Delivery -->
           <div class="step" id="step2">
-            <div class="step-head">
-              <div>
-                <div class="step-tag">Step 2</div>
-                <h2 class="step-title">Delivery method</h2>
-                <p class="step-copy">Choose how you’d like to receive your order. Locker options are filtered against the box size your order requires whenever possible.</p>
-              </div>
-            </div>
+            <div class="step-tag">Step 2</div>
+            <h2 class="step-title">Delivery method</h2>
+            <p class="step-copy">Choose how you'd like to receive your order. Locker options are filtered against the box size your order requires.</p>
 
             <div class="delivery-grid">
               <button type="button" class="delivery-card selected" id="delivery-door" onclick="selectDelivery('door')">
@@ -313,12 +611,13 @@
             <div class="delivery-meta">
               <div>
                 <strong id="deliveryMetaTitle">Door delivery selected</strong>
-                <p id="deliveryMetaText">Enter your address and we’ll estimate a delivery window based on business days and local holidays.</p>
+                <p id="deliveryMetaText">Enter your address and we'll estimate a delivery window based on business days and local holidays.</p>
               </div>
-              <div class="delivery-window" id="deliveryWindow">Estimating delivery…</div>
+              <div class="delivery-window" id="deliveryWindow">Estimating…</div>
             </div>
 
-            <div id="door-fields" style="margin-top:18px">
+            <!-- Door fields -->
+            <div id="door-fields" style="margin-top:18px;">
               <div class="field-grid one">
                 <div class="field" id="field-street">
                   <label for="f-street">Street address</label>
@@ -326,7 +625,7 @@
                   <div class="error-text" id="err-street">Please enter your street address.</div>
                 </div>
               </div>
-              <div class="field-grid" style="margin-top:18px">
+              <div class="field-grid" style="margin-top:16px;">
                 <div class="field" id="field-suburb">
                   <label for="f-suburb">Suburb</label>
                   <input id="f-suburb" type="text" autocomplete="address-level3" placeholder="Suburb" />
@@ -350,46 +649,47 @@
               </div>
             </div>
 
-            <div id="locker-fields" style="display:none;margin-top:18px">
+            <!-- Locker fields -->
+            <div id="locker-fields" style="display:none;margin-top:18px;">
               <div class="search-wrap">
                 <div class="field-grid one">
                   <div class="field">
                     <label for="lockerQuery">Search for a locker</label>
                     <input id="lockerQuery" type="text" placeholder="Enter an address, suburb or landmark" />
-                    <span class="hint">We’ll find the closest lockers and try to match them to the required compartment size for your order.</span>
+                    <span class="hint">We'll find the closest lockers and try to match them to the required compartment size for your order.</span>
                   </div>
                 </div>
                 <div class="search-actions">
-                  <button type="button" class="primary-btn" style="padding:12px 18px" onclick="searchLockers()">Search lockers</button>
+                  <button type="button" class="primary-btn" style="padding:11px 18px;" onclick="searchLockers()">Search lockers</button>
                   <button type="button" class="mini-btn" onclick="useMyLocation()">Use my location</button>
                 </div>
                 <input type="hidden" id="lockerSearchLat" />
                 <input type="hidden" id="lockerSearchLng" />
                 <div id="lockerSizeNotice"></div>
                 <div class="locker-results" id="lockerResults"></div>
-                <div class="locker-selected" id="selectedLockerCard" style="display:none"></div>
+                <div class="locker-selected" id="selectedLockerCard" style="display:none;"></div>
                 <div class="error-text" id="err-locker">Please choose a locker before continuing.</div>
               </div>
             </div>
 
-            <div class="divider"></div>
+            <div class="co-divider"></div>
 
             <div class="toggle-row">
               <div class="toggle-copy">
                 <h4>Is this order a gift?</h4>
-                <p>Add a message and we’ll save it with the order for your packaging notes.</p>
+                <p>Add a message and we'll save it with the order for your packaging notes.</p>
               </div>
               <button type="button" class="switch" id="giftSwitch" aria-label="Toggle gift order" aria-pressed="false"></button>
             </div>
 
-            <div class="field-grid one" id="giftMessageWrap" style="display:none;margin-top:18px">
+            <div class="field-grid one" id="giftMessageWrap" style="display:none;margin-top:16px;">
               <div class="field">
                 <label for="f-gift-message">Gift message</label>
                 <textarea id="f-gift-message" placeholder="Write a short note for the recipient"></textarea>
               </div>
             </div>
 
-            <div class="field-grid one" style="margin-top:18px">
+            <div class="field-grid one" style="margin-top:16px;">
               <div class="field">
                 <label for="f-notes">Order notes</label>
                 <textarea id="f-notes" placeholder="Optional delivery or order notes"></textarea>
@@ -397,19 +697,16 @@
             </div>
 
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goStep(1)">Back to contact</button>
-              <button class="primary-btn" onclick="goStep(3)">Review order</button>
+              <button class="ghost-btn" onclick="goStep(1)">← Back to contact</button>
+              <button class="primary-btn" onclick="goStep(3)">Review order →</button>
             </div>
           </div>
 
+          <!-- Step 3: Review & Pay -->
           <div class="step" id="step3">
-            <div class="step-head">
-              <div>
-                <div class="step-tag">Step 3</div>
-                <h2 class="step-title">Review and pay</h2>
-                <p class="step-copy">Confirm your details below. We’ll save the order, create your secure payment session, then redirect you to Yoco to complete payment.</p>
-              </div>
-            </div>
+            <div class="step-tag">Step 3</div>
+            <h2 class="step-title">Review and pay</h2>
+            <p class="step-copy">Confirm your details below. We'll save the order, create your secure payment session, then redirect you to Yoco to complete payment.</p>
 
             <div class="review-panel">
               <div class="review-grid">
@@ -422,30 +719,30 @@
                   <p id="doneDelivery">—</p>
                 </div>
               </div>
-
               <div class="done-block">
                 <h4>Order summary</h4>
                 <div class="review-lines" id="reviewItems"></div>
-                <div class="totals" id="reviewTotals">
+                <div class="co-totals" id="reviewTotals">
                   <div class="total-row"><span>Subtotal</span><strong id="rv-subtotal">R0</strong></div>
                   <div class="total-row"><span>Delivery</span><strong id="rv-delivery">R0</strong></div>
                   <div class="total-row grand"><span>Total</span><strong id="rv-total">R0</strong></div>
                 </div>
-                <div class="review-note" id="giftReview" style="display:none"></div>
+                <div class="review-note" id="giftReview" style="display:none;"></div>
               </div>
             </div>
 
             <div class="alert" id="payAlert"></div>
 
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goStep(2)">Back to delivery</button>
+              <button class="ghost-btn" onclick="goStep(2)">← Back to delivery</button>
               <button class="primary-btn" id="payBtn" onclick="handlePay()">Pay <span id="payBtnTotal">R0</span></button>
             </div>
           </div>
         </section>
       </div>
 
-      <aside class="summary-card card" id="summaryCard">
+      <!-- Desktop order summary -->
+      <aside class="co-card co-aside" id="summaryCard">
         <div class="summary-title">
           <div>
             <h2>Your order</h2>
@@ -454,26 +751,28 @@
           <button class="chip-btn" onclick="location.href='shop.html'">Edit cart</button>
         </div>
         <div class="summary-rows" id="summaryItems"></div>
-        <div class="totals" id="summaryTotals">
-          <div class="total-row muted"><span>Subtotal</span><strong id="sum-sub">R0</strong></div>
-          <div class="total-row muted"><span>Delivery</span><strong id="sum-del">R0</strong></div>
+        <div class="co-totals" id="summaryTotals">
+          <div class="total-row"><span>Subtotal</span><strong id="sum-sub">R0</strong></div>
+          <div class="total-row"><span>Delivery</span><strong id="sum-del">R0</strong></div>
           <div class="total-row grand"><span>Total</span><strong id="sum-total">R0</strong></div>
         </div>
         <div class="summary-foot">
           <strong>What happens next</strong>
-          Your order is saved first, then you’re redirected to Yoco to finish payment. If payment is cancelled, your cart and checkout details stay available so you can try again.
+          Your order is saved first, then you're redirected to Yoco to finish payment. If payment is cancelled, your cart and checkout details stay available so you can try again.
         </div>
       </aside>
     </div>
 
+    <!-- Mobile sticky summary bar -->
     <div class="mobile-summary-bar" id="mobileSummaryBar">
       <div class="mobile-summary-copy">
         <span id="mobileSummary">0 items</span>
         <strong id="mobileTotals">R0 total</strong>
       </div>
-      <button class="primary-btn" style="padding:12px 18px" onclick="scrollToTop()">View checkout</button>
+      <button class="primary-btn" style="padding:11px 18px;" onclick="scrollToTop()">View checkout</button>
     </div>
-  </div>
+
+  </div><!-- /.co-wrap -->
 
   <div class="toast" id="toast"></div>
 
@@ -756,7 +1055,7 @@
       const giftMsg = document.getElementById('f-gift-message').value.trim();
       if(isGift){
         els.giftReview.style.display = 'block';
-        els.giftReview.innerHTML = `<strong style="display:block;color:#fff;margin-bottom:6px">Gift order</strong>${giftMsg ? esc(giftMsg) : 'Gift order with no message added.'}`;
+        els.giftReview.innerHTML = `<strong style="display:block;color:var(--accent-strong);margin-bottom:6px">Gift order</strong>${giftMsg ? esc(giftMsg) : 'Gift order with no message added.'}`;
       } else {
         els.giftReview.style.display = 'none';
         els.giftReview.textContent = '';
@@ -768,7 +1067,7 @@
       els.deliveryWindow.textContent = range;
       if(selectedDelivery === 'door'){
         els.deliveryMetaTitle.textContent = 'Door delivery selected';
-        els.deliveryMetaText.textContent = 'Enter your address and we’ll estimate a delivery window based on business days and local holidays.';
+        els.deliveryMetaText.textContent = 'Enter your address and we'll estimate a delivery window based on business days and local holidays.';
       } else {
         els.deliveryMetaTitle.textContent = 'Pudo locker selected';
         els.deliveryMetaText.textContent = `Search nearby lockers. Your order currently maps to an estimated ${boxSize} locker box.`;
@@ -821,7 +1120,7 @@
               </div>
             </div>
             <div class="locker-cta">
-              <span class="hint">Pickup window: estimated ${getDeliveryWindow()}</span>
+              <span class="hint" style="font-size:.8rem;color:var(--text-muted);">Pickup window: estimated ${getDeliveryWindow()}</span>
               <button type="button" class="mini-btn" onclick='selectLocker(${JSON.stringify({
                 id: locker.id || locker.locker_id || '',
                 name: locker.name || locker.title || 'Pudo Locker',
@@ -866,7 +1165,7 @@
         const filtered = results.some(r => r.size_verified === true);
         renderLockerResults(results.slice(0, 10), filtered);
       } catch (err) {
-        els.lockerResults.innerHTML = `<div class="locker-size-notice">We couldn’t load nearby lockers right now. Please try again in a moment.</div>`;
+        els.lockerResults.innerHTML = `<div class="locker-size-notice">We couldn't load nearby lockers right now. Please try again in a moment.</div>`;
       }
     }
 
@@ -989,7 +1288,7 @@
         const order = Array.isArray(orderData) ? orderData[0] : orderData;
         if(!order?.id) throw new Error('Order was created but no order ID was returned');
 
-        showLoading('Redirecting to payment…', 'We’re preparing your Yoco payment page.');
+        showLoading('Redirecting to payment…', 'We\'re preparing your Yoco payment page.');
         const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
           method: 'POST',
           headers: {
@@ -1035,6 +1334,7 @@
       if(!cart.length){
         els.emptyState.classList.add('show');
         els.checkoutLayout.style.display = 'none';
+        document.getElementById('heroCard').style.display = 'none';
         document.getElementById('summaryCard').style.display = 'none';
         document.getElementById('mobileSummaryBar').style.display = 'none';
         return;
