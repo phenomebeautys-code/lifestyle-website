@@ -159,6 +159,9 @@
     .co-totals     { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--glass-border); display: grid; gap: 8px; }
     .total-row     { display: flex; justify-content: space-between; gap: 10px; color: var(--text-soft); font-size: .9rem; font-family: var(--font-body); }
     .total-row.grand { font-size: 1.05rem; font-weight: 800; color: var(--accent-strong); padding-top: 6px; }
+    /* Alias so JS-rendered co-total-row gets same styling as total-row */
+    .co-total-row  { display: flex; justify-content: space-between; gap: 10px; color: var(--text-soft); font-size: .9rem; font-family: var(--font-body); }
+    .co-total-row.grand { font-size: 1.05rem; font-weight: 800; color: var(--accent-strong); padding-top: 6px; }
     .secure-badge { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); background: rgba(255,255,255,0.04); font-size: .82rem; color: var(--text-muted); font-family: var(--font-body); }
     .secure-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 5px rgba(52,211,153,0.12); flex-shrink: 0; }
     .review-panel { display: grid; gap: 14px; }
@@ -527,10 +530,10 @@
         <div class="summary-title">
           <div>
             <h2>Your order</h2>
-            <p id="itemCountLabel">0 items in your cart</p>
+            <p class="co-cart-count" id="itemCountLabel">0 items in your cart</p>
             <p id="done-contact-val-2" style="font-size:.8rem;color:var(--text-muted);margin-top:2px;"></p>
           </div>
-          <button class="mini-btn" onclick="window.location.href='index.html'">Edit cart</button>
+          <button class="mini-btn" onclick="window.location.href='shop.html'">Continue shopping</button>
         </div>
         <div class="summary-rows" id="summaryItems"></div>
         <div class="co-totals" id="summaryTotals"></div>
