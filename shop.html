@@ -697,6 +697,19 @@
       return null;
     }
 
+    function getVariantImage(p, variantName) {
+      // Look up the variant's index and return image_urls[variantIndex].
+      // Falls back to image_urls[0] if that slot is empty or absent.
+      if (variantName && Array.isArray(p.image_urls) && p.image_urls.length) {
+        const variants = normaliseVariants(p.variants);
+        const idx = variants.findIndex(v => v.name === variantName);
+        if (idx !== -1 && p.image_urls[idx]) return p.image_urls[idx];
+        // fallback: first available image
+        return p.image_urls.find(Boolean) || null;
+      }
+      return getFirstImage(p);
+    }
+
     function isProductUnavailable(p) {
       const a = p.availability || 'available';
       return a === 'unavailable' || a === 'coming_soon';
@@ -967,7 +980,9 @@
       const sizeObj   = selSize[pid] || null;
       const sizeName  = sizeObj ? sizeObj.name : null;
       const unitPrice = getActivePrice(pid);
-      const imageUrl  = getFirstImage(p);
+      // Use the variant-specific image when a variant is selected,
+      // otherwise fall back to the first available image.
+      const imageUrl  = getVariantImage(p, variant);
       const key = [pid, variant, sizeName].filter(Boolean).join('::') || pid;
       const ex  = cart.find(i => i.key === key);
       if (ex) { ex.qty++; if (!ex.imageUrl && imageUrl) ex.imageUrl = imageUrl; }
