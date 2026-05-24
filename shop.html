@@ -734,9 +734,9 @@
     }
 
     function getVariantImage(p, variant) {
-      if (!variant || !p.variants) return (p.images?.[0] || p.image || '');
+      if (!variant || !p.variants) return (p.image_urls?.[0] || p.image_url || '');
       const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant);
-      return vObj?.image || p.images?.[0] || p.image || '';
+      return vObj?.image || p.image_urls?.[0] || p.image_url || '';
     }
 
     /* ── Sticky bottom cart bar ── */
@@ -831,7 +831,7 @@
 
       grid.innerHTML = products.map(p => {
         const pid        = p.id;
-        const images     = Array.isArray(p.images) ? p.images.filter(Boolean) : (p.image ? [p.image] : []);
+        const images     = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
         const available  = p.available !== false;
         const unavailableClass = available ? '' : ' is-unavailable';
 
@@ -1005,9 +1005,6 @@
         let next = _dragStartIndex;
         if (dx < -40 && next < slides - 1) next++;
         else if (dx > 40 && next > 0) next--;
-        const fakeDot = { closest: () => el };
-        carouselGoTo({ closest: () => el, ...el.querySelectorAll('.shop-carousel-dot')[next] }, next);
-        // Use direct manipulation
         const track = el.querySelector('.shop-carousel-track');
         if (track) track.style.transform = `translateX(-${next * 100}%)`;
         el.dataset.index = next;
