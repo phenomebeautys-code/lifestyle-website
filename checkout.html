@@ -13,23 +13,17 @@
   <link rel="stylesheet" href="styles.css" />
   <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
   <style>
-    /* ── Checkout-specific overrides on top of styles.css ── */
-
-    /* Re-use the shop's ok/error/warn semantic colours */
     :root {
       --ok:   #34d399;
       --warn: #f59e0b;
       --err:  #ef4444;
     }
 
-    /* ── Page shell ── */
     .co-wrap {
       max-width: 1180px;
       margin: 0 auto;
       padding: 0 20px 60px;
     }
-
-    /* ── Layout grid ── */
     .co-layout {
       display: grid;
       grid-template-columns: minmax(0,1fr) 380px;
@@ -38,8 +32,6 @@
       margin-top: 24px;
     }
     .co-stack { display: grid; gap: 18px; }
-
-    /* ── Glass cards ── */
     .co-card {
       background: linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
       border: 1px solid var(--glass-border);
@@ -54,8 +46,6 @@
       position: sticky;
       top: 100px;
     }
-
-    /* ── Hero section ── */
     .co-hero-eyebrow {
       display: inline-flex;
       align-items: center;
@@ -96,16 +86,8 @@
       background: rgba(255,255,255,0.035);
       border: 1px solid var(--glass-border);
     }
-    .co-promise b {
-      display: block;
-      font-size: .9rem;
-      color: var(--accent-strong);
-      margin-bottom: 4px;
-      font-family: var(--font-body);
-    }
+    .co-promise b { display: block; font-size: .9rem; color: var(--accent-strong); margin-bottom: 4px; font-family: var(--font-body); }
     .co-promise span { font-size: .84rem; color: var(--text-soft); line-height: 1.5; }
-
-    /* ── Step breadcrumb ── */
     .co-steps {
       display: flex;
       align-items: center;
@@ -126,47 +108,18 @@
       font-weight: 600;
       font-family: var(--font-body);
     }
-    .step-pill.active {
-      background: rgba(255,255,255,0.10);
-      color: var(--accent-strong);
-      border-color: rgba(255,255,255,0.28);
-    }
-    .step-pill.done {
-      color: #d5f8e7;
-      border-color: rgba(52,211,153,0.24);
-      background: rgba(52,211,153,0.08);
-    }
-    .step-num {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      display: grid; place-items: center;
-      background: rgba(255,255,255,0.07);
-      font-size: .76rem;
-    }
+    .step-pill.active { background: rgba(255,255,255,0.10); color: var(--accent-strong); border-color: rgba(255,255,255,0.28); }
+    .step-pill.done   { color: #d5f8e7; border-color: rgba(52,211,153,0.24); background: rgba(52,211,153,0.08); }
+    .step-num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.07); font-size: .76rem; }
     .step-pill.active .step-num { background: rgba(255,255,255,0.15); }
-    .step-pill.done  .step-num { background: rgba(52,211,153,0.18); }
+    .step-pill.done  .step-num  { background: rgba(52,211,153,0.18); }
     .step-arrow { opacity: .35; font-size: .9rem; color: var(--text-muted); }
-
-    /* ── Step panels ── */
     .step { display: none; animation: co-fade .26s ease; }
     .step.active { display: block; }
     @keyframes co-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-
-    .step-tag {
-      font-size: .75rem; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
-      color: var(--accent);
-      font-family: var(--font-body);
-    }
-    .step-title {
-      margin: 6px 0 0;
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      color: var(--accent-strong);
-    }
+    .step-tag { font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-family: var(--font-body); }
+    .step-title { margin: 6px 0 0; font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong); }
     .step-copy { margin: 8px 0 22px; color: var(--text-soft); line-height: 1.65; font-size: .9rem; }
-
-    /* ── Form fields ── */
     .field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
     .field-grid.one { grid-template-columns: 1fr; }
     .field-grid.contact { grid-template-columns: 1.2fr .8fr; }
@@ -197,8 +150,6 @@
     }
     .error-text { font-size: .78rem; color: #ffb4b4; display: none; }
     .error-text.show { display: block; }
-
-    /* ── Delivery cards ── */
     .delivery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-bottom: 18px; }
     .delivery-card {
       padding: 18px; border-radius: 20px;
@@ -209,141 +160,39 @@
       text-align: left;
     }
     .delivery-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
-    .delivery-card.selected {
-      border-color: rgba(255,255,255,0.38);
-      background: linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04));
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.10) inset;
-    }
+    .delivery-card.selected { border-color: rgba(255,255,255,0.38); background: linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04)); box-shadow: 0 0 0 1px rgba(255,255,255,0.10) inset; }
     .delivery-card h3 { margin: 0 0 6px; font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); font-weight: 700; }
     .delivery-card p  { margin: 0; color: var(--text-soft); font-size: .86rem; line-height: 1.55; }
-    .delivery-price {
-      display: inline-flex; align-items: center;
-      margin-top: 12px; padding: 7px 12px;
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--glass-border);
-      font-weight: 700; font-size: .84rem;
-      color: var(--accent);
-    }
-    .delivery-chip {
-      position: absolute; top: 14px; right: 14px;
-      width: 12px; height: 12px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.3);
-    }
+    .delivery-price { display: inline-flex; align-items: center; margin-top: 12px; padding: 7px 12px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); font-weight: 700; font-size: .84rem; color: var(--accent); }
+    .delivery-chip { position: absolute; top: 14px; right: 14px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
     .delivery-card.selected .delivery-chip { border-color: var(--accent-strong); background: var(--accent-strong); }
-
-    .delivery-meta {
-      margin-top: 14px; padding: 16px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--glass-border);
-      display: flex; justify-content: space-between;
-      gap: 14px; align-items: flex-start; flex-wrap: wrap;
-    }
+    .delivery-meta { margin-top: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
     .delivery-meta strong { display: block; margin-bottom: 5px; color: var(--accent-strong); font-family: var(--font-body); }
     .delivery-meta p { margin: 0; color: var(--text-soft); font-size: .88rem; line-height: 1.55; }
-    .delivery-window {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 13px; border-radius: var(--radius-pill);
-      background: rgba(52,211,153,0.08);
-      border: 1px solid rgba(52,211,153,0.18);
-      color: #d8fff0; font-size: .8rem; font-weight: 700;
-      white-space: nowrap;
-      font-family: var(--font-body);
-    }
-
+    .delivery-window { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: var(--radius-pill); background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.18); color: #d8fff0; font-size: .8rem; font-weight: 700; white-space: nowrap; font-family: var(--font-body); }
     .co-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
-
-    /* ── Gift toggle ── */
-    .toggle-row {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 14px; padding: 16px;
-      border-radius: 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--glass-border);
-    }
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); }
     .toggle-copy h4 { margin: 0 0 3px; font-size: .95rem; color: var(--accent-strong); font-family: var(--font-body); }
     .toggle-copy p  { margin: 0; color: var(--text-soft); font-size: .84rem; line-height: 1.5; }
-    .switch {
-      position: relative; width: 56px; height: 32px;
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.10);
-      border: 1px solid var(--glass-border);
-      padding: 0; cursor: pointer;
-      transition: background .18s ease;
-      flex-shrink: 0;
-    }
-    .switch::after {
-      content: ""; position: absolute;
-      top: 3px; left: 3px;
-      width: 24px; height: 24px; border-radius: 50%;
-      background: #fff; transition: transform .18s ease;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
+    .switch { position: relative; width: 56px; height: 32px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.10); border: 1px solid var(--glass-border); padding: 0; cursor: pointer; transition: background .18s ease; flex-shrink: 0; }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .switch.on { background: var(--accent); border-color: var(--accent); }
     .switch.on::after { transform: translateX(24px); }
-
-    /* ── Nav actions ── */
-    .nav-actions {
-      display: flex; justify-content: space-between;
-      gap: 14px; margin-top: 26px;
-      align-items: center; flex-wrap: wrap;
-    }
-    .ghost-btn {
-      appearance: none; border: 1px solid var(--glass-border);
-      border-radius: var(--radius-pill);
-      padding: 13px 22px;
-      font-weight: 700; font-family: var(--font-body);
-      letter-spacing: -.01em; cursor: pointer;
-      background: rgba(255,255,255,0.05);
-      color: var(--text);
-      transition: background .18s ease, transform .18s ease;
-    }
+    .nav-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 26px; align-items: center; flex-wrap: wrap; }
+    .ghost-btn { appearance: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: 13px 22px; font-weight: 700; font-family: var(--font-body); letter-spacing: -.01em; cursor: pointer; background: rgba(255,255,255,0.05); color: var(--text); transition: background .18s ease, transform .18s ease; }
     .ghost-btn:hover { background: rgba(255,255,255,0.10); transform: translateY(-1px); }
-    .primary-btn {
-      appearance: none; border: none;
-      border-radius: var(--radius-pill);
-      padding: 13px 26px;
-      font-weight: 700; font-family: var(--font-body);
-      letter-spacing: -.01em; cursor: pointer;
-      background: var(--accent-strong);
-      color: #111;
-      box-shadow: 0 8px 24px rgba(255,255,255,0.10);
-      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
-    }
+    .primary-btn { appearance: none; border: none; border-radius: var(--radius-pill); padding: 13px 26px; font-weight: 700; font-family: var(--font-body); letter-spacing: -.01em; cursor: pointer; background: var(--accent-strong); color: #111; box-shadow: 0 8px 24px rgba(255,255,255,0.10); transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease; }
     .primary-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(255,255,255,0.14); }
     .primary-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
-    .mini-btn {
-      appearance: none; border: 1px solid var(--glass-border);
-      border-radius: var(--radius-pill);
-      padding: 9px 14px; font-size: .84rem;
-      font-family: var(--font-body); font-weight: 600;
-      background: rgba(255,255,255,0.05); color: var(--text); cursor: pointer;
-      transition: background .18s ease;
-    }
+    .mini-btn { appearance: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: 9px 14px; font-size: .84rem; font-family: var(--font-body); font-weight: 600; background: rgba(255,255,255,0.05); color: var(--text); cursor: pointer; transition: background .18s ease; }
     .mini-btn:hover { background: rgba(255,255,255,0.10); }
-    .chip-btn {
-      appearance: none; border: 1px solid var(--glass-border);
-      border-radius: var(--radius-pill);
-      padding: 9px 13px; font-size: .8rem;
-      font-family: var(--font-body); font-weight: 600;
-      background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer;
-      transition: background .18s ease;
-    }
+    .chip-btn { appearance: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: 9px 13px; font-size: .8rem; font-family: var(--font-body); font-weight: 600; background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; transition: background .18s ease; }
     .chip-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-
-    /* ── Order summary aside ── */
     .summary-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
     .summary-title h2 { margin: 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--accent-strong); }
     .summary-title p  { margin: 5px 0 0; color: var(--text-soft); font-size: .84rem; }
     .summary-rows { display: grid; gap: 12px; }
-    .cart-item {
-      display: grid; grid-template-columns: 60px 1fr auto;
-      gap: 12px; align-items: center;
-      padding: 12px; border-radius: 14px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--glass-border);
-    }
+    .cart-item { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); }
     .cart-item img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
     .cart-item h4  { margin: 0 0 4px; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); }
     .cart-meta     { font-size: .76rem; color: var(--text-muted); line-height: 1.45; }
@@ -351,34 +200,10 @@
     .co-totals     { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--glass-border); display: grid; gap: 8px; }
     .total-row     { display: flex; justify-content: space-between; gap: 10px; color: var(--text-soft); font-size: .9rem; font-family: var(--font-body); }
     .total-row.grand { font-size: 1.05rem; font-weight: 800; color: var(--accent-strong); padding-top: 6px; }
-    .summary-foot {
-      margin-top: 16px; padding: 14px;
-      border-radius: 14px;
-      background: rgba(52,211,153,0.08);
-      border: 1px solid rgba(52,211,153,0.16);
-      color: #d8fff0; font-size: .84rem; line-height: 1.6;
-      font-family: var(--font-body);
-    }
+    .summary-foot { margin-top: 16px; padding: 14px; border-radius: 14px; background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.16); color: #d8fff0; font-size: .84rem; line-height: 1.6; font-family: var(--font-body); }
     .summary-foot strong { display: block; margin-bottom: 5px; color: #fff; }
-
-    /* ── Secure badge ── */
-    .secure-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 9px 14px;
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-pill);
-      background: rgba(255,255,255,0.04);
-      font-size: .82rem; color: var(--text-muted);
-      font-family: var(--font-body);
-    }
-    .secure-dot {
-      width: 9px; height: 9px; border-radius: 50%;
-      background: var(--ok);
-      box-shadow: 0 0 0 5px rgba(52,211,153,0.12);
-      flex-shrink: 0;
-    }
-
-    /* ── Review panel ── */
+    .secure-badge { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); background: rgba(255,255,255,0.04); font-size: .82rem; color: var(--text-muted); font-family: var(--font-body); }
+    .secure-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 5px rgba(52,211,153,0.12); flex-shrink: 0; }
     .review-panel { display: grid; gap: 14px; }
     .review-grid  { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
     .done-block   { padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); }
@@ -387,19 +212,13 @@
     .review-lines { display: grid; gap: 9px; margin-top: 12px; }
     .review-line  { display: flex; justify-content: space-between; gap: 12px; font-size: .88rem; color: var(--text); font-family: var(--font-body); }
     .review-note  { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); font-size: .86rem; color: var(--text-soft); line-height: 1.6; }
-
-    /* ── Alerts ── */
     .alert { display: none; margin-top: 16px; padding: 13px 16px; border-radius: 14px; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #ffd7d7; font-size: .86rem; line-height: 1.55; font-family: var(--font-body); }
     .alert.show { display: block; }
     .alert.warn { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.24); color: #ffe0ad; }
-
-    /* ── Empty state ── */
     .empty-state { display: none; padding: 42px; border-radius: 28px; border: 1px dashed var(--glass-border); background: rgba(255,255,255,0.02); text-align: center; }
     .empty-state.show { display: block; }
     .empty-state h2 { margin: 14px 0 8px; font-family: var(--font-display); font-size: 1.8rem; color: var(--accent-strong); }
     .empty-state p  { margin: 0 auto; color: var(--text-soft); max-width: 42ch; line-height: 1.65; }
-
-    /* ── Locker UI ── */
     .search-wrap { display: grid; gap: 12px; }
     .search-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .locker-results { display: grid; gap: 12px; margin-top: 14px; }
@@ -416,68 +235,58 @@
     .locker-size-notice { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); font-size: .83rem; color: var(--text); line-height: 1.55; font-family: var(--font-body); }
     .locker-size-notice--filtered { border-color: rgba(52,211,153,0.22); background: rgba(52,211,153,0.08); color: #d8fff0; }
     .locker-item-size-warn { margin-top: 5px; font-size: .77rem; color: #ffd7a6; display: flex; align-items: center; gap: 5px; }
-
-    /* ── Mobile summary bar ── */
+    /* Box size loading state */
+    .box-size-loading { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--text-muted); font-family: var(--font-body); }
+    .box-size-ring { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); border-top-color: var(--accent); animation: spin .7s linear infinite; display: inline-block; vertical-align: -3px; }
+    /* Exit-intent nudge */
+    .exit-nudge {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-100%);
+      z-index: 999; background: rgba(10,10,14,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border); border-top: none;
+      border-radius: 0 0 20px 20px; padding: 16px 24px;
+      box-shadow: var(--shadow-lg);
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      transition: transform .32s cubic-bezier(.4,0,.2,1);
+      font-family: var(--font-body);
+    }
+    .exit-nudge.show { transform: translateX(-50%) translateY(0); }
+    .exit-nudge p { margin: 0; color: var(--text); font-size: .9rem; }
+    .exit-nudge strong { color: var(--accent-strong); }
+    .exit-nudge-actions { display: flex; gap: 8px; }
     .mobile-summary-bar { display: none; }
-
-    /* ── Toast ── */
     .toast {
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 18px; z-index: 50;
-      background: rgba(12,12,18,0.92);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border: 1px solid var(--glass-border);
-      color: var(--text); padding: 11px 16px;
-      border-radius: var(--radius-pill);
-      box-shadow: var(--shadow-lg);
+      background: rgba(12,12,18,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border); color: var(--text);
+      padding: 11px 16px; border-radius: var(--radius-pill); box-shadow: var(--shadow-lg);
       font-size: .84rem; font-family: var(--font-body);
       opacity: 0; pointer-events: none;
       transition: opacity .22s ease, transform .22s ease;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
-
-    /* ── Loading overlay ── */
-    .loading {
-      position: fixed; inset: 0;
-      background: rgba(4,4,6,0.75);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      display: none; align-items: center; justify-content: center;
-      z-index: 80; padding: 24px;
-    }
+    .loading { position: fixed; inset: 0; background: rgba(4,4,6,0.75); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: none; align-items: center; justify-content: center; z-index: 80; padding: 24px; }
     .loading.show { display: flex; }
-    .loading-card {
-      width: min(100%, 400px); padding: 28px;
-      border-radius: 28px;
-      background: linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-lg);
-      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-      text-align: center;
-    }
-    .loading-ring {
-      width: 52px; height: 52px; border-radius: 50%;
-      margin: 0 auto 18px;
-      border: 3px solid rgba(255,255,255,0.08);
-      border-top-color: var(--accent-strong);
-      animation: spin .85s linear infinite;
-    }
+    .loading-card { width: min(100%, 400px); padding: 28px; border-radius: 28px; background: linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04)); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); text-align: center; }
+    .loading-ring { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 18px; border: 3px solid rgba(255,255,255,0.08); border-top-color: var(--accent-strong); animation: spin .85s linear infinite; }
     .loading-card h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.3rem; color: var(--accent-strong); }
     .loading-card p  { margin: 0; color: var(--text-soft); line-height: 1.6; font-size: .9rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── Responsive ── */
+    /* Google Places autocomplete dropdown dark theme override */
+    .pac-container {
+      background: rgba(10,10,14,0.97); border: 1px solid var(--glass-border);
+      border-radius: 14px; margin-top: 4px; box-shadow: var(--shadow-lg);
+      font-family: var(--font-body); overflow: hidden;
+    }
+    .pac-item { padding: 10px 14px; color: var(--text); border-top: 1px solid var(--glass-border); cursor: pointer; font-size: .88rem; }
+    .pac-item:hover, .pac-item-selected { background: rgba(255,255,255,0.07); }
+    .pac-item-query { color: var(--accent-strong); font-weight: 600; }
+    .pac-icon { display: none; }
+    .hdpi.pac-logo::after, .pac-logo::after { display: none; }
     @media (max-width: 1080px) {
       .co-layout { grid-template-columns: 1fr; }
       .co-aside  { position: relative; top: auto; display: none; }
-      .mobile-summary-bar {
-        display: flex; position: sticky; bottom: 12px; z-index: 30;
-        margin-top: 16px; align-items: center; justify-content: space-between;
-        gap: 14px; padding: 13px 16px; border-radius: 20px;
-        background: rgba(4,4,6,0.88);
-        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-        border: 1px solid var(--glass-border);
-        box-shadow: var(--shadow-lg);
-      }
+      .mobile-summary-bar { display: flex; position: sticky; bottom: 12px; z-index: 30; margin-top: 16px; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 16px; border-radius: 20px; background: rgba(4,4,6,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); }
       .mobile-summary-copy { display: grid; gap: 2px; }
       .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
       .mobile-summary-copy strong { font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); }
@@ -489,36 +298,47 @@
       .nav-actions { flex-direction: column-reverse; align-items: stretch; }
       .ghost-btn,.primary-btn { width: 100%; text-align: center; }
       .secure-badge { width: 100%; justify-content: center; margin-top: 8px; }
+      .exit-nudge { width: calc(100% - 32px); border-radius: 0 0 16px 16px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- shared background from styles.css -->
   <div id="bg-image"></div>
   <div id="bg-overlay"></div>
 
-  <!-- shared pill navbar from styles.css -->
+  <!-- Navbar — matches styles.css + script.js structure exactly -->
   <nav class="navbar" id="navbar">
-    <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
+    <div class="navbar-inner">
+      <a href="index.html" class="logo-wrap" aria-label="PhenomeBeauty home">
         <img src="assets/phenome-logo.png" alt="PhenomeBeauty" height="36" />
       </a>
-      <div class="nav-links">
-        <a href="index.html">Home</a>
-        <a href="shop.html">Shop</a>
-        <a href="index.html#about">About</a>
-        <a href="index.html#contact">Contact</a>
-      </div>
+      <ul class="nav-menu" id="navMenu" role="list">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
       <div class="secure-badge">
         <span class="secure-dot"></span> Secure checkout via Yoco
       </div>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
 
+  <!-- Exit-intent nudge (Step 3 only) -->
+  <div class="exit-nudge" id="exitNudge" role="alert" aria-live="polite">
+    <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet — go back and tap <strong>Pay</strong> to complete it.</p>
+    <div class="exit-nudge-actions">
+      <button class="primary-btn" style="padding:9px 16px;font-size:.84rem;" onclick="dismissExitNudge(true)">Complete payment</button>
+      <button class="ghost-btn" style="padding:9px 14px;font-size:.84rem;" onclick="dismissExitNudge(false)">Dismiss</button>
+    </div>
+  </div>
+
   <div class="co-wrap">
 
-    <!-- ── Hero ── -->
     <section class="co-card" id="heroCard" style="margin-top: 24px;">
       <span class="co-hero-eyebrow">Final step</span>
       <h1 class="co-hero-title">Complete your order.</h1>
@@ -539,7 +359,6 @@
       </div>
     </section>
 
-    <!-- ── Empty state ── -->
     <div class="co-card empty-state" id="emptyState" style="margin-top:18px;">
       <h2>Your cart is empty</h2>
       <p>Add a few products before checking out. Once you have something you love, come back here and we'll guide you through delivery and payment.</p>
@@ -548,7 +367,6 @@
       </div>
     </div>
 
-    <!-- ── Main checkout layout ── -->
     <div class="co-layout" id="checkoutLayout">
       <div class="co-stack">
         <section class="co-card">
@@ -559,7 +377,6 @@
             <div class="step-tag">Step 1</div>
             <h2 class="step-title">Contact details</h2>
             <p class="step-copy">We'll use these for your order confirmation, delivery updates and payment notifications.</p>
-
             <div class="field-grid contact">
               <div class="field" id="field-name">
                 <label for="f-name">Full name</label>
@@ -572,7 +389,6 @@
                 <div class="error-text" id="err-phone">Please enter a valid phone number.</div>
               </div>
             </div>
-
             <div class="field-grid one" style="margin-top:16px;">
               <div class="field" id="field-email">
                 <label for="f-email">Email address</label>
@@ -580,7 +396,6 @@
                 <div class="error-text" id="err-email">Please enter a valid email address.</div>
               </div>
             </div>
-
             <div class="nav-actions">
               <a class="ghost-btn" href="shop.html">← Return to cart</a>
               <button class="primary-btn" onclick="goStep(2)">Continue to delivery →</button>
@@ -592,7 +407,6 @@
             <div class="step-tag">Step 2</div>
             <h2 class="step-title">Delivery method</h2>
             <p class="step-copy">Choose how you'd like to receive your order. Locker options are filtered against the box size your order requires.</p>
-
             <div class="delivery-grid">
               <button type="button" class="delivery-card selected" id="delivery-door" onclick="selectDelivery('door')">
                 <span class="delivery-chip"></span>
@@ -607,7 +421,6 @@
                 <span class="delivery-price">R59</span>
               </button>
             </div>
-
             <div class="delivery-meta">
               <div>
                 <strong id="deliveryMetaTitle">Door delivery selected</strong>
@@ -656,7 +469,7 @@
                   <div class="field">
                     <label for="lockerQuery">Search for a locker</label>
                     <input id="lockerQuery" type="text" placeholder="Enter an address, suburb or landmark" />
-                    <span class="hint">We'll find the closest lockers and try to match them to the required compartment size for your order.</span>
+                    <span class="hint">We'll find the closest lockers and filter them against the compartment size required for your order.</span>
                   </div>
                 </div>
                 <div class="search-actions">
@@ -673,7 +486,6 @@
             </div>
 
             <div class="co-divider"></div>
-
             <div class="toggle-row">
               <div class="toggle-copy">
                 <h4>Is this order a gift?</h4>
@@ -681,21 +493,18 @@
               </div>
               <button type="button" class="switch" id="giftSwitch" aria-label="Toggle gift order" aria-pressed="false"></button>
             </div>
-
             <div class="field-grid one" id="giftMessageWrap" style="display:none;margin-top:16px;">
               <div class="field">
                 <label for="f-gift-message">Gift message</label>
                 <textarea id="f-gift-message" placeholder="Write a short note for the recipient"></textarea>
               </div>
             </div>
-
             <div class="field-grid one" style="margin-top:16px;">
               <div class="field">
                 <label for="f-notes">Order notes</label>
                 <textarea id="f-notes" placeholder="Optional delivery or order notes"></textarea>
               </div>
             </div>
-
             <div class="nav-actions">
               <button class="ghost-btn" onclick="goStep(1)">← Back to contact</button>
               <button class="primary-btn" onclick="goStep(3)">Review order →</button>
@@ -707,7 +516,6 @@
             <div class="step-tag">Step 3</div>
             <h2 class="step-title">Review and pay</h2>
             <p class="step-copy">Confirm your details below. We'll save the order, create your secure payment session, then redirect you to Yoco to complete payment.</p>
-
             <div class="review-panel">
               <div class="review-grid">
                 <div class="done-block">
@@ -730,9 +538,7 @@
                 <div class="review-note" id="giftReview" style="display:none;"></div>
               </div>
             </div>
-
             <div class="alert" id="payAlert"></div>
-
             <div class="nav-actions">
               <button class="ghost-btn" onclick="goStep(2)">← Back to delivery</button>
               <button class="primary-btn" id="payBtn" onclick="handlePay()">Pay <span id="payBtnTotal">R0</span></button>
@@ -772,7 +578,7 @@
       <button class="primary-btn" style="padding:11px 18px;" onclick="scrollToTop()">View checkout</button>
     </div>
 
-  </div><!-- /.co-wrap -->
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -784,64 +590,72 @@
     </div>
   </div>
 
+  <!-- script.js: iOS device class, navbar scroll depth, mobile menu, scroll reveal -->
+  <script src="script.js" defer></script>
+
   <script>
-    const SUPABASE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+    /* ─── Constants ─────────────────────────────────────── */
+    const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5ODQ4NzAsImV4cCI6MjA3MTU2MDg3MH0.rk0sdjGexVOmWozJbH6dk4hVw2Eeb7p1wJzPd8rh7qQ';
-    const ORIGIN = window.location.origin;
-    const CART_KEY = 'phenome_cart';
-    const DRAFT_KEY = 'phenome_checkout_draft';
-    const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes','f-gift-message','lockerQuery'];
+    const ORIGIN        = window.location.origin;
+    const CART_KEY      = 'phenome_cart';
+    const DRAFT_KEY     = 'phenome_checkout_draft';
+    const DRAFT_FIELDS  = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes','f-gift-message','lockerQuery'];
     const DELIVERY_FEES = { locker: 59, door: 99 };
-    const STEP_CONFIG = [
-      { id: 1, label: 'Contact' },
-      { id: 2, label: 'Delivery' },
-      { id: 3, label: 'Review' }
-    ];
+    const STEP_CONFIG   = [{id:1,label:'Contact'},{id:2,label:'Delivery'},{id:3,label:'Review'}];
 
     const SA_HOLIDAYS = new Set([
       '2026-01-01','2026-03-21','2026-04-03','2026-04-06','2026-04-27','2026-05-01',
       '2026-06-16','2026-08-09','2026-09-24','2026-12-16','2026-12-25','2026-12-26'
     ]);
 
+    /* ─── Element refs ─────────────────────────────────── */
     const els = {
-      stepsBar: document.getElementById('stepsBar'),
-      emptyState: document.getElementById('emptyState'),
-      checkoutLayout: document.getElementById('checkoutLayout'),
-      summaryCard: document.getElementById('summaryCard'),
-      toast: document.getElementById('toast'),
-      loading: document.getElementById('coLoading'),
-      loadingTitle: document.getElementById('loadingTitle'),
-      loadingText: document.getElementById('loadingText'),
-      payAlert: document.getElementById('payAlert'),
-      deliveryWindow: document.getElementById('deliveryWindow'),
+      stepsBar:          document.getElementById('stepsBar'),
+      emptyState:        document.getElementById('emptyState'),
+      checkoutLayout:    document.getElementById('checkoutLayout'),
+      summaryCard:       document.getElementById('summaryCard'),
+      toast:             document.getElementById('toast'),
+      loading:           document.getElementById('coLoading'),
+      loadingTitle:      document.getElementById('loadingTitle'),
+      loadingText:       document.getElementById('loadingText'),
+      payAlert:          document.getElementById('payAlert'),
+      deliveryWindow:    document.getElementById('deliveryWindow'),
       deliveryMetaTitle: document.getElementById('deliveryMetaTitle'),
-      deliveryMetaText: document.getElementById('deliveryMetaText'),
-      giftSwitch: document.getElementById('giftSwitch'),
-      giftMessageWrap: document.getElementById('giftMessageWrap'),
-      lockerResults: document.getElementById('lockerResults'),
-      selectedLockerCard: document.getElementById('selectedLockerCard'),
-      lockerSizeNotice: document.getElementById('lockerSizeNotice'),
-      doneContact: document.getElementById('doneContact'),
-      doneDelivery: document.getElementById('doneDelivery'),
-      reviewItems: document.getElementById('reviewItems'),
-      giftReview: document.getElementById('giftReview'),
-      summaryItems: document.getElementById('summaryItems'),
-      summaryMeta: document.getElementById('summaryMeta'),
-      payBtnTotal: document.getElementById('payBtnTotal'),
-      mobileSummary: document.getElementById('mobileSummary'),
-      mobileTotals: document.getElementById('mobileTotals')
+      deliveryMetaText:  document.getElementById('deliveryMetaText'),
+      giftSwitch:        document.getElementById('giftSwitch'),
+      giftMessageWrap:   document.getElementById('giftMessageWrap'),
+      lockerResults:     document.getElementById('lockerResults'),
+      selectedLockerCard:document.getElementById('selectedLockerCard'),
+      lockerSizeNotice:  document.getElementById('lockerSizeNotice'),
+      doneContact:       document.getElementById('doneContact'),
+      doneDelivery:      document.getElementById('doneDelivery'),
+      reviewItems:       document.getElementById('reviewItems'),
+      giftReview:        document.getElementById('giftReview'),
+      summaryItems:      document.getElementById('summaryItems'),
+      summaryMeta:       document.getElementById('summaryMeta'),
+      payBtnTotal:       document.getElementById('payBtnTotal'),
+      mobileSummary:     document.getElementById('mobileSummary'),
+      mobileTotals:      document.getElementById('mobileTotals'),
+      exitNudge:         document.getElementById('exitNudge')
     };
 
-    let cart = [];
-    let currentStep = 1;
-    let selectedDelivery = 'door';
-    let isGift = false;
-    let selectedLocker = null;
-    let lockerSearchResults = [];
-    let boxSize = 'XS';
+    /* ─── State ─────────────────────────────────────────── */
+    let cart              = [];
+    let currentStep       = 1;
+    let selectedDelivery  = 'door';
+    let isGift            = false;
+    let selectedLocker    = null;
+    let boxSize           = null;   // null until fetched from Supabase
+    let boxSizeLoading    = false;
+    let exitNudgeDismissed = false;
+    let placesStreet      = null;
+    let placesLocker      = null;
 
-    function fmtCurrency(value){ return `R${Number(value || 0).toFixed(0)}`; }
-    function esc(str){ return String(str ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); }
+    /* ─── Helpers ──────────────────────────────────────── */
+    function fmtCurrency(v){ return `R${Number(v||0).toFixed(0)}`; }
+    function esc(str){ return String(str??'').replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+
     function showToast(msg){
       els.toast.textContent = msg;
       els.toast.classList.add('show');
@@ -850,33 +664,36 @@
     }
     function showLoading(title, text){
       els.loadingTitle.textContent = title;
-      els.loadingText.textContent = text;
+      els.loadingText.textContent  = text;
       els.loading.classList.add('show');
     }
     function hideLoading(){ els.loading.classList.remove('show'); }
-    function scrollToTop(){ window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function scrollToTop(){ window.scrollTo({ top:0, behavior:'smooth' }); }
 
+    /* ─── Steps ─────────────────────────────────────────── */
     function renderSteps(){
-      els.stepsBar.innerHTML = STEP_CONFIG.map((step, idx) => {
+      els.stepsBar.innerHTML = STEP_CONFIG.map((step,idx) => {
         const state = currentStep === step.id ? 'active' : currentStep > step.id ? 'done' : '';
         return `
           <div class="step-pill ${state}">
             <span class="step-num">${currentStep > step.id ? '✓' : step.id}</span>
             <span>${step.label}</span>
           </div>
-          ${idx < STEP_CONFIG.length - 1 ? '<span class="step-arrow">→</span>' : ''}
+          ${idx < STEP_CONFIG.length-1 ? '<span class="step-arrow">→</span>' : ''}
         `;
       }).join('');
     }
-
     function setStep(id){
       currentStep = id;
-      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
       document.getElementById(`step${id}`).classList.add('active');
       renderSteps();
       scrollToTop();
+      // Exit nudge only listens while on Step 3
+      exitNudgeDismissed = false;
     }
 
+    /* ─── Validation ────────────────────────────────────── */
     function clearError(fieldId, errId){
       document.getElementById(fieldId)?.classList.remove('error');
       document.getElementById(errId)?.classList.remove('show');
@@ -885,43 +702,32 @@
       document.getElementById(fieldId)?.classList.add('error');
       document.getElementById(errId)?.classList.add('show');
     }
-
     function validateStep1(){
       let ok = true;
-      const name = document.getElementById('f-name').value.trim();
+      const name  = document.getElementById('f-name').value.trim();
       const email = document.getElementById('f-email').value.trim();
       const phone = document.getElementById('f-phone').value.trim();
-      clearError('field-name','err-name');
-      clearError('field-email','err-email');
-      clearError('field-phone','err-phone');
-      if(name.length < 2){ markError('field-name','err-name'); ok = false; }
-      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ markError('field-email','err-email'); ok = false; }
-      if(phone.replace(/\D/g,'').length < 7){ markError('field-phone','err-phone'); ok = false; }
+      clearError('field-name','err-name'); clearError('field-email','err-email'); clearError('field-phone','err-phone');
+      if(name.length < 2)              { markError('field-name','err-name');  ok=false; }
+      if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { markError('field-email','err-email'); ok=false; }
+      if(phone.replace(/\D/g,'').length < 7)         { markError('field-phone','err-phone'); ok=false; }
       return ok;
     }
-
     function validateStep2(){
       let ok = true;
       ['field-street','field-suburb','field-city','field-postal','field-province'].forEach(id => document.getElementById(id)?.classList.remove('error'));
       ['err-street','err-suburb','err-city','err-postal','err-province','err-locker'].forEach(id => document.getElementById(id)?.classList.remove('show'));
-
       if(selectedDelivery === 'door'){
-        const checks = [
-          ['f-street','field-street','err-street'],
-          ['f-suburb','field-suburb','err-suburb'],
-          ['f-city','field-city','err-city'],
-          ['f-postal','field-postal','err-postal'],
-          ['f-province','field-province','err-province']
-        ];
-        checks.forEach(([inputId, fieldId, errId]) => {
-          if(document.getElementById(inputId).value.trim().length < 2){ markError(fieldId, errId); ok = false; }
+        [['f-street','field-street','err-street'],['f-suburb','field-suburb','err-suburb'],
+         ['f-city','field-city','err-city'],['f-postal','field-postal','err-postal'],
+         ['f-province','field-province','err-province']].forEach(([inp,fld,err]) => {
+          if(document.getElementById(inp).value.trim().length < 2){ markError(fld,err); ok=false; }
         });
       } else {
-        if(!selectedLocker){ document.getElementById('err-locker').classList.add('show'); ok = false; }
+        if(!selectedLocker){ document.getElementById('err-locker').classList.add('show'); ok=false; }
       }
       return ok;
     }
-
     function goStep(target){
       if(target === 2 && !validateStep1()) return;
       if(target === 3){
@@ -934,199 +740,244 @@
       saveDraft();
     }
 
-    function calcSub(){ return cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0); }
+    /* ─── Totals ─────────────────────────────────────────── */
+    function calcSub(){ return cart.reduce((s,i) => s + Number(i.price||0)*Number(i.qty||0), 0); }
     function getDeliveryFee(){ return cart.length ? DELIVERY_FEES[selectedDelivery] : 0; }
     function calcTotal(){ return calcSub() + getDeliveryFee(); }
 
-    function isHoliday(date){
-      const iso = date.toISOString().slice(0,10);
-      return SA_HOLIDAYS.has(iso);
-    }
-    function isBusinessDay(date){
-      const day = date.getDay();
-      return day !== 0 && day !== 6 && !isHoliday(date);
-    }
-    function addBusinessDays(date, count){
-      const d = new Date(date);
-      let remaining = count;
-      while(remaining > 0){
-        d.setDate(d.getDate() + 1);
-        if(isBusinessDay(d)) remaining--;
-      }
+    /* ─── Delivery window ───────────────────────────────── */
+    function isHoliday(d){ return SA_HOLIDAYS.has(d.toISOString().slice(0,10)); }
+    function isBusinessDay(d){ const day=d.getDay(); return day!==0&&day!==6&&!isHoliday(d); }
+    function addBusinessDays(date,count){
+      const d=new Date(date); let r=count;
+      while(r>0){ d.setDate(d.getDate()+1); if(isBusinessDay(d)) r--; }
       return d;
     }
     function startBusinessDate(){
-      const now = new Date();
-      const base = new Date(now);
-      const hour = now.getHours();
-      if(hour >= 14 || !isBusinessDay(base)){
-        do { base.setDate(base.getDate() + 1); } while(!isBusinessDay(base));
-      }
+      const now=new Date(); const base=new Date(now); const hr=now.getHours();
+      if(hr>=14||!isBusinessDay(base)){ do{ base.setDate(base.getDate()+1); } while(!isBusinessDay(base)); }
       return base;
     }
-    function formatDateShort(date){
-      return date.toLocaleDateString('en-ZA', { weekday:'short', day:'numeric', month:'short' });
-    }
+    function formatDateShort(d){ return d.toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'}); }
     function getDeliveryWindow(){
-      const base = startBusinessDate();
-      const [minDays, maxDays] = selectedDelivery === 'locker' ? [1,3] : [2,4];
-      const min = addBusinessDays(base, minDays);
-      const max = addBusinessDays(base, maxDays);
-      return `${formatDateShort(min)} - ${formatDateShort(max)}`;
+      const base=startBusinessDate();
+      const [min,max]=selectedDelivery==='locker'?[1,3]:[2,4];
+      return `${formatDateShort(addBusinessDays(base,min))} - ${formatDateShort(addBusinessDays(base,max))}`;
     }
 
-    function normaliseCart(){
-      try {
-        cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-        if(!Array.isArray(cart)) cart = [];
-      } catch(e){ cart = []; }
+    /* ─── Real box size from Supabase ───────────────────── */
+    /*
+     * PUDO box definitions (matches pudo-create-shipment Edge Function exactly).
+     * We mirror the same size table client-side so we can tell the customer
+     * which locker compartment they need BEFORE they pay.
+     */
+    const PUDO_BOXES = [
+      { code:'XS', l:60, w:17, h:8,  maxKg:2  },
+      { code:'S',  l:60, w:41, h:8,  maxKg:5  },
+      { code:'M',  l:60, w:41, h:19, maxKg:10 },
+      { code:'L',  l:60, w:41, h:41, maxKg:15 },
+      { code:'XL', l:60, w:41, h:69, maxKg:20 }
+    ];
+
+    function getPackedDims(product, packFlat){
+      const dims = [Number(product.length_cm||0), Number(product.width_cm||0), Number(product.height_cm||0)];
+      if(packFlat) dims.sort((a,b)=>b-a);
+      return { l:dims[0]||0, w:dims[1]||0, h:dims[2]||0 };
     }
 
-    function inferBoxSizeFromCart(){
-      const totalQty = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-      const subtotal = calcSub();
-      if(totalQty <= 1 && subtotal < 500) return 'XS';
-      if(totalQty <= 2 && subtotal < 900) return 'S';
-      if(totalQty <= 4) return 'M';
-      if(totalQty <= 6) return 'L';
+    function fitsInBox(units, box){
+      // Sort units tallest first, stack rows fitting box width, count total height used
+      const sorted = [...units].sort((a,b) => b.h - a.h);
+      let usedH = 0; let rowW = 0; let rowH = 0;
+      for(const u of sorted){
+        if(u.l > box.l || u.w > box.w) return false;
+        if(rowW + u.w <= box.w){
+          rowW += u.w; rowH = Math.max(rowH, u.h);
+        } else {
+          usedH += rowH; rowW = u.w; rowH = u.h;
+        }
+        if(usedH + rowH > box.h) return false;
+      }
+      return true;
+    }
+
+    function computeBoxFromDimensions(cartItems, dimensionMap){
+      let totalWeight = 0;
+      const units = [];
+      for(const item of cartItems){
+        const pid = item.productId || item.product_id;
+        const dims = dimensionMap[pid];
+        const qty  = Number(item.qty || 1);
+        if(!dims){ continue; }
+        totalWeight += Number(dims.weight_kg||0) * qty;
+        const packed = getPackedDims(dims, !!dims.pack_flat);
+        for(let i=0; i<qty; i++) units.push(packed);
+      }
+      if(!units.length) return 'XS'; // fallback — no dimension data
+      for(const box of PUDO_BOXES){
+        if(totalWeight <= box.maxKg && fitsInBox(units, box)) return box.code;
+      }
       return 'XL';
     }
 
-    function renderSummary(){
-      const count = cart.reduce((sum, item) => sum + Number(item.qty || 0), 0);
-      els.summaryMeta.textContent = `${count} item${count === 1 ? '' : 's'} in your cart`;
-      els.mobileSummary.textContent = `${count} item${count === 1 ? '' : 's'}`;
-      els.mobileTotals.textContent = `${fmtCurrency(calcTotal())} total`;
+    async function fetchBoxSize(){
+      if(boxSizeLoading) return;
+      boxSizeLoading = true;
+      // Show loading state in delivery meta
+      els.deliveryMetaText.innerHTML = `<span class="box-size-loading"><span class="box-size-ring"></span>Calculating required locker size…</span>`;
+      try {
+        const productIds = [...new Set(cart.map(i => i.productId || i.product_id).filter(Boolean))];
+        if(!productIds.length){
+          boxSize = 'XS';
+          return;
+        }
+        const ids = productIds.map(id => `"${id}"`).join(',');
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/products?id=in.(${ids})&select=id,weight_kg,length_cm,width_cm,height_cm,pack_flat`,
+          { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+        );
+        if(!res.ok) throw new Error('dim fetch failed');
+        const rows = await res.json();
+        const dimensionMap = {};
+        (Array.isArray(rows) ? rows : []).forEach(r => { dimensionMap[r.id] = r; });
+        boxSize = computeBoxFromDimensions(cart, dimensionMap);
+      } catch(e) {
+        // Fallback: heuristic using qty/price
+        const totalQty = cart.reduce((s,i) => s+Number(i.qty||0), 0);
+        const sub      = calcSub();
+        boxSize = totalQty<=1&&sub<500 ? 'XS' : totalQty<=2&&sub<900 ? 'S' : totalQty<=4 ? 'M' : totalQty<=6 ? 'L' : 'XL';
+      } finally {
+        boxSizeLoading = false;
+        updateDeliveryWindow();
+      }
+    }
 
+    /* ─── Summary render ────────────────────────────────── */
+    function renderSummary(){
+      const count = cart.reduce((s,i) => s+Number(i.qty||0), 0);
+      els.summaryMeta.textContent  = `${count} item${count===1?'':'s'} in your cart`;
+      els.mobileSummary.textContent= `${count} item${count===1?'':'s'}`;
+      els.mobileTotals.textContent = `${fmtCurrency(calcTotal())} total`;
       els.summaryItems.innerHTML = cart.map(item => `
         <div class="cart-item">
-          <img src="${esc(item.imageUrl || 'assets/logo.png')}" alt="${esc(item.name)}" />
+          <img src="${esc(item.imageUrl||'assets/logo.png')}" alt="${esc(item.name)}" loading="lazy" />
           <div>
             <h4>${esc(item.name)}</h4>
             <div class="cart-meta">
-              ${item.variant ? `Variant: ${esc(item.variant)}<br>` : ''}
-              ${item.size ? `Size: ${esc(item.size)}<br>` : ''}
-              Qty ${Number(item.qty || 0)}
+              ${item.variant ? `Variant: ${esc(item.variant)}<br>`:''}
+              ${item.size    ? `Size: ${esc(item.size)}<br>`:''}
+              Qty ${Number(item.qty||0)}
             </div>
           </div>
-          <div class="cart-price">${fmtCurrency(Number(item.price || 0) * Number(item.qty || 0))}</div>
+          <div class="cart-price">${fmtCurrency(Number(item.price||0)*Number(item.qty||0))}</div>
         </div>
       `).join('');
-
-      document.getElementById('sum-sub').textContent = fmtCurrency(calcSub());
-      document.getElementById('sum-del').textContent = fmtCurrency(getDeliveryFee());
+      document.getElementById('sum-sub').textContent   = fmtCurrency(calcSub());
+      document.getElementById('sum-del').textContent   = fmtCurrency(getDeliveryFee());
       document.getElementById('sum-total').textContent = fmtCurrency(calcTotal());
       els.payBtnTotal.textContent = fmtCurrency(calcTotal());
     }
 
+    /* ─── Review panel ──────────────────────────────────── */
     function populateDoneContact(){
-      const name = document.getElementById('f-name').value.trim();
-      const email = document.getElementById('f-email').value.trim();
-      const phone = document.getElementById('f-phone').value.trim();
-      els.doneContact.innerHTML = `${esc(name)}<br>${esc(email)}<br>${esc(phone)}`;
+      const name=document.getElementById('f-name').value.trim();
+      const email=document.getElementById('f-email').value.trim();
+      const phone=document.getElementById('f-phone').value.trim();
+      els.doneContact.innerHTML=`${esc(name)}<br>${esc(email)}<br>${esc(phone)}`;
     }
-
     function populateDoneDelivery(){
-      if(selectedDelivery === 'locker' && selectedLocker){
-        els.doneDelivery.innerHTML = `<strong>${esc(selectedLocker.name)}</strong><br>${esc(selectedLocker.address)}<br>Pickup from locker • ${getDeliveryWindow()}`;
+      if(selectedDelivery==='locker'&&selectedLocker){
+        els.doneDelivery.innerHTML=`<strong>${esc(selectedLocker.name)}</strong><br>${esc(selectedLocker.address)}<br>Pickup from locker • ${getDeliveryWindow()}`;
       } else {
-        const address = [
-          document.getElementById('f-street').value.trim(),
-          document.getElementById('f-suburb').value.trim(),
-          document.getElementById('f-city').value.trim(),
-          document.getElementById('f-postal').value.trim(),
-          document.getElementById('f-province').value.trim()
-        ].filter(Boolean).join(', ');
-        els.doneDelivery.innerHTML = `${esc(address)}<br>Door delivery • ${getDeliveryWindow()}`;
+        const addr=[document.getElementById('f-street').value.trim(),document.getElementById('f-suburb').value.trim(),
+          document.getElementById('f-city').value.trim(),document.getElementById('f-postal').value.trim(),
+          document.getElementById('f-province').value.trim()].filter(Boolean).join(', ');
+        els.doneDelivery.innerHTML=`${esc(addr)}<br>Door delivery • ${getDeliveryWindow()}`;
       }
     }
-
     function populateReview(){
-      els.reviewItems.innerHTML = cart.map(item => `
+      els.reviewItems.innerHTML=cart.map(item=>`
         <div class="review-line">
-          <span>${Number(item.qty || 0)} × ${esc(item.name)}${item.variant ? ` • ${esc(item.variant)}` : ''}${item.size ? ` • ${esc(item.size)}` : ''}</span>
-          <strong>${fmtCurrency(Number(item.price || 0) * Number(item.qty || 0))}</strong>
+          <span>${Number(item.qty||0)} × ${esc(item.name)}${item.variant?` • ${esc(item.variant)}`:''}${item.size?` • ${esc(item.size)}`:''}</span>
+          <strong>${fmtCurrency(Number(item.price||0)*Number(item.qty||0))}</strong>
         </div>
       `).join('');
-      document.getElementById('rv-subtotal').textContent = fmtCurrency(calcSub());
-      document.getElementById('rv-delivery').textContent = fmtCurrency(getDeliveryFee());
-      document.getElementById('rv-total').textContent = fmtCurrency(calcTotal());
-      els.payBtnTotal.textContent = fmtCurrency(calcTotal());
-      const giftMsg = document.getElementById('f-gift-message').value.trim();
+      document.getElementById('rv-subtotal').textContent=fmtCurrency(calcSub());
+      document.getElementById('rv-delivery').textContent=fmtCurrency(getDeliveryFee());
+      document.getElementById('rv-total').textContent=fmtCurrency(calcTotal());
+      els.payBtnTotal.textContent=fmtCurrency(calcTotal());
+      const giftMsg=document.getElementById('f-gift-message').value.trim();
       if(isGift){
-        els.giftReview.style.display = 'block';
-        els.giftReview.innerHTML = `<strong style="display:block;color:var(--accent-strong);margin-bottom:6px">Gift order</strong>${giftMsg ? esc(giftMsg) : 'Gift order with no message added.'}`;
+        els.giftReview.style.display='block';
+        els.giftReview.innerHTML=`<strong style="display:block;color:var(--accent-strong);margin-bottom:6px">Gift order</strong>${giftMsg?esc(giftMsg):'Gift order with no message added.'}`;
       } else {
-        els.giftReview.style.display = 'none';
-        els.giftReview.textContent = '';
+        els.giftReview.style.display='none';
+        els.giftReview.textContent='';
       }
     }
 
+    /* ─── Delivery UI ───────────────────────────────────── */
     function updateDeliveryWindow(){
-      const range = getDeliveryWindow();
-      els.deliveryWindow.textContent = range;
-      if(selectedDelivery === 'door'){
-        els.deliveryMetaTitle.textContent = 'Door delivery selected';
-        els.deliveryMetaText.textContent = 'Enter your address and we'll estimate a delivery window based on business days and local holidays.';
+      els.deliveryWindow.textContent = getDeliveryWindow();
+      if(selectedDelivery==='door'){
+        els.deliveryMetaTitle.textContent='Door delivery selected';
+        els.deliveryMetaText.textContent='Enter your address and we'll estimate a delivery window based on business days and local holidays.';
       } else {
-        els.deliveryMetaTitle.textContent = 'Pudo locker selected';
-        els.deliveryMetaText.textContent = `Search nearby lockers. Your order currently maps to an estimated ${boxSize} locker box.`;
+        els.deliveryMetaTitle.textContent='Pudo locker selected';
+        const sizeLabel = boxSize ? `<strong>${boxSize}</strong>` : '<span class="box-size-loading"><span class="box-size-ring"></span>calculating…</span>';
+        els.deliveryMetaText.innerHTML=`Search nearby lockers. Your order requires an estimated ${sizeLabel} locker compartment.`;
       }
       renderSummary();
     }
-
     function selectDelivery(method){
-      selectedDelivery = method;
-      document.getElementById('delivery-door').classList.toggle('selected', method === 'door');
-      document.getElementById('delivery-locker').classList.toggle('selected', method === 'locker');
-      document.getElementById('door-fields').style.display = method === 'door' ? '' : 'none';
-      document.getElementById('locker-fields').style.display = method === 'locker' ? '' : 'none';
+      selectedDelivery=method;
+      document.getElementById('delivery-door').classList.toggle('selected', method==='door');
+      document.getElementById('delivery-locker').classList.toggle('selected', method==='locker');
+      document.getElementById('door-fields').style.display  = method==='door'  ? '':'none';
+      document.getElementById('locker-fields').style.display= method==='locker'? '':'none';
       updateDeliveryWindow();
       saveDraft();
+      // Kick off real box-size fetch the first time locker is selected
+      if(method==='locker' && !boxSize && !boxSizeLoading) fetchBoxSize();
     }
-
     function toggleGift(force){
-      isGift = typeof force === 'boolean' ? force : !isGift;
+      isGift = typeof force==='boolean' ? force : !isGift;
       els.giftSwitch.classList.toggle('on', isGift);
       els.giftSwitch.setAttribute('aria-pressed', String(isGift));
       els.giftMessageWrap.style.display = isGift ? '' : 'none';
       saveDraft();
     }
 
+    /* ─── Locker search & render ────────────────────────── */
     function renderLockerResults(items, filtered){
-      lockerSearchResults = items || [];
+      const bSize = boxSize || '?';
       const noticeHtml = filtered
-        ? `<div class="locker-size-notice locker-size-notice--filtered"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Showing lockers with a <strong>${boxSize}</strong> compartment available for your order.</div>`
+        ? `<div class="locker-size-notice locker-size-notice--filtered"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>Showing lockers with a <strong>${bSize}</strong> compartment available for your order.</div>`
         : '';
       els.lockerSizeNotice.innerHTML = noticeHtml;
       if(!items.length){
-        els.lockerResults.innerHTML = `<div class="locker-size-notice">No lockers found for that search. Try a different suburb, address or your current location.</div>`;
+        els.lockerResults.innerHTML=`<div class="locker-size-notice">No lockers found for that search. Try a different suburb, address or your current location.</div>`;
         return;
       }
-      els.lockerResults.innerHTML = items.map(locker => {
-        const sizeVerified = locker.size_verified === true;
-        const sizeWarn = locker.size_warning || !sizeVerified;
+      els.lockerResults.innerHTML=items.map(locker=>{
+        const sizeVerified = locker.size_verified===true;
+        const sizeWarn = locker.size_warning||!sizeVerified;
         return `
           <div class="locker-item">
             <div class="locker-item-top">
               <div>
-                <h4>${esc(locker.name || locker.title || 'Pudo Locker')}</h4>
-                <p>${esc(locker.address || locker.location || '')}</p>
-                ${sizeWarn ? `<div class="locker-item-size-warn"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Compartment size unverified</div>` : ''}
+                <h4>${esc(locker.name||locker.title||'Pudo Locker')}</h4>
+                <p>${esc(locker.address||locker.location||'')}</p>
+                ${sizeWarn?`<div class="locker-item-size-warn"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Compartment size unverified</div>`:''}
               </div>
               <div class="locker-badges">
-                ${locker.distance_km ? `<span class="locker-tag">${Number(locker.distance_km).toFixed(1)} km away</span>` : ''}
-                ${locker.box_size ? `<span class="locker-tag">${esc(locker.box_size)} box</span>` : ''}
+                ${locker.distance_km?`<span class="locker-tag">${Number(locker.distance_km).toFixed(1)} km away</span>`:''}
+                ${locker.box_size?`<span class="locker-tag">${esc(locker.box_size)} box</span>`:''}
               </div>
             </div>
             <div class="locker-cta">
               <span class="hint" style="font-size:.8rem;color:var(--text-muted);">Pickup window: estimated ${getDeliveryWindow()}</span>
-              <button type="button" class="mini-btn" onclick='selectLocker(${JSON.stringify({
-                id: locker.id || locker.locker_id || '',
-                name: locker.name || locker.title || 'Pudo Locker',
-                address: locker.address || locker.location || '',
-                sizeVerified
-              }).replace(/'/g, "&#39;")})'>Select locker</button>
+              <button type="button" class="mini-btn" onclick='selectLocker(${JSON.stringify({id:locker.id||locker.locker_id||'',name:locker.name||locker.title||'Pudo Locker',address:locker.address||locker.location||'',sizeVerified}).replace(/'/g,"&#39;")})'>Select locker</button>
             </div>
           </div>
         `;
@@ -1135,208 +986,254 @@
 
     function selectLocker(locker){
       selectedLocker = locker;
-      els.selectedLockerCard.style.display = 'block';
+      els.selectedLockerCard.style.display='block';
+      const bSize = boxSize || 'XS';
       const note = locker.sizeVerified
-        ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>This locker has a <strong>${boxSize}</strong> compartment confirmed for your order.`
-        : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Compartment size for a <strong>${boxSize || 'XS'}</strong> box could not be verified. Pudo will confirm at collection.`;
-      els.selectedLockerCard.innerHTML = `<strong>${esc(locker.name)}</strong><p>${esc(locker.address)}</p><p style="margin-top:10px">${note}</p>`;
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><polyline points="20 6 9 17 4 12"/></svg>This locker has a <strong>${bSize}</strong> compartment confirmed for your order.`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Compartment size for a <strong>${bSize}</strong> box could not be verified. Pudo will confirm at collection.`;
+      els.selectedLockerCard.innerHTML=`<strong>${esc(locker.name)}</strong><p>${esc(locker.address)}</p><p style="margin-top:10px">${note}</p>`;
       document.getElementById('err-locker').classList.remove('show');
       saveDraft();
       showToast('Locker selected');
     }
 
     async function searchLockers(){
-      const q = document.getElementById('lockerQuery').value.trim();
+      const q   = document.getElementById('lockerQuery').value.trim();
       const lat = document.getElementById('lockerSearchLat').value.trim();
       const lng = document.getElementById('lockerSearchLng').value.trim();
-      els.lockerResults.innerHTML = `<div class="locker-size-notice">Searching nearby lockers…</div>`;
-      boxSize = inferBoxSizeFromCart();
+      els.lockerResults.innerHTML=`<div class="locker-size-notice">Searching nearby lockers…</div>`;
+      // Make sure box size is resolved before searching
+      if(!boxSize) await fetchBoxSize();
       try {
         const params = new URLSearchParams();
-        if(lat && lng){ params.set('lat', lat); params.set('lng', lng); }
-        else if(q){ params.set('q', q); }
-        params.set('box_size', boxSize);
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/pudo-locker-search?${params.toString()}`, {
-          headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }
-        });
-        const data = await res.json().catch(() => ({}));
-        if(!res.ok) throw new Error(data?.error || 'Locker search failed');
+        if(lat&&lng){ params.set('lat',lat); params.set('lng',lng); }
+        else if(q){ params.set('q',q); }
+        params.set('box_size', boxSize||'XS');
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/pudo-locker-search?${params}`,
+          { headers: { apikey:SUPABASE_ANON, Authorization:`Bearer ${SUPABASE_ANON}` } });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(data?.error||'Locker search failed');
         const results = Array.isArray(data.results) ? data.results : [];
-        const filtered = results.some(r => r.size_verified === true);
-        renderLockerResults(results.slice(0, 10), filtered);
-      } catch (err) {
-        els.lockerResults.innerHTML = `<div class="locker-size-notice">We couldn't load nearby lockers right now. Please try again in a moment.</div>`;
+        const filtered = results.some(r => r.size_verified===true);
+        renderLockerResults(results.slice(0,10), filtered);
+      } catch(err){
+        els.lockerResults.innerHTML=`<div class="locker-size-notice">We couldn't load nearby lockers right now. Please try again in a moment.</div>`;
       }
     }
 
     function useMyLocation(){
       if(!navigator.geolocation){ showToast('Location not available in this browser'); return; }
-      navigator.geolocation.getCurrentPosition(pos => {
-        document.getElementById('lockerSearchLat').value = pos.coords.latitude;
-        document.getElementById('lockerSearchLng').value = pos.coords.longitude;
+      navigator.geolocation.getCurrentPosition(pos=>{
+        document.getElementById('lockerSearchLat').value=pos.coords.latitude;
+        document.getElementById('lockerSearchLng').value=pos.coords.longitude;
         showToast('Location captured');
         searchLockers();
-      }, () => showToast('Unable to access your location'));
+      }, ()=>showToast('Unable to access your location'));
     }
 
+    /* ─── Google Places autocomplete ───────────────────── */
+    async function fetchPlacesApiKey(){
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/get-places-key`,
+          { headers: { apikey:SUPABASE_ANON, Authorization:`Bearer ${SUPABASE_ANON}` } });
+        const data = await res.json().catch(()=>({}));
+        return data?.key || null;
+      } catch(e){ return null; }
+    }
+
+    function initPlacesAutocomplete(apiKey){
+      if(!apiKey || typeof google === 'undefined') return;
+      const opts = { componentRestrictions:{ country:'za' }, fields:['address_components','geometry','formatted_address'] };
+
+      // Street address field
+      const streetInput = document.getElementById('f-street');
+      if(streetInput && !placesStreet){
+        placesStreet = new google.maps.places.Autocomplete(streetInput, { ...opts, types:['address'] });
+        placesStreet.addListener('place_changed', () => {
+          const place = placesStreet.getPlace();
+          if(!place.address_components) return;
+          const get = (type) => {
+            const c = place.address_components.find(c => c.types.includes(type));
+            return c ? c.long_name : '';
+          };
+          document.getElementById('f-suburb').value   = get('sublocality_level_1') || get('locality') || '';
+          document.getElementById('f-city').value     = get('locality') || get('administrative_area_level_2') || '';
+          document.getElementById('f-postal').value   = get('postal_code') || '';
+          document.getElementById('f-province').value = get('administrative_area_level_1') || '';
+          saveDraft();
+        });
+      }
+
+      // Locker search field
+      const lockerInput = document.getElementById('lockerQuery');
+      if(lockerInput && !placesLocker){
+        placesLocker = new google.maps.places.Autocomplete(lockerInput, { ...opts, types:['geocode'] });
+        placesLocker.addListener('place_changed', () => {
+          const place = placesLocker.getPlace();
+          if(!place.geometry) return;
+          document.getElementById('lockerSearchLat').value = place.geometry.location.lat();
+          document.getElementById('lockerSearchLng').value = place.geometry.location.lng();
+          saveDraft();
+        });
+      }
+    }
+
+    function loadGooglePlaces(apiKey){
+      if(!apiKey) return;
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=onPlacesReady`;
+      script.async = true; script.defer = true;
+      window.onPlacesReady = () => initPlacesAutocomplete(apiKey);
+      document.head.appendChild(script);
+    }
+
+    /* ─── Exit-intent nudge (Step 3) ────────────────────── */
+    function showExitNudge(){
+      if(currentStep !== 3 || exitNudgeDismissed) return;
+      els.exitNudge.classList.add('show');
+    }
+    function hideExitNudge(){
+      els.exitNudge.classList.remove('show');
+    }
+    function dismissExitNudge(scrollToPay){
+      exitNudgeDismissed = true;
+      hideExitNudge();
+      if(scrollToPay) document.getElementById('payBtn')?.scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+    document.addEventListener('mouseleave', (e) => {
+      if(e.clientY < 10) showExitNudge();
+    });
+
+    /* ─── Draft persistence ─────────────────────────────── */
     function saveDraft(){
       const payload = {
-        selectedDelivery,
-        isGift,
-        selectedLocker,
-        values: Object.fromEntries(DRAFT_FIELDS.map(id => [id, document.getElementById(id)?.value || '']))
+        selectedDelivery, isGift, selectedLocker,
+        values: Object.fromEntries(DRAFT_FIELDS.map(id => [id, document.getElementById(id)?.value||'']))
       };
-      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(payload)); } catch(e) {}
+      try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(payload)); }catch(e){}
     }
-
     function loadDraft(){
-      try {
-        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      try{
+        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
         if(!draft) return;
         DRAFT_FIELDS.forEach(id => {
-          if(typeof draft.values?.[id] === 'string' && document.getElementById(id)) {
+          if(typeof draft.values?.[id]==='string'&&document.getElementById(id))
             document.getElementById(id).value = draft.values[id];
-          }
         });
         if(draft.selectedDelivery) selectedDelivery = draft.selectedDelivery;
-        if(draft.selectedLocker) selectedLocker = draft.selectedLocker;
+        if(draft.selectedLocker)   selectedLocker   = draft.selectedLocker;
         toggleGift(Boolean(draft.isGift));
-      } catch(e) {}
+        // Re-apply delivery UI (show correct fields, re-render selected locker card)
+        selectDelivery(selectedDelivery);
+        if(selectedLocker) selectLocker(selectedLocker);
+        showToast('Details restored from your last visit');
+      }catch(e){}
     }
+    function clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
 
-    function clearDraft(){
-      try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
-    }
-
+    /* ─── Return / cancellation detection ──────────────── */
     function checkReturn(){
       const qp = new URLSearchParams(window.location.search);
-      const payment = qp.get('payment');
-      if(payment === 'cancelled'){
-        els.payAlert.className = 'alert warn show';
-        els.payAlert.textContent = 'Payment was cancelled — no charge was made. Review your order and try again.';
+      if(qp.get('payment')==='cancelled'){
+        els.payAlert.className='alert warn show';
+        els.payAlert.textContent='Payment was cancelled — no charge was made. Review your order and try again.';
         setStep(3);
       }
     }
 
+    /* ─── Payment ───────────────────────────────────────── */
     async function handlePay(){
-      if(!validateStep1() || !validateStep2()) return;
-      populateDoneContact();
-      populateDoneDelivery();
-      populateReview();
-      els.payAlert.className = 'alert';
-      els.payAlert.textContent = '';
-
+      if(!validateStep1()||!validateStep2()) return;
+      populateDoneContact(); populateDoneDelivery(); populateReview();
+      els.payAlert.className='alert'; els.payAlert.textContent='';
       const payBtn = document.getElementById('payBtn');
       payBtn.disabled = true;
-      showLoading('Creating your order…', 'Please keep this tab open while we save your details.');
-
-      try {
-        const name = document.getElementById('f-name').value.trim();
-        const email = document.getElementById('f-email').value.trim();
-        const phone = document.getElementById('f-phone').value.trim();
-        const notes = document.getElementById('f-notes').value.trim();
+      showLoading('Creating your order…','Please keep this tab open while we save your details.');
+      try{
+        const name    = document.getElementById('f-name').value.trim();
+        const email   = document.getElementById('f-email').value.trim();
+        const phone   = document.getElementById('f-phone').value.trim();
+        const notes   = document.getElementById('f-notes').value.trim();
         const giftMsg = document.getElementById('f-gift-message').value.trim();
-
-        let deliveryAddress = '';
-        let deliveryMeta = {};
-        if(selectedDelivery === 'locker' && selectedLocker){
-          deliveryAddress = `${selectedLocker.name}, ${selectedLocker.address}`;
-          deliveryMeta = {
-            type: 'locker',
-            locker_id: selectedLocker.id,
-            locker_name: selectedLocker.name,
-            locker_address: selectedLocker.address,
-            box_size: boxSize
-          };
+        let deliveryAddress='', deliveryMeta={};
+        if(selectedDelivery==='locker'&&selectedLocker){
+          deliveryAddress=`${selectedLocker.name}, ${selectedLocker.address}`;
+          deliveryMeta={ type:'locker', locker_id:selectedLocker.id, locker_name:selectedLocker.name, locker_address:selectedLocker.address, box_size:boxSize };
         } else {
-          const street = document.getElementById('f-street').value.trim();
-          const suburb = document.getElementById('f-suburb').value.trim();
-          const city = document.getElementById('f-city').value.trim();
-          const postal = document.getElementById('f-postal').value.trim();
+          const street   = document.getElementById('f-street').value.trim();
+          const suburb   = document.getElementById('f-suburb').value.trim();
+          const city     = document.getElementById('f-city').value.trim();
+          const postal   = document.getElementById('f-postal').value.trim();
           const province = document.getElementById('f-province').value.trim();
-          deliveryAddress = [street, suburb, city, postal, province].filter(Boolean).join(', ');
-          deliveryMeta = { type: 'door', street, suburb, city, postal, province };
+          deliveryAddress=[street,suburb,city,postal,province].filter(Boolean).join(', ');
+          deliveryMeta={ type:'door', street, suburb, city, postal, province };
         }
-
-        showLoading('Saving your order…', 'Your order is being saved securely before payment is created.');
-        const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: SUPABASE_ANON,
-            Authorization: `Bearer ${SUPABASE_ANON}`,
-            Prefer: 'return=representation'
-          },
-          body: JSON.stringify({
-            customer_name: name,
-            customer_email: email,
-            customer_phone: phone,
-            delivery_address: deliveryAddress,
-            delivery_method: selectedDelivery,
-            delivery_meta: deliveryMeta,
-            items: cart,
-            subtotal: calcSub(),
-            delivery_fee: getDeliveryFee(),
-            total_amount: calcTotal(),
-            notes: notes || null,
-            is_gift: isGift,
-            gift_message: isGift && giftMsg ? giftMsg : null
+        showLoading('Saving your order…','Your order is being saved securely before payment is created.');
+        const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:`Bearer ${SUPABASE_ANON}`,Prefer:'return=representation'},
+          body:JSON.stringify({
+            customer_name:name, customer_email:email, customer_phone:phone,
+            delivery_address:deliveryAddress, delivery_method:selectedDelivery, delivery_meta:deliveryMeta,
+            items:cart, subtotal:calcSub(), delivery_fee:getDeliveryFee(), total_amount:calcTotal(),
+            notes:notes||null, is_gift:isGift, gift_message:isGift&&giftMsg?giftMsg:null
           })
         });
-        const orderData = await orderRes.json().catch(() => []);
-        if(!orderRes.ok) throw new Error(orderData?.message || orderData?.error || 'Could not save order');
+        const orderData = await orderRes.json().catch(()=>[]);
+        if(!orderRes.ok) throw new Error(orderData?.message||orderData?.error||'Could not save order');
         const order = Array.isArray(orderData) ? orderData[0] : orderData;
         if(!order?.id) throw new Error('Order was created but no order ID was returned');
-
-        showLoading('Redirecting to payment…', 'We\'re preparing your Yoco payment page.');
-        const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: SUPABASE_ANON,
-            Authorization: `Bearer ${SUPABASE_ANON}`
-          },
-          body: JSON.stringify({
-            order_id: order.id,
-            success_url: `${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}&ct=${order.customer_token || ''}`,
-            cancel_url: `${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`
+        showLoading('Redirecting to payment…','We\'re preparing your Yoco payment page.');
+        const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,{
+          method:'POST',
+          headers:{'Content-Type':'application/json',apikey:SUPABASE_ANON,Authorization:`Bearer ${SUPABASE_ANON}`},
+          body:JSON.stringify({
+            order_id:order.id,
+            success_url:`${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}&ct=${order.customer_token||''}`,
+            cancel_url:`${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`
           })
         });
-        const checkoutData = await checkoutRes.json().catch(() => ({}));
-        if(!checkoutRes.ok) throw new Error(checkoutData?.error || 'Could not create payment session');
-        const redirect = checkoutData.redirectUrl || checkoutData.url;
+        const checkoutData = await checkoutRes.json().catch(()=>({}));
+        if(!checkoutRes.ok) throw new Error(checkoutData?.error||'Could not create payment session');
+        const redirect = checkoutData.redirectUrl||checkoutData.url;
         if(!redirect) throw new Error('No payment redirect URL was returned');
-
-        cart = [];
-        localStorage.setItem(CART_KEY, '[]');
+        cart=[];
+        localStorage.setItem(CART_KEY,'[]');
         clearDraft();
         window.location.href = redirect;
-      } catch (err) {
+      } catch(err){
         hideLoading();
-        payBtn.disabled = false;
-        els.payAlert.className = 'alert show';
-        els.payAlert.textContent = err.message || 'Something went wrong while preparing payment.';
+        payBtn.disabled=false;
+        els.payAlert.className='alert show';
+        els.payAlert.textContent=err.message||'Something went wrong while preparing payment.';
       }
     }
 
+    /* ─── Draft field binding ───────────────────────────── */
     function bindDraftFields(){
-      DRAFT_FIELDS.forEach(id => {
-        const el = document.getElementById(id);
+      DRAFT_FIELDS.forEach(id=>{
+        const el=document.getElementById(id);
         if(!el) return;
-        el.addEventListener('input', saveDraft);
-        el.addEventListener('change', saveDraft);
+        el.addEventListener('input',saveDraft);
+        el.addEventListener('change',saveDraft);
       });
     }
 
+    /* ─── Normalise cart ────────────────────────────────── */
+    function normaliseCart(){
+      try{ cart=JSON.parse(localStorage.getItem(CART_KEY)||'[]'); if(!Array.isArray(cart)) cart=[]; }
+      catch(e){ cart=[]; }
+    }
+
+    /* ─── Init ─────────────────────────────────────────── */
     function init(){
       normaliseCart();
-      boxSize = inferBoxSizeFromCart();
       if(!cart.length){
         els.emptyState.classList.add('show');
-        els.checkoutLayout.style.display = 'none';
-        document.getElementById('heroCard').style.display = 'none';
-        document.getElementById('summaryCard').style.display = 'none';
-        document.getElementById('mobileSummaryBar').style.display = 'none';
+        els.checkoutLayout.style.display='none';
+        document.getElementById('heroCard').style.display='none';
+        document.getElementById('summaryCard').style.display='none';
+        document.getElementById('mobileSummaryBar').style.display='none';
         return;
       }
       loadDraft();
@@ -1345,12 +1242,13 @@
       bindDraftFields();
       updateDeliveryWindow();
       toggleGift(isGift);
-      selectDelivery(selectedDelivery);
-      if(selectedLocker) selectLocker(selectedLocker);
-      els.giftSwitch.addEventListener('click', () => toggleGift());
+      els.giftSwitch.addEventListener('click',()=>toggleGift());
       checkReturn();
-      const qp = new URLSearchParams(window.location.search);
-      if(qp.get('payment') === 'cancelled') setStep(3);
+      if(new URLSearchParams(window.location.search).get('payment')==='cancelled') setStep(3);
+      // Pre-fetch box size eagerly so it's ready when locker tab is opened
+      fetchBoxSize();
+      // Load Google Places in background
+      fetchPlacesApiKey().then(key => loadGooglePlaces(key));
     }
 
     init();
