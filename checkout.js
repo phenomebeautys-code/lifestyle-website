@@ -378,11 +378,11 @@ function renderDeliveryDate() {
 
 /* ── PRODUCT_IMGS ────────────────────────────────────────── */
 const PRODUCT_IMGS = {
-  'film-wax-collection':        'https://iili.io/B6e8YKJ.jpg',
-  'refine-restore-ritual-kit':  'https://iili.io/B6e8cSR.png',
-  'refine-exfoliating-scrub':   'https://iili.io/B6e8cSR.png',
-  'restore-moisturising-cream': 'https://iili.io/B6e8acv.jpg',
-  'pro-max-100-wax-heater':     'https://iili.io/B6e8YKJ.jpg',
+  'film-wax-collection':        'https://iili.io/BiIZ18x.jpg',
+  'refine-restore-ritual-kit':  'https://iili.io/BPKRo0J.jpg',
+  'refine-exfoliating-scrub':   'https://iili.io/BPFXtun.jpg',
+  'restore-moisturising-cream': 'https://iili.io/BP36aft.jpg',
+  'pro-max-100-wax-heater':     'https://iili.io/BP3Dn9t.jpg',
   'custom-press-on-nails':      'https://iili.io/BscYqN9.png',
 };
 
