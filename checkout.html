@@ -296,7 +296,7 @@
       <h2>Your cart is empty</h2>
       <p>Add a few products before checking out. Once you have something you love, come back here and we'll guide you through delivery and payment.</p>
       <div style="margin-top:20px">
-        <a class="primary-btn" href="index.html" style="display:inline-flex;align-items:center;justify-content:center;">← Back to home</a>
+        <a class="primary-btn" href="index.html" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back to home</a>
       </div>
     </div>
 
@@ -330,8 +330,8 @@
               </div>
             </div>
             <div class="nav-actions">
-              <a class="ghost-btn" href="index.html">← Return to home</a>
-              <button class="primary-btn" onclick="goStep(2)">Continue to delivery →</button>
+              <a class="ghost-btn" href="index.html" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Return to home</a>
+              <button class="primary-btn" onclick="goStep(2)" style="display:inline-flex;align-items:center;gap:6px;">Continue to delivery <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
             </div>
           </div>
 
@@ -359,7 +359,7 @@
                 <strong id="deliveryMetaTitle">Door delivery selected</strong>
                 <p id="deliveryMetaText">Enter your address and we'll estimate a delivery window based on business days and local holidays.</p>
               </div>
-              <div class="delivery-window" id="deliveryWindow">Estimating…</div>
+              <div class="delivery-window" id="deliveryWindow">Estimating&hellip;</div>
             </div>
 
             <!-- Door fields -->
@@ -427,14 +427,14 @@
               <div id="specialFieldWrap" style="display:none;margin-top:14px;">
                 <div class="field">
                   <label for="f-special">Instructions</label>
-                  <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival…"></textarea>
+                  <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
                 </div>
               </div>
             </div>
 
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goStep(1)">← Back</button>
-              <button class="primary-btn" onclick="goStep(3)">Review order →</button>
+              <button class="ghost-btn" onclick="goStep(1)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
+              <button class="primary-btn" onclick="goStep(3)" style="display:inline-flex;align-items:center;gap:6px;">Review order <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
             </div>
           </div>
 
@@ -446,8 +446,8 @@
             <div class="review-panel" id="reviewPanel"></div>
             <div class="alert" id="payAlert"></div>
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goStep(2)">← Back</button>
-              <button class="primary-btn" id="payBtn" onclick="submitOrder()">Pay now →</button>
+              <button class="ghost-btn" onclick="goStep(2)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
+              <button class="primary-btn" id="payBtn" onclick="submitOrder()" style="display:inline-flex;align-items:center;gap:6px;">Pay now <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
             </div>
           </div>
 
@@ -489,7 +489,7 @@
   <div class="loading" id="loadingOverlay">
     <div class="loading-card">
       <div class="loading-ring"></div>
-      <h3>Saving your order…</h3>
+      <h3>Saving your order&hellip;</h3>
       <p>Please don't close this page. You'll be redirected to Yoco to complete payment securely.</p>
     </div>
   </div>
