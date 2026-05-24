@@ -5,6 +5,7 @@
    - Correct locker endpoint: pudo-locker-search (GET)
    - Correct Places callback name: initPlaces
    - selectLocker(id, name, address, boxSize, sizeUnknown)
+   - IDs/classes aligned with checkout.html (May 2026)
    ============================================================ */
 
 'use strict';
@@ -110,11 +111,8 @@ function getDeliveryRange() {
   const now  = new Date();
   const hour = now.getHours();
   const base = new Date(now);
-  // orders after 14:00 count as next business day
   if (hour >= 14) base.setDate(base.getDate() + 1);
-  // skip weekends for dispatch
   while (base.getDay() === 0 || base.getDay() === 6) base.setDate(base.getDate() + 1);
-  // locker: +2 bd, door: +3 bd
   const daysMin = selectedDelivery === 'locker' ? 2 : 3;
   const daysMax = daysMin + 1;
   function addBd(d, n) {
@@ -131,14 +129,14 @@ function getDeliveryRange() {
 function saveDraft() {
   try {
     const d = {
-      name:     document.getElementById('coName')?.value  || '',
-      phone:    document.getElementById('coPhone')?.value || '',
-      email:    document.getElementById('coEmail')?.value || '',
-      addr1:    document.getElementById('coAddr1')?.value || '',
-      addr2:    document.getElementById('coAddr2')?.value || '',
-      city:     document.getElementById('coCity')?.value  || '',
-      province: document.getElementById('coProvince')?.value || '',
-      postal:   document.getElementById('coPostal')?.value  || '',
+      name:     document.getElementById('f-name')?.value     || '',
+      phone:    document.getElementById('f-phone')?.value    || '',
+      email:    document.getElementById('f-email')?.value    || '',
+      addr1:    document.getElementById('f-street')?.value   || '',
+      addr2:    document.getElementById('f-suburb')?.value   || '',
+      city:     document.getElementById('f-city')?.value     || '',
+      province: document.getElementById('f-province')?.value || '',
+      postal:   document.getElementById('f-postal')?.value   || '',
       delivery: selectedDelivery,
       locker:   selectedLocker,
     };
@@ -151,37 +149,40 @@ function loadDraft() {
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
     if (!d) return;
     const set = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
-    set('coName', d.name); set('coPhone', d.phone); set('coEmail', d.email);
-    set('coAddr1', d.addr1); set('coAddr2', d.addr2); set('coCity', d.city);
-    set('coProvince', d.province); set('coPostal', d.postal);
+    set('f-name',     d.name);
+    set('f-phone',    d.phone);
+    set('f-email',    d.email);
+    set('f-street',   d.addr1);
+    set('f-suburb',   d.addr2);
+    set('f-city',     d.city);
+    set('f-province', d.province);
+    set('f-postal',   d.postal);
     if (d.delivery) { selectedDelivery = d.delivery; syncDeliveryToggle(); }
     if (d.locker)   { selectedLocker   = d.locker; }
   } catch(e) {}
 }
 
 /* ── Validation ──────────────────────────────────────────── */
-function showFieldError(id, msg) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.add('error');
-  let err = el.parentElement.querySelector('.field-error');
-  if (!err) { err = document.createElement('span'); err.className = 'field-error'; el.parentElement.appendChild(err); }
-  err.textContent = msg;
+function showFieldError(fieldId, errId, msg) {
+  const field = document.getElementById(fieldId);
+  const errEl = document.getElementById(errId);
+  if (field) field.closest('.field')?.classList.add('error');
+  if (errEl) { errEl.textContent = msg; errEl.classList.add('show'); }
 }
 function clearFieldErrors() {
-  document.querySelectorAll('.field-error').forEach(e => e.remove());
-  document.querySelectorAll('.error').forEach(e => e.classList.remove('error'));
+  document.querySelectorAll('.field.error').forEach(e => e.classList.remove('error'));
+  document.querySelectorAll('.error-text.show').forEach(e => e.classList.remove('show'));
 }
 
 function validateStep1() {
   clearFieldErrors();
   let ok = true;
-  const name  = document.getElementById('coName')?.value.trim();
-  const phone = document.getElementById('coPhone')?.value.trim();
-  const email = document.getElementById('coEmail')?.value.trim();
-  if (!name)               { showFieldError('coName',  'Full name is required'); ok = false; }
-  if (!phone)              { showFieldError('coPhone', 'Phone number is required'); ok = false; }
-  if (!email || !email.includes('@')) { showFieldError('coEmail', 'Valid email is required'); ok = false; }
+  const name  = document.getElementById('f-name')?.value.trim();
+  const phone = document.getElementById('f-phone')?.value.trim();
+  const email = document.getElementById('f-email')?.value.trim();
+  if (!name)                       { showFieldError('f-name',  'err-name',  'Full name is required'); ok = false; }
+  if (!phone)                      { showFieldError('f-phone', 'err-phone', 'Phone number is required'); ok = false; }
+  if (!email || !email.includes('@')) { showFieldError('f-email', 'err-email', 'Valid email is required'); ok = false; }
   return ok;
 }
 
@@ -189,33 +190,35 @@ function validateStep2() {
   clearFieldErrors();
   if (selectedDelivery === 'locker') {
     if (!selectedLocker) {
-      const nudge = document.getElementById('lockerNudge');
+      const nudge = document.getElementById('err-locker');
       if (nudge) { nudge.classList.add('show'); nudge.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
       return false;
     }
     return true;
   }
   let ok = true;
-  const addr1    = document.getElementById('coAddr1')?.value.trim();
-  const city     = document.getElementById('coCity')?.value.trim();
-  const province = document.getElementById('coProvince')?.value.trim();
-  const postal   = document.getElementById('coPostal')?.value.trim();
-  if (!addr1)    { showFieldError('coAddr1',    'Street address is required'); ok = false; }
-  if (!city)     { showFieldError('coCity',     'City is required'); ok = false; }
-  if (!province) { showFieldError('coProvince', 'Province is required'); ok = false; }
-  if (!postal)   { showFieldError('coPostal',   'Postal code is required'); ok = false; }
+  const addr1    = document.getElementById('f-street')?.value.trim();
+  const city     = document.getElementById('f-city')?.value.trim();
+  const province = document.getElementById('f-province')?.value.trim();
+  const postal   = document.getElementById('f-postal')?.value.trim();
+  if (!addr1)    { showFieldError('f-street',   'err-street',   'Street address is required'); ok = false; }
+  if (!city)     { showFieldError('f-city',     'err-city',     'City is required'); ok = false; }
+  if (!province) { showFieldError('f-province', 'err-province', 'Province is required'); ok = false; }
+  if (!postal)   { showFieldError('f-postal',   'err-postal',   'Postal code is required'); ok = false; }
   return ok;
 }
 
 /* ── Step navigation ─────────────────────────────────────── */
 function goToStep(n) {
   currentStep = n;
-  document.querySelectorAll('.co-step-panel').forEach((p, i) => {
+  // panels: id="panel-1", "panel-2", "panel-3"
+  document.querySelectorAll('.step').forEach((p, i) => {
     p.classList.toggle('active', i + 1 === n);
   });
-  document.querySelectorAll('.co-step-btn').forEach((b, i) => {
+  // breadcrumbs: id="breadcrumb-1", "breadcrumb-2", "breadcrumb-3"
+  document.querySelectorAll('.step-pill').forEach((b, i) => {
     b.classList.toggle('active',    i + 1 === n);
-    b.classList.toggle('completed', i + 1 <  n);
+    b.classList.toggle('done',      i + 1 <  n);
   });
   renderSummary();
   renderMobileSummary();
@@ -223,26 +226,47 @@ function goToStep(n) {
 }
 
 /* ── Delivery toggle ─────────────────────────────────────── */
+function selectDelivery(type) {
+  selectedDelivery = type;
+  syncDeliveryToggle();
+  renderSummary();
+  renderMobileSummary();
+  saveDraft();
+}
+
 function syncDeliveryToggle() {
-  const lockerBtn = document.getElementById('deliveryLocker');
-  const doorBtn   = document.getElementById('deliveryDoor');
-  const lockerSec = document.getElementById('lockerSection');
-  const doorSec   = document.getElementById('doorSection');
+  const lockerBtn = document.getElementById('opt-locker');
+  const doorBtn   = document.getElementById('opt-door');
+  const lockerSec = document.getElementById('locker-fields');
+  const doorSec   = document.getElementById('door-fields');
   if (lockerBtn) lockerBtn.classList.toggle('selected', selectedDelivery === 'locker');
   if (doorBtn)   doorBtn.classList.toggle('selected',   selectedDelivery === 'door');
   if (lockerSec) lockerSec.style.display = selectedDelivery === 'locker' ? '' : 'none';
   if (doorSec)   doorSec.style.display   = selectedDelivery === 'door'   ? '' : 'none';
+  // update meta copy
+  const metaTitle = document.getElementById('deliveryMetaTitle');
+  const metaText  = document.getElementById('deliveryMetaText');
+  if (metaTitle) metaTitle.textContent = selectedDelivery === 'locker' ? 'Pudo locker selected' : 'Door delivery selected';
+  if (metaText)  metaText.textContent  = selectedDelivery === 'locker'
+    ? 'Select a locker from the list below. We\u2019ll include the locker details in your order.'
+    : 'Enter your address and we\u2019ll estimate a delivery window based on business days and local holidays.';
+  renderDeliveryDate();
 }
 
 /* ── Locker search ───────────────────────────────────────── */
 let _lockerSearchTimer = null;
 
 async function searchLockers(query) {
-  const list = document.getElementById('lockerList');
+  // query may come from the input field directly (called by HTML onclick)
+  if (query === undefined) {
+    query = document.getElementById('f-locker-search')?.value.trim() || '';
+  }
+  const list = document.getElementById('lockerResults');
   if (!list) return;
 
-  // If we have GPS coords, always prefer those
-  const useCoords = lockerSearchLat !== null && lockerSearchLng !== null;
+  const lat = lockerSearchLat ?? window.lockerSearchLat ?? null;
+  const lng = lockerSearchLng ?? window.lockerSearchLng ?? null;
+  const useCoords = lat !== null && lng !== null;
   if (!useCoords && (!query || query.length < 3)) return;
 
   list.innerHTML = '<div class="locker-loading">Searching\u2026</div>';
@@ -250,8 +274,8 @@ async function searchLockers(query) {
   try {
     const params = new URLSearchParams({ limit: '20' });
     if (useCoords) {
-      params.set('lat', lockerSearchLat);
-      params.set('lng', lockerSearchLng);
+      params.set('lat', lat);
+      params.set('lng', lng);
     } else {
       params.set('q', query);
     }
@@ -272,16 +296,18 @@ async function searchLockers(query) {
 
     list.innerHTML = lockers.map(l => {
       const sizeUnknown = !l.box_size || l.box_size === 'UNKNOWN';
-      const sizeLabel   = sizeUnknown ? '' : `<span class="locker-size">${l.box_size}</span>`;
-      const distLabel   = l.distance_km != null ? `<span class="locker-dist">${(+l.distance_km).toFixed(1)} km</span>` : '';
+      const sizeLabel   = sizeUnknown ? '' : `<span class="locker-tag">${l.box_size}</span>`;
+      const distLabel   = l.distance_km != null ? `<span class="locker-tag">${(+l.distance_km).toFixed(1)} km</span>` : '';
       return `<div class="locker-item" data-id="${l.id}" data-name="${encodeURIComponent(l.name||'')}" data-addr="${encodeURIComponent(l.address||l.full_address||'')}" data-size="${l.box_size||''}" data-unknown="${sizeUnknown}">
-        <div class="locker-item-top"><span class="locker-name">${l.name||'Locker'}</span>${distLabel}${sizeLabel}</div>
-        <div class="locker-addr">${l.address||l.full_address||''}</div>
+        <div class="locker-item-top"><h4>${l.name||'Locker'}</h4><div class="locker-badges">${distLabel}${sizeLabel}</div></div>
+        <p>${l.address||l.full_address||''}</p>
+        <div class="locker-cta"><button type="button" class="mini-btn" onclick="(function(el){selectLocker(el.dataset.id,decodeURIComponent(el.dataset.name),decodeURIComponent(el.dataset.addr),el.dataset.size,el.dataset.unknown==='true')})(this.closest('.locker-item'))">Select</button></div>
       </div>`;
     }).join('');
 
     list.querySelectorAll('.locker-item').forEach(el => {
-      el.addEventListener('click', () => {
+      el.addEventListener('click', e => {
+        if (e.target.tagName === 'BUTTON') return; // button has own handler
         selectLocker(
           el.dataset.id,
           decodeURIComponent(el.dataset.name),
@@ -299,35 +325,61 @@ async function searchLockers(query) {
 
 function selectLocker(id, name, address, boxSize, sizeUnknown) {
   selectedLocker = { id, name, address, boxSize, sizeUnknown };
-  const badge = document.getElementById('selectedLockerBadge');
-  if (badge) {
-    badge.innerHTML = `<strong>${name}</strong><br><small>${address}</small>`;
-    badge.style.display = 'block';
+
+  // Show selected locker display block
+  const display  = document.getElementById('lockerSelectedDisplay');
+  const nameEl   = document.getElementById('lockerSelectedName');
+  const addrEl   = document.getElementById('lockerSelectedAddr');
+  const sizeNote = document.getElementById('lockerSelectedSizeNote');
+  if (display) display.style.display = '';
+  if (nameEl)  nameEl.textContent    = name;
+  if (addrEl)  addrEl.textContent    = address;
+  if (sizeNote) {
+    if (sizeUnknown) {
+      sizeNote.textContent  = 'Box size could not be confirmed for this locker. Your order will be packed to fit the available box.';
+      sizeNote.className    = 'locker-size-note locker-size-note--unknown';
+      sizeNote.style.display = '';
+    } else if (boxSize) {
+      sizeNote.textContent  = `This locker accepts up to box size ${boxSize}.`;
+      sizeNote.className    = 'locker-size-note locker-size-note--confirmed';
+      sizeNote.style.display = '';
+    } else {
+      sizeNote.style.display = 'none';
+    }
   }
+
+  // Highlight selected item in list
   document.querySelectorAll('.locker-item').forEach(el => {
     el.classList.toggle('selected', el.dataset.id === String(id));
   });
-  const nudge = document.getElementById('lockerNudge');
+
+  // Hide validation error
+  const nudge = document.getElementById('err-locker');
   if (nudge) nudge.classList.remove('show');
+
   renderSummary();
   renderMobileSummary();
 }
 
-/* ── GPS ─────────────────────────────────────────────────── */
+function clearLockerSelection() {
+  selectedLocker = null;
+  const display = document.getElementById('lockerSelectedDisplay');
+  if (display) display.style.display = 'none';
+  document.querySelectorAll('.locker-item').forEach(el => el.classList.remove('selected'));
+  renderSummary();
+  renderMobileSummary();
+}
+
+/* ── GPS (called by useMyLocation in HTML inline script) ─── */
 function requestGPS() {
   if (!navigator.geolocation) return;
-  const btn = document.getElementById('gpsBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Locating\u2026'; }
   navigator.geolocation.getCurrentPosition(
     pos => {
       lockerSearchLat = pos.coords.latitude;
       lockerSearchLng = pos.coords.longitude;
-      if (btn) { btn.disabled = false; btn.textContent = 'Use my location'; }
       searchLockers('');
     },
-    () => {
-      if (btn) { btn.disabled = false; btn.textContent = 'Use my location'; }
-    }
+    () => {}
   );
 }
 
@@ -335,7 +387,7 @@ function requestGPS() {
 let _placesAutocomplete = null;
 
 function initPlaces() {
-  const input = document.getElementById('coAddr1');
+  const input = document.getElementById('f-street');
   if (!input || !window.google?.maps?.places) return;
   _placesAutocomplete = new google.maps.places.Autocomplete(input, {
     componentRestrictions: { country: 'ZA' },
@@ -345,7 +397,7 @@ function initPlaces() {
   _placesAutocomplete.addListener('place_changed', () => {
     const place = _placesAutocomplete.getPlace();
     if (!place.address_components) return;
-    const get = (type) => place.address_components.find(c => c.types.includes(type))?.long_name || '';
+    const get      = (type) => place.address_components.find(c => c.types.includes(type))?.long_name  || '';
     const getShort = (type) => place.address_components.find(c => c.types.includes(type))?.short_name || '';
     const streetNum  = get('street_number');
     const streetName = get('route');
@@ -353,13 +405,13 @@ function initPlaces() {
     const city       = get('locality') || get('administrative_area_level_2');
     const province   = getShort('administrative_area_level_1');
     const postal     = get('postal_code');
-    const addr1El    = document.getElementById('coAddr1');
-    const addr2El    = document.getElementById('coAddr2');
-    const cityEl     = document.getElementById('coCity');
-    const provEl     = document.getElementById('coProvince');
-    const postalEl   = document.getElementById('coPostal');
-    if (addr1El) addr1El.value = [streetNum, streetName].filter(Boolean).join(' ') || place.formatted_address;
-    if (addr2El && suburb) addr2El.value = suburb;
+    const streetEl   = document.getElementById('f-street');
+    const suburbEl   = document.getElementById('f-suburb');
+    const cityEl     = document.getElementById('f-city');
+    const provEl     = document.getElementById('f-province');
+    const postalEl   = document.getElementById('f-postal');
+    if (streetEl) streetEl.value = [streetNum, streetName].filter(Boolean).join(' ') || place.formatted_address;
+    if (suburbEl && suburb) suburbEl.value = suburb;
     if (cityEl)   cityEl.value   = city;
     if (provEl)   provEl.value   = province;
     if (postalEl) postalEl.value = postal;
@@ -370,10 +422,18 @@ function initPlaces() {
 /* ── Render delivery date ────────────────────────────────── */
 function renderDeliveryDate() {
   const range = getDeliveryRange();
-  const elSummary = document.getElementById('summaryDeliveryDate');
-  const elMobile  = document.getElementById('mobileDeliveryDate');
-  if (elSummary) elSummary.textContent = range;
-  if (elMobile)  elMobile.textContent  = range;
+  // sidebar
+  const elDate2  = document.getElementById('summaryDeliveryDate');
+  if (elDate2) elDate2.textContent = range;
+  // step 2 delivery window pill
+  const elDate   = document.getElementById('deliveryDateText2');
+  if (elDate) elDate.textContent = range;
+  // step 3 review
+  const rvDate   = document.getElementById('rv-delivery-date');
+  if (rvDate) rvDate.textContent = range;
+  // mobile
+  const elMobile = document.getElementById('mobileDeliveryDate');
+  if (elMobile) elMobile.textContent = range;
 }
 
 /* ── PRODUCT_IMGS ────────────────────────────────────────── */
@@ -393,16 +453,19 @@ function renderSummary() {
   if (!itemsEl) return;
   itemsEl.innerHTML = cart.map(item => {
     const img = PRODUCT_IMGS[item.productId] || item.imageUrl || '';
-    return `<div class="co-item"><div class="co-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant || ''}</div></div><div class="co-item-price">R${item.price * item.qty}</div></div>`;
+    return `<div class="cart-item"><div class="cart-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" width="60" height="60" />` : ''}</div><div class="cart-item-info"><h4>${item.name}</h4>${item.variant ? `<div class="cart-meta">${item.variant}</div>` : ''}</div><div class="cart-price">R${item.price * item.qty}</div></div>`;
   }).join('');
   if (totalsEl) totalsEl.innerHTML = `
-    <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
+    <div class="total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
     ${currentStep >= 2 ? `
-    <div class="co-total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
-    <div class="co-total-row delivery-date"><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Est. delivery</span><span id="summaryDeliveryDate">-</span></div>
+    <div class="total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
+    <div class="total-row delivery-date"><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Est. delivery</span><span id="summaryDeliveryDate">-</span></div>
     <div class="co-divider" style="margin:6px 0"></div>
-    <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>` : ''}`;
+    <div class="total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>` : ''}`;
   renderDeliveryDate();
+  // update pay button total
+  const payBtnTotal = document.getElementById('payBtnTotal');
+  if (payBtnTotal) payBtnTotal.textContent = calcTotal();
 }
 
 function renderMobileSummary() {
@@ -412,24 +475,24 @@ function renderMobileSummary() {
   if (totalEl) totalEl.textContent = `R${calcTotal()}`;
   if (itemsEl) itemsEl.innerHTML = cart.map(item => {
     const img = PRODUCT_IMGS[item.productId] || item.imageUrl || '';
-    return `<div class="co-item"><div class="co-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant || ''}</div></div><div class="co-item-price">R${item.price * item.qty}</div></div>`;
+    return `<div class="cart-item"><div class="cart-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" width="60" height="60" />` : ''}</div><div class="cart-item-info"><h4>${item.name}</h4>${item.variant ? `<div class="cart-meta">${item.variant}</div>` : ''}</div><div class="cart-price">R${item.price * item.qty}</div></div>`;
   }).join('');
   if (totalsEl) totalsEl.innerHTML = `
-    <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
+    <div class="total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
     ${currentStep >= 2 ? `
-    <div class="co-total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
-    <div class="co-total-row delivery-date"><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Est. delivery</span><span id="mobileDeliveryDate">-</span></div>
+    <div class="total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
+    <div class="total-row delivery-date"><span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg> Est. delivery</span><span id="mobileDeliveryDate">-</span></div>
     <div class="co-divider" style="margin:6px 0"></div>
-    <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>` : ''}`;
+    <div class="total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>` : ''}`;
   renderDeliveryDate();
 }
 
 function toggleMobileSummary() {
-  const drawer = document.getElementById('mobileSummaryDrawer');
-  const arrow  = document.getElementById('msArrow');
-  if (!drawer) return;
-  const open = drawer.classList.toggle('open');
-  if (arrow) arrow.style.transform = open ? 'rotate(180deg)' : '';
+  const body    = document.getElementById('mobileSummaryBody');
+  const chevron = document.getElementById('msChevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
 }
 
 /* ── Cart count ──────────────────────────────────────────── */
@@ -442,54 +505,99 @@ function renderCartCount() {
 
 /* ── Review step (Step 3) ────────────────────────────────── */
 function renderReview() {
-  const el = document.getElementById('reviewContent');
-  if (!el) return;
-  const name  = document.getElementById('coName')?.value.trim()  || '';
-  const phone = document.getElementById('coPhone')?.value.trim() || '';
-  const email = document.getElementById('coEmail')?.value.trim() || '';
+  const name  = document.getElementById('f-name')?.value.trim()     || '';
+  const phone = document.getElementById('f-phone')?.value.trim()    || '';
+  const email = document.getElementById('f-email')?.value.trim()    || '';
+
+  // Contact block
+  const contactVal = document.getElementById('done-contact-val');
+  const contactVal2 = document.getElementById('done-contact-val-2');
+  if (contactVal)  contactVal.textContent  = `${name} \u00b7 ${phone} \u00b7 ${email}`;
+  if (contactVal2) contactVal2.textContent = email;
+
+  // Delivery block
   let deliveryStr = '';
   if (selectedDelivery === 'locker' && selectedLocker) {
     deliveryStr = `Pudo Locker: ${selectedLocker.name}, ${selectedLocker.address}`;
   } else {
-    const addr1    = document.getElementById('coAddr1')?.value.trim()    || '';
-    const addr2    = document.getElementById('coAddr2')?.value.trim()    || '';
-    const city     = document.getElementById('coCity')?.value.trim()     || '';
-    const province = document.getElementById('coProvince')?.value.trim() || '';
-    const postal   = document.getElementById('coPostal')?.value.trim()   || '';
+    const addr1    = document.getElementById('f-street')?.value.trim()   || '';
+    const addr2    = document.getElementById('f-suburb')?.value.trim()   || '';
+    const city     = document.getElementById('f-city')?.value.trim()     || '';
+    const province = document.getElementById('f-province')?.value.trim() || '';
+    const postal   = document.getElementById('f-postal')?.value.trim()   || '';
     deliveryStr    = [addr1, addr2, city, province, postal].filter(Boolean).join(', ');
   }
-  el.innerHTML = `
-    <div class="review-section">
-      <div class="review-label">Contact</div>
-      <div class="review-value">${name} \u00b7 ${phone} \u00b7 ${email}</div>
-    </div>
-    <div class="review-section">
-      <div class="review-label">Delivery</div>
-      <div class="review-value">${deliveryStr}</div>
-    </div>
-    <div class="review-section">
-      <div class="review-label">Items</div>
-      ${cart.map(i => `<div class="review-value">${i.qty}\u00d7 ${i.name}${i.variant ? ' \u2013 ' + i.variant : ''} \u2014 R${i.price * i.qty}</div>`).join('')}
-    </div>
-    <div class="review-section">
-      <div class="review-label">Order total</div>
-      <div class="review-value grand">R${calcTotal()}</div>
-    </div>`;
+  const deliveryVal = document.getElementById('done-delivery-val');
+  if (deliveryVal) deliveryVal.textContent = deliveryStr;
+
+  // Totals
+  const rvDeliveryLabel = document.getElementById('rv-delivery-label');
+  const rvDelivery      = document.getElementById('rv-delivery');
+  const rvSubtotal      = document.getElementById('rv-subtotal');
+  const rvTotal         = document.getElementById('rv-total');
+  if (rvDeliveryLabel) rvDeliveryLabel.textContent = selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door delivery';
+  if (rvDelivery)      rvDelivery.textContent      = `R${getDeliveryFee()}`;
+  if (rvSubtotal)      rvSubtotal.textContent      = `R${calcSub()}`;
+  if (rvTotal)         rvTotal.textContent         = `R${calcTotal()}`;
+
+  // Items panel
+  const reviewItems = document.getElementById('reviewItems');
+  if (reviewItems) {
+    reviewItems.innerHTML = cart.map(i =>
+      `<div class="review-line"><span>${i.qty}\u00d7 ${i.name}${i.variant ? ' \u2013 ' + i.variant : ''}</span><span>R${i.price * i.qty}</span></div>`
+    ).join('');
+  }
+
+  // Gift message review
+  const giftReveal = document.getElementById('giftReveal');
+  const giftMsg    = document.getElementById('f-gift-message')?.value.trim() || '';
+  const giftBlock  = document.getElementById('giftReviewBlock');
+  const giftBody   = document.getElementById('giftReviewBody');
+  if (giftBlock) giftBlock.style.display = (giftReveal?.classList.contains('open') && giftMsg) ? '' : 'none';
+  if (giftBody)  giftBody.textContent    = giftMsg;
+
+  renderDeliveryDate();
+}
+
+/* ── Gift toggle ─────────────────────────────────────────── */
+function toggleGift() {
+  const reveal  = document.getElementById('giftReveal');
+  const toggles = document.querySelectorAll('#giftToggleRow .switch');
+  if (!reveal) return;
+  const open = !reveal.classList.contains('open');
+  reveal.classList.toggle('open', open);
+  reveal.style.maxHeight = open ? reveal.scrollHeight + 'px' : '0';
+  toggles.forEach(t => t.classList.toggle('on', open));
+  if (open) document.getElementById('f-gift-message')?.focus();
+}
+
+/* ── Exit nudge ──────────────────────────────────────────── */
+function dismissNudge() {
+  const nudge = document.getElementById('exitNudge');
+  if (nudge) nudge.classList.remove('show');
 }
 
 /* ── Yoco payment ────────────────────────────────────────── */
+async function handlePay() {
+  if (!validateStep2()) { goToStep(2); return; }
+  initiatePayment();
+}
+
 async function initiatePayment() {
   const btn = document.getElementById('payBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing\u2026'; }
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Processing\u2026'; }
 
-  const name  = document.getElementById('coName')?.value.trim()  || '';
-  const phone = document.getElementById('coPhone')?.value.trim() || '';
-  const email = document.getElementById('coEmail')?.value.trim() || '';
+  const loading = document.getElementById('coLoading');
+  if (loading) loading.classList.add('show');
+
+  const name  = document.getElementById('f-name')?.value.trim()  || '';
+  const phone = document.getElementById('f-phone')?.value.trim() || '';
+  const email = document.getElementById('f-email')?.value.trim() || '';
 
   let deliveryAddress = null;
   if (selectedDelivery === 'locker' && selectedLocker) {
     deliveryAddress = {
-      type: 'locker',
+      type:       'locker',
       lockerId:   selectedLocker.id,
       lockerName: selectedLocker.name,
       address:    selectedLocker.address,
@@ -498,11 +606,11 @@ async function initiatePayment() {
   } else {
     deliveryAddress = {
       type:     'door',
-      line1:    document.getElementById('coAddr1')?.value.trim()    || '',
-      line2:    document.getElementById('coAddr2')?.value.trim()    || '',
-      city:     document.getElementById('coCity')?.value.trim()     || '',
-      province: document.getElementById('coProvince')?.value.trim() || '',
-      postal:   document.getElementById('coPostal')?.value.trim()   || '',
+      line1:    document.getElementById('f-street')?.value.trim()   || '',
+      line2:    document.getElementById('f-suburb')?.value.trim()   || '',
+      city:     document.getElementById('f-city')?.value.trim()     || '',
+      province: document.getElementById('f-province')?.value.trim() || '',
+      postal:   document.getElementById('f-postal')?.value.trim()   || '',
     };
   }
 
@@ -529,50 +637,37 @@ async function initiatePayment() {
     }
   } catch(e) {
     console.error('Payment error:', e);
-    if (btn) { btn.disabled = false; btn.textContent = 'Pay now'; }
-    const errEl = document.getElementById('payError');
-    if (errEl) { errEl.textContent = 'Payment could not be initiated. Please try again.'; errEl.style.display = 'block'; }
+    if (loading) loading.classList.remove('show');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `Pay R<span id="payBtnTotal">${calcTotal()}</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+    }
+    const errEl = document.getElementById('alert-3');
+    if (errEl) {
+      errEl.textContent = 'Payment could not be initiated. Please try again.';
+      errEl.classList.add('show');
+    }
   }
 }
 
 /* ── Init ────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   loadDraft();
+
+  // Show/hide layout based on cart
+  const isEmpty = !cart.length;
+  const emptyState = document.getElementById('emptyState');
+  const coLayout   = document.getElementById('coLayout');
+  if (emptyState) emptyState.classList.toggle('show', isEmpty);
+  if (coLayout)   coLayout.style.display = isEmpty ? 'none' : '';
+
   renderSummary();
   renderMobileSummary();
   renderCartCount();
   syncDeliveryToggle();
 
-  // Step 1 → 2
-  const nextBtn = document.getElementById('nextToDelivery');
-  if (nextBtn) nextBtn.addEventListener('click', () => {
-    if (validateStep1()) { saveDraft(); goToStep(2); }
-  });
-
-  // Step 2 → 3
-  const next2Btn = document.getElementById('nextToReview');
-  if (next2Btn) next2Btn.addEventListener('click', () => {
-    if (validateStep2()) { saveDraft(); goToStep(3); renderReview(); }
-  });
-
-  // Step 3: Pay
-  const payBtn = document.getElementById('payBtn');
-  if (payBtn) payBtn.addEventListener('click', initiatePayment);
-
-  // Back buttons
-  document.getElementById('backToContact')?.addEventListener('click', () => goToStep(1));
-  document.getElementById('backToDelivery')?.addEventListener('click', () => goToStep(2));
-
-  // Delivery toggle
-  document.getElementById('deliveryLocker')?.addEventListener('click', () => {
-    selectedDelivery = 'locker'; syncDeliveryToggle(); renderSummary(); renderMobileSummary(); saveDraft();
-  });
-  document.getElementById('deliveryDoor')?.addEventListener('click', () => {
-    selectedDelivery = 'door'; syncDeliveryToggle(); renderSummary(); renderMobileSummary(); saveDraft();
-  });
-
-  // Locker search input
-  const lockerInput = document.getElementById('lockerSearch');
+  // Locker search input (debounced)
+  const lockerInput = document.getElementById('f-locker-search');
   if (lockerInput) {
     lockerInput.addEventListener('input', e => {
       clearTimeout(_lockerSearchTimer);
@@ -580,20 +675,28 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // GPS button
-  document.getElementById('gpsBtn')?.addEventListener('click', requestGPS);
-
-  // Mobile summary toggle
-  document.getElementById('mobileSummaryToggle')?.addEventListener('click', toggleMobileSummary);
-
   // Draft autosave on input
-  document.querySelectorAll('#coName,#coPhone,#coEmail,#coAddr1,#coAddr2,#coCity,#coProvince,#coPostal').forEach(el => {
+  document.querySelectorAll('#f-name,#f-phone,#f-email,#f-street,#f-suburb,#f-city,#f-province,#f-postal').forEach(el => {
     el.addEventListener('input', saveDraft);
   });
 
-  // Empty cart warning
-  if (!cart.length) {
-    const warn = document.getElementById('emptyCartWarn');
-    if (warn) warn.style.display = 'block';
-  }
+  // Show toast if draft was restored
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+    if (d && (d.name || d.email)) {
+      const toast = document.getElementById('coToast');
+      if (toast) {
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+    }
+  } catch(e) {}
+
+  // Exit-intent nudge on step 3
+  document.addEventListener('mouseleave', e => {
+    if (e.clientY < 10 && currentStep === 3) {
+      const nudge = document.getElementById('exitNudge');
+      if (nudge) nudge.classList.add('show');
+    }
+  });
 });
