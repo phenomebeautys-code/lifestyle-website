@@ -24,7 +24,7 @@ let lockerSearchLat  = null;
 let lockerSearchLng  = null;
 let currentStep      = 1;
 
-/* ── Box-size client estimator ──────────────────────────── */
+/* -- Box-size client estimator -------------------------------------------- */
 const _PUDO_BOXES_CLIENT = [
   { code: 'XS', boxL: 60, boxW: 17, boxH:  8, maxKg:  2 },
   { code: 'S',  boxL: 60, boxW: 41, boxH:  8, maxKg:  5 },
@@ -98,7 +98,7 @@ async function estimateBoxSize() {
   return 'XL';
 }
 
-/* ── Helpers ─────────────────────────────────────────────── */
+/* -- Helpers --------------------------------------------------------------- */
 function calcSub()   { return cart.reduce((s, i) => s + i.price * i.qty, 0); }
 function getDeliveryFee() { return DELIVERY_FEES[selectedDelivery] ?? 0; }
 function calcTotal() { return calcSub() + getDeliveryFee(); }
@@ -125,7 +125,7 @@ function getDeliveryRange() {
   return `${fmt(lo)} \u2013 ${fmt(hi)}`;
 }
 
-/* ── Draft persistence ───────────────────────────────────── */
+/* -- Draft persistence ----------------------------------------------------- */
 function saveDraft() {
   try {
     const d = {
@@ -162,7 +162,7 @@ function loadDraft() {
   } catch(e) {}
 }
 
-/* ── Validation ──────────────────────────────────────────── */
+/* -- Validation ------------------------------------------------------------ */
 function showFieldError(fieldId, errId, msg) {
   const field = document.getElementById(fieldId);
   const errEl = document.getElementById(errId);
@@ -180,8 +180,8 @@ function validateStep1() {
   const name  = document.getElementById('f-name')?.value.trim();
   const phone = document.getElementById('f-phone')?.value.trim();
   const email = document.getElementById('f-email')?.value.trim();
-  if (!name)                       { showFieldError('f-name',  'err-name',  'Full name is required'); ok = false; }
-  if (!phone)                      { showFieldError('f-phone', 'err-phone', 'Phone number is required'); ok = false; }
+  if (!name)                         { showFieldError('f-name',  'err-name',  'Full name is required'); ok = false; }
+  if (!phone)                        { showFieldError('f-phone', 'err-phone', 'Phone number is required'); ok = false; }
   if (!email || !email.includes('@')) { showFieldError('f-email', 'err-email', 'Valid email is required'); ok = false; }
   return ok;
 }
@@ -208,7 +208,7 @@ function validateStep2() {
   return ok;
 }
 
-/* ── Step navigation ─────────────────────────────────────── */
+/* -- Step navigation ------------------------------------------------------- */
 function goToStep(n) {
   if (n === 2 && currentStep === 1) {
     if (!validateStep1()) return;
@@ -233,7 +233,7 @@ function goToStep(n) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ── Delivery toggle ─────────────────────────────────────── */
+/* -- Delivery toggle ------------------------------------------------------- */
 function selectDelivery(type) {
   selectedDelivery = type;
   syncDeliveryToggle();
@@ -260,7 +260,7 @@ function syncDeliveryToggle() {
   renderDeliveryDate();
 }
 
-/* ── Locker search ───────────────────────────────────────── */
+/* -- Locker search --------------------------------------------------------- */
 let _lockerSearchTimer = null;
 
 async function searchLockers(query) {
@@ -327,7 +327,7 @@ async function searchLockers(query) {
   }
 }
 
-/* ── Select locker ───────────────────────────────────────── */
+/* -- Select locker --------------------------------------------------------- */
 function selectLocker(id, name, address, boxSize, sizeUnknown) {
   selectedLocker = { id, name, address, boxSize, sizeUnknown };
 
@@ -359,14 +359,14 @@ function selectLocker(id, name, address, boxSize, sizeUnknown) {
   saveDraft();
 }
 
-/* ── Render delivery date ────────────────────────────────── */
+/* -- Render delivery date -------------------------------------------------- */
 function renderDeliveryDate() {
   const range = getDeliveryRange();
   const el2   = document.getElementById('deliveryDateText2');
   if (el2) el2.textContent = range;
 }
 
-/* ── Render summary (desktop aside) ─────────────────────── */
+/* -- Render summary (desktop aside) ---------------------------------------- */
 function renderSummary() {
   const rowsEl   = document.getElementById('asideSummaryRows');
   const totalsEl = document.getElementById('asideTotals');
@@ -405,7 +405,7 @@ function renderSummary() {
   _renderReviewPanel();
 }
 
-/* ── Render summary (mobile bar) ────────────────────────── */
+/* -- Render summary (mobile bar) ------------------------------------------- */
 function renderMobileSummary() {
   const rowsEl   = document.getElementById('mobileSummaryRows');
   const totalsEl = document.getElementById('mobileTotals');
@@ -442,7 +442,7 @@ function renderMobileSummary() {
   `;
 }
 
-/* ── Toggle mobile summary ───────────────────────────────── */
+/* -- Toggle mobile summary ------------------------------------------------- */
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
   const toggle  = document.querySelector('.mobile-summary-toggle');
@@ -453,7 +453,7 @@ function toggleMobileSummary() {
   if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
 }
 
-/* ── Review panel (step 3) ───────────────────────────────── */
+/* -- Review panel (step 3) ------------------------------------------------- */
 function _renderReviewPanel() {
   const panel = document.getElementById('reviewPanel');
   if (!panel || currentStep !== 3) return;
@@ -495,7 +495,7 @@ function _renderReviewPanel() {
   `;
 }
 
-/* ── Yoco payment ────────────────────────────────────────── */
+/* -- Yoco payment ---------------------------------------------------------- */
 let _yocoSDK    = null;
 let _yocoReady  = false;
 
@@ -631,7 +631,7 @@ async function submitPayment() {
   }
 }
 
-/* ── Google Places autocomplete callback ─────────────────── */
+/* -- Google Places autocomplete callback ----------------------------------- */
 async function initPlaces() {
   try {
     const { Autocomplete } = await google.maps.importLibrary('places');
@@ -682,7 +682,7 @@ async function initPlaces() {
   }
 }
 
-/* ── DOMContentLoaded init ───────────────────────────────── */
+/* -- DOMContentLoaded init ------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function () {
   if (!cart.length) {
     window.location.href = 'index.html';
