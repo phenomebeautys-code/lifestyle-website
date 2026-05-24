@@ -1,15 +1,11 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v2 — fixes truncated-file browser cache (2026-05-24).
-   - Correct Supabase anon key (iat: May 2026)
-   - Correct locker endpoint: pudo-locker-search (GET)
-   - renderSummary / renderDeliveryDate / initPlaces / submitOrder
-   - DOMContentLoaded wiring
+   Cache-bust v3 — updated Supabase anon key (2026-05-25).
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwNTI5MDIsImV4cCI6MjA2MjYyODkwMn0.n0SB7EB91a3uGp5mRTFbIarU4z-R6T5l6Vc4bpNF3Sg';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
 /* -- State ---------------------------------------------------------------- */
 let currentStep      = 1;
@@ -704,7 +700,7 @@ document.addEventListener('DOMContentLoaded', function() {
   renderDeliveryDate();
   renderSummary();
 
-  // Wire Step 1 inputs — clear errors on input
+  // Wire Step 1 inputs - clear errors on input
   ['f-name','f-phone','f-email'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
