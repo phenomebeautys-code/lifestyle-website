@@ -124,7 +124,7 @@ function getDeliveryRange() {
   }
   const lo = addBd(new Date(base), daysMin);
   const hi = addBd(new Date(lo),   daysMax - daysMin);
-  return `${fmt(lo)} – ${fmt(hi)}`;
+  return `${fmt(lo)} \u2013 ${fmt(hi)}`;
 }
 
 /* ── Draft persistence ───────────────────────────────────── */
@@ -245,7 +245,7 @@ async function searchLockers(query) {
   const useCoords = lockerSearchLat !== null && lockerSearchLng !== null;
   if (!useCoords && (!query || query.length < 3)) return;
 
-  list.innerHTML = '<div class="locker-loading">Searching…</div>';
+  list.innerHTML = '<div class="locker-loading">Searching\u2026</div>';
 
   try {
     const params = new URLSearchParams({ limit: '20' });
@@ -317,7 +317,7 @@ function selectLocker(id, name, address, boxSize, sizeUnknown) {
 function requestGPS() {
   if (!navigator.geolocation) return;
   const btn = document.getElementById('gpsBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Locating…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Locating\u2026'; }
   navigator.geolocation.getCurrentPosition(
     pos => {
       lockerSearchLat = pos.coords.latitude;
@@ -378,12 +378,12 @@ function renderDeliveryDate() {
 
 /* ── PRODUCT_IMGS ────────────────────────────────────────── */
 const PRODUCT_IMGS = {
-  'smooth-ritual':          'https://iili.io/B6e8cSR.png',
-  'smooth-veil':            'https://iili.io/B6e8acv.jpg',
-  'smooth-ritual-kit':      'https://iili.io/B6e8cSR.png',
-  'film-wax-collection':    'https://iili.io/B6e8YKJ.jpg',
-  'wax-melting-pot':        'https://iili.io/B6e8YKJ.jpg',
-  'professional-wax':       'https://iili.io/B6e8YKJ.jpg',
+  'film-wax-collection':        'https://iili.io/B6e8YKJ.jpg',
+  'refine-restore-ritual-kit':  'https://iili.io/B6e8cSR.png',
+  'refine-exfoliating-scrub':   'https://iili.io/B6e8cSR.png',
+  'restore-moisturising-cream': 'https://iili.io/B6e8acv.jpg',
+  'pro-max-100-wax-heater':     'https://iili.io/B6e8YKJ.jpg',
+  'custom-press-on-nails':      'https://iili.io/BscYqN9.png',
 };
 
 /* ── Render sidebar summary ──────────────────────────────── */
@@ -461,7 +461,7 @@ function renderReview() {
   el.innerHTML = `
     <div class="review-section">
       <div class="review-label">Contact</div>
-      <div class="review-value">${name} · ${phone} · ${email}</div>
+      <div class="review-value">${name} \u00b7 ${phone} \u00b7 ${email}</div>
     </div>
     <div class="review-section">
       <div class="review-label">Delivery</div>
@@ -469,7 +469,7 @@ function renderReview() {
     </div>
     <div class="review-section">
       <div class="review-label">Items</div>
-      ${cart.map(i => `<div class="review-value">${i.qty}× ${i.name}${i.variant ? ' – ' + i.variant : ''} — R${i.price * i.qty}</div>`).join('')}
+      ${cart.map(i => `<div class="review-value">${i.qty}\u00d7 ${i.name}${i.variant ? ' \u2013 ' + i.variant : ''} \u2014 R${i.price * i.qty}</div>`).join('')}
     </div>
     <div class="review-section">
       <div class="review-label">Order total</div>
@@ -480,7 +480,7 @@ function renderReview() {
 /* ── Yoco payment ────────────────────────────────────────── */
 async function initiatePayment() {
   const btn = document.getElementById('payBtn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing\u2026'; }
 
   const name  = document.getElementById('coName')?.value.trim()  || '';
   const phone = document.getElementById('coPhone')?.value.trim() || '';
