@@ -1,6 +1,13 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/favicon.ico",
+      "destination": "https://iili.io/fpiAjBj.jpg",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
