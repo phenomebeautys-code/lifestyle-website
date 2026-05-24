@@ -208,15 +208,10 @@ window.initAutocomplete = function() {
 
 /* ── Fetch required box size from Supabase ──────────────── */
 async function fetchBoxSize() {
-  const notice = document.getElementById('lockerSizeNotice');
-  if (notice) notice.innerHTML = '<div class="box-size-loading"><span class="box-size-ring"></span> Determining required locker size…</div>';
-
   try {
-    // Build a list of product keys from cart
     const keys = cart.map(i => i.key || i.productId).filter(Boolean);
-    if (!keys.length) { pudoBoxSize = 'medium'; updateSizeNotice(); return; }
+    if (!keys.length) { pudoBoxSize = 'medium'; return; }
 
-    // Fetch box sizes from Supabase products table
     const q = keys.map(k => `key=eq.${k}`).join(',');
     const url = `${SUPA_URL}/rest/v1/products?or=(${encodeURIComponent(q)})&select=key,pudo_box_size`;
     const res = await fetch(url, {
@@ -230,7 +225,6 @@ async function fetchBoxSize() {
     if (!res.ok) throw new Error('Supabase ' + res.status);
     const rows = await res.json();
 
-    // Pick largest box size required
     const sizeOrder = ['xsmall','small','medium','large','xlarge'];
     let maxIdx = 0;
     rows.forEach(r => {
@@ -240,18 +234,12 @@ async function fetchBoxSize() {
     pudoBoxSize = sizeOrder[maxIdx] || 'medium';
   } catch (e) {
     console.warn('fetchBoxSize failed:', e);
-    pudoBoxSize = 'medium'; // safe fallback
+    pudoBoxSize = 'medium';
   }
-
-  updateSizeNotice();
 }
 
-function updateSizeNotice() {
-  const notice = document.getElementById('lockerSizeNotice');
-  if (!notice) return;
-  if (!pudoBoxSize) return;
-  notice.innerHTML = `<div class="locker-size-notice locker-size-notice--filtered">📦 Your order requires a <strong>${pudoBoxSize}</strong> compartment or larger. Results are filtered accordingly.</div>`;
-}
+/* Box size is calculated silently — never shown to the customer */
+function updateSizeNotice() {}
 
 /* ── Pudo locker search ─────────────────────────────────── */
 window.searchLockers = async function() {
@@ -297,16 +285,12 @@ window.searchLockers = async function() {
         `<span class="locker-tag">${c.size || c.type || c}</span>`
       ).join('');
       const dist = locker.distance ? `<span class="locker-tag">${(locker.distance/1000).toFixed(1)} km</span>` : '';
-      const sizeWarning = pudoBoxSize && !compartments.some(c =>
-        ['medium','large','xlarge'].includes((c.size || c.type || '').toLowerCase())
-      ) ? '<div class="locker-item-size-warn">⚠️ May not have your required compartment size</div>' : '';
 
       return `<div class="locker-item">
         <div class="locker-item-top">
           <div>
             <h4>${locker.name || locker.locationName || 'Locker ' + (idx + 1)}</h4>
             <p>${locker.address || locker.fullAddress || ''}</p>
-            ${sizeWarning}
           </div>
           <div class="locker-badges">${dist}${tags}</div>
         </div>
@@ -344,7 +328,6 @@ window.useMyLocation = function() {
     pos => {
       document.getElementById('lockerSearchLat').value = pos.coords.latitude;
       document.getElementById('lockerSearchLng').value = pos.coords.longitude;
-      // Auto-trigger search
       window.searchLockers();
     },
     () => showToast('Could not get your location. Please enter it manually.')

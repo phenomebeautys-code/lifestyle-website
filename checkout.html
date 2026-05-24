@@ -339,7 +339,7 @@
           <div class="step" id="step2">
             <div class="step-tag">Step 2</div>
             <h2 class="step-title">Delivery method</h2>
-            <p class="step-copy">Choose how you'd like to receive your order. Locker options are filtered against the box size your order requires.</p>
+            <p class="step-copy">Choose how you'd like to receive your order.</p>
             <div class="delivery-grid">
               <button type="button" class="delivery-card selected" id="delivery-door" onclick="selectDelivery('door')">
                 <span class="delivery-chip"></span>
@@ -402,7 +402,6 @@
                   <div class="field">
                     <label for="lockerQuery">Search for a locker</label>
                     <input id="lockerQuery" type="text" placeholder="Enter an address, suburb or landmark" />
-                    <span class="hint">We'll find the closest lockers and filter them against the compartment size required for your order.</span>
                   </div>
                 </div>
                 <div class="search-actions">
@@ -499,5 +498,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="checkout.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&libraries=places&callback=initAutocomplete" async defer></script>
 </body>
 </html>
