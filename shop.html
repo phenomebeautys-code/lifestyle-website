@@ -368,18 +368,6 @@
     .delivery-note { font-size: 0.75rem; color: var(--text-muted); font-style: italic; text-align: right; margin-top: -6px; }
     .secure-note { display:flex; align-items:center; justify-content:center; gap:5px; text-align:center; font-size:0.75rem; color:var(--text-muted); }
 
-    /* ── Checkout coming soon notice inside drawer ── */
-    .checkout-coming-soon {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 8px; text-align: center;
-      padding: 16px; border-radius: var(--radius-md);
-      background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
-    }
-    .checkout-coming-soon p {
-      font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; margin: 0;
-    }
-    .checkout-coming-soon strong { color: var(--text); display: block; margin-bottom: 2px; }
-
     .continue-shopping {
       display: flex; align-items: center; justify-content: center; gap: 6px;
       background: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill);
@@ -400,7 +388,7 @@
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:4px; }
 
-    /* ── Responsive: match site's 768px breakpoint (was 600px) ── */
+    /* ── Responsive: match site's 768px breakpoint ── */
     @media(max-width:767px) { .product-grid { grid-template-columns:1fr; } }
 
     /* ═══════════════════════════════════════════════════════
@@ -467,9 +455,7 @@
   <!-- SKIP TO CONTENT -->
   <a href="#main-content" class="sr-only">Skip to main content</a>
 
-  <!-- ═══════════════════════════════════════════════════════
-       FULL-BLEED BACKGROUND LAYER — iOS Safari proof
-  ═══════════════════════════════════════════════════════ -->
+  <!-- FULL-BLEED BACKGROUND LAYER -->
   <div id="bg-image" aria-hidden="true"></div>
   <div id="bg-overlay" aria-hidden="true"></div>
 
@@ -529,7 +515,6 @@
     <section class="shop-section" aria-label="Products">
       <div class="container">
         <div class="product-grid" id="productGrid">
-          <!-- Populated by JS. No-JS fallback below. -->
           <noscript>
             <div class="noscript-notice">
               <strong>JavaScript is required to view products.</strong>
@@ -563,15 +548,10 @@
         <div class="total-row grand"><span>Subtotal</span><span id="subtotalDisplay">R0</span></div>
         <p class="delivery-note">Delivery calculated at checkout</p>
       </div>
-      <!-- Checkout page is coming soon — replaced broken href with informational notice -->
-      <div class="checkout-coming-soon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <p><strong>Online checkout coming soon!</strong>To complete your order, please send us your cart via WhatsApp and we'll assist you directly.</p>
-        <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:100%;justify-content:center;text-align:center;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-          Order via WhatsApp
-        </a>
-      </div>
+      <a href="checkout.html" class="btn btn-primary" style="width:100%;justify-content:center;text-align:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        Proceed to Checkout
+      </a>
       <button class="continue-shopping" onclick="closeCart()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
         Continue Shopping
@@ -649,8 +629,6 @@
 
     let PRODUCTS = [];
 
-    /* ── Cart stored in memory (localStorage blocked in sandboxed envs).
-       On a real production domain localStorage works fine — swap back if needed. ── */
     let cart = (function() {
       try { return JSON.parse(localStorage.getItem('phenome_cart') || '[]'); }
       catch(e) { return []; }
