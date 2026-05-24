@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v3 — updated Supabase anon key (2026-05-25).
+   Cache-bust v4 — add renderDeliveryOptions(), fix door-fields ID.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -188,6 +188,37 @@ function restoreDraft() {
     }
     return true;
   } catch(e) { return false; }
+}
+
+/* -- Delivery options render ---------------------------------------------- */
+function renderDeliveryOptions() {
+  const container = document.getElementById('deliveryOptions');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="delivery-card selected" id="opt-door" onclick="selectDelivery('door')">
+      <div class="delivery-chip"></div>
+      <h3>Door delivery</h3>
+      <p>We deliver straight to your door anywhere in South Africa.</p>
+      <div class="delivery-price">R${DOOR_PRICE.toFixed(2)}</div>
+    </div>
+    <div class="delivery-card" id="opt-locker" onclick="selectDelivery('locker')">
+      <div class="delivery-chip"></div>
+      <h3>Pudo locker</h3>
+      <p>Collect at a Pudo locker near you at a time that suits you.</p>
+      <div class="delivery-price">R${LOCKER_PRICE.toFixed(2)}</div>
+    </div>
+  `;
+
+  // Show the meta bar and set initial state
+  const meta = document.getElementById('deliveryMeta');
+  if (meta) meta.style.display = '';
+
+  // Show door fields by default (door is the default selection)
+  const doorFields   = document.getElementById('door-fields');
+  const lockerFields = document.getElementById('locker-fields');
+  if (doorFields)   doorFields.style.display   = '';
+  if (lockerFields) lockerFields.style.display = 'none';
 }
 
 /* -- Delivery method selection -------------------------------------------- */
@@ -692,6 +723,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (layout)     layout.style.display     = '';
   if (emptyState) emptyState.classList.remove('show');
+
+  // Build delivery option cards
+  renderDeliveryOptions();
 
   // Restore draft
   const restored = restoreDraft();

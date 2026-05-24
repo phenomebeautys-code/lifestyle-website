@@ -347,18 +347,19 @@
             <h2 class="step-title">Delivery method</h2>
             <p class="step-copy">Choose how you'd like to receive your order.</p>
 
+            <!-- Delivery option cards injected by renderDeliveryOptions() -->
             <div class="delivery-grid" id="deliveryOptions"></div>
 
             <div class="delivery-meta" id="deliveryMeta" style="display:none;">
               <div>
-                <strong>Estimated delivery</strong>
-                <p id="deliveryEtaText">Calculating&hellip;</p>
+                <strong id="deliveryMetaTitle">Door delivery selected</strong>
+                <p id="deliveryMetaText">Enter your address and we will estimate a delivery window based on business days and local holidays.</p>
               </div>
               <div class="delivery-window" id="deliveryWindow"><span id="deliveryDateText">Estimating&hellip;</span></div>
             </div>
 
-            <!-- Home delivery address fields -->
-            <div id="home-fields" style="display:none;margin-top:18px;">
+            <!-- Door delivery address fields -->
+            <div id="door-fields" style="display:none;margin-top:18px;">
               <div class="field-grid one">
                 <div class="field" id="field-street">
                   <label for="f-street">Street address</label>
@@ -515,7 +516,7 @@
 
   <div class="toast" id="coToast">Your details have been restored.</div>
 
-  <script src="checkout.js?v=4"></script>
+  <script src="checkout.js?v=5"></script>
 
   <script>
     function toggleSpecial() {
