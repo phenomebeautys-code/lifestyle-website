@@ -211,11 +211,9 @@ function validateStep2() {
 /* ── Step navigation ─────────────────────────────────────── */
 function goToStep(n) {
   currentStep = n;
-  // panels: id="panel-1", "panel-2", "panel-3"
   document.querySelectorAll('.step').forEach((p, i) => {
     p.classList.toggle('active', i + 1 === n);
   });
-  // breadcrumbs: id="breadcrumb-1", "breadcrumb-2", "breadcrumb-3"
   document.querySelectorAll('.step-pill').forEach((b, i) => {
     b.classList.toggle('active',    i + 1 === n);
     b.classList.toggle('done',      i + 1 <  n);
@@ -243,7 +241,6 @@ function syncDeliveryToggle() {
   if (doorBtn)   doorBtn.classList.toggle('selected',   selectedDelivery === 'door');
   if (lockerSec) lockerSec.style.display = selectedDelivery === 'locker' ? '' : 'none';
   if (doorSec)   doorSec.style.display   = selectedDelivery === 'door'   ? '' : 'none';
-  // update meta copy
   const metaTitle = document.getElementById('deliveryMetaTitle');
   const metaText  = document.getElementById('deliveryMetaText');
   if (metaTitle) metaTitle.textContent = selectedDelivery === 'locker' ? 'Pudo locker selected' : 'Door delivery selected';
@@ -257,7 +254,6 @@ function syncDeliveryToggle() {
 let _lockerSearchTimer = null;
 
 async function searchLockers(query) {
-  // query may come from the input field directly (called by HTML onclick)
   if (query === undefined) {
     query = document.getElementById('f-locker-search')?.value.trim() || '';
   }
@@ -274,3 +270,435 @@ async function searchLockers(query) {
   try {
     const params = new URLSearchParams({ limit: '20' });
     if (useCoords)
+      { params.set('lat', lat); params.set('lng', lng); }
+    else
+      { params.set('q', query); }
+
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/pudo-locker-search?${params}`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    const data = await resp.json();
+    const lockers = Array.isArray(data) ? data : (data.lockers || []);
+
+    if (!lockers.length) {
+      list.innerHTML = '<div class="locker-loading">No lockers found nearby. Try a different address.</div>';
+      return;
+    }
+
+    list.innerHTML = lockers.map(l => {
+      const id      = l.id || l.locker_id || '';
+      const name    = l.name || l.locker_name || 'Locker';
+      const address = l.address || l.locker_address || '';
+      const boxSize = l.box_size || l.boxSize || '';
+      const unknown = !boxSize;
+      return `<div class="locker-item" onclick="selectLocker(${JSON.stringify(id)},${JSON.stringify(name)},${JSON.stringify(address)},${JSON.stringify(boxSize)},${unknown})">
+        <strong>${name}</strong>
+        <span>${address}</span>
+        ${boxSize ? `<span class="locker-box-chip">${boxSize} box</span>` : ''}
+      </div>`;
+    }).join('');
+  } catch(err) {
+    list.innerHTML = '<div class="locker-loading">Search failed. Please try again.</div>';
+    console.error('Locker search error:', err);
+  }
+}
+
+/* ── Select locker ───────────────────────────────────────── */
+function selectLocker(id, name, address, boxSize, sizeUnknown) {
+  selectedLocker = { id, name, address, boxSize, sizeUnknown };
+
+  const list = document.getElementById('lockerResults');
+  if (list) list.innerHTML = '';
+
+  const display = document.getElementById('lockerSelectedDisplay');
+  const nameEl  = document.getElementById('lockerSelectedName');
+  const addrEl  = document.getElementById('lockerSelectedAddr');
+  if (display) display.style.display = '';
+  if (nameEl)  nameEl.textContent = name;
+  if (addrEl)  addrEl.textContent = address;
+
+  const errEl = document.getElementById('err-locker');
+  if (errEl) errEl.classList.remove('show');
+
+  const notice = document.getElementById('lockerSizeNotice');
+  if (notice) {
+    if (boxSize && !sizeUnknown) {
+      notice.style.display = '';
+      notice.textContent   = `This locker accepts ${boxSize} boxes. Your order will be packed to fit.`;
+    } else {
+      notice.style.display = 'none';
+    }
+  }
+
+  renderSummary();
+  renderMobileSummary();
+  saveDraft();
+}
+
+/* ── Render delivery date ────────────────────────────────── */
+function renderDeliveryDate() {
+  const range = getDeliveryRange();
+  const el2   = document.getElementById('deliveryDateText2');
+  if (el2) el2.textContent = range;
+}
+
+/* ── Render summary (desktop aside) ─────────────────────── */
+function renderSummary() {
+  const rowsEl   = document.getElementById('asideSummaryRows');
+  const totalsEl = document.getElementById('asideTotals');
+  const countEl  = document.getElementById('asideItemCount');
+  if (!rowsEl) return;
+
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  if (countEl) countEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''}`;
+
+  rowsEl.innerHTML = cart.map(item => `
+    <div class="summary-row">
+      <span class="summary-row-name">${item.name || 'Product'}${item.qty > 1 ? ` <span class="summary-qty">x${item.qty}</span>` : ''}</span>
+      <span class="summary-row-price">R${(item.price * item.qty).toFixed(2)}</span>
+    </div>
+  `).join('');
+
+  const sub      = calcSub();
+  const delivery = getDeliveryFee();
+  const total    = calcTotal();
+  const range    = getDeliveryRange();
+
+  if (totalsEl) totalsEl.innerHTML = `
+    <div class="totals-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="totals-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker' : 'Door'})</span><span>R${delivery.toFixed(2)}</span></div>
+    <div class="totals-divider"></div>
+    <div class="totals-row totals-total"><span>Total</span><span>R${total.toFixed(2)}</span></div>
+    <div class="totals-eta">Est. delivery: ${range}</div>
+  `;
+
+  _renderReviewPanel();
+}
+
+/* ── Render summary (mobile bar) ────────────────────────── */
+function renderMobileSummary() {
+  const rowsEl   = document.getElementById('mobileSummaryRows');
+  const totalsEl = document.getElementById('mobileTotals');
+  const labelEl  = document.getElementById('mobileSummaryLabel');
+  const totalEl  = document.getElementById('mobileSummaryTotal');
+  if (!rowsEl) return;
+
+  const totalQty = cart.reduce((s, i) => s + i.qty, 0);
+  if (labelEl) labelEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''} in your order`;
+  if (totalEl) totalEl.textContent = `R${calcTotal().toFixed(2)}`;
+
+  rowsEl.innerHTML = cart.map(item => `
+    <div class="summary-row">
+      <span class="summary-row-name">${item.name || 'Product'}${item.qty > 1 ? ` <span class="summary-qty">x${item.qty}</span>` : ''}</span>
+      <span class="summary-row-price">R${(item.price * item.qty).toFixed(2)}</span>
+    </div>
+  `).join('');
+
+  const sub      = calcSub();
+  const delivery = getDeliveryFee();
+  const total    = calcTotal();
+
+  if (totalsEl) totalsEl.innerHTML = `
+    <div class="totals-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="totals-row"><span>Delivery</span><span>R${delivery.toFixed(2)}</span></div>
+    <div class="totals-divider"></div>
+    <div class="totals-row totals-total"><span>Total</span><span>R${total.toFixed(2)}</span></div>
+  `;
+}
+
+/* ── Toggle mobile summary ───────────────────────────────── */
+function toggleMobileSummary() {
+  const body    = document.getElementById('mobileSummaryBody');
+  const toggle  = document.querySelector('.mobile-summary-toggle');
+  const chevron = document.getElementById('mobileSummaryChevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (toggle)  toggle.setAttribute('aria-expanded', open);
+  if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+/* ── Review panel (step 3) ───────────────────────────────── */
+function _renderReviewPanel() {
+  const panel = document.getElementById('reviewPanel');
+  if (!panel || currentStep !== 3) return;
+
+  const name    = document.getElementById('f-name')?.value    || '';
+  const phone   = document.getElementById('f-phone')?.value   || '';
+  const email   = document.getElementById('f-email')?.value   || '';
+  const special = document.getElementById('f-special')?.value || '';
+
+  let deliveryHtml = '';
+  if (selectedDelivery === 'locker' && selectedLocker) {
+    deliveryHtml = `<p><strong>Pudo locker:</strong> ${selectedLocker.name}</p>
+                    <p>${selectedLocker.address}</p>`;
+  } else {
+    const street   = document.getElementById('f-street')?.value   || '';
+    const suburb   = document.getElementById('f-suburb')?.value   || '';
+    const city     = document.getElementById('f-city')?.value     || '';
+    const province = document.getElementById('f-province')?.value || '';
+    const postal   = document.getElementById('f-postal')?.value   || '';
+    deliveryHtml   = `<p>${street}${suburb ? ', ' + suburb : ''}</p>
+                      <p>${city}${province ? ', ' + province : ''}${postal ? ' ' + postal : ''}</p>`;
+  }
+
+  panel.innerHTML = `
+    <div class="review-section">
+      <h4>Contact</h4>
+      <p>${name}</p><p>${email}</p><p>${phone}</p>
+    </div>
+    <div class="review-section">
+      <h4>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker &mdash; R59' : 'Door &mdash; R99'})</h4>
+      ${deliveryHtml}
+      ${special ? `<p><em>Instructions: ${special}</em></p>` : ''}
+    </div>
+    <div class="review-section">
+      <h4>Order</h4>
+      ${cart.map(i => `<p>${i.name || 'Product'} x${i.qty} &mdash; R${(i.price * i.qty).toFixed(2)}</p>`).join('')}
+      <p><strong>Total: R${calcTotal().toFixed(2)}</strong></p>
+    </div>
+  `;
+}
+
+/* ── Yoco payment ────────────────────────────────────────── */
+let _yocoSDK    = null;
+let _yocoReady  = false;
+
+function _initYoco() {
+  if (typeof window.YocoSDK === 'undefined') return;
+  try {
+    _yocoSDK  = new window.YocoSDK({ publicKey: 'pk_live_eba4e00cLbkMSn5b5a8f' });
+    const inline = _yocoSDK.inline({ layout: 'basic', showErrors: true, showSubmitButton: false });
+    inline.mount('#yoco-card-frame');
+    _yocoReady = true;
+    window._yocoInline = inline;
+  } catch(e) {
+    console.warn('Yoco init error:', e);
+  }
+}
+
+async function submitPayment() {
+  const btn     = document.getElementById('payBtn');
+  const alertEl = document.getElementById('payAlert');
+  if (btn) btn.disabled = true;
+
+  const showAlert = (msg, type = 'error') => {
+    if (!alertEl) return;
+    alertEl.textContent   = msg;
+    alertEl.className     = `alert alert-${type}`;
+    alertEl.style.display = '';
+  };
+
+  if (!_yocoReady || !window._yocoInline) {
+    showAlert('Payment form is not ready. Please refresh and try again.');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  const overlay   = document.getElementById('loadingOverlay');
+  const loadTitle = document.getElementById('loadingTitle');
+  const loadText  = document.getElementById('loadingText');
+  if (overlay)   overlay.style.display = '';
+  if (loadTitle) loadTitle.textContent = 'Processing payment';
+  if (loadText)  loadText.textContent  = 'Please wait while we securely process your payment\u2026';
+
+  try {
+    const result = await window._yocoInline.createToken();
+    if (result.error) {
+      if (overlay) overlay.style.display = 'none';
+      showAlert(result.error.message || 'Card error. Please check your details.');
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    const token    = result.id;
+    const orderRef = `PB-${Date.now()}`;
+    const name     = document.getElementById('f-name')?.value.trim()  || '';
+    const phone    = document.getElementById('f-phone')?.value.trim() || '';
+    const email    = document.getElementById('f-email')?.value.trim() || '';
+    const special  = document.getElementById('f-special')?.value.trim() || '';
+
+    let deliveryAddress = {};
+    if (selectedDelivery === 'locker' && selectedLocker) {
+      deliveryAddress = { type: 'locker', ...selectedLocker };
+    } else {
+      deliveryAddress = {
+        type:     'door',
+        street:   document.getElementById('f-street')?.value.trim()   || '',
+        suburb:   document.getElementById('f-suburb')?.value.trim()   || '',
+        city:     document.getElementById('f-city')?.value.trim()     || '',
+        province: document.getElementById('f-province')?.value.trim() || '',
+        postal:   document.getElementById('f-postal')?.value.trim()   || '',
+        special,
+      };
+    }
+
+    const orderPayload = {
+      order_ref:        orderRef,
+      customer_name:    name,
+      customer_phone:   phone,
+      customer_email:   email,
+      delivery_type:    selectedDelivery,
+      delivery_address: deliveryAddress,
+      items:            cart,
+      subtotal:         calcSub(),
+      delivery_fee:     getDeliveryFee(),
+      total:            calcTotal(),
+      status:           'pending_payment',
+      yoco_token:       token,
+    };
+
+    const saveResp = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method:  'POST',
+      headers: {
+        apikey:         SUPABASE_ANON,
+        Authorization:  `Bearer ${SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+        Prefer:         'return=representation',
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    if (!saveResp.ok) {
+      const err = await saveResp.json().catch(() => ({}));
+      throw new Error(err.message || `Order save failed (${saveResp.status})`);
+    }
+
+    const chargeResp = await fetch(`${SUPABASE_URL}/functions/v1/yoco-charge`, {
+      method:  'POST',
+      headers: {
+        apikey:         SUPABASE_ANON,
+        Authorization:  `Bearer ${SUPABASE_ANON}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, amount: Math.round(calcTotal() * 100), currency: 'ZAR', order_ref: orderRef }),
+    });
+
+    const chargeData = await chargeResp.json();
+    if (!chargeResp.ok || chargeData.error) {
+      throw new Error(chargeData.error || chargeData.message || 'Payment charge failed.');
+    }
+
+    localStorage.removeItem('phenome_cart');
+    localStorage.removeItem(DRAFT_KEY);
+    if (loadTitle) loadTitle.textContent = 'Payment successful!';
+    if (loadText)  loadText.textContent  = 'Redirecting to your order confirmation\u2026';
+
+    setTimeout(() => {
+      window.location.href = `order-confirmation.html?ref=${encodeURIComponent(orderRef)}&email=${encodeURIComponent(email)}`;
+    }, 1200);
+
+  } catch(err) {
+    if (overlay) overlay.style.display = 'none';
+    showAlert(err.message || 'Something went wrong. Please try again.');
+    if (btn) btn.disabled = false;
+    console.error('Payment error:', err);
+  }
+}
+
+/* ── Google Places autocomplete callback ─────────────────── */
+async function initPlaces() {
+  try {
+    const { Autocomplete } = await google.maps.importLibrary('places');
+
+    const streetInput = document.getElementById('f-street');
+    if (streetInput) {
+      const ac = new Autocomplete(streetInput, {
+        componentRestrictions: { country: 'za' },
+        fields: ['address_components'],
+        types:  ['address'],
+      });
+      const hint = document.getElementById('placesHint');
+      if (hint) hint.style.display = '';
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.address_components) return;
+        const get = (type) => place.address_components.find(c => c.types.includes(type))?.long_name || '';
+        const street_number = get('street_number');
+        const route         = get('route');
+        document.getElementById('f-street').value   = [street_number, route].filter(Boolean).join(' ');
+        document.getElementById('f-suburb').value   = get('sublocality_level_1') || get('neighborhood') || get('sublocality');
+        document.getElementById('f-city').value     = get('locality') || get('postal_town');
+        document.getElementById('f-province').value = get('administrative_area_level_1');
+        document.getElementById('f-postal').value   = get('postal_code');
+        saveDraft();
+      });
+    }
+
+    const lockerInput = document.getElementById('f-locker-search');
+    if (lockerInput) {
+      const hint = document.getElementById('lockerPlacesHint');
+      if (hint) hint.style.display = 'flex';
+      const acLocker = new Autocomplete(lockerInput, {
+        componentRestrictions: { country: 'za' },
+        fields: ['geometry', 'formatted_address'],
+      });
+      acLocker.addListener('place_changed', () => {
+        const place = acLocker.getPlace();
+        if (place.geometry?.location) {
+          lockerSearchLat = place.geometry.location.lat();
+          lockerSearchLng = place.geometry.location.lng();
+          searchLockers();
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('Places init error:', e);
+  }
+}
+
+/* ── DOMContentLoaded init ───────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+  if (!cart.length) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  syncDeliveryToggle();
+  renderSummary();
+  renderMobileSummary();
+  renderDeliveryDate();
+
+  const hasDraft = !!localStorage.getItem(DRAFT_KEY);
+  loadDraft();
+  if (hasDraft) {
+    const toast = document.getElementById('coToast');
+    if (toast) {
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+  }
+
+  document.querySelectorAll('#f-name,#f-phone,#f-email,#f-street,#f-suburb,#f-city,#f-province,#f-postal').forEach(el => {
+    el.addEventListener('input', saveDraft);
+  });
+
+  const lockerSearchInput = document.getElementById('f-locker-search');
+  if (lockerSearchInput) {
+    lockerSearchInput.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter') { searchLockers(); return; }
+      clearTimeout(_lockerSearchTimer);
+      _lockerSearchTimer = setTimeout(searchLockers, 500);
+    });
+  }
+
+  const origGoToStep = goToStep;
+  window.goToStep = function(n) {
+    if (n === 2 && currentStep === 1) {
+      if (!validateStep1()) return;
+    }
+    if (n === 3 && currentStep === 2) {
+      if (!validateStep2()) return;
+    }
+    origGoToStep(n);
+    if (n === 3) {
+      _initYoco();
+      _renderReviewPanel();
+    }
+  };
+
+  window.searchLockers  = searchLockers;
+  window.selectLocker   = selectLocker;
+  window.selectDelivery = selectDelivery;
+  window.submitPayment  = submitPayment;
+});
