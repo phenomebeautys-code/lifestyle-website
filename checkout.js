@@ -265,14 +265,16 @@ async function searchLockers(query) {
   const useCoords = lat !== null && lng !== null;
   if (!useCoords && (!query || query.length < 3)) return;
 
-  list.innerHTML = '<div class="locker-loading">Searching\u2026</div>';
+  list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Searching&hellip;</div>';
 
   try {
     const params = new URLSearchParams({ limit: '20' });
-    if (useCoords)
-      { params.set('lat', lat); params.set('lng', lng); }
-    else
-      { params.set('q', query); }
+    if (useCoords) {
+      params.set('lat', lat);
+      params.set('lng', lng);
+    } else {
+      params.set('q', query);
+    }
 
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/pudo-locker-search?${params}`,
@@ -282,7 +284,7 @@ async function searchLockers(query) {
     const lockers = Array.isArray(data) ? data : (data.lockers || []);
 
     if (!lockers.length) {
-      list.innerHTML = '<div class="locker-loading">No lockers found nearby. Try a different address.</div>';
+      list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">No lockers found nearby. Try a different address.</div>';
       return;
     }
 
@@ -292,14 +294,25 @@ async function searchLockers(query) {
       const address = l.address || l.locker_address || '';
       const boxSize = l.box_size || l.boxSize || '';
       const unknown = !boxSize;
-      return `<div class="locker-item" onclick="selectLocker(${JSON.stringify(id)},${JSON.stringify(name)},${JSON.stringify(address)},${JSON.stringify(boxSize)},${unknown})">
-        <strong>${name}</strong>
-        <span>${address}</span>
-        ${boxSize ? `<span class="locker-box-chip">${boxSize} box</span>` : ''}
+      const idJ     = JSON.stringify(id);
+      const nameJ   = JSON.stringify(name);
+      const addrJ   = JSON.stringify(address);
+      const boxJ    = JSON.stringify(boxSize);
+      return `<div class="locker-item">
+        <div class="locker-item-top">
+          <div>
+            <h4>${name}</h4>
+            <p>${address}</p>
+            ${boxSize ? `<div class="locker-badges"><span class="locker-tag">${boxSize} box</span></div>` : ''}
+          </div>
+        </div>
+        <div class="locker-cta">
+          <button class="mini-btn" onclick="selectLocker(${idJ},${nameJ},${addrJ},${boxJ},${unknown})">Select locker</button>
+        </div>
       </div>`;
     }).join('');
   } catch(err) {
-    list.innerHTML = '<div class="locker-loading">Search failed. Please try again.</div>';
+    list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Search failed. Please try again.</div>';
     console.error('Locker search error:', err);
   }
 }
@@ -353,12 +366,19 @@ function renderSummary() {
   const totalQty = cart.reduce((s, i) => s + i.qty, 0);
   if (countEl) countEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''}`;
 
-  rowsEl.innerHTML = cart.map(item => `
-    <div class="summary-row">
-      <span class="summary-row-name">${item.name || 'Product'}${item.qty > 1 ? ` <span class="summary-qty">x${item.qty}</span>` : ''}</span>
-      <span class="summary-row-price">R${(item.price * item.qty).toFixed(2)}</span>
-    </div>
-  `).join('');
+  rowsEl.innerHTML = cart.map(item => {
+    const imgHtml = item.image
+      ? `<img src="${item.image}" alt="${item.name || 'Product'}" width="60" height="60" loading="lazy" style="width:60px;height:60px;border-radius:10px;object-fit:cover;" />`
+      : `<div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div>`;
+    return `<div class="cart-item">
+      ${imgHtml}
+      <div>
+        <h4>${item.name || 'Product'}</h4>
+        <div class="cart-meta">${item.qty > 1 ? `Qty: ${item.qty}` : ''}</div>
+      </div>
+      <div class="cart-price">R${(item.price * item.qty).toFixed(2)}</div>
+    </div>`;
+  }).join('');
 
   const sub      = calcSub();
   const delivery = getDeliveryFee();
@@ -366,11 +386,10 @@ function renderSummary() {
   const range    = getDeliveryRange();
 
   if (totalsEl) totalsEl.innerHTML = `
-    <div class="totals-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
-    <div class="totals-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker' : 'Door'})</span><span>R${delivery.toFixed(2)}</span></div>
-    <div class="totals-divider"></div>
-    <div class="totals-row totals-total"><span>Total</span><span>R${total.toFixed(2)}</span></div>
-    <div class="totals-eta">Est. delivery: ${range}</div>
+    <div class="total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo locker' : 'Door'})</span><span>R${delivery.toFixed(2)}</span></div>
+    <div class="total-row grand"><span>Total</span><span>R${total.toFixed(2)}</span></div>
+    <div class="total-row" style="font-size:.78rem;color:#34d399;"><span style="color:var(--text-muted);">Est. delivery</span><span>${range}</span></div>
   `;
 
   _renderReviewPanel();
@@ -388,22 +407,28 @@ function renderMobileSummary() {
   if (labelEl) labelEl.textContent = `${totalQty} item${totalQty !== 1 ? 's' : ''} in your order`;
   if (totalEl) totalEl.textContent = `R${calcTotal().toFixed(2)}`;
 
-  rowsEl.innerHTML = cart.map(item => `
-    <div class="summary-row">
-      <span class="summary-row-name">${item.name || 'Product'}${item.qty > 1 ? ` <span class="summary-qty">x${item.qty}</span>` : ''}</span>
-      <span class="summary-row-price">R${(item.price * item.qty).toFixed(2)}</span>
-    </div>
-  `).join('');
+  rowsEl.innerHTML = cart.map(item => {
+    const imgHtml = item.image
+      ? `<img src="${item.image}" alt="${item.name || 'Product'}" width="60" height="60" loading="lazy" style="width:60px;height:60px;border-radius:10px;object-fit:cover;" />`
+      : `<div style="width:60px;height:60px;border-radius:10px;background:rgba(255,255,255,0.06);flex-shrink:0;"></div>`;
+    return `<div class="cart-item">
+      ${imgHtml}
+      <div>
+        <h4>${item.name || 'Product'}</h4>
+        <div class="cart-meta">${item.qty > 1 ? `Qty: ${item.qty}` : ''}</div>
+      </div>
+      <div class="cart-price">R${(item.price * item.qty).toFixed(2)}</div>
+    </div>`;
+  }).join('');
 
   const sub      = calcSub();
   const delivery = getDeliveryFee();
   const total    = calcTotal();
 
   if (totalsEl) totalsEl.innerHTML = `
-    <div class="totals-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
-    <div class="totals-row"><span>Delivery</span><span>R${delivery.toFixed(2)}</span></div>
-    <div class="totals-divider"></div>
-    <div class="totals-row totals-total"><span>Total</span><span>R${total.toFixed(2)}</span></div>
+    <div class="total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="total-row"><span>Delivery</span><span>R${delivery.toFixed(2)}</span></div>
+    <div class="total-row grand"><span>Total</span><span>R${total.toFixed(2)}</span></div>
   `;
 }
 
@@ -701,4 +726,5 @@ document.addEventListener('DOMContentLoaded', function () {
   window.selectLocker   = selectLocker;
   window.selectDelivery = selectDelivery;
   window.submitPayment  = submitPayment;
+  window.initPlaces     = initPlaces;
 });
