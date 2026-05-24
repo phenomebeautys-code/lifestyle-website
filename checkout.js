@@ -210,6 +210,12 @@ function validateStep2() {
 
 /* ── Step navigation ─────────────────────────────────────── */
 function goToStep(n) {
+  if (n === 2 && currentStep === 1) {
+    if (!validateStep1()) return;
+  }
+  if (n === 3 && currentStep === 2) {
+    if (!validateStep2()) return;
+  }
   currentStep = n;
   document.querySelectorAll('.step').forEach((p, i) => {
     p.classList.toggle('active', i + 1 === n);
@@ -220,6 +226,10 @@ function goToStep(n) {
   });
   renderSummary();
   renderMobileSummary();
+  if (n === 3) {
+    _initYoco();
+    _renderReviewPanel();
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -706,25 +716,4 @@ document.addEventListener('DOMContentLoaded', function () {
       _lockerSearchTimer = setTimeout(searchLockers, 500);
     });
   }
-
-  const origGoToStep = goToStep;
-  window.goToStep = function(n) {
-    if (n === 2 && currentStep === 1) {
-      if (!validateStep1()) return;
-    }
-    if (n === 3 && currentStep === 2) {
-      if (!validateStep2()) return;
-    }
-    origGoToStep(n);
-    if (n === 3) {
-      _initYoco();
-      _renderReviewPanel();
-    }
-  };
-
-  window.searchLockers  = searchLockers;
-  window.selectLocker   = selectLocker;
-  window.selectDelivery = selectDelivery;
-  window.submitPayment  = submitPayment;
-  window.initPlaces     = initPlaces;
 });
