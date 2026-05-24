@@ -1,12 +1,16 @@
 /**
  * pudo-locker-search
- * GET ?lat=X&lng=Y          — direct coords (preferred, from Places autocomplete)
- * GET ?q=suburb+or+address  — falls back to geocoding via GOOGLE_GEOCODING_KEY
+ * GET ?lat=X&lng=Y                    — direct coords (preferred, from Places autocomplete)
+ * GET ?q=suburb+or+address            — falls back to geocoding via GOOGLE_GEOCODING_KEY
+ * GET ?box_size=XS|S|M|L|XL           — optional: filter to lockers that have this compartment size available
  *
  * Confirmed endpoint: GET https://api-pudo.co.za/api/v1/lockers-data
  * Authorization: Bearer <PUDO_API_KEY>
  *
- * Fetches all lockers, computes Haversine distance, returns 10 nearest.
+ * Fetches all lockers, computes Haversine distance, returns up to 10 nearest.
+ * When box_size is supplied, only lockers whose available_sizes array includes
+ * that size are returned. Falls back to all lockers if the API doesn't surface
+ * compartment data (graceful degradation).
  *
  * Env vars:
  *  - PUDO_API_KEY          — Pudo/TCG API key (customer.pudo.co.za > Settings > API Keys)
@@ -18,6 +22,10 @@ const ALLOWED_ORIGINS = [
   'https://phenomebeauty.co.za',
 ];
 
+// Canonical Pudo box size codes, smallest → largest
+const VALID_SIZES = ['XS', 'S', 'M', 'L', 'XL'] as const;
+type BoxSize = typeof VALID_SIZES[number];
+
 /** Haversine distance in km */
 function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
@@ -28,6 +36,36 @@ function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number): num
     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
     Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * Extract the set of available box sizes from a locker record.
+ * The Pudo /lockers-data response varies — we look for common shapes:
+ *   - locker.available_sizes: string[]          e.g. ["XS","M"]
+ *   - locker.sizes: string[]                    e.g. ["XS","M"]
+ *   - locker.compartments: [{size:"XS",...}]    object array
+ *   - locker.lockerSizes / locker.locker_sizes  same
+ * Returns null when no compartment data is present (caller should treat as
+ * "unknown — don't filter out").
+ */
+function extractAvailableSizes(l: any): BoxSize[] | null {
+  // Direct string arrays
+  for (const key of ['available_sizes', 'sizes', 'lockerSizes', 'locker_sizes', 'box_sizes']) {
+    if (Array.isArray(l[key]) && l[key].length > 0) {
+      const mapped = (l[key] as string[]).map(s => s.toUpperCase().trim()).filter(s => VALID_SIZES.includes(s as BoxSize)) as BoxSize[];
+      if (mapped.length > 0) return mapped;
+    }
+  }
+  // Compartment object arrays
+  for (const key of ['compartments', 'locker_compartments', 'parcelSizes']) {
+    if (Array.isArray(l[key]) && l[key].length > 0) {
+      const mapped = (l[key] as any[])
+        .map(c => (c.size ?? c.boxSize ?? c.box_size ?? c.type ?? '').toString().toUpperCase().trim())
+        .filter(s => VALID_SIZES.includes(s as BoxSize)) as BoxSize[];
+      if (mapped.length > 0) return mapped;
+    }
+  }
+  return null; // API didn't surface compartment data for this locker
 }
 
 Deno.serve(async (req: Request) => {
@@ -48,6 +86,8 @@ Deno.serve(async (req: Request) => {
   const latParam = params.get('lat');
   const lngParam = params.get('lng');
   const query    = (params.get('q') ?? '').trim();
+  const rawSize  = (params.get('box_size') ?? '').trim().toUpperCase();
+  const requiredSize: BoxSize | null = VALID_SIZES.includes(rawSize as BoxSize) ? rawSize as BoxSize : null;
 
   const pudoKey    = Deno.env.get('PUDO_API_KEY')         ?? '';
   const geocodeKey = Deno.env.get('GOOGLE_GEOCODING_KEY') ?? '';
@@ -133,22 +173,49 @@ Deno.serve(async (req: Request) => {
       console.log('[pudo-locker-search] First locker sample:', JSON.stringify(lockers[0]).slice(0, 400));
     }
 
-    // Compute distance, sort ascending, return 10 nearest
+    // ── Compartment-size filtering ────────────────────────────────────────
+    // Detect whether the API is returning compartment data at all (check first 5 lockers)
+    const sampleSlice = lockers.slice(0, 5);
+    const apiHasCompartmentData = sampleSlice.some(l => extractAvailableSizes(l) !== null);
+    console.log('[pudo-locker-search] API has compartment data:', apiHasCompartmentData, '| required box size:', requiredSize ?? 'none');
+
+    // Compute distance, sort ascending
     const withDistance = lockers
       .filter((l: any) => l.latitude && l.longitude)
       .map((l: any) => ({
         ...l,
-        _distKm: distanceKm(lat, lng, parseFloat(l.latitude), parseFloat(l.longitude)),
+        _distKm:    distanceKm(lat, lng, parseFloat(l.latitude), parseFloat(l.longitude)),
+        _availSizes: extractAvailableSizes(l),
       }))
       .sort((a: any, b: any) => a._distKm - b._distKm);
 
-    const results = withDistance.slice(0, 10).map((l: any) => ({
+    // Apply size filter only when:
+    //  (a) caller specified a box_size, AND
+    //  (b) the API actually returned compartment data
+    // When the API doesn't surface compartment data, we skip the filter and
+    // flag each result with size_availability_unknown: true so the frontend
+    // can show an appropriate warning.
+    let filtered = withDistance;
+    let sizeFilterApplied = false;
+
+    if (requiredSize && apiHasCompartmentData) {
+      filtered = withDistance.filter((l: any) => {
+        if (l._availSizes === null) return true; // this individual locker lacks data — keep it
+        return l._availSizes.includes(requiredSize);
+      });
+      sizeFilterApplied = true;
+      console.log(`[pudo-locker-search] After size filter (${requiredSize}): ${filtered.length} of ${withDistance.length} lockers`);
+    }
+
+    const results = filtered.slice(0, 10).map((l: any) => ({
       id:          l.code ?? l.terminal_id ?? l.id ?? '',
       name:        l.name ?? '',
       address:     l.address ?? '',
       town:        l.place?.town ?? '',
       postal_code: l.place?.postalCode ?? '',
       distance_km: Math.round(l._distKm * 10) / 10,
+      available_sizes: l._availSizes,          // null when API doesn't surface this
+      size_availability_unknown: l._availSizes === null,
       opening_hours: (l.openinghours ?? []).map((h: any) => ({
         day:   h.day?.trim(),
         open:  h.open_time,
@@ -156,8 +223,13 @@ Deno.serve(async (req: Request) => {
       })),
     }));
 
-    console.log('[pudo-locker-search] Returning', results.length, 'nearest lockers');
-    return respond({ results }, 200, corsHeaders);
+    console.log('[pudo-locker-search] Returning', results.length, 'lockers | size_filter_applied:', sizeFilterApplied);
+    return respond({
+      results,
+      required_box_size:    requiredSize,
+      size_filter_applied:  sizeFilterApplied,
+      api_has_compartment_data: apiHasCompartmentData,
+    }, 200, corsHeaders);
 
   } catch (err) {
     console.error('[pudo-locker-search] Unexpected error:', err);
