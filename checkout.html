@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — PhenomeBeauty</title>
+  <meta name="robots" content="noindex" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background: #0a0a0b; min-height: 100vh; }
+
+    /* ─ Nav ─────────────────────────────────────── */
+    .co-nav {
+      position: sticky; top: 0; z-index: 200;
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(8,8,10,0.92);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    }
+    .co-nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .co-nav-logo  { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.1rem; color: #fff; }
+    .co-nav-logo img { height: 34px; border-radius: 6px; }
+    .co-nav-back  { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-muted); transition: color 0.2s; }
+    .co-nav-back:hover { color: var(--text); }
+    .co-trust     { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ─ Layout ───────────────────────────────────── */
+    .co-layout {
+      display: grid; grid-template-columns: 1fr 420px; gap: 0;
+      min-height: calc(100vh - 64px); max-width: 1140px; margin: 0 auto; padding: 0 20px;
+    }
+    .co-form-col { padding: 40px 48px 60px 0; border-right: 1px solid var(--glass-border); }
+
+    /* ─ Breadcrumb ───────────────────────────────── */
+    .co-steps { display: flex; align-items: center; gap: 0; margin-bottom: 36px; font-size: 0.8rem; }
+    .co-step  { display: flex; align-items: center; gap: 6px; color: var(--text-muted); font-weight: 500; }
+    .co-step.active { color: var(--accent-strong); }
+    .co-step.done   { color: var(--text-soft); }
+    .co-step-num {
+      width: 22px; height: 22px; border-radius: 50%; border: 1px solid currentColor;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+    }
+    .co-step.done .co-step-num   { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.20); }
+    .co-step.active .co-step-num { background: #fff; color: #000; border-color: #fff; }
+    .co-sep { width: 28px; height: 1px; background: var(--glass-border); margin: 0 8px; }
+
+    /* ─ Section heads ────────────────────────────── */
+    .co-section-head { margin-bottom: 22px; }
+    .co-section-head h2 { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent-strong); line-height: 1.1; margin-bottom: 4px; }
+    .co-section-head p  { font-size: 0.83rem; color: var(--text-muted); }
+
+    /* ─ Step panels ──────────────────────────────── */
+    .co-step-panel        { display: none; }
+    .co-step-panel.active { display: block; }
+
+    /* ─ Done cards ───────────────────────────────── */
+    .done-card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04);
+      margin-bottom: 10px; gap: 12px;
+    }
+    .done-card-left { font-size: 0.82rem; color: var(--text-muted); }
+    .done-card-val  { font-size: 0.88rem; color: var(--text); font-weight: 500; margin-top: 2px; }
+    .done-card-edit {
+      font-size: 0.78rem; color: var(--accent); background: none; border: none;
+      cursor: pointer; font-family: var(--font-body); text-decoration: underline;
+      transition: color 0.18s; flex-shrink: 0;
+    }
+    .done-card-edit:hover { color: var(--accent-strong); }
+
+    /* ─ Fields ───────────────────────────────────── */
+    .field-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+    .field-group:last-of-type { margin-bottom: 0; }
+    .field-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); display: block; }
+    .field-input {
+      width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+      color: var(--text); border-radius: var(--radius-md); padding: 12px 16px;
+      font-size: 0.9rem; font-family: var(--font-body); outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .field-input:focus  { border-color: rgba(255,255,255,0.38); background: rgba(255,255,255,0.07); }
+    .field-input.error  { border-color: #f87171; }
+    .field-error        { font-size: 0.75rem; color: #f87171; display: none; }
+    .field-error.show   { display: block; }
+    textarea.field-input { resize: vertical; min-height: 76px; }
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 14px; }
+    .field-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
+
+    /* ─ Delivery method selector ─────────────────── */
+    .delivery-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+    .delivery-option {
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.03);
+      transition: border-color 0.2s, background 0.2s;
+      user-select: none;
+      position: relative;
+    }
+    .delivery-option:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); }
+    .delivery-option.selected {
+      border-color: rgba(255,255,255,0.45);
+      background: rgba(255,255,255,0.08);
+    }
+    .delivery-option input[type="radio"] { display: none; }
+    .delivery-option-icon { font-size: 1.4rem; margin-bottom: 6px; }
+    .delivery-option-title { font-size: 0.9rem; font-weight: 700; color: var(--accent-strong); }
+    .delivery-option-price {
+      font-size: 0.85rem; font-weight: 600; color: var(--accent);
+      margin-top: 2px;
+    }
+    .delivery-option-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; line-height: 1.4; }
+    .delivery-option-check {
+      position: absolute; top: 12px; right: 12px;
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .delivery-option.selected .delivery-option-check {
+      background: #fff;
+      border-color: #fff;
+    }
+    .delivery-option.selected .delivery-option-check::after {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #000;
+    }
+
+    /* ─ Locker search ────────────────────────────── */
+    .locker-search-wrap { margin-bottom: 14px; }
+    .locker-search-row { display: flex; gap: 8px; }
+    .locker-search-row .field-input { flex: 1; }
+    .locker-search-btn {
+      padding: 12px 18px; border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
+      color: var(--text); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; font-family: var(--font-body);
+      transition: background 0.18s; white-space: nowrap; flex-shrink: 0;
+    }
+    .locker-search-btn:hover { background: rgba(255,255,255,0.14); }
+    .locker-search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .locker-results {
+      margin-top: 8px;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: none;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .locker-results.show { display: block; }
+    .locker-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .locker-item:last-child { border-bottom: none; }
+    .locker-item:hover { background: rgba(255,255,255,0.06); }
+    .locker-item.selected-locker { background: rgba(255,255,255,0.09); border-left: 2px solid rgba(255,255,255,0.5); }
+    .locker-item-name { font-size: 0.87rem; font-weight: 600; color: var(--accent-strong); }
+    .locker-item-addr { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .locker-item-dist { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+    .locker-item-select {
+      font-size: 0.75rem; color: var(--accent); font-weight: 600;
+      background: none; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 4px 12px; cursor: pointer;
+      font-family: var(--font-body); transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .locker-item-select:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
+    .locker-selected-display {
+      padding: 14px 16px; border-radius: var(--radius-md);
+      border: 1px solid rgba(52,211,153,0.3);
+      background: rgba(52,211,153,0.06);
+      margin-top: 8px; display: none;
+    }
+    .locker-selected-display.show { display: block; }
+    .locker-selected-name { font-size: 0.9rem; font-weight: 600; color: #34d399; }
+    .locker-selected-addr { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+    .locker-selected-change {
+      font-size: 0.75rem; color: var(--accent); background: none; border: none;
+      cursor: pointer; font-family: var(--font-body); text-decoration: underline;
+      margin-top: 6px; padding: 0; display: inline-block;
+    }
+    .locker-loading { padding: 14px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem; }
+    .locker-size-notice {
+      padding: 10px 16px;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .locker-size-notice--filtered {
+      color: #86efac;
+      background: rgba(52,211,153,0.06);
+    }
+    .locker-size-notice--unknown {
+      color: #fbbf24;
+      background: rgba(251,191,36,0.07);
+    }
+    .locker-item-size-warn {
+      font-size: 0.72rem;
+      color: #fbbf24;
+      margin-top: 3px;
+    }
+    .locker-size-note {
+      font-size: 0.75rem;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      line-height: 1.45;
+    }
+    .locker-size-note--confirmed { color: #86efac; }
+    .locker-size-note--unknown   { color: #fbbf24; }
+    .locker-empty   { padding: 14px 16px; text-align: center; color: var(--text-muted); font-size: 0.82rem; }
+
+    /* ─ Places autocomplete hint ─────────────────── */
+    .places-hint {
+      font-size: 0.72rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 5px;
+      margin-top: 3px;
+    }
+    .places-hint svg { flex-shrink: 0; }
+    .pac-container {
+      background: #1a1a1e !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+      margin-top: 4px !important;
+      font-family: var(--font-body, 'Inter', sans-serif) !important;
+      overflow: hidden;
+    }
+    .pac-item {
+      padding: 10px 14px !important;
+      border-top: 1px solid rgba(255,255,255,0.06) !important;
+      color: rgba(255,255,255,0.75) !important;
+      font-size: 0.85rem !important;
+      cursor: pointer !important;
+    }
+    .pac-item:first-child { border-top: none !important; }
+    .pac-item:hover, .pac-item-selected { background: rgba(255,255,255,0.07) !important; }
+    .pac-item-query { color: #fff !important; font-weight: 600 !important; }
+    .pac-matched { color: #fff !important; font-weight: 700 !important; }
+    .pac-icon { display: none !important; }
+    .pac-logo::after { display: none !important; }
+    .hdpi.pac-logo::after { display: none !important; }
+
+    /* ─ Buttons ──────────────────────────────────── */
+    .co-btn-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 26px; flex-wrap: wrap; }
+    .co-back-link {
+      font-size: 0.82rem; color: var(--text-muted);
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer;
+      font-family: var(--font-body); transition: color 0.2s;
+    }
+    .co-back-link:hover { color: var(--text); }
+
+    /* ─ Step 1 payment trust micro-strip ─────────── */
+    .step1-trust {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin-top: 22px; padding-top: 20px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .step1-trust-strip {
+      display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+      flex-wrap: wrap; background: #ffffff; border-radius: var(--radius-md);
+      padding: 10px 20px; box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    }
+    .step1-trust-strip img { height: 20px; width: auto; display: block; }
+    .step1-trust-strip .strip-div { width: 1px; height: 18px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
+    .step1-trust-strip .pci-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em;
+      color: rgba(0,0,0,0.45); white-space: nowrap;
+    }
+    .step1-trust-caption {
+      font-size: 0.69rem; color: var(--text-muted); text-align: center; line-height: 1.5;
+    }
+
+    /* ─ Delivery date banner ─────────────────────── */
+    .delivery-banner {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: var(--radius-md);
+      border: 1px solid rgba(52,211,153,0.22);
+      background: rgba(52,211,153,0.06); margin-bottom: 22px;
+    }
+    .delivery-banner svg { flex-shrink: 0; color: #34d399; }
+    .delivery-banner-text { font-size: 0.83rem; }
+    .delivery-banner-text strong { color: #34d399; font-weight: 600; }
+    .delivery-banner-text span   { color: var(--text-muted); }
+
+    /* ─ Gift toggle ──────────────────────────────── */
+    .gift-toggle-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.03);
+      cursor: pointer; user-select: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .gift-toggle-row:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.05); }
+    .gift-toggle-row.active { border-color: rgba(255,200,120,0.35); background: rgba(255,200,120,0.05); }
+    .gift-toggle-icon { font-size: 1.2rem; flex-shrink: 0; line-height: 1; }
+    .gift-toggle-label { flex: 1; }
+    .gift-toggle-label strong { display: block; font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .gift-toggle-label span   { font-size: 0.75rem; color: var(--text-muted); }
+    .gift-switch { position: relative; width: 38px; height: 22px; flex-shrink: 0; }
+    .gift-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .gift-switch-track {
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,0.12); border-radius: 11px;
+      border: 1px solid var(--glass-border); transition: background 0.22s;
+    }
+    .gift-switch input:checked + .gift-switch-track { background: rgba(255,190,100,0.55); border-color: rgba(255,190,100,0.5); }
+    .gift-switch-track::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: transform 0.22s;
+    }
+    .gift-switch input:checked + .gift-switch-track::after { transform: translateX(16px); }
+    .gift-message-reveal {
+      overflow: hidden; max-height: 0;
+      transition: max-height 0.32s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease, margin-top 0.28s ease;
+      opacity: 0; margin-top: 0;
+    }
+    .gift-message-reveal.open { max-height: 200px; opacity: 1; margin-top: 12px; }
+
+    /* ─ Review blocks ────────────────────────────── */
+    .review-block { border: 1px solid var(--glass-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 16px; }
+    .review-block-head {
+      padding: 12px 18px; background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .review-block-body { padding: 16px 18px; font-size: 0.88rem; color: var(--text-soft); line-height: 1.7; }
+    .review-block-body strong { color: var(--text); }
+
+    /* ─ Payment trust strip (Step 3) ─────────────── */
+    .pay-trust-wrap {
+      margin-top: 20px; padding: 18px 0 10px;
+      border-top: 1px solid var(--glass-border);
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .pay-trust-strip {
+      display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+      flex-wrap: wrap; background: #ffffff; border-radius: var(--radius-md);
+      padding: 12px 24px; box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+    }
+    .pay-trust-strip img.yoco-strip { height: 22px; width: auto; display: block; }
+    .pay-trust-strip .strip-divider { width: 1px; height: 20px; background: rgba(0,0,0,0.12); flex-shrink: 0; }
+    .pay-trust-pci {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.64rem; font-weight: 800; letter-spacing: 0.08em;
+      color: rgba(0,0,0,0.45); white-space: nowrap;
+    }
+    .pay-trust-caption { font-size: 0.7rem; color: var(--text-muted); text-align: center; line-height: 1.5; }
+
+    /* ─ Secure note ──────────────────────────────── */
+    .co-secure {
+      display: flex; align-items: center; justify-content: center;
+      gap: 7px; font-size: 0.75rem; color: var(--text-muted); margin-top: 14px;
+    }
+
+    /* ─ Exit-intent nudge ────────────────────────── */
+    .exit-nudge {
+      display: none; align-items: center; gap: 10px;
+      padding: 13px 16px; border-radius: var(--radius-md);
+      border: 1px solid rgba(251,191,36,0.35);
+      background: rgba(251,191,36,0.07);
+      margin-bottom: 18px;
+      animation: nudgeFadeIn 0.35s ease forwards;
+    }
+    .exit-nudge.show { display: flex; }
+    @keyframes nudgeFadeIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .exit-nudge-icon { font-size: 1.1rem; flex-shrink: 0; line-height: 1; }
+    .exit-nudge-text { flex: 1; font-size: 0.83rem; color: #fbbf24; line-height: 1.4; }
+    .exit-nudge-text strong { display: block; font-weight: 700; margin-bottom: 1px; }
+    .exit-nudge-text span   { font-size: 0.76rem; color: rgba(251,191,36,0.75); }
+    .exit-nudge-close {
+      background: none; border: none; cursor: pointer;
+      color: rgba(251,191,36,0.5); font-size: 1rem; line-height: 1;
+      padding: 2px; transition: color 0.18s; flex-shrink: 0;
+    }
+    .exit-nudge-close:hover { color: #fbbf24; }
+
+    /* ─ Right summary col ─────────────────────────── */
+    .co-summary-col {
+      padding: 40px 0 60px 40px;
+      position: sticky; top: 64px; align-self: start;
+      max-height: calc(100vh - 64px); overflow-y: auto;
+    }
+    .co-summary-title { font-family: var(--font-display); font-size: 1.1rem; color: var(--accent-strong); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .co-items  { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .co-item   { display: flex; align-items: flex-start; gap: 12px; }
+    .co-item-img {
+      width: 56px; height: 56px; border-radius: 10px;
+      border: 1px solid var(--glass-border); overflow: hidden; flex-shrink: 0;
+      background: rgba(255,255,255,0.04); position: relative;
+    }
+    .co-item-img img       { width: 100%; height: 100%; object-fit: cover; }
+    .co-item-qty-badge {
+      position: absolute; top: -6px; right: -6px;
+      background: rgba(255,255,255,0.20); border: 1px solid var(--glass-border);
+      border-radius: 50%; width: 20px; height: 20px;
+      font-size: 0.65rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; color: #fff;
+    }
+    .co-item-info  { flex: 1; }
+    .co-item-name  { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); line-height: 1.2; }
+    .co-item-var   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .co-item-price { font-size: 0.9rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .co-divider    { height: 1px; background: var(--glass-border); margin: 16px 0; }
+    .co-totals     { display: flex; flex-direction: column; gap: 8px; }
+    .co-total-row  { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
+    .co-total-row span:last-child { color: var(--text); }
+    .co-total-row.grand { font-size: 1.05rem; font-weight: 700; }
+    .co-total-row.grand span:last-child { color: var(--accent); }
+    .co-total-row.delivery-date span { color: #34d399 !important; font-size: 0.78rem; }
+    .co-total-row.delivery-date span:first-child { color: var(--text-muted) !important; font-size: 0.78rem; }
+
+    /* ─ Mobile summary bar ────────────────────────── */
+    .co-mobile-summary { display: none; border-bottom: 1px solid var(--glass-border); background: rgba(8,8,10,0.95); padding: 14px 20px; }
+    .co-mobile-summary-toggle { display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .co-mobile-summary-toggle span:first-child { font-size: 0.85rem; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+    .co-mobile-summary-toggle .ms-total { font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+    .co-mobile-summary-body      { display: none; padding-top: 14px; }
+    .co-mobile-summary-body.open { display: block; }
+
+    /* ─ Alerts ───────────────────────────────────── */
+    .co-alert { padding: 12px 16px; border-radius: var(--radius-md); background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.22); color: #f87171; font-size: 0.83rem; margin-bottom: 18px; display: none; }
+    .co-alert.show { display: block; }
+
+    /* ─ Toast ────────────────────────────────────── */
+    .co-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(16px); color: var(--text); font-size: 0.82rem;
+      padding: 10px 20px; border-radius: var(--radius-pill);
+      display: flex; align-items: center; gap: 8px;
+      z-index: 800; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none; white-space: nowrap;
+    }
+    .co-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ─ Loading ──────────────────────────────────── */
+    .co-loading { position: fixed; inset: 0; z-index: 900; background: rgba(4,4,6,0.88); backdrop-filter: blur(8px); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+    .co-loading.show { display: flex; }
+    .co-spinner { width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .co-loading p { color: var(--text-soft); font-size: 0.9rem; }
+
+    /* ─ Empty ────────────────────────────────────── */
+    .co-empty { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 40px; }
+    .co-empty h2 { font-family: var(--font-display); font-size: 2rem; color: var(--accent-strong); }
+    .co-empty p  { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* ─ Responsive ───────────────────────────────── */
+    @media (max-width: 900px) {
+      .co-layout { grid-template-columns: 1fr; padding: 0 16px; }
+      .co-form-col { padding: 24px 0 40px; border-right: none; }
+      .co-summary-col { display: none; }
+      .co-mobile-summary { display: block; }
+    }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; gap: 0; }
+      .form-row-3 { grid-template-columns: 1fr; gap: 0; }
+      .co-steps { font-size: 0.72rem; }
+      .co-sep { width: 16px; }
+      .pay-trust-strip { padding: 10px 16px; gap: 10px; }
+      .pay-trust-strip img.yoco-strip { height: 18px; }
+      .step1-trust-strip { padding: 8px 14px; gap: 8px; }
+      .step1-trust-strip img { height: 17px; }
+      .delivery-options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="co-nav">
+    <div class="container">
+      <div class="co-nav-inner">
+        <a href="index.html" class="co-nav-logo">
+          <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty" />
+          PhenomeBeauty
+        </a>
+        <div class="co-trust">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Secure Checkout
+        </div>
+        <a href="shop.html" class="co-nav-back">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+          Back to Shop
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Summary Bar -->
+  <div class="co-mobile-summary" id="mobileSummary">
+    <div class="co-mobile-summary-toggle" onclick="toggleMobileSummary()">
+      <span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+        Show order summary
+        <svg id="msChevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform 0.2s"><path d="M6 9l6 6 6-6"/></svg>
+      </span>
+      <span class="ms-total" id="msTotalDisplay">R0</span>
+    </div>
+    <div class="co-mobile-summary-body" id="mobileSummaryBody">
+      <div class="co-divider" style="margin-top:0"></div>
+      <div class="co-items" id="mobileItems"></div>
+      <div class="co-divider"></div>
+      <div class="co-totals" id="mobileTotals"></div>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="co-layout" id="coLayout">
+    <div class="co-form-col">
+
+      <div class="co-empty" id="emptyState" style="display:none">
+        <h2>Your cart is empty</h2>
+        <p>Add some products before checking out.</p>
+        <a href="shop.html" class="btn btn-primary">Back to Shop</a>
+      </div>
+
+      <div id="checkoutContent">
+
+        <!-- Breadcrumb -->
+        <div class="co-steps" id="stepsBreadcrumb">
+          <div class="co-step active" id="breadcrumb-1"><span class="co-step-num">1</span> Contact</div>
+          <div class="co-sep"></div>
+          <div class="co-step" id="breadcrumb-2"><span class="co-step-num">2</span> Delivery</div>
+          <div class="co-sep"></div>
+          <div class="co-step" id="breadcrumb-3"><span class="co-step-num">3</span> Review</div>
+        </div>
+
+        <!-- ══ STEP 1: CONTACT ══ -->
+        <div class="co-step-panel active" id="panel-1">
+          <div class="co-section-head">
+            <h2>Contact</h2>
+            <p>We'll use these details for your order confirmation and delivery.</p>
+          </div>
+          <div class="co-alert" id="alert-1"></div>
+          <div class="field-group">
+            <label class="field-label">Full Name</label>
+            <input class="field-input" id="f-name" type="text" placeholder="Jane Doe" autocomplete="name" />
+            <span class="field-error" id="err-name">Please enter your full name.</span>
+          </div>
+          <div class="form-row">
+            <div class="field-group">
+              <label class="field-label">Email Address</label>
+              <input class="field-input" id="f-email" type="email" placeholder="jane@example.com" autocomplete="email" />
+              <span class="field-error" id="err-email">Please enter a valid email.</span>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Phone Number</label>
+              <input class="field-input" id="f-phone" type="tel" placeholder="082 000 0000" autocomplete="tel" />
+              <span class="field-error" id="err-phone">Please enter your phone number.</span>
+            </div>
+          </div>
+          <div class="co-btn-row">
+            <a href="shop.html" class="co-back-link">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Return to cart
+            </a>
+            <button class="btn btn-primary" onclick="goStep(2)" style="min-width:180px">
+              Continue to Delivery
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+          <div class="step1-trust">
+            <div class="step1-trust-strip">
+              <img src="https://assets.yoco.com/f/111633/313x19/cbe08e96e2/payment-strip-dark.svg" alt="Visa, Mastercard, Amex, Diners accepted via Yoco" loading="lazy" width="250" height="16" />
+              <span class="strip-div" aria-hidden="true"></span>
+              <span class="pci-badge">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:rgba(0,0,0,0.4)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                PCI DSS
+              </span>
+            </div>
+            <div class="step1-trust-caption">All cards accepted &bull; Encrypted &amp; processed securely by Yoco</div>
+          </div>
+        </div>
+
+        <!-- ══ STEP 2: DELIVERY ══ -->
+        <div class="co-step-panel" id="panel-2">
+          <div class="done-card">
+            <div class="done-card-left">Contact<div class="done-card-val" id="done-contact-val"></div></div>
+            <button class="done-card-edit" onclick="goStep(1)">Edit</button>
+          </div>
+          <div class="co-section-head" style="margin-top:24px">
+            <h2>Delivery</h2>
+            <p>Choose how you'd like to receive your order.</p>
+          </div>
+          <div class="co-alert" id="alert-2"></div>
+
+          <div class="delivery-options">
+            <label class="delivery-option selected" id="opt-door" onclick="selectDelivery('door')">
+              <input type="radio" name="delivery_method" value="door" checked />
+              <div class="delivery-option-icon">&#127968;</div>
+              <div class="delivery-option-title">Door Delivery</div>
+              <div class="delivery-option-price" id="door-price-display">R99</div>
+              <div class="delivery-option-desc">Delivered straight to your address. Includes 12% fuel surcharge. 2&ndash;4 business days.</div>
+              <div class="delivery-option-check"></div>
+            </label>
+            <label class="delivery-option" id="opt-locker" onclick="selectDelivery('locker')">
+              <input type="radio" name="delivery_method" value="locker" />
+              <div class="delivery-option-icon">&#128230;</div>
+              <div class="delivery-option-title">Pudo Locker</div>
+              <div class="delivery-option-price" id="locker-price-display">R59</div>
+              <div class="delivery-option-desc">Collect from a nearby Pudo locker at your convenience. 2&ndash;3 business days.</div>
+              <div class="delivery-option-check"></div>
+            </label>
+          </div>
+
+          <div class="delivery-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <div class="delivery-banner-text">
+              <strong id="deliveryDateText2">Calculating delivery date...</strong>
+              <span id="deliveryMethodLabel"> &mdash; Door delivery via Pudo</span>
+            </div>
+          </div>
+
+          <div id="door-fields">
+            <div class="field-group">
+              <label class="field-label">Street Address</label>
+              <input class="field-input" id="f-street" type="text" placeholder="Start typing your address&hellip;" autocomplete="off" />
+              <span class="places-hint" id="placesHint">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#34d399"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="color:#34d399">Start typing</span>&nbsp;&mdash; we'll fill in suburb, city &amp; postal code for you
+              </span>
+              <span class="field-error" id="err-street">Please enter your street address.</span>
+            </div>
+            <div class="form-row">
+              <div class="field-group">
+                <label class="field-label">Suburb</label>
+                <input class="field-input" id="f-suburb" type="text" placeholder="Sea Point" autocomplete="off" />
+                <span class="field-error" id="err-suburb">Required.</span>
+              </div>
+              <div class="field-group">
+                <label class="field-label">City</label>
+                <input class="field-input" id="f-city" type="text" placeholder="Cape Town" autocomplete="off" value="Cape Town" />
+                <span class="field-error" id="err-city">Required.</span>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field-group">
+                <label class="field-label">Postal Code</label>
+                <input class="field-input" id="f-postal" type="text" placeholder="8001" autocomplete="off" maxlength="4" />
+                <span class="field-error" id="err-postal">Required.</span>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Province</label>
+                <select class="field-input" id="f-province" autocomplete="address-level1">
+                  <option value="Western Cape" selected>Western Cape</option>
+                  <option value="Eastern Cape">Eastern Cape</option>
+                  <option value="Northern Cape">Northern Cape</option>
+                  <option value="Gauteng">Gauteng</option>
+                  <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                  <option value="Free State">Free State</option>
+                  <option value="Limpopo">Limpopo</option>
+                  <option value="Mpumalanga">Mpumalanga</option>
+                  <option value="North West">North West</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="locker-fields" style="display:none">
+            <div class="field-group">
+              <label class="field-label">Find a Pudo Locker Near You</label>
+              <div class="locker-search-row">
+                <input class="field-input" id="f-locker-search" type="text"
+                  placeholder="Start typing your suburb or address&hellip;" autocomplete="off" />
+                <button class="locker-search-btn" id="lockerSearchBtn" onclick="searchLockers()">Search</button>
+              </div>
+              <span class="places-hint" id="lockerPlacesHint" style="display:none">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#34d399"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span style="color:#34d399">Address recognised</span>&nbsp;&mdash; click Search to find nearby lockers
+              </span>
+              <span class="field-error" id="err-locker">Please select a Pudo locker.</span>
+            </div>
+            <div class="locker-results" id="lockerResults"></div>
+            <div class="locker-selected-display" id="lockerSelectedDisplay">
+              <div class="locker-selected-name" id="lockerSelectedName"></div>
+              <div class="locker-selected-addr" id="lockerSelectedAddr"></div>
+              <div class="locker-size-note" id="lockerSelectedSizeNote" style="display:none;"></div>
+              <button class="locker-selected-change" onclick="clearLockerSelection()">Change locker</button>
+            </div>
+          </div>
+
+          <div class="field-divider"></div>
+
+          <div style="margin-bottom:14px">
+            <label class="gift-toggle-row" id="giftToggleRow" onclick="toggleGift()">
+              <span class="gift-toggle-icon">&#127873;</span>
+              <span class="gift-toggle-label">
+                <strong>This is a gift</strong>
+                <span>Add a personalised message to include with the order</span>
+              </span>
+              <span class="gift-switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="f-is-gift" onchange="toggleGift()" />
+                <span class="gift-switch-track"></span>
+              </span>
+            </label>
+            <div class="gift-message-reveal" id="giftReveal">
+              <div class="field-group" style="margin-bottom:0">
+                <label class="field-label">Gift Message <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+                <textarea class="field-input" id="f-gift-message" placeholder="e.g. Happy Birthday! Wishing you a day as beautiful as you are. Love, Sarah &#128149;" style="min-height:90px"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Order Notes <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+            <textarea class="field-input" id="f-notes" placeholder="Any special instructions for your order or delivery?"></textarea>
+          </div>
+
+          <div class="co-btn-row">
+            <button class="co-back-link" onclick="goStep(1)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Back to Contact
+            </button>
+            <button class="btn btn-primary" onclick="goStep(3)" style="min-width:180px">
+              Review Order
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ══ STEP 3: REVIEW ══ -->
+        <div class="co-step-panel" id="panel-3">
+          <div class="done-card">
+            <div class="done-card-left">Contact<div class="done-card-val" id="done-contact-val-2"></div></div>
+            <button class="done-card-edit" onclick="goStep(1)">Edit</button>
+          </div>
+          <div class="done-card">
+            <div class="done-card-left">Deliver to<div class="done-card-val" id="done-delivery-val"></div></div>
+            <button class="done-card-edit" onclick="goStep(2)">Edit</button>
+          </div>
+          <div class="co-section-head" style="margin-top:24px">
+            <h2>Review &amp; Pay</h2>
+            <p>Check your order below, then click Pay to be taken to the secure Yoco payment page.</p>
+          </div>
+
+          <div class="exit-nudge" id="exitNudge">
+            <span class="exit-nudge-icon">&#9888;</span>
+            <div class="exit-nudge-text">
+              <strong>Your order is ready &mdash; don&#8217;t lose it!</strong>
+              <span>Complete payment now to secure your items.</span>
+            </div>
+            <button class="exit-nudge-close" onclick="dismissNudge()" aria-label="Dismiss">&#215;</button>
+          </div>
+
+          <div class="co-alert" id="alert-3"></div>
+
+          <div class="review-block">
+            <div class="review-block-head">
+              <span>Order Items</span>
+              <a href="shop.html" style="font-size:0.75rem;color:var(--accent);text-decoration:underline">Edit cart</a>
+            </div>
+            <div class="review-block-body" id="reviewItems"></div>
+          </div>
+
+          <div class="review-block" id="giftReviewBlock" style="display:none">
+            <div class="review-block-head">
+              <span>&#127873; Gift Message</span>
+              <button class="done-card-edit" onclick="goStep(2)">Edit</button>
+            </div>
+            <div class="review-block-body" id="giftReviewBody" style="font-style:italic;color:var(--text-soft)"></div>
+          </div>
+
+          <div class="review-block">
+            <div class="review-block-head">Totals</div>
+            <div class="review-block-body">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;font-size:0.88rem">
+                  <span style="color:var(--text-muted)">Subtotal</span><span id="rv-subtotal">R0</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.88rem">
+                  <span style="color:var(--text-muted)" id="rv-delivery-label">Delivery</span><span id="rv-delivery">R99</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.8rem;padding-top:2px">
+                  <span style="color:var(--text-muted)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    Est. delivery
+                  </span>
+                  <span style="color:#34d399;font-weight:600" id="rv-delivery-date">-</span>
+                </div>
+                <div style="height:1px;background:var(--glass-border)"></div>
+                <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700">
+                  <span>Total</span>
+                  <span style="color:var(--accent)" id="rv-total">R0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pay-trust-wrap">
+            <div class="pay-trust-strip">
+              <img class="yoco-strip" src="https://assets.yoco.com/f/111633/313x19/cbe08e96e2/payment-strip-dark.svg" alt="Visa, Mastercard, Amex, Diners accepted via Yoco" loading="lazy" width="313" height="19" />
+              <span class="strip-divider" aria-hidden="true"></span>
+              <span class="pay-trust-pci">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:rgba(0,0,0,0.4)"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                PCI DSS
+              </span>
+            </div>
+            <div class="pay-trust-caption">Your payment is encrypted &amp; processed securely by Yoco</div>
+          </div>
+
+          <div class="co-btn-row" style="margin-top:18px">
+            <button class="co-back-link" onclick="goStep(2)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Back to Delivery
+            </button>
+            <button class="btn btn-primary" id="payBtn" onclick="handlePay()" style="min-width:200px;font-size:0.95rem">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Pay R<span id="payBtnTotal">0</span>
+            </button>
+          </div>
+          <div class="co-secure">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            Secured by Yoco &bull; All major cards accepted
+          </div>
+        </div>
+
+      </div><!-- /checkoutContent -->
+    </div><!-- /co-form-col -->
+
+    <!-- RIGHT: Order Summary -->
+    <div class="co-summary-col">
+      <div class="co-summary-title">Order Summary</div>
+      <div class="co-items" id="summaryItems"></div>
+      <div class="co-divider"></div>
+      <div class="co-totals" id="summaryTotals"></div>
+    </div>
+  </div><!-- /co-layout -->
+
+  <div class="co-toast" id="coToast">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Details restored from your last visit
+  </div>
+
+  <div class="co-loading" id="coLoading">
+    <div class="co-spinner"></div>
+    <p id="loadingMsg">Creating your order...</p>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
+    const ORIGIN        = 'https://www.phenomebeauty.co.za';
+    const DRAFT_KEY     = 'phenome_checkout_draft';
+
+    const DELIVERY_FEES = {
+      locker: 59,
+      door:   99,
+    };
+
+    let selectedDelivery = 'door';
+    let selectedLocker   = null;
+    let lockerSearchLat  = null;
+    let lockerSearchLng  = null;
+// ── Client-side box-size estimator ─────────────────────────────────────
+const _PUDO_BOXES_CLIENT = [
+  { code: 'XS', boxL: 60, boxW: 17, boxH:  8, maxKg:  2 },
+  { code: 'S',  boxL: 60, boxW: 41, boxH:  8, maxKg:  5 },
+  { code: 'M',  boxL: 60, boxW: 41, boxH: 19, maxKg: 10 },
+  { code: 'L',  boxL: 60, boxW: 41, boxH: 41, maxKg: 15 },
+  { code: 'XL', boxL: 60, boxW: 41, boxH: 69, maxKg: 20 },
+];
+let _productDimCache = {};
+
+async function _fetchProductDims(productIds) {
+  const missing = productIds.filter(id => !_productDimCache[id]);
+  if (!missing.length) return;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/shop_products?id=in.(${missing.join(',')})&select=id,weight_kg,length_cm,width_cm,height_cm,pack_flat`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    const rows = await res.json();
+    if (Array.isArray(rows)) rows.forEach(r => { _productDimCache[r.id] = r; });
+  } catch(e) { /* silently degrade */ }
+}
+
+function _fitsInBoxClient(items, box) {
+  const units = [];
+  for (const it of items) {
+    for (let i = 0; i < it.qty; i++) units.push({ l: it.l, w: it.w, h: it.h });
+  }
+  units.sort((a, b) => b.h - a.h);
+  let usedHeight = 0;
+  let remaining = [...units];
+  while (remaining.length > 0) {
+    const layerH = remaining[0].h;
+    usedHeight += layerH;
+    if (usedHeight > box.boxH) return false;
+    let usedL = 0, rowW = 0;
+    const packed = [];
+    for (let i = 0; i < remaining.length; i++) {
+      const u = remaining[i];
+      if (u.h > layerH) continue;
+      if (usedL + u.l <= box.boxL && u.w <= box.boxW) {
+        usedL += u.l;
+        rowW = Math.max(rowW, u.w);
+        packed.push(i);
+      }
+    }
+    if (!packed.length) return false;
+    for (let i = packed.length - 1; i >= 0; i--) remaining.splice(packed[i], 1);
+  }
+  return true;
+}
+
+async function estimateBoxSize() {
+  if (!cart.length) return 'XS';
+  const productIds = [...new Set(cart.map(i => i.productId).filter(Boolean))];
+  await _fetchProductDims(productIds);
+  let totalKg = 0;
+  const packedItems = [];
+  for (const item of cart) {
+    const d = _productDimCache[item.productId];
+    if (!d) continue;
+    const dims = [Number(d.length_cm), Number(d.width_cm), Number(d.height_cm)].sort((a, b) => b - a);
+    const pd = d.pack_flat
+      ? { l: dims[0], w: dims[1], h: dims[2] }
+      : { l: Number(d.length_cm), w: Number(d.width_cm), h: Number(d.height_cm) };
+    packedItems.push({ id: item.productId, qty: item.qty, ...pd });
+    totalKg += Number(d.weight_kg) * item.qty;
+  }
+  if (!packedItems.length) return 'XS';
+  for (const box of _PUDO_BOXES_CLIENT) {
+    if (totalKg > box.maxKg) continue;
+    if (_fitsInBoxClient(packedItems, box)) return box.code;
+  }
+  return 'XL';
+}
+
+    function updateDeliveryPriceLabels() {
+      const doorEl   = document.getElementById('door-price-display');
+      const lockerEl = document.getElementById('locker-price-display');
+      if (doorEl)   doorEl.textContent   = `R${DELIVERY_FEES.door}`;
+      if (lockerEl) lockerEl.textContent = `R${DELIVERY_FEES.locker}`;
+    }
+
+    const PRODUCT_IMGS = {
+      'smooth-ritual':     'https://iili.io/B6e8cSR.png',
+      'smooth-veil':       'https://iili.io/B6e8acv.jpg',
+      'smooth-ritual-kit': 'https://iili.io/B6e8acv.jpg',
+      'wax-melting-pot':   'https://iili.io/B6e8YKJ.jpg',
+      'professional-wax':  'https://iili.io/B6e8YKJ.jpg',
+    };
+
+    let cart = JSON.parse(localStorage.getItem('phenome_cart') || '[]');
+    let currentStep = 1;
+
+    const calcSub        = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const getDeliveryFee = () => cart.length ? DELIVERY_FEES[selectedDelivery] : 0;
+    const calcTotal      = () => calcSub() + getDeliveryFee();
+
+    function selectDelivery(method) {
+      selectedDelivery = method;
+      document.getElementById('opt-door').classList.toggle('selected', method === 'door');
+      document.getElementById('opt-locker').classList.toggle('selected', method === 'locker');
+      document.getElementById('door-fields').style.display   = method === 'door'   ? '' : 'none';
+      document.getElementById('locker-fields').style.display = method === 'locker' ? '' : 'none';
+      const label = document.getElementById('deliveryMethodLabel');
+      label.textContent = method === 'door' ? ' \u2014 Door delivery via Pudo' : ' \u2014 Pudo locker collection';
+      renderSummary(); renderMobileSummary();
+    }
+
+    async function searchLockers() {
+      const query     = document.getElementById('f-locker-search').value.trim();
+      const hasCoords = lockerSearchLat !== null && lockerSearchLng !== null;
+      if (!query && !hasCoords) return;
+
+      const btn     = document.getElementById('lockerSearchBtn');
+      const results = document.getElementById('lockerResults');
+      btn.disabled    = true;
+      btn.textContent = 'Searching...';
+      results.innerHTML = '<div class="locker-loading">Finding nearby lockers...</div>';
+      results.classList.add('show');
+
+      try {
+        const boxSize = await estimateBoxSize();
+        let apiUrl;
+        if (hasCoords) {
+          apiUrl = `${SUPABASE_URL}/functions/v1/pudo-locker-search?lat=${lockerSearchLat}&lng=${lockerSearchLng}&box_size=${boxSize}`;
+        } else {
+          apiUrl = `${SUPABASE_URL}/functions/v1/pudo-locker-search?q=${encodeURIComponent(query)}&box_size=${boxSize}`;
+        }
+        const res  = await fetch(apiUrl, {
+          headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
+        });
+        const data    = await res.json();
+        const lockers = data.results || [];
+        const sizeFilterActive = data.size_filter_applied === true;
+        const sizeUnknown      = data.api_has_compartment_data === false;
+
+        // build size-awareness notice banner
+        let noticeHtml = '';
+        if (sizeFilterActive) {
+          noticeHtml = `<div class="locker-size-notice locker-size-notice--filtered">✓ Showing lockers with a <strong>${boxSize}</strong> compartment available for your order.</div>`;
+        } else {
+          noticeHtml = `<div class="locker-size-notice locker-size-notice--unknown">ℹ Compartment availability can't be verified in advance. Your estimated box size is <strong>${boxSize}</strong>. Pudo will confirm at time of collection.</div>`;
+        }
+
+        if (data.error && !lockers.length) {
+          results.innerHTML = noticeHtml + `<div class="locker-empty">${esc(data.error)}</div>`;
+        } else if (!lockers.length) {
+          results.innerHTML = noticeHtml + '<div class="locker-empty">No lockers found near that area. Try a nearby suburb.</div>';
+        } else {
+          const warnHtml = sizeUnknown
+            ? `<div class="locker-item-size-warn">⚠ Compartment size unverified</div>`
+            : '';
+          results.innerHTML = noticeHtml + lockers.map(l => `
+            <div class="locker-item" onclick="selectLocker('${escAttr(l.id)}','${escAttr(l.name)}','${escAttr(l.address)}','${boxSize}',${sizeUnknown})"
+                 id="locker-row-${escAttr(l.id)}">
+              <div>
+                <div class="locker-item-name">${esc(l.name)}</div>
+                <div class="locker-item-addr">${esc(l.address)}</div>
+                ${l.distance_km != null ? `<div class="locker-item-dist">${l.distance_km} km away</div>` : ''}
+                ${warnHtml}
+              </div>
+              <button class="locker-item-select"
+                onclick="event.stopPropagation();selectLocker('${escAttr(l.id)}','${escAttr(l.name)}','${escAttr(l.address)}','${boxSize}',${sizeUnknown})">
+                Select
+              </button>
+            </div>`).join('');
+        }
+      } catch(e) {
+        results.innerHTML = '<div class="locker-empty">Could not load lockers. Please try again.</div>';
+      }
+      btn.disabled    = false;
+      btn.textContent = 'Search';
+    }
+
+    function selectLocker(id, name, address, boxSize, sizeUnknown) {
+      selectedLocker = { id, name, address, boxSize, sizeUnknown };
+      document.getElementById('lockerResults').classList.remove('show');
+      document.getElementById('lockerSelectedName').textContent = name;
+      document.getElementById('lockerSelectedAddr').textContent = address;
+      // size confirmation note
+      const sizeNoteEl = document.getElementById('lockerSelectedSizeNote');
+      if (sizeNoteEl) {
+        if (sizeUnknown) {
+          sizeNoteEl.className = 'locker-size-note locker-size-note--unknown';
+          sizeNoteEl.innerHTML = `⚠ Compartment size for a <strong>${boxSize || 'XS'}</strong> box could not be verified. Pudo will confirm at collection.`;
+          sizeNoteEl.style.display = '';
+        } else if (boxSize) {
+          sizeNoteEl.className = 'locker-size-note locker-size-note--confirmed';
+          sizeNoteEl.innerHTML = `✓ This locker has a <strong>${boxSize}</strong> compartment confirmed for your order.`;
+          sizeNoteEl.style.display = '';
+        } else {
+          sizeNoteEl.style.display = 'none';
+        }
+      }
+      document.getElementById('lockerSelectedDisplay').classList.add('show');
+      document.getElementById('err-locker').classList.remove('show');
+      document.getElementById('f-locker-search').value = '';
+      const hint = document.getElementById('lockerPlacesHint');
+      if (hint) hint.style.display = 'none';
+      lockerSearchLat = null; lockerSearchLng = null;
+      saveDraft();
+    }
+
+    function clearLockerSelection() {
+      selectedLocker = null;
+      document.getElementById('lockerSelectedDisplay').classList.remove('show');
+      document.getElementById('f-locker-search').focus();
+    }
+
+    document.getElementById('f-locker-search').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); searchLockers(); }
+    });
+    document.getElementById('f-locker-search').addEventListener('input', () => {
+      lockerSearchLat = null; lockerSearchLng = null;
+      const hint = document.getElementById('lockerPlacesHint');
+      if (hint) hint.style.display = 'none';
+    });
+
+    function toggleGift() {
+      const cb     = document.getElementById('f-is-gift');
+      const reveal = document.getElementById('giftReveal');
+      const row    = document.getElementById('giftToggleRow');
+      if (event && event.currentTarget === row) cb.checked = !cb.checked;
+      reveal.classList.toggle('open', cb.checked);
+      row.classList.toggle('active', cb.checked);
+      if (cb.checked) setTimeout(() => document.getElementById('f-gift-message').focus(), 340);
+    }
+
+    const SA_HOLIDAYS = new Set([
+      '2025-01-01','2025-03-21','2025-04-18','2025-04-19','2025-04-21',
+      '2025-04-27','2025-05-01','2025-06-16','2025-08-09','2025-09-24',
+      '2025-12-16','2025-12-25','2025-12-26',
+      '2026-01-01','2026-03-21','2026-04-03','2026-04-06','2026-04-07',
+      '2026-04-27','2026-05-01','2026-06-16','2026-08-10','2026-09-24',
+      '2026-12-16','2026-12-25','2026-12-26'
+    ]);
+    function isBusinessDay(d) {
+      const day = d.getDay();
+      if (day === 0 || day === 6) return false;
+      return !SA_HOLIDAYS.has(d.toISOString().slice(0,10));
+    }
+    function addBusinessDays(start, n) {
+      const d = new Date(start); let added = 0;
+      while (added < n) { d.setDate(d.getDate()+1); if (isBusinessDay(d)) added++; }
+      return d;
+    }
+    function fmtDate(d) { return d.toLocaleDateString('en-ZA',{weekday:'short',day:'numeric',month:'short'}); }
+    function getDeliveryWindow() {
+      const now = new Date();
+      const hourSAST = now.getUTCHours() + 2;
+      const base = (hourSAST >= 14 && isBusinessDay(now)) ? addBusinessDays(now,1) : (isBusinessDay(now) ? now : addBusinessDays(now,1));
+      const days = selectedDelivery === 'locker' ? [1,3] : [2,4];
+      return `${fmtDate(addBusinessDays(base,days[0]))} - ${fmtDate(addBusinessDays(base,days[1]))}`;
+    }
+    function renderDeliveryDate() {
+      const range = getDeliveryWindow();
+      ['deliveryDateText2','rv-delivery-date','summaryDeliveryDate','mobileDeliveryDate'].forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        el.textContent = (id === 'deliveryDateText2') ? `Est. delivery: ${range}` : range;
+      });
+    }
+
+    const DRAFT_FIELDS = ['f-name','f-email','f-phone','f-street','f-suburb','f-city','f-postal','f-province','f-notes','f-gift-message'];
+    function saveDraft() {
+      const d = {};
+      DRAFT_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
+      const giftCb = document.getElementById('f-is-gift');
+      if (giftCb) d['f-is-gift-checked'] = giftCb.checked;
+      d['delivery_method'] = selectedDelivery;
+      if (selectedLocker) d['selected_locker'] = JSON.stringify(selectedLocker);
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    }
+    function loadDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY); if (!raw) return false;
+        const d = JSON.parse(raw); let found = false;
+        DRAFT_FIELDS.forEach(id => { if (d[id] !== undefined && d[id] !== '') { const el = document.getElementById(id); if (el) { el.value = d[id]; found = true; } } });
+        if (d['f-is-gift-checked']) {
+          const cb = document.getElementById('f-is-gift');
+          if (cb) { cb.checked = true; document.getElementById('giftReveal').classList.add('open'); document.getElementById('giftToggleRow').classList.add('active'); }
+        }
+        if (d['delivery_method']) selectDelivery(d['delivery_method']);
+        if (d['selected_locker']) {
+          try { const l = JSON.parse(d['selected_locker']); selectLocker(l.id, l.name, l.address, l.boxSize, l.sizeUnknown); } catch(e) {}
+        }
+        return found;
+      } catch(e) { return false; }
+    }
+    function clearDraft() { localStorage.removeItem(DRAFT_KEY); }
+    function attachDraftListeners() {
+      DRAFT_FIELDS.forEach(id => {
+        const el = document.getElementById(id); if (!el) return;
+        el.addEventListener((el.tagName === 'SELECT' ? 'change' : 'input'), saveDraft);
+      });
+      const giftCb = document.getElementById('f-is-gift');
+      if (giftCb) giftCb.addEventListener('change', saveDraft);
+    }
+    function showRestoredToast() {
+      const t = document.getElementById('coToast'); t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    let nudgeFired = false, nudgeDismissed = false;
+    function initExitIntent() {
+      document.documentElement.addEventListener('mouseleave', function(e) {
+        if (e.clientY > 10 || currentStep !== 3 || nudgeFired || nudgeDismissed) return;
+        nudgeFired = true;
+        const nudge = document.getElementById('exitNudge');
+        nudge.classList.add('show');
+        nudge.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    }
+    function dismissNudge() {
+      nudgeDismissed = true;
+      const nudge = document.getElementById('exitNudge');
+      nudge.style.transition = 'opacity 0.25s ease';
+      nudge.style.opacity = '0';
+      setTimeout(() => nudge.classList.remove('show'), 260);
+    }
+
+    function initPlaces() {
+      if (!window.google) return;
+      const streetInput = document.getElementById('f-street');
+      if (streetInput) {
+        const acStreet = new google.maps.places.Autocomplete(streetInput, {
+          componentRestrictions: { country: 'za' },
+          fields: ['address_components'],
+          types: ['address']
+        });
+        streetInput.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+        acStreet.addListener('place_changed', function() {
+          const place = acStreet.getPlace();
+          const comps = place.address_components || [];
+          function get(type, short) {
+            const c = comps.find(c => c.types.includes(type));
+            return c ? (short ? c.short_name : c.long_name) : '';
+          }
+          streetInput.value = [get('street_number'), get('route')].filter(Boolean).join(' ');
+          document.getElementById('f-suburb').value = get('sublocality_level_1') || get('sublocality') || get('neighborhood') || get('locality');
+          document.getElementById('f-city').value   = get('locality') || get('administrative_area_level_2');
+          document.getElementById('f-postal').value = get('postal_code', true);
+          const province = get('administrative_area_level_1');
+          const sel = document.getElementById('f-province');
+          const opt = [...sel.options].find(o => o.value.toLowerCase() === province.toLowerCase() || province.toLowerCase().includes(o.value.toLowerCase()));
+          if (opt) sel.value = opt.value;
+          const hint = document.getElementById('placesHint');
+          if (hint) hint.style.display = 'none';
+          saveDraft();
+          ['f-street','f-suburb','f-city','f-postal'].forEach(id => document.getElementById(id).classList.remove('error'));
+          ['err-street','err-suburb','err-city','err-postal'].forEach(id => document.getElementById(id).classList.remove('show'));
+        });
+      }
+      const lockerInput = document.getElementById('f-locker-search');
+      if (lockerInput) {
+        const acLocker = new google.maps.places.Autocomplete(lockerInput, {
+          componentRestrictions: { country: 'za' },
+          fields: ['geometry', 'formatted_address'],
+          types: ['geocode']
+        });
+        lockerInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchLockers(); } });
+        acLocker.addListener('place_changed', function() {
+          const place = acLocker.getPlace();
+          if (place.geometry && place.geometry.location) {
+            lockerSearchLat = place.geometry.location.lat();
+            lockerSearchLng = place.geometry.location.lng();
+            const hint = document.getElementById('lockerPlacesHint');
+            if (hint) hint.style.display = 'flex';
+            searchLockers();
+          }
+        });
+      }
+    }
+
+    (function init() {
+      updateDeliveryPriceLabels();
+      if (!cart.length) {
+        document.getElementById('checkoutContent').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'flex';
+        document.getElementById('coLayout').querySelector('.co-summary-col').style.display = 'none';
+        document.getElementById('mobileSummary').style.display = 'none';
+        return;
+      }
+      renderSummary(); renderMobileSummary(); renderDeliveryDate();
+      attachDraftListeners();
+      if (loadDraft()) setTimeout(showRestoredToast, 400);
+      initExitIntent();
+    })();
+
+    function renderSummary() {
+      document.getElementById('summaryItems').innerHTML = cart.map(item => {
+        const img = PRODUCT_IMGS[item.productId] || '';
+        return `<div class="co-item"><div class="co-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant}</div></div><div class="co-item-price">R${item.price * item.qty}</div></div>`;
+      }).join('');
+      document.getElementById('summaryTotals').innerHTML = `
+        <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
+        <div class="co-total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
+        <div class="co-total-row delivery-date"><span>&#128666; Est. delivery</span><span id="summaryDeliveryDate">-</span></div>
+        <div class="co-divider" style="margin:6px 0"></div>
+        <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
+      renderDeliveryDate();
+    }
+    function renderMobileSummary() {
+      document.getElementById('msTotalDisplay').textContent = `R${calcTotal()}`;
+      document.getElementById('mobileItems').innerHTML = cart.map(item => {
+        const img = PRODUCT_IMGS[item.productId] || '';
+        return `<div class="co-item"><div class="co-item-img">${img ? `<img src="${img}" alt="${item.name}" loading="lazy" />` : ''}<span class="co-item-qty-badge">${item.qty}</span></div><div class="co-item-info"><div class="co-item-name">${item.name}</div><div class="co-item-var">${item.variant}</div></div><div class="co-item-price">R${item.price * item.qty}</div></div>`;
+      }).join('');
+      document.getElementById('mobileTotals').innerHTML = `
+        <div class="co-total-row"><span>Subtotal</span><span>R${calcSub()}</span></div>
+        <div class="co-total-row"><span>Delivery (${selectedDelivery === 'locker' ? 'Pudo Locker' : 'Door'})</span><span>R${getDeliveryFee()}</span></div>
+        <div class="co-total-row delivery-date"><span>&#128666; Est. delivery</span><span id="mobileDeliveryDate">-</span></div>
+        <div class="co-divider" style="margin:6px 0"></div>
+        <div class="co-total-row grand"><span>Total</span><span>R${calcTotal()}</span></div>`;
+      renderDeliveryDate();
+    }
+    function toggleMobileSummary() {
+      const body    = document.getElementById('mobileSummaryBody');
+      const chevron = document.getElementById('msChevron');
+      chevron.style.transform = body.classList.toggle('open') ? 'rotate(180deg)' : '';
+    }
+
+    function goStep(n) {
+      if (n > currentStep) {
+        if (currentStep === 1 && !validateStep1()) return;
+        if (currentStep === 2 && !validateStep2()) return;
+      }
+      document.getElementById(`panel-${currentStep}`).classList.remove('active');
+      document.getElementById(`panel-${n}`).classList.add('active');
+      for (let i = 1; i <= 3; i++) {
+        const el = document.getElementById(`breadcrumb-${i}`);
+        el.classList.remove('active','done');
+        if (i < n) el.classList.add('done');
+        if (i === n) el.classList.add('active');
+      }
+      currentStep = n;
+      if (n >= 2) populateDoneContact();
+      if (n >= 3) { populateDoneDelivery(); populateReview(); renderDeliveryDate(); }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function setFieldError(id, errId, show) {
+      document.getElementById(id).classList.toggle('error', show);
+      document.getElementById(errId).classList.toggle('show', show);
+    }
+    function validateStep1() {
+      const name  = document.getElementById('f-name').value.trim();
+      const email = document.getElementById('f-email').value.trim();
+      const phone = document.getElementById('f-phone').value.trim();
+      setFieldError('f-name','err-name', name.length < 2);
+      setFieldError('f-email','err-email', !/^[^@]+@[^@]+\.[^@]+$/.test(email));
+      setFieldError('f-phone','err-phone', phone.length < 7);
+      return name.length >= 2 && /^[^@]+@[^@]+\.[^@]+$/.test(email) && phone.length >= 7;
+    }
+    function validateStep2() {
+      if (selectedDelivery === 'locker') {
+        const ok = !!selectedLocker;
+        document.getElementById('err-locker').classList.toggle('show', !ok);
+        return ok;
+      }
+      const s = document.getElementById('f-street').value.trim();
+      const u = document.getElementById('f-suburb').value.trim();
+      const c = document.getElementById('f-city').value.trim();
+      const p = document.getElementById('f-postal').value.trim();
+      setFieldError('f-street','err-street', s.length < 3);
+      setFieldError('f-suburb','err-suburb', u.length < 2);
+      setFieldError('f-city','err-city', c.length < 2);
+      setFieldError('f-postal','err-postal', p.length < 4);
+      return s.length >= 3 && u.length >= 2 && c.length >= 2 && p.length >= 4;
+    }
+
+    function populateDoneContact() {
+      const val = `${document.getElementById('f-name').value.trim()} \u00b7 ${document.getElementById('f-email').value.trim()}`;
+      ['done-contact-val','done-contact-val-2'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = val; });
+    }
+    function populateDoneDelivery() {
+      let val;
+      if (selectedDelivery === 'locker' && selectedLocker) {
+        val = `Pudo Locker: ${selectedLocker.name} \u2014 ${selectedLocker.address}`;
+      } else {
+        const s = document.getElementById('f-street').value.trim();
+        const u = document.getElementById('f-suburb').value.trim();
+        const c = document.getElementById('f-city').value.trim();
+        const p = document.getElementById('f-postal').value.trim();
+        val = `${s}, ${u}, ${c}, ${p}`;
+      }
+      document.getElementById('done-delivery-val').textContent = val;
+    }
+
+    function populateReview() {
+      document.getElementById('reviewItems').innerHTML = cart.map(item => `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--glass-border);gap:12px">
+          <div>
+            <div style="font-weight:600;color:var(--accent-strong)">${item.name} <span style="font-weight:400;color:var(--text-muted)">x${item.qty}</span></div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">${item.variant}</div>
+          </div>
+          <div style="font-weight:700;color:var(--accent);white-space:nowrap">R${item.price * item.qty}</div>
+        </div>`).join('');
+      const deliveryLabel = selectedDelivery === 'locker' ? 'Pudo Locker Collection' : 'Door Delivery (incl. fuel surcharge)';
+      document.getElementById('rv-delivery-label').textContent = deliveryLabel;
+      document.getElementById('rv-subtotal').textContent = `R${calcSub()}`;
+      document.getElementById('rv-delivery').textContent = `R${getDeliveryFee()}`;
+      document.getElementById('rv-total').textContent    = `R${calcTotal()}`;
+      document.getElementById('payBtnTotal').textContent  = calcTotal();
+      const isGift    = document.getElementById('f-is-gift').checked;
+      const giftMsg   = document.getElementById('f-gift-message').value.trim();
+      const giftBlock = document.getElementById('giftReviewBlock');
+      const giftBody  = document.getElementById('giftReviewBody');
+      giftBlock.style.display = isGift ? '' : 'none';
+      if (isGift) giftBody.textContent = giftMsg || '(No message added)';
+    }
+
+    async function handlePay() {
+      const btn = document.getElementById('payBtn');
+      btn.disabled = true;
+      document.getElementById('coLoading').classList.add('show');
+      const name    = document.getElementById('f-name').value.trim();
+      const email   = document.getElementById('f-email').value.trim();
+      const phone   = document.getElementById('f-phone').value.trim();
+      const notes   = document.getElementById('f-notes').value.trim();
+      const isGift  = document.getElementById('f-is-gift').checked;
+      const giftMsg = document.getElementById('f-gift-message').value.trim();
+
+      let deliveryAddress, deliveryMeta;
+      if (selectedDelivery === 'locker' && selectedLocker) {
+        deliveryAddress = `Pudo Locker: ${selectedLocker.name}, ${selectedLocker.address}`;
+        deliveryMeta    = { type: 'locker', locker_id: selectedLocker.id, locker_name: selectedLocker.name, locker_address: selectedLocker.address };
+      } else {
+        const street   = document.getElementById('f-street').value.trim();
+        const suburb   = document.getElementById('f-suburb').value.trim();
+        const city     = document.getElementById('f-city').value.trim();
+        const postal   = document.getElementById('f-postal').value.trim();
+        const province = document.getElementById('f-province').value;
+        deliveryAddress = `${street}, ${suburb}, ${city}, ${postal}, ${province}`;
+        deliveryMeta    = { type: 'door', street, suburb, city, postal, province };
+      }
+
+      try {
+        document.getElementById('loadingMsg').textContent = 'Saving your order...';
+        const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/shop_orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Prefer': 'return=representation' },
+          body: JSON.stringify({
+            customer_name:    name,
+            customer_email:   email,
+            customer_phone:   phone,
+            delivery_address: deliveryAddress,
+            delivery_method:  selectedDelivery,
+            delivery_meta:    deliveryMeta,
+            items:            cart,
+            subtotal:         calcSub(),
+            delivery_fee:     getDeliveryFee(),
+            total_amount:     calcTotal(),
+            notes:            notes || null,
+            is_gift:          isGift,
+            gift_message:     isGift && giftMsg ? giftMsg : null
+          })
+        });
+        if (!orderRes.ok) throw new Error('Failed to save order. Please try again.');
+        const [order] = await orderRes.json();
+        document.getElementById('loadingMsg').textContent = 'Redirecting to payment...';
+        const checkoutRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` },
+          body: JSON.stringify({
+            order_id:    order.id,
+            success_url: `${ORIGIN}/shop-success.html?payment=success&order_id=${order.id}&name=${encodeURIComponent(name)}&ct=${order.customer_token}`,
+            cancel_url:  `${ORIGIN}/checkout.html?payment=cancelled&order_id=${order.id}`
+          })
+        });
+        if (!checkoutRes.ok) throw new Error('Failed to create payment session. Please try again.');
+        const cd = await checkoutRes.json();
+        const redirect = cd.redirectUrl || cd.url;
+        if (!redirect) throw new Error('No payment URL returned. Please try again.');
+        cart = []; localStorage.setItem('phenome_cart', '[]'); clearDraft();
+        window.location.href = redirect;
+      } catch(err) {
+        document.getElementById('coLoading').classList.remove('show');
+        btn.disabled = false;
+        const alertEl = document.getElementById('alert-3');
+        alertEl.textContent = err.message; alertEl.classList.add('show');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    (function checkReturn() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment') === 'cancelled') {
+        window.history.replaceState({}, '', 'checkout.html');
+        setTimeout(() => {
+          const el = document.getElementById('alert-3');
+          if (el) {
+            el.style.background  = 'rgba(251,191,36,0.08)';
+            el.style.borderColor = 'rgba(251,191,36,0.28)';
+            el.style.color       = '#fbbf24';
+            el.textContent = 'Payment was cancelled - no charge was made. Review your order and try again.';
+            el.classList.add('show');
+          }
+        }, 300);
+      }
+    })();
+
+    function esc(str)     { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+    function escAttr(str) { return (str || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;'); }
+  </script>
+
+  <!-- Google Places: key loaded securely from Supabase Edge Function -->
+  <script>
+    (async function loadPlaces() {
+      try {
+        const res = await fetch(
+          'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/get-places-key',
+          { headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+        );
+        const { key } = await res.json();
+        if (!key) return;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initPlaces&loading=async`;
+        s.async = true; s.defer = true;
+        document.head.appendChild(s);
+      } catch(e) {
+        console.warn('Places autocomplete unavailable:', e);
+      }
+    })();
+  </script>
+
+</body>
+</html>
