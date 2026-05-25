@@ -305,7 +305,7 @@ function renderDeliveryDate() {
   const latest = new Date(date);
 
   const fmt = d => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
-  el.textContent = `Estimated delivery: ${fmt(earliest)} – ${fmt(latest)}`;
+  el.textContent = `Estimated delivery: ${fmt(earliest)} - ${fmt(latest)}`;
 }
 
 /* -- Review panel render -------------------------------------------------- */
@@ -500,49 +500,55 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /* -- Google Places autocomplete callback ---------------------------------- */
 window.initPlaces = async function() {
-  const streetInput = document.getElementById('f-street');
-  if (!streetInput || typeof google === 'undefined') return;
+  if (typeof google === 'undefined') return;
 
   const { Autocomplete } = await google.maps.importLibrary('places');
-  const ac = new Autocomplete(streetInput, {
-    componentRestrictions: { country: 'za' },
-    fields: ['address_components'],
-    types: ['address'],
-  });
 
-  const hint = document.getElementById('placesHint');
-  if (hint) hint.style.display = '';
+  // Street address autocomplete (door delivery)
+  const streetInput = document.getElementById('f-street');
+  if (streetInput) {
+    const ac = new Autocomplete(streetInput, {
+      componentRestrictions: { country: 'za' },
+      fields: ['address_components'],
+      types: ['address'],
+    });
 
-  ac.addListener('place_changed', function() {
-    const place = ac.getPlace();
-    if (!place.address_components) return;
+    const hint = document.getElementById('placesHint');
+    if (hint) hint.style.display = '';
 
-    const get = (types) => {
-      const comp = place.address_components.find(c => types.some(t => c.types.includes(t)));
-      return comp ? comp.long_name : '';
-    };
+    ac.addListener('place_changed', function() {
+      const place = ac.getPlace();
+      if (!place.address_components) return;
 
-    const streetNum  = get(['street_number']);
-    const route      = get(['route']);
-    const suburb     = get(['sublocality', 'sublocality_level_1', 'neighborhood']);
-    const city       = get(['locality', 'administrative_area_level_2']);
-    const province   = get(['administrative_area_level_1']);
-    const postalCode = get(['postal_code']);
+      const get = (types) => {
+        const comp = place.address_components.find(c => types.some(t => c.types.includes(t)));
+        return comp ? comp.long_name : '';
+      };
 
-    const streetEl  = document.getElementById('f-street');
-    const suburbEl  = document.getElementById('f-suburb');
-    const cityEl    = document.getElementById('f-city');
-    const provinceEl= document.getElementById('f-province');
-    const postalEl  = document.getElementById('f-postal');
+      const streetNum  = get(['street_number']);
+      const route      = get(['route']);
+      const suburb     = get(['sublocality', 'sublocality_level_1', 'neighborhood']);
+      const city       = get(['locality', 'administrative_area_level_2']);
+      const province   = get(['administrative_area_level_1']);
+      const postalCode = get(['postal_code']);
 
-    if (streetEl)   streetEl.value   = [streetNum, route].filter(Boolean).join(' ');
-    if (suburbEl)   suburbEl.value   = suburb;
-    if (cityEl)     cityEl.value     = city;
-    if (provinceEl) provinceEl.value = province;
-    if (postalEl)   postalEl.value   = postalCode;
-  });
+      const streetEl   = document.getElementById('f-street');
+      const suburbEl   = document.getElementById('f-suburb');
+      const cityEl     = document.getElementById('f-city');
+      const provinceEl = document.getElementById('f-province');
+      const postalEl   = document.getElementById('f-postal');
 
-  // Wire Places autocomplete for locker search (independent of street autocomplete)
+      if (streetEl)   streetEl.value   = [streetNum, route].filter(Boolean).join(' ');
+      if (suburbEl)   suburbEl.value   = suburb;
+      if (cityEl)     cityEl.value     = city;
+      if (provinceEl) provinceEl.value = province;
+      if (postalEl)   postalEl.value   = postalCode;
+    });
+  }
+
+  // Locker search autocomplete — initialised independently so it works
+  // even when the user goes straight to locker delivery without visiting
+  // the door-delivery fields first.
   const lockerInput = document.getElementById('f-locker-search');
   if (lockerInput) {
     const lacHint = document.getElementById('lockerPlacesHint');
