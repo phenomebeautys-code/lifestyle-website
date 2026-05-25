@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a0e" />
-    <link rel="icon" type="image/jpeg" href="https://iili.io/fpiAjBj.jpg" />
 
     <!-- Primary SEO -->
     <title>PhenomeBeauty | Mobile Waxing &amp; Beauty Specialist Cape Town</title>
@@ -145,6 +144,12 @@
 </head>
 <body>
 
+    <!-- ═══════════════════════════════════════════════════════
+         FULL-BLEED BACKGROUND LAYER — iOS Safari proof
+         Using real divs instead of pseudo-elements avoids
+         the WebKit z-index painting bug entirely.
+         Both layers sit at z-index:0, body content at z-index:1.
+    ═══════════════════════════════════════════════════════ -->
     <div id="bg-image" aria-hidden="true"></div>
     <div id="bg-overlay" aria-hidden="true"></div>
 
@@ -186,36 +191,37 @@
 
                     <div class="hero-copy">
                         <span class="section-kicker">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            Available Mon to Sat, 8am&#8211;6pm
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            Cape Town &middot; Mobile Beauty
                         </span>
-                        <h1>Cape Town's <em>Mobile Beauty</em> Specialist</h1>
-                        <p class="hero-body">Professional waxing, gel nails, and lash &amp; brow tinting &#8212; delivered directly to your door. No traffic. No waiting rooms. Just beautiful results.</p>
+                        <h1>Beauty,<br/>Refined.<br/>At Home.</h1>
+                        <p>Professional mobile waxing and beauty services delivered to your door with a luxury, client-first experience across Cape Town.</p>
                         <div class="hero-actions">
-                            <a href="#booking" class="btn btn-primary btn-lg">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                                Book appointment
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                                Book Appointment
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
                             </a>
-                            <a href="#services" class="btn btn-ghost btn-lg">View services</a>
+                            <a href="#services" class="btn btn-secondary">View Services</a>
                         </div>
-                        <div class="hero-badges">
-                            <span class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fully mobile</span>
-                            <span class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg> All CT areas</span>
-                            <span class="badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Instant booking</span>
+                        <div class="hero-meta">
+                            <span class="meta-pill">Mobile across Cape Town</span>
+                            <span class="meta-pill">Professional care</span>
+                            <span class="meta-pill">Easy online booking</span>
                         </div>
                     </div>
 
                     <div class="hero-visual">
-                        <div class="hero-image-wrap">
-                            <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty mobile beauty service" class="hero-img" width="540" height="540" loading="eager" />
+                        <div class="feature-card">
+                            <div class="feature-content">
+                                <span class="feature-tag">Now Booking</span>
+                                <h3>Luxury beauty without<br/>the salon trip.</h3>
+                                <p>Designed around your comfort and convenience, delivered with precision.</p>
+                            </div>
                         </div>
-                        <div class="hero-float hero-float--tl">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            <span>Certified professional</span>
-                        </div>
-                        <div class="hero-float hero-float--br">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                            <span>5-star rated</span>
+                        <div class="hero-mini-grid">
+                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gbZN.png')"><span>Waxing &amp;<br/>Threading</span></div>
+                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gyGt.png')"><span>Nails &amp;<br/>Tinting</span></div>
+                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gpnI.png')"><span>Body<br/>Waxing</span></div>
                         </div>
                     </div>
 
@@ -224,247 +230,227 @@
         </div>
     </section>
 
-    <!-- PROMISE STRIP -->
-    <section class="promise-strip section-sm">
+    <!-- PROMO CARDS -->
+    <section class="promo-section section" aria-label="Featured resources">
         <div class="container">
-            <div class="promise-grid">
-                <div class="promise-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                    <div>
-                        <strong>We come to you</strong>
-                        <span>Your home, office, or airbnb</span>
-                    </div>
-                </div>
-                <div class="promise-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    <div>
-                        <strong>Easy online booking</strong>
-                        <span>Book in under 60 seconds</span>
-                    </div>
-                </div>
-                <div class="promise-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    <div>
-                        <strong>Professional &amp; hygienic</strong>
-                        <span>Certified, insured, trusted</span>
-                    </div>
-                </div>
-                <div class="promise-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <div>
-                        <strong>Mon&#8211;Sat, 8am&#8211;6pm</strong>
-                        <span>Flexible appointment times</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+            <div class="promo-grid">
 
-    <!-- ABOUT -->
-    <section id="about" class="about section">
-        <div class="container">
-            <div class="about-layout">
-
-                <div class="about-visual">
-                    <div class="about-image-wrap">
-                        <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty professional" class="about-img" width="480" height="560" loading="lazy" />
+                <a href="https://www.google.com/search?sca_esv=1cd8785de84224e8&rlz=1C5CHFA_enZA910ZA910&sxsrf=ANbL-n48sPmL4p7qurKaVOGru_vF1Uezog:1776983854995&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOVrZUD-o6iSDUpMY2OosiVZIFUKWRkp5vXu0SdsvpwL70n2cvIwVEz3X-LjClHX8SUSbgwNNuzwrHc8_riibwgutQUkH&q=PhenomeBeauty+Reviews&sa=X&ved=2ahUKEwj3i8vbhIWUAxU0dUEAHQR5C-cQ0bkNegQIIRAF&biw=1280&bih=712&dpr=2" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rdKDF.png" alt="PhenomeBeauty Google Reviews - Cape Town mobile beauty" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Reviews</span>
+                        <h3>See What<br/>Clients Say</h3>
+                        <span class="promo-btn">View Reviews <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
                     </div>
-                </div>
+                </a>
 
-                <div class="about-copy">
-                    <span class="section-kicker">About</span>
-                    <h2>Beauty that comes to <em>you</em></h2>
-                    <p>PhenomeBeauty is Cape Town's fully mobile beauty specialist, bringing professional-grade treatments directly to your door. Whether you're at home, at the office, or staying in an Airbnb, we make it effortless.</p>
-                    <p>We specialise in waxing, gel nails, and lash &amp; brow tinting &#8212; using only premium products to deliver results that last. Every appointment is handled with care, precision, and a commitment to your comfort.</p>
-                    <ul class="about-highlights">
-                        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Fully qualified and insured</li>
-                        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Premium, skin-safe products only</li>
-                        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> All Cape Town areas covered</li>
-                        <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg> Instant online booking available</li>
-                    </ul>
-                    <a href="#booking" class="btn btn-primary">Book a session</a>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- GUIDES -->
-    <section id="guides" class="guides section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-kicker">Guides</span>
-                <h2>Know before you go</h2>
-                <p class="section-sub">Quick tips to get the most out of your appointment.</p>
-            </div>
-            <div class="guides-grid">
-
-                <article class="guide-card">
-                    <div class="guide-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rdBVa.png" alt="First wax guide - what to expect from your first waxing appointment" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Guide</span>
+                        <h3>First Wax<br/>What to Expect</h3>
+                        <span class="promo-btn">Read Guide <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
                     </div>
-                    <h3>Waxing prep</h3>
-                    <p>Hair should be at least 5mm long (about 2&#8211;3 weeks of growth). Avoid sun exposure and tanning 24 hours before. No retinoids or exfoliants 48 hours prior.</p>
-                </article>
+                </a>
 
-                <article class="guide-card">
-                    <div class="guide-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rdxlR.png" alt="Pre and post wax care guide for smooth skin" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Guide</span>
+                        <h3>Pre &amp; Post<br/>Care Guide</h3>
+                        <span class="promo-btn">Download <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
                     </div>
-                    <h3>After your wax</h3>
-                    <p>Avoid tight clothing, hot showers, swimming, and sunbeds for 24 hours after your wax. Use a gentle, fragrance-free moisturiser to keep skin calm and hydrated.</p>
-                </article>
+                </a>
 
-                <article class="guide-card">
-                    <div class="guide-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                <a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rd2HB.png" alt="Waxing workshop sign up - learn professional waxing Cape Town" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Workshop</span>
+                        <h3>Sign Up for<br/>Waxing Workshop</h3>
+                        <span class="promo-btn">Register <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
                     </div>
-                    <h3>Gel nail care</h3>
-                    <p>Avoid soaking hands for the first 24 hours after application. Wear gloves for cleaning and use cuticle oil daily to keep the skin and nails healthy and extend the life of your gels.</p>
-                </article>
-
-                <article class="guide-card">
-                    <div class="guide-icon">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
-                    </div>
-                    <h3>Tint aftercare</h3>
-                    <p>Keep lashes and brows dry for 24 hours after tinting. Avoid oil-based makeup removers around the eye area, as these can fade the tint faster. Results typically last 4&#8211;6 weeks.</p>
-                </article>
+                </a>
 
             </div>
         </div>
     </section>
 
     <!-- SERVICES -->
-    <section id="services" class="services section">
+    <section id="services" class="services-section section">
         <div class="container">
-            <div class="section-header">
-                <span class="section-kicker">Services</span>
-                <h2>What we offer</h2>
-                <p class="section-sub">Professional treatments, delivered to your door across Cape Town.</p>
-            </div>
+            <div class="glass-panel section-inner reveal">
 
-            <div class="services-tabs" id="servicesTabs">
-                <button class="tab-btn active" data-tab="waxing">Waxing</button>
-                <button class="tab-btn" data-tab="nails">Nails</button>
-                <button class="tab-btn" data-tab="tinting">Tinting</button>
-            </div>
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                    Full Catalog
+                </span>
+                <h2 class="section-title">Our Services</h2>
+                <p class="section-copy">Professional mobile beauty treatments delivered across Cape Town; waxing, nails, tinting, and more.</p>
 
-            <div class="services-panel active" id="tab-waxing">
-                <div class="services-grid" id="waxingGrid"></div>
-            </div>
-            <div class="services-panel" id="tab-nails">
-                <div class="services-grid" id="nailsGrid"></div>
-            </div>
-            <div class="services-panel" id="tab-tinting">
-                <div class="services-grid" id="tintingGrid"></div>
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Intimate Waxing</h3><p>Brazilian, Hollywood &amp; intimate care</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Brazilian</h4><p>A Brazilian wax removes hair from the front bikini area, leaving smooth, clean skin.</p><span class="price">R 320.00</span></div>
+                        <div class="service-card reveal"><h4>Hollywood</h4><p>Experience ultimate smoothness with the Hollywood, a complete hair removal treatment.</p><span class="price">R 400.00</span></div>
+                        <div class="service-card reveal"><h4>Garden Path</h4><p>Great for clients who want the tummy area to the bikini line tidied up.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Areola</h4><p>This treatment removes unwanted hair around the areola area with care and precision.</p><span class="price">R 100.00</span></div>
+                        <div class="service-card reveal"><h4>Tummy</h4><p>Removes unwanted hair from the stomach area for smooth, clean results.</p><span class="price">R 250.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Body Waxing</h3><p>Back, arms, legs, chest &amp; underarm</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Full Back</h4><p>Removes unwanted hair from the entire back area for smooth, clean skin.</p><span class="price">R 350.00</span></div>
+                        <div class="service-card reveal"><h4>Half Back</h4><p>Removes unwanted hair from either the upper or lower back.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Chest</h4><p>Removes unwanted hair from the chest area for a smooth, clean finish.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Full Leg</h4><p>Enjoy silky-smooth legs from hip to toe with our full leg wax.</p><span class="price">R 350.00</span></div>
+                        <div class="service-card reveal"><h4>Half Leg</h4><p>Get smooth, ready-to-show-off legs with our half leg wax treatment.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Full Arm</h4><p>Get sleek, hair-free arms from shoulder to wrist.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Half Arm</h4><p>A half arm wax removes hair from the elbow down to the wrist.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Underarm</h4><p>Using premium wax, we remove every hair from the underarm area cleanly.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Hands or Feet</h4><p>A quick, effective wax that removes hair from the hands or feet.</p><span class="price">R 100.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Waxing &amp; Threading</h3><p>Brows, lip, chin, face &amp; more</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Brow, Lip Or Chin</h4><p>Includes eyebrow shaping plus hair removal from lip or chin area.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Brow, Lip &amp; Chin</h4><p>Includes eyebrow shaping and hair removal from both lip and chin.</p><span class="price">R 240.00</span></div>
+                        <div class="service-card reveal"><h4>Brow &amp; Lip Combo</h4><p>Perfect your pout and arches with the Brow &amp; Lip Combo.</p><span class="price">R 160.00</span></div>
+                        <div class="service-card reveal"><h4>Sideburns</h4><p>Tame and sculpt your sideburns with precise, clean removal.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Full Face excl. Brows</h4><p>Achieve silky, fuzz-free skin with our Full Face treatment, excluding brows.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Full Face incl. Brows</h4><p>Complete facial hair removal treatment including eyebrow shaping.</p><span class="price">R 340.00</span></div>
+                        <div class="service-card reveal"><h4>Fingers or Toes</h4><p>Say goodbye to unwanted hair on fingers and toes with a quick, precise wax.</p><span class="price">R 90.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Tinting</h3><p>Lash tint, brow tint &amp; combos</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Lash &amp; Brow Combo</h4><p>Includes both a brow tint and lash tint in one session.</p><span class="price">R 200.00</span></div>
+                        <div class="service-card reveal"><h4>Lash Tint</h4><p>Darkens the natural eyelashes, giving them a more defined, fuller appearance.</p><span class="price">R 110.00</span></div>
+                        <div class="service-card reveal"><h4>Brow Tint</h4><p>Adds colour to the eyebrow hairs to make them look fuller and more defined.</p><span class="price">R 110.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Manicure &amp; Pedicure</h3><p>Gel, soft tips, nail art &amp; finishing</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Full Gel Manicure</h4><p>Includes nail shaping, cuticle care, exfoliation, and a full gel polish application.</p><span class="price">R 390.00</span></div>
+                        <div class="service-card reveal"><h4>Full Gel Pedicure</h4><p>Includes nail shaping, cuticle care, removal of dead skin, and gel polish.</p><span class="price">R 450.00</span></div>
+                        <div class="service-card reveal"><h4>Soft Gel Tips</h4><p>Premium lightweight gel tip extensions that deliver a natural, long-lasting look.</p><span class="price">R 520.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Overlay - Hands</h4><p>Quick yet luxurious gel manicure express nail treatment for hands.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Overlay - Toes</h4><p>Gel-polished toes with long-lasting shine and a clean finish.</p><span class="price">R 380.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Removal</h4><p>Tailored for safe, damage-free gel extraction from hands or toes.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Acrylic or Soft Gel Removal</h4><p>Tailored for safe, damage-free extraction of acrylic or soft gel nails.</p><span class="price">R 150.00</span></div>
+                        <div class="service-card reveal"><h4>Detailed Nail Art - Per Nail</h4><p>Think delicate florals, geometric patterns, and intricate custom designs.</p><span class="price">R 50.00</span></div>
+                        <div class="service-card reveal"><h4>Basic Nail Art - Per Nail</h4><p>Basic Nail Art is ideal when you want something simple and elegant per nail.</p><span class="price">R 20.00</span></div>
+                        <div class="service-card reveal"><h4>French Finish</h4><p>This classic, clean-lined look features crisp white tips for a timeless result.</p><span class="price">R 80.00</span></div>
+                        <div class="service-card reveal"><h4>Chrome Finish</h4><p>A high-impact add-on that transforms any gel polish into a mirror-chrome finish.</p><span class="price">R 80.00</span></div>
+                    </div></div>
+                </details>
+
             </div>
         </div>
     </section>
 
-    <!-- SHOP -->
-    <section id="shop" class="shop section">
+    <!-- GUIDES -->
+    <section id="guides" class="section">
         <div class="container">
-            <div class="section-header">
-                <span class="section-kicker">Shop</span>
-                <h2>Beauty products</h2>
-                <p class="section-sub">Curated aftercare and beauty essentials, delivered to your door.</p>
-            </div>
-            <div class="shop-filters" id="shopFilters"></div>
-            <div class="shop-grid" id="shopGrid"></div>
-            <div class="cart-bar" id="cartBar" style="display:none;">
-                <div class="cart-bar-inner">
-                    <div class="cart-bar-info">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                        <span id="cartCount">0 items</span>
-                        <strong id="cartTotal">R0</strong>
-                    </div>
-                    <a href="checkout.html" class="btn btn-primary btn-sm">Checkout</a>
+            <div class="glass-panel section-inner reveal">
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                    Resources
+                </span>
+                <h2 class="section-title">Beauty Guides</h2>
+                <p class="section-copy">Curated resources to help you prepare, care for your skin, and get the best results from every treatment.</p>
+                <div class="guides-grid">
+                    <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="guide-card guide-card--image reveal">
+                        <img src="https://iili.io/B4rdBVa.png" alt="First Wax 101 guide - everything you need to know before your first waxing appointment" loading="lazy" />
+                        <div class="guide-label">
+                            <h3>First Wax 101</h3>
+                            <p>Everything you need to know before your very first wax: what to expect, how to prep, and what happens after.</p>
+                            <span class="btn btn-secondary">View Guide</span>
+                        </div>
+                    </a>
+                    <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="guide-card guide-card--image reveal">
+                        <img src="https://iili.io/B4rdxlR.png" alt="Pre and post wax care guide for healthy smooth skin after waxing" loading="lazy" />
+                        <div class="guide-label">
+                            <h3>Pre &amp; Post Care Guide</h3>
+                            <p>Essential before-and-after care tips to keep your skin smooth, calm, and healthy between appointments.</p>
+                            <span class="btn btn-secondary">Download Guide</span>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- BOOKING -->
-    <section id="booking" class="booking section">
+    <section id="booking" class="section">
         <div class="container">
-            <div class="section-header">
-                <span class="section-kicker">Booking</span>
-                <h2>Book your appointment</h2>
-                <p class="section-sub">Choose your service, pick a time, and we'll come to you.</p>
-            </div>
-            <div class="booking-wrap">
-                <iframe
-                    src="https://phenomebeauty.nextslot.co.za/"
-                    title="Book a PhenomeBeauty appointment"
-                    class="booking-frame"
-                    loading="lazy"
-                    allowpaymentrequest
-                ></iframe>
-            </div>
-        </div>
-    </section>
-
-    <!-- CONTACT -->
-    <section id="contact" class="contact section">
-        <div class="container">
-            <div class="section-header">
-                <span class="section-kicker">Contact</span>
-                <h2>Get in touch</h2>
-                <p class="section-sub">Questions? We'd love to hear from you.</p>
-            </div>
-            <div class="contact-layout">
-                <div class="contact-methods">
-                    <a href="https://wa.me/27745115725" class="contact-card" target="_blank" rel="noopener noreferrer">
-                        <div class="contact-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        </div>
-                        <div>
-                            <strong>WhatsApp</strong>
-                            <span>+27 74 511 5725</span>
-                        </div>
-                        <svg class="contact-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
-                    <a href="mailto:hello@phenomebeauty.co.za" class="contact-card" target="_blank" rel="noopener noreferrer">
-                        <div class="contact-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        </div>
-                        <div>
-                            <strong>Email</strong>
-                            <span>hello@phenomebeauty.co.za</span>
-                        </div>
-                        <svg class="contact-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
-                    <a href="https://www.instagram.com/phenomebeauty" class="contact-card" target="_blank" rel="noopener noreferrer">
-                        <div class="contact-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                        </div>
-                        <div>
-                            <strong>Instagram</strong>
-                            <span>@phenomebeauty</span>
-                        </div>
-                        <svg class="contact-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
-                    <a href="https://www.facebook.com/share/1Rz4vLJmpH/" class="contact-card" target="_blank" rel="noopener noreferrer">
-                        <div class="contact-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                        </div>
-                        <div>
-                            <strong>Facebook</strong>
-                            <span>PhenomeBeauty</span>
-                        </div>
-                        <svg class="contact-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
-                    <a href="https://www.tiktok.com/@phenomebeauty" class="contact-card" target="_blank" rel="noopener noreferrer">
-                        <div class="contact-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
-                        </div>
-                        <div>
-                            <strong>TikTok</strong>
-                            <span>@phenomebeauty</span>
-                        </div>
-                        <svg class="contact-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                    </a>
+            <div class="glass-panel section-inner reveal">
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Booking
+                </span>
+                <div class="booking-content">
+                    <div class="booking-info">
+                        <h3>Book Your<br/>Appointment.</h3>
+                        <p>Mobile beauty services across Cape Town. Professional treatments in the comfort of your own space. No travel, no waiting rooms.</p>
+                        <ul class="booking-features">
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Mobile services across Cape Town</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Waxing, nails, tinting &amp; more</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Hygiene &amp; safety guaranteed</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Flexible scheduling</li>
+                        </ul>
+                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                            Open Booking App
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+                        </a>
+                    </div>
+                    <div class="phone-mockup">
+                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="phone-frame">
+                            <div class="phone-notch"></div>
+                            <div class="phone-screen">
+                                <div class="phone-screen-content">
+                                    <img src="./PhenomeBeauty%20%20Book%20Online.png" class="phone-screenshot" alt="PhenomeBeauty online booking app screenshot" />
+                                </div>
+                            </div>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -473,42 +459,41 @@
     <!-- FOOTER -->
     <footer class="footer">
         <div class="container">
-            <div class="footer-inner">
-                <div class="footer-brand">
-                    <a href="#home" class="logo-wrap">
-                        <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty" class="logo-img" height="32" />
-                        <span class="logo-wordmark">PhenomeBeauty</span>
-                    </a>
-                    <p>Cape Town's mobile beauty specialist. Professional waxing, gel nails and tinting &#8212; delivered to your door.</p>
-                </div>
-                <div class="footer-links">
-                    <div class="footer-col">
-                        <h4>Services</h4>
-                        <ul>
-                            <li><a href="#services">Waxing</a></li>
-                            <li><a href="#services">Gel nails</a></li>
-                            <li><a href="#services">Tinting</a></li>
-                        </ul>
+            <div class="footer-shell">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <div class="footer-logo">
+                            <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="footer-logo-img" />
+                            <span class="footer-logo-name">PhenomeBeauty</span>
+                        </div>
+                        <p>Mobile beauty specialist based in Cape Town. Professional waxing, nails, and tinting delivered to your door.</p>
                     </div>
-                    <div class="footer-col">
-                        <h4>Company</h4>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
                         <ul>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#guides">Guides</a></li>
+                            <li><a href="#services">Services</a></li>
+                            <li><a href="#booking">Book Now</a></li>
                             <li><a href="terms.html">T&amp;Cs</a></li>
                         </ul>
                     </div>
-                    <div class="footer-col">
-                        <h4>Follow us</h4>
-                        <ul>
-                            <li><a href="https://www.instagram.com/phenomebeauty" target="_blank" rel="noopener noreferrer">Instagram</a></li>
-                            <li><a href="https://www.facebook.com/share/1Rz4vLJmpH/" target="_blank" rel="noopener noreferrer">Facebook</a></li>
-                            <li><a href="https://www.tiktok.com/@phenomebeauty" target="_blank" rel="noopener noreferrer">TikTok</a></li>
-                        </ul>
+                    <div class="footer-section">
+                        <h4>Contact</h4>
+                        <p>hello@phenomebeauty.co.za</p>
+                        <p>+27 74 511 5725</p>
+                        <p>Cape Town, South Africa</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Follow Us</h4>
+                        <div class="social-links">
+                            <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="Chat with PhenomeBeauty on WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
+                            <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
+                            <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
+                            <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="footer-bottom">
+                <div class="footer-bottom">
                     <p>&copy; <span id="footer-year">2026</span> PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&amp;Cs</a></p>
                     <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
                 </div>
