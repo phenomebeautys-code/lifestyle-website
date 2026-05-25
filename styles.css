@@ -34,9 +34,15 @@ html {
     --text: #f5f3ef;
     --text-soft: rgba(245, 243, 239, 0.72);
     --text-muted: rgba(245, 243, 239, 0.44);
+    --text-faint: rgba(245, 243, 239, 0.28);
     --accent: #f2e7d6;
     --accent-strong: #ffffff;
     --accent-dark: #080808;
+
+    --bg: #0a0a0e;
+    --glass: linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
+    --glass-border: rgba(255,255,255,0.13);
+    --radius-card: 20px;
 
     --shadow-lg: 0 32px 90px rgba(0, 0, 0, 0.78);
     --shadow-md: 0 18px 44px rgba(0, 0, 0, 0.60);
@@ -52,7 +58,6 @@ html {
     --section-pad: clamp(20px, 4vw, 38px);
 
     --glass-bg: linear-gradient(160deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
-    --glass-border: rgba(255,255,255,0.13);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1347,68 +1352,4 @@ section, footer, nav { position: relative; z-index: 1; }
         font-size: 0.95rem;
     }
 
-    .booking-content { grid-template-columns: 1fr; }
-    .phone-mockup { order: -1; }
-    .phone-frame { width: min(100%, 240px); }
-}
-
-/* =========================
-   Responsive - Small mobile <= 600px
-========================= */
-@media (max-width: 600px) {
-    :root {
-        --section-pad: 18px;
-        --radius-xl: 20px;
-    }
-
-    .container { width: calc(100% - 16px); }
-    .navbar-inner { padding: 6px 10px; }
-    .logo-img { height: 30px; }
-
-    .section { padding: 7px 0; }
-    .hero { padding: 10px 0 7px; }
-    .hero-panel { border-radius: 22px; padding: 18px; min-height: auto; }
-    .hero-copy h1 { font-size: clamp(2.4rem, 12vw, 3.4rem); margin-bottom: 12px; }
-    .hero-copy > p { margin-bottom: 18px; }
-    .hero-actions { flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .hero-actions .btn { width: 100%; justify-content: center; }
-    .hero-meta { gap: 6px; }
-    .meta-pill { font-size: 0.76rem; padding: 6px 10px; }
-    .feature-card { min-height: 220px; }
-    .hero-mini-grid { gap: 8px; }
-    .hero-mini-card { min-height: 80px; padding: 10px; border-radius: 14px; }
-    .hero-mini-card span { font-size: 0.73rem; }
-
-    .promo-grid { grid-template-columns: 1fr; }
-    .promo-card { aspect-ratio: 4 / 3; }
-
-    .guides-grid { grid-template-columns: 1fr; }
-    .guide-card--image { aspect-ratio: 4 / 3; }
-
-    .blog-grid,
-    .services-grid { grid-template-columns: 1fr; }
-
-    .glass-panel,
-    .section-inner { border-radius: 20px; padding: 18px; }
-
-    .blog-card { border-radius: 16px; min-height: auto; padding: 18px; }
-
-    .service-card { border-radius: 14px; padding: 16px; }
-
-    .service-accordion > summary { padding: 14px 16px; }
-    .accordion-body { padding: 0 14px 14px; }
-    .summary-left h3 { font-size: 1.2rem; }
-    .summary-right .category-cta { display: none; }
-
-    .booking-info { border-radius: 18px; }
-    .booking-info h3 { font-size: clamp(1.6rem, 8vw, 2.2rem); }
-    .booking-info .btn { width: 100%; justify-content: center; }
-    .booking-features li { padding: 10px 12px; font-size: 0.86rem; border-radius: 11px; }
-
-    .phone-frame { width: min(100%, 200px); border-radius: 28px; }
-    .phone-screen { border-radius: 20px; }
-
-    .footer-content { grid-template-columns: 1fr; gap: 20px; }
-    .footer-shell { border-radius: 20px; padding: 18px; }
-    .footer-bottom { font-size: 0.78rem; flex-direction: column; align-items: flex-start; }
-}
+    .booking-content { grid-tem
