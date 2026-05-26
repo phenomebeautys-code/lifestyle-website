@@ -21,9 +21,6 @@ html {
     min-height: 100%;
     min-height: 100dvh;
     height: 100%;
-    /* This is THE key fix: any area Safari paints outside the body
-       (safe-area zones, overscroll bounce) will be this dark color,
-       not the browser default white. */
     background-color: #0a0a0e;
 }
 
@@ -62,20 +59,11 @@ html {
 
 /* ═══════════════════════════════════════════════════════════════
    BODY
-   Must be transparent so the fixed #bg-image div behind it
-   shows through — including during iOS rubber-band overscroll.
-   A solid body background is what causes the white (or color)
-   bars at the top and bottom on iPhone.
-
-   NOTE: padding-top safe-area is intentionally NOT set here.
-   It is handled by the navbar's sticky top value instead
-   (see .navbar below). Setting it on body caused a double-offset
-   that pushed the navbar below the safe-area boundary on shop.html.
 ═══════════════════════════════════════════════════════════════ */
 body {
     font-family: var(--font-body);
     color: var(--text);
-    background: transparent;   /* DO NOT set a solid color here */
+    background: transparent;
     min-height: 100vh;
     min-height: 100dvh;
     line-height: 1.65;
@@ -86,13 +74,6 @@ body {
 
 /* ═══════════════════════════════════════════════════════════════
    FULL-BLEED BACKGROUND DIVS
-   Using real <div> elements instead of pseudo-elements avoids
-   the WebKit z-index painting bug where z-index values below -1
-   get painted behind the browser's own layer and disappear.
-
-   #bg-image  — the actual background photo (fixed, edge-to-edge)
-   #bg-overlay — dark scrim over the photo for text legibility
-   Both sit at z-index: 0, body content at z-index: 1.
 ═══════════════════════════════════════════════════════════════ */
 #bg-image {
     position: fixed;
@@ -103,10 +84,6 @@ body {
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
-    /* background-attachment: scroll is correct here.
-       The element itself is position:fixed so it already
-       stays locked to the viewport. Using 'fixed' on
-       background-attachment breaks on iOS Safari. */
     background-attachment: scroll;
 }
 
@@ -131,26 +108,7 @@ body::before {
 
 /* ═══════════════════════════════════════════════════════════════
    iOS VIEWPORT EDGE FADE
-   ─────────────────────────────────────────────────────────────
-   iOS Safari uses a fixed viewport box. As the user scrolls,
-   content hits the hard top/bottom viewport edges abruptly.
-   This pair of pseudo-elements sits on top of the background
-   image (z-index: 1, same layer as body content but pointer-
-   events: none so it never blocks clicks) and fades the top
-   and bottom edges to #0a0a0e (matching html background-color).
-   This makes scrolling content appear to dissolve into black
-   at both edges, blending seamlessly with the iOS chrome.
-
-   We target iOS specifically using the -webkit-overflow-scrolling
-   media query trick combined with supports(). The safest, most
-   broadly-supported approach is a dedicated class added by JS
-   (see script.js), but as a pure-CSS fallback we also apply it
-   via the iOS-specific @supports selector below.
-
-   The .ios-device class is toggled onto <html> by script.js.
 ═══════════════════════════════════════════════════════════════ */
-
-/* JS-driven class — script.js adds .ios-device to <html> */
 html.ios-device #bg-image::before,
 html.ios-device #bg-image::after {
     content: "";
@@ -234,10 +192,6 @@ section, footer, nav { position: relative; z-index: 1; }
 
 /* =========================
    Navbar
-   top uses calc(env(safe-area-inset-top) + gap) so the navbar
-   always clears the iOS status bar / notch on every page.
-   On Android and desktop env() resolves to 0, so behaviour
-   is identical to the plain gap value there.
 ========================= */
 .navbar {
     position: sticky;
@@ -271,7 +225,6 @@ section, footer, nav { position: relative; z-index: 1; }
     position: relative;
 }
 
-/* Logo + wordmark */
 .logo-wrap {
     display: inline-flex;
     align-items: center;
@@ -1153,6 +1106,12 @@ section, footer, nav { position: relative; z-index: 1; }
     margin-bottom: 22px;
 }
 
+/* Prevent grid cells from overflowing their column */
+.footer-section {
+    min-width: 0;
+    overflow: hidden;
+}
+
 .footer-section h4 {
     font-family: var(--font-display);
     color: var(--accent-strong);
@@ -1269,7 +1228,6 @@ section, footer, nav { position: relative; z-index: 1; }
     .navbar { top: calc(env(safe-area-inset-top) + 8px); padding-top: 8px; }
     .mobile-menu-toggle { display: inline-flex; }
 
-    /* Hide ALL nav-cta content on mobile, overriding any inline styles */
     .nav-cta,
     .nav-cta * {
         display: none !important;
@@ -1352,33 +1310,69 @@ section, footer, nav { position: relative; z-index: 1; }
         font-size: 0.95rem;
     }
 
-    /* ── Booking card: stack to single column on mobile ── */
+    /* ── Booking card: single column on mobile ── */
     .booking-content {
         grid-template-columns: 1fr;
         gap: 14px;
     }
 
-    /* Hide the phone mockup on mobile — booking info card is enough */
     .phone-mockup {
         display: none;
     }
 
-    /* Ensure booking info card fills width cleanly */
     .booking-info {
         border-radius: 18px;
         width: 100%;
     }
 
-    /* ── Footer contact card: stack to single column on mobile ── */
+    /* ── Footer: 2x2 grid on mobile, no text overflow ── */
     .footer-content {
-        grid-template-columns: 1fr;
-        gap: 20px;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    /* Each footer cell must not overflow its column */
+    .footer-section {
+        min-width: 0;
+        overflow: hidden;
+        word-break: break-word;
+    }
+
+    /* Smaller logo name so it doesn't bleed into Quick Links column */
+    .footer-logo-name {
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Tighten footer logo row */
+    .footer-logo {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .footer-logo-img {
+        height: 32px;
+    }
+
+    /* Smaller section headings in footer on mobile */
+    .footer-section h4 {
+        font-size: 0.88rem;
+        margin-bottom: 10px;
+    }
+
+    .footer-section p,
+    .footer-section a {
+        font-size: 0.82rem;
+        line-height: 1.65;
     }
 
     .footer-bottom {
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
+        gap: 6px;
+        font-size: 0.78rem;
     }
 }
 
