@@ -1352,4 +1352,45 @@ section, footer, nav { position: relative; z-index: 1; }
         font-size: 0.95rem;
     }
 
-    .booking-content { grid-tem
+    /* ── Booking card: stack to single column on mobile ── */
+    .booking-content {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    /* Hide the phone mockup on mobile — booking info card is enough */
+    .phone-mockup {
+        display: none;
+    }
+
+    /* Ensure booking info card fills width cleanly */
+    .booking-info {
+        border-radius: 18px;
+        width: 100%;
+    }
+
+    /* ── Footer contact card: stack to single column on mobile ── */
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* =========================
+   Responsive - Small mobile <= 480px
+========================= */
+@media (max-width: 480px) {
+    .hero-copy h1 { font-size: clamp(2rem, 11vw, 3rem); }
+    .hero-mini-grid { grid-template-columns: repeat(2, 1fr); }
+    .promo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .services-grid { grid-template-columns: 1fr; }
+    .blog-grid { grid-template-columns: 1fr; }
+    .guides-grid { grid-template-columns: 1fr; }
+    .booking-features li { font-size: 0.84rem; padding: 10px 12px; }
+}
