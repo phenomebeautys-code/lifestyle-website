@@ -144,12 +144,6 @@
 </head>
 <body>
 
-    <!-- ═══════════════════════════════════════════════════════
-         FULL-BLEED BACKGROUND LAYER — iOS Safari proof
-         Using real divs instead of pseudo-elements avoids
-         the WebKit z-index painting bug entirely.
-         Both layers sit at z-index:0, body content at z-index:1.
-    ═══════════════════════════════════════════════════════ -->
     <div id="bg-image" aria-hidden="true"></div>
     <div id="bg-overlay" aria-hidden="true"></div>
 
@@ -233,44 +227,54 @@
     <!-- PROMO CARDS -->
     <section class="promo-section section" aria-label="Featured resources">
         <div class="container">
-            <div class="promo-grid">
+            <div class="glass-panel section-inner reveal">
 
-                <a href="https://www.google.com/search?sca_esv=1cd8785de84224e8&rlz=1C5CHFA_enZA910ZA910&sxsrf=ANbL-n48sPmL4p7qurKaVOGru_vF1Uezog:1776983854995&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOVrZUD-o6iSDUpMY2OosiVZIFUKWRkp5vXu0SdsvpwL70n2cvIwVEz3X-LjClHX8SUSbgwNNuzwrHc8_riibwgutQUkH&q=PhenomeBeauty+Reviews&sa=X&ved=2ahUKEwj3i8vbhIWUAxU0dUEAHQR5C-cQ0bkNegQIIRAF&biw=1280&bih=712&dpr=2" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
-                    <img src="https://iili.io/B4rdKDF.png" alt="PhenomeBeauty Google Reviews - Cape Town mobile beauty" loading="lazy" />
-                    <div class="promo-label">
-                        <span class="tag">Reviews</span>
-                        <h3>See What<br/>Clients Say</h3>
-                        <span class="promo-btn">View Reviews <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
-                    </div>
-                </a>
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Explore
+                </span>
+                <h2 class="section-title">Featured</h2>
+                <p class="section-copy">Reviews, guides, and resources to help you get the most from your PhenomeBeauty experience.</p>
 
-                <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
-                    <img src="https://iili.io/B4rdBVa.png" alt="First wax guide - what to expect from your first waxing appointment" loading="lazy" />
-                    <div class="promo-label">
-                        <span class="tag">Guide</span>
-                        <h3>First Wax<br/>What to Expect</h3>
-                        <span class="promo-btn">Read Guide <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
-                    </div>
-                </a>
+                <div class="promo-grid">
 
-                <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
-                    <img src="https://iili.io/B4rdxlR.png" alt="Pre and post wax care guide for smooth skin" loading="lazy" />
-                    <div class="promo-label">
-                        <span class="tag">Guide</span>
-                        <h3>Pre &amp; Post<br/>Care Guide</h3>
-                        <span class="promo-btn">Download <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
-                    </div>
-                </a>
+                    <a href="https://www.google.com/search?sca_esv=1cd8785de84224e8&rlz=1C5CHFA_enZA910ZA910&sxsrf=ANbL-n48sPmL4p7qurKaVOGru_vF1Uezog:1776983854995&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOVrZUD-o6iSDUpMY2OosiVZIFUKWRkp5vXu0SdsvpwL70n2cvIwVEz3X-LjClHX8SUSbgwNNuzwrHc8_riibwgutQUkH&q=PhenomeBeauty+Reviews&sa=X&ved=2ahUKEwj3i8vbhIWUAxU0dUEAHQR5C-cQ0bkNegQIIRAF&biw=1280&bih=712&dpr=2" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                        <img src="https://iili.io/B4rdKDF.png" alt="PhenomeBeauty Google Reviews - Cape Town mobile beauty" loading="lazy" />
+                        <div class="promo-label">
+                            <span class="tag">Reviews</span>
+                            <h3>See What<br/>Clients Say</h3>
+                            <span class="promo-btn">View Reviews <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+                        </div>
+                    </a>
 
-                <a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
-                    <img src="https://iili.io/B4rd2HB.png" alt="Waxing workshop sign up - learn professional waxing Cape Town" loading="lazy" />
-                    <div class="promo-label">
-                        <span class="tag">Workshop</span>
-                        <h3>Sign Up for<br/>Waxing Workshop</h3>
-                        <span class="promo-btn">Register <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
-                    </div>
-                </a>
+                    <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                        <img src="https://iili.io/B4rdBVa.png" alt="First wax guide - what to expect from your first waxing appointment" loading="lazy" />
+                        <div class="promo-label">
+                            <span class="tag">Guide</span>
+                            <h3>First Wax<br/>What to Expect</h3>
+                            <span class="promo-btn">Read Guide <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+                        </div>
+                    </a>
 
+                    <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                        <img src="https://iili.io/B4rdxlR.png" alt="Pre and post wax care guide for smooth skin" loading="lazy" />
+                        <div class="promo-label">
+                            <span class="tag">Guide</span>
+                            <h3>Pre &amp; Post<br/>Care Guide</h3>
+                            <span class="promo-btn">Download <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+                        </div>
+                    </a>
+
+                    <a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                        <img src="https://iili.io/B4rd2HB.png" alt="Waxing workshop sign up - learn professional waxing Cape Town" loading="lazy" />
+                        <div class="promo-label">
+                            <span class="tag">Workshop</span>
+                            <h3>Sign Up for<br/>Waxing Workshop</h3>
+                            <span class="promo-btn">Register <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></span>
+                        </div>
+                    </a>
+
+                </div>
             </div>
         </div>
     </section>
