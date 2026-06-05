@@ -1,11 +1,15 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v4 — add renderDeliveryOptions(), fix door-fields ID.
+   Cache-bust v5 — live Pudo shipping quote replaces hardcoded fees.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
+
+/* Fallback prices shown while the live quote is loading or if the API fails */
+const FALLBACK_DOOR_PRICE   = 99;
+const FALLBACK_LOCKER_PRICE = 59;
 
 /* -- State ---------------------------------------------------------------- */
 let currentStep      = 1;
@@ -19,12 +23,80 @@ let yocoSDK          = null;
 let yocoCard         = null;
 let specialOpen      = false;
 
-/* -- Delivery pricing ----------------------------------------------------- */
-const DOOR_PRICE   = 99;
-const LOCKER_PRICE = 59;
+/* Live shipping quote state */
+let shippingQuote        = null;   // { box, locker_fee, door_fee, total_weight_kg, ... }
+let shippingQuoteLoading = false;
+let shippingQuoteError   = null;
 
+/* -- Delivery pricing ----------------------------------------------------- */
+
+/**
+ * Returns the delivery fee to charge for the currently selected method.
+ * Uses the live Pudo quote when available, otherwise falls back to the
+ * hardcoded constants so the UI is never blank.
+ */
 function deliveryFee() {
-  return deliveryMethod === 'locker' ? LOCKER_PRICE : DOOR_PRICE;
+  if (shippingQuote) {
+    const fee = deliveryMethod === 'locker'
+      ? Number(shippingQuote.locker_fee)
+      : Number(shippingQuote.door_fee);
+    if (Number.isFinite(fee) && fee > 0) return fee;
+  }
+  return deliveryMethod === 'locker' ? FALLBACK_LOCKER_PRICE : FALLBACK_DOOR_PRICE;
+}
+
+/**
+ * Calls the get-shipping-quote edge function with the current cart items.
+ * Updates shippingQuote and re-renders the summary and delivery option cards
+ * once the response arrives.
+ */
+async function loadShippingQuote() {
+  if (!cart.length) return;
+
+  shippingQuoteLoading = true;
+  shippingQuoteError   = null;
+  shippingQuote        = null;
+
+  // Show "Calculating..." immediately so the user knows something is happening
+  renderSummary();
+  renderDeliveryOptions();
+
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-shipping-quote`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+        body: JSON.stringify({
+          items: cart.map(i => ({
+            productId: i.productId || i.id || '',
+            qty:       Number(i.qty) || 1,
+          })),
+        }),
+      }
+    );
+
+    const data = await resp.json();
+
+    if (!resp.ok || data.error) {
+      shippingQuoteError = data.error || 'Could not retrieve delivery rates.';
+      console.warn('[checkout] Shipping quote error:', shippingQuoteError);
+    } else {
+      shippingQuote = data;
+      console.log('[checkout] Shipping quote received:', data);
+    }
+  } catch (e) {
+    shippingQuoteError = 'Network error fetching delivery rates.';
+    console.warn('[checkout] Shipping quote fetch failed:', e);
+  } finally {
+    shippingQuoteLoading = false;
+    renderSummary();
+    renderDeliveryOptions();
+  }
 }
 
 /* -- Cart helpers --------------------------------------------------------- */
@@ -191,22 +263,40 @@ function restoreDraft() {
 }
 
 /* -- Delivery options render ---------------------------------------------- */
+
+/**
+ * Renders the two delivery option cards (door / locker).
+ * While the quote is loading, prices show "Calculating...".
+ * If the quote failed, prices fall back to the hardcoded constants.
+ */
 function renderDeliveryOptions() {
   const container = document.getElementById('deliveryOptions');
   if (!container) return;
 
+  const doorLabel   = shippingQuoteLoading
+    ? 'Calculating...'
+    : `R${deliveryMethod === 'door'
+        ? deliveryFee().toFixed(2)
+        : (shippingQuote ? Number(shippingQuote.door_fee).toFixed(2) : FALLBACK_DOOR_PRICE.toFixed(2))}`;
+
+  const lockerLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : `R${deliveryMethod === 'locker'
+        ? deliveryFee().toFixed(2)
+        : (shippingQuote ? Number(shippingQuote.locker_fee).toFixed(2) : FALLBACK_LOCKER_PRICE.toFixed(2))}`;
+
   container.innerHTML = `
-    <div class="delivery-card selected" id="opt-door" onclick="selectDelivery('door')">
+    <div class="delivery-card ${deliveryMethod === 'door' ? 'selected' : ''}" id="opt-door" onclick="selectDelivery('door')">
       <div class="delivery-chip"></div>
       <h3>Door delivery</h3>
       <p>We deliver straight to your door anywhere in South Africa.</p>
-      <div class="delivery-price">R${DOOR_PRICE.toFixed(2)}</div>
+      <div class="delivery-price">${doorLabel}</div>
     </div>
-    <div class="delivery-card" id="opt-locker" onclick="selectDelivery('locker')">
+    <div class="delivery-card ${deliveryMethod === 'locker' ? 'selected' : ''}" id="opt-locker" onclick="selectDelivery('locker')">
       <div class="delivery-chip"></div>
       <h3>Pudo locker</h3>
       <p>Collect at a Pudo locker near you at a time that suits you.</p>
-      <div class="delivery-price">R${LOCKER_PRICE.toFixed(2)}</div>
+      <div class="delivery-price">${lockerLabel}</div>
     </div>
   `;
 
@@ -214,11 +304,11 @@ function renderDeliveryOptions() {
   const meta = document.getElementById('deliveryMeta');
   if (meta) meta.style.display = '';
 
-  // Show door fields by default (door is the default selection)
+  // Show correct fields based on current method
   const doorFields   = document.getElementById('door-fields');
   const lockerFields = document.getElementById('locker-fields');
-  if (doorFields)   doorFields.style.display   = '';
-  if (lockerFields) lockerFields.style.display = 'none';
+  if (doorFields)   doorFields.style.display   = deliveryMethod === 'door'   ? '' : 'none';
+  if (lockerFields) lockerFields.style.display = deliveryMethod === 'locker' ? '' : 'none';
 }
 
 /* -- Delivery method selection -------------------------------------------- */
@@ -264,8 +354,8 @@ function renderSummary() {
   const tot = sub + fee;
 
   if (subtotalEl) subtotalEl.textContent = `R${sub.toFixed(2)}`;
-  if (deliveryEl) deliveryEl.textContent = `R${fee.toFixed(2)}`;
-  if (totalEl)    totalEl.textContent    = `R${tot.toFixed(2)}`;
+  if (deliveryEl) deliveryEl.textContent = shippingQuoteLoading ? 'Calculating...' : `R${fee.toFixed(2)}`;
+  if (totalEl)    totalEl.textContent    = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
 
   if (itemsEl) {
     itemsEl.innerHTML = cart.map(item => {
@@ -342,10 +432,10 @@ function renderReview() {
   const special  = document.getElementById('f-special')?.value || '';
   if (rSpecial) rSpecial.textContent = special || 'None';
 
-  const rSubtotal = document.getElementById('r-subtotal');
+  const rSubtotal    = document.getElementById('r-subtotal');
   const rDeliveryFee = document.getElementById('r-delivery-fee');
-  const rTotal    = document.getElementById('r-total');
-  const rYocoTotal = document.getElementById('yoco-amount-display');
+  const rTotal       = document.getElementById('r-total');
+  const rYocoTotal   = document.getElementById('yoco-amount-display');
 
   const sub = cartSubtotal();
   const fee = deliveryFee();
@@ -422,6 +512,7 @@ async function submitPayment() {
       customer: { name, phone, email },
       delivery_method: deliveryMethod,
       delivery_address: address,
+      delivery_fee: fee,
       locker_id:      selectedLocker?.id      || '',
       locker_name:    selectedLocker?.name    || '',
       locker_address: selectedLocker?.address || '',
@@ -483,6 +574,9 @@ document.addEventListener('DOMContentLoaded', function() {
   renderSummary();
   renderDeliveryDate();
   restoreDraft();
+
+  // Kick off the live shipping quote as soon as the page loads
+  loadShippingQuote();
 
   // Clear field errors on input
   document.querySelectorAll('input, select, textarea').forEach(el => {
