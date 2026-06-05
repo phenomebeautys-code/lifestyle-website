@@ -16,19 +16,33 @@ const ALLOWED_ORIGINS = [
 ];
 
 // ── Pudo rate-quote addresses ─────────────────────────────────────────────────
-const COLLECTION_ADDRESS  = { terminal_id: 'CG0000' };
-const QUOTE_LOCKER_ID     = 'CG107';
-const QUOTE_DOOR_ADDRESS  = {
-  type: 'residential', street_address: '1 Adderley Street',
-  local_area: 'Cape Town City Centre', suburb: 'Cape Town City Centre',
-  city: 'Cape Town', code: '8001', zone: 'WC', country: 'South Africa',
+// Collection: PhenomeBeauty's own Pudo locker terminal
+const COLLECTION_TERMINAL_ID = 'CG0000';
+
+// Quote destination for L2L: any locker (used only to get the rate — not the real delivery locker)
+const QUOTE_L2L_DEST_TERMINAL = 'CG107';
+
+// Quote destination for L2D: a representative residential address (Cape Town)
+// Pudo requires a full address object with lat/lng for L2D rate quotes
+const QUOTE_L2D_DEST_ADDRESS = {
+  type: 'residential',
+  street_address: '1 Adderley Street',
+  local_area: 'Cape Town City Centre',
+  suburb: 'Cape Town City Centre',
+  city: 'Cape Town',
+  code: '8001',
+  zone: 'WC',
+  country: 'South Africa',
+  entered_address: '1 Adderley St, Cape Town City Centre, Cape Town, 8001, South Africa',
+  lat: '-33.9248685',
+  lng: '18.4240553',
 };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface CartItem        { productId: string; qty: number; }
+interface CartItem          { productId: string; qty: number; }
 interface ProductDimensions { id: string; weight_kg: number; length_cm: number; width_cm: number; height_cm: number; pack_flat: boolean; }
-interface PackedItem      { id: string; qty: number; l: number; w: number; h: number; }
-interface PudoBox         { code: string; serviceL2L: string; serviceL2D: string; boxL: number; boxW: number; boxH: number; maxKg: number; }
+interface PackedItem        { id: string; qty: number; l: number; w: number; h: number; }
+interface PudoBox           { code: string; serviceL2L: string; serviceL2D: string; boxL: number; boxW: number; boxH: number; maxKg: number; }
 
 // ── Pudo box definitions ──────────────────────────────────────────────────────
 const PUDO_BOXES: PudoBox[] = [
@@ -141,9 +155,26 @@ Deno.serve(async (req: Request) => {
   if (!pudoKey) return respond({ error: 'PUDO_API_KEY not configured' }, 500, corsHeaders);
 
   const { box } = result;
+
+  // L2L: locker terminal to locker terminal — Pudo returns all L2L service levels, pick by code
+  const l2lPayload = {
+    collection_address: { terminal_id: COLLECTION_TERMINAL_ID },
+    delivery_address:   { terminal_id: QUOTE_L2L_DEST_TERMINAL },
+    opt_in_rates: [],
+    opt_in_time_based_rates: [],
+  };
+
+  // L2D: locker terminal to residential address — Pudo returns all L2D service levels, pick by code
+  const l2dPayload = {
+    collection_address: { terminal_id: COLLECTION_TERMINAL_ID },
+    delivery_address:   QUOTE_L2D_DEST_ADDRESS,
+    opt_in_rates: [],
+    opt_in_time_based_rates: [],
+  };
+
   const [l2lRes, l2dRes] = await Promise.all([
-    fetchRate(pudoKey, { service_level_code: box.serviceL2L, collection_address: COLLECTION_ADDRESS, delivery_address: { terminal_id: QUOTE_LOCKER_ID } }),
-    fetchRate(pudoKey, { service_level_code: box.serviceL2D, collection_address: COLLECTION_ADDRESS, delivery_address: QUOTE_DOOR_ADDRESS }),
+    fetchRates(pudoKey, l2lPayload),
+    fetchRates(pudoKey, l2dPayload),
   ]);
 
   if (l2lRes.error || l2dRes.error) {
@@ -155,31 +186,53 @@ Deno.serve(async (req: Request) => {
   const doorFee   = extractRate(l2dRes.data, box.serviceL2D);
 
   if (lockerFee === null || doorFee === null) {
-    console.error('[get-shipping-quote] Rate not found:', JSON.stringify(l2lRes.data).slice(0,300), JSON.stringify(l2dRes.data).slice(0,300));
+    console.error('[get-shipping-quote] Rate not found. L2L:', JSON.stringify(l2lRes.data).slice(0, 300), 'L2D:', JSON.stringify(l2dRes.data).slice(0, 300));
     return respond({ error: 'Rate data not found in Pudo response.' }, 502, corsHeaders);
   }
 
   console.log(`[get-shipping-quote] L2L: R${lockerFee} | L2D: R${doorFee}`);
-  return respond({ box: box.code, service_l2l: box.serviceL2L, service_l2d: box.serviceL2D, locker_fee: lockerFee, door_fee: doorFee, total_weight_kg: result.totalWeightKg }, 200, corsHeaders);
+  return respond({
+    box: box.code,
+    service_l2l: box.serviceL2L,
+    service_l2d: box.serviceL2D,
+    locker_fee: lockerFee,
+    door_fee: doorFee,
+    total_weight_kg: result.totalWeightKg,
+  }, 200, corsHeaders);
 });
 
-async function fetchRate(apiKey: string, payload: Record<string, unknown>): Promise<{ data?: any; error?: string }> {
+async function fetchRates(apiKey: string, payload: Record<string, unknown>): Promise<{ data?: any; error?: string }> {
   try {
     const res  = await fetch('https://api-pudo.co.za/rates', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Accept': 'application/json', 'Content-Type': 'application/json', 'requested-from': 'portal' },
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'requested-from': 'portal',
+      },
       body: JSON.stringify(payload),
     });
     const text = await res.text();
-    if (!res.ok) { console.error(`Pudo ${res.status}:`, text.slice(0,300)); return { error: `Pudo API error ${res.status}` }; }
+    if (!res.ok) {
+      console.error(`Pudo ${res.status}:`, text.slice(0, 300));
+      return { error: `Pudo API error ${res.status}` };
+    }
     try { return { data: JSON.parse(text) }; } catch { return { error: 'Invalid JSON from Pudo' }; }
-  } catch (err) { return { error: `Network error: ${String(err)}` }; }
+  } catch (err) {
+    return { error: `Network error: ${String(err)}` };
+  }
 }
 
+// Pudo returns { rates: [ { rate: "68.75", service_level: { code: "L2LXS - ECO" }, ... } ] }
 function extractRate(data: any, serviceLevelCode: string): number | null {
   if (!data) return null;
   const rates: any[] = Array.isArray(data) ? data : (data.rates ?? data.data ?? []);
-  const match = rates.find((r: any) => r.service_level?.code === serviceLevelCode || r.service_level_code === serviceLevelCode || r.code === serviceLevelCode);
+  const match = rates.find((r: any) =>
+    r.service_level?.code === serviceLevelCode ||
+    r.service_level_code  === serviceLevelCode ||
+    r.code                === serviceLevelCode
+  );
   if (!match) return null;
   const amount = match.rate ?? match.total ?? match.price ?? match.amount;
   if (amount == null) return null;
