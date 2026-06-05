@@ -136,7 +136,7 @@ Deno.serve(async (req: Request) => {
   const cartItems: CartItem[] = orderItems.map((i: any) => ({ productId: i.productId ?? i.id, qty: Number(i.qty) || 1 }));
   const productIds = [...new Set(cartItems.map(i => i.productId))];
   const { data: products, error: prodErr } = await supabase
-    .from('shop_products')
+    .from('products')
     .select('id, weight_kg, length_cm, width_cm, height_cm, pack_flat')
     .in('id', productIds);
 
@@ -231,7 +231,7 @@ Deno.serve(async (req: Request) => {
     pudo_shipment_id: String(shipmentId), pudo_tracking_ref: trackingRef, pudo_error: null,
   }).eq('id', order_id);
 
-  console.log(`[pudo-create-shipment] ✓ order=${order_id} | method=${order.delivery_method} | shipment=${shipmentId} | tracking=${trackingRef}`);
+  console.log(`[pudo-create-shipment] order=${order_id} | method=${order.delivery_method} | shipment=${shipmentId} | tracking=${trackingRef}`);
   return respond({ success: true, pudo_shipment_id: String(shipmentId), pudo_tracking_ref: trackingRef, service_level: serviceLevelCode, parcel_weight_kg: parcelWeight }, 200, corsHeaders);
 });
 

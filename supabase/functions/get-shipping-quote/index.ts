@@ -117,7 +117,7 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   const { data: products, error: prodErr } = await supabase
-    .from('shop_products')
+    .from('products')
     .select('id, weight_kg, length_cm, width_cm, height_cm, pack_flat')
     .in('id', items.map(i => i.productId));
 
