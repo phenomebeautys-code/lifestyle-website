@@ -118,6 +118,7 @@ async function loadShippingQuote() {
     shippingQuoteLoading = false;
     renderSummary();
     renderDeliveryOptions();
+     renderSidebarItems();
   }
 }
 
