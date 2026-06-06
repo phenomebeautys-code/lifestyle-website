@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v9 — create-order + yoco-shop-checkout two-step pay.
+   Cache-bust v10 — fix productId mapping in handlePay cart payload.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -586,7 +586,7 @@ async function handlePay() {
       is_gift:              isGift,
       gift_message:         giftMsg || null,
       cart: cart.map(item => ({
-        id:    item.id    || '',
+        id:    item.productId || item.id || '',
         name:  item.name  || '',
         price: item.price || 0,
         qty:   item.qty   || 1,
@@ -594,7 +594,7 @@ async function handlePay() {
       })),
     };
 
-    /* ── Step 1: create the order row ── */
+    /* -- Step 1: create the order row -- */
     const orderResp = await fetch(
       `${SUPABASE_URL}/functions/v1/create-order`,
       {
@@ -613,7 +613,7 @@ async function handlePay() {
 
     const orderId = orderData.order_id;
 
-    /* ── Step 2: create Yoco payment session ── */
+    /* -- Step 2: create Yoco payment session -- */
     const yocoResp = await fetch(
       `${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,
       {
@@ -634,7 +634,7 @@ async function handlePay() {
     const yocoData = await yocoResp.json();
     if (!yocoResp.ok || yocoData.error) throw new Error(yocoData.error || 'Payment session failed.');
 
-    /* ── Step 3: clear cart and redirect to Yoco ── */
+    /* -- Step 3: clear cart and redirect to Yoco -- */
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_checkout_draft');
