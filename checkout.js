@@ -804,9 +804,7 @@ function selectLockerByIndex(i) {
 
   if (sizeNote) {
     if (sizeUnknown) {
-      sizeNote.textContent   = 'Box size not confirmed for this locker. Our team will contact you if there is a sizing issue.';
-      sizeNote.className     = 'locker-size-note locker-size-note--unknown';
-      sizeNote.style.display = '';
+      sizeNote.style.display = 'none';
     } else {
       sizeNote.textContent   = `Box size: ${boxSize}`;
       sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
@@ -835,9 +833,7 @@ function selectLocker(id, name, address, boxSize, sizeUnknown) {
 
   if (sizeNote) {
     if (sizeUnknown) {
-      sizeNote.textContent   = 'Box size not confirmed for this locker. Our team will contact you if there is a sizing issue.';
-      sizeNote.className     = 'locker-size-note locker-size-note--unknown';
-      sizeNote.style.display = '';
+      sizeNote.style.display = 'none';
     } else if (boxSize) {
       sizeNote.textContent   = `Box size: ${boxSize}`;
       sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
