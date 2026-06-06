@@ -622,7 +622,7 @@
         const data = await resp.json();
         if (!data.key) throw new Error('No key returned');
         const s = document.createElement('script');
-        s.src = 'https://maps.googleapis.com/maps/api/js?key=' + data.key + '&libraries=places&callback=initPlaces';
+        s.src = 'https://maps.googleapis.com/maps/api/js?key=' + data.key + '&libraries=places&loading=async&callback=initPlaces';
         s.async = true;
         s.defer = true;
         document.head.appendChild(s);
