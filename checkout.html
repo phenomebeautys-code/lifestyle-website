@@ -247,6 +247,38 @@
     .pac-icon { display: none; }
     .hdpi.pac-logo::after, .pac-logo::after { display: none; }
 
+    /* ---- mobile nav fixes ---- */
+    @media (max-width: 820px) {
+      /* hide secure badge inside navbar — it breaks the 3-col grid */
+      .navbar-inner .secure-badge { display: none !important; }
+      /* alias .menu-toggle to behave like .mobile-menu-toggle */
+      .menu-toggle {
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
+        border: 1px solid rgba(255,255,255,0.13);
+        border-radius: 50%;
+        background: rgba(255,255,255,0.05);
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 5px;
+        flex-shrink: 0;
+        flex: 0 0 auto;
+        grid-column: 3;
+        grid-row: 1;
+      }
+      .menu-toggle span {
+        width: 16px;
+        height: 2px;
+        border-radius: 10px;
+        background: var(--accent-strong);
+        transition: transform 0.25s ease, opacity 0.25s ease;
+        display: block;
+      }
+    }
+
     /* ---- 1080px: swap to single-column, show mobile summary bar ---- */
     @media (max-width: 1080px) {
       .co-layout { grid-template-columns: 1fr; }
@@ -382,7 +414,7 @@
       <div class="secure-badge">
         <span class="secure-dot"></span> Secure checkout via Yoco
       </div>
-      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">
+      <button class="menu-toggle mobile-menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -669,6 +701,25 @@
   <script src="checkout.js"></script>
 
   <script>
+    // Burger toggle for checkout navbar
+    (function() {
+      var btn    = document.getElementById('menuToggle');
+      var navbar = document.getElementById('navbar');
+      if (!btn || !navbar) return;
+      btn.addEventListener('click', function() {
+        var open = navbar.classList.toggle('menu-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      // Close menu when a nav link is tapped
+      var links = document.querySelectorAll('#navMenu a');
+      links.forEach(function(link) {
+        link.addEventListener('click', function() {
+          navbar.classList.remove('menu-open');
+          btn.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+
     function toggleSpecial() {
       const btn  = document.getElementById('specialToggle');
       const wrap = document.getElementById('specialFieldWrap');
