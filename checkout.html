@@ -213,7 +213,7 @@
     .exit-nudge-actions { display: flex; gap: 8px; }
     .mobile-summary-bar { display: none; }
     .mobile-summary-body { overflow: hidden; max-height: 0; transition: max-height .3s ease; padding: 0 4px; }
-    .mobile-summary-body.open { max-height: 600px; }
+    .mobile-summary-body.open { max-height: 800px; }
     .mobile-summary-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: none; border: none; cursor: pointer; padding: 0; color: var(--text); font-family: var(--font-body); }
     .mobile-summary-copy { display: grid; gap: 2px; text-align: left; }
     .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
@@ -246,19 +246,119 @@
     .pac-item-query { color: var(--accent-strong); font-weight: 600; }
     .pac-icon { display: none; }
     .hdpi.pac-logo::after, .pac-logo::after { display: none; }
+
+    /* ---- 1080px: swap to single-column, show mobile summary bar ---- */
     @media (max-width: 1080px) {
       .co-layout { grid-template-columns: 1fr; }
       .co-aside  { position: relative; top: auto; display: none; }
-      .mobile-summary-bar { display: flex; flex-direction: column; position: sticky; bottom: 12px; z-index: 30; margin-top: 16px; padding: 13px 16px; border-radius: 20px; background: rgba(4,4,6,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); gap: 0; }
+      .mobile-summary-bar {
+        display: flex; flex-direction: column;
+        position: sticky; bottom: 12px; z-index: 30;
+        margin-top: 16px; padding: 13px 16px;
+        border-radius: 20px;
+        background: rgba(4,4,6,0.88);
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-lg); gap: 0;
+      }
     }
+
+    /* ---- 760px: core mobile layout ---- */
     @media (max-width: 760px) {
-      .co-wrap { padding: 0 14px 50px; }
+      .co-wrap  { padding: 0 14px 80px; }
       .co-card  { padding: 20px; border-radius: 20px; }
-      .co-promise-grid,.delivery-grid,.field-grid,.field-grid.contact,.review-grid { grid-template-columns: 1fr; }
-      .nav-actions { flex-direction: column-reverse; align-items: stretch; }
-      .ghost-btn,.primary-btn { width: 100%; text-align: center; }
+
+      /* step header */
+      .step-title { font-size: 1.4rem; }
+      .step-copy  { margin: 6px 0 18px; font-size: .88rem; }
+      .co-steps   { gap: 6px; margin-bottom: 18px; }
+      .step-pill  { padding: 8px 11px; font-size: .8rem; gap: 6px; }
+
+      /* grids collapse to 1 col */
+      .co-promise-grid,
+      .delivery-grid,
+      .field-grid,
+      .field-grid.contact,
+      .review-grid { grid-template-columns: 1fr; }
+
+      /* delivery meta stacks vertically */
+      .delivery-meta { flex-direction: column; gap: 10px; }
+      .delivery-window { align-self: flex-start; }
+
+      /* delivery cards: make tap targets taller */
+      .delivery-card { padding: 16px; }
+
+      /* locker search actions fill width */
+      .search-actions { flex-direction: column; }
+      .search-actions .primary-btn,
+      .search-actions .mini-btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* locker result row stacks */
+      .locker-item-top { flex-direction: column; gap: 6px; }
+      .locker-cta { flex-direction: column; align-items: stretch; }
+      .locker-cta .mini-btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* nav buttons */
+      .nav-actions { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+      .ghost-btn,.primary-btn { width: 100%; text-align: center; justify-content: center; }
+
+      /* review done-blocks */
+      .done-block { padding: 14px; }
+
+      /* misc */
       .secure-badge { width: 100%; justify-content: center; margin-top: 8px; }
-      .exit-nudge { width: calc(100% - 32px); border-radius: 0 0 16px 16px; }
+      .exit-nudge   { width: calc(100% - 32px); border-radius: 0 0 16px 16px; }
+
+      /* mobile summary bar sits above page bottom padding */
+      .mobile-summary-bar { bottom: 8px; border-radius: 16px; }
+    }
+
+    /* ---- 480px: small phones ---- */
+    @media (max-width: 480px) {
+      .co-wrap  { padding: 0 10px 90px; }
+      .co-card  { padding: 16px; border-radius: 18px; }
+
+      /* prevent iOS auto-zoom on input focus (needs font-size >= 16px) */
+      .field input,
+      .field textarea,
+      .field select { font-size: 1rem; padding: 13px 14px; }
+
+      /* step header */
+      .step-title { font-size: 1.25rem; }
+      .step-copy  { font-size: .85rem; }
+
+      /* hide step arrows on very small screens to avoid wrapping */
+      .step-arrow { display: none; }
+      .co-steps   { gap: 4px; }
+      .step-pill  { padding: 7px 10px; font-size: .78rem; }
+
+      /* delivery cards: compact */
+      .delivery-card { padding: 14px; border-radius: 16px; }
+      .delivery-card p { font-size: .82rem; }
+
+      /* primary CTA: generous tap target */
+      .primary-btn { min-height: 52px; font-size: .95rem; }
+      .ghost-btn   { min-height: 48px; font-size: .9rem; }
+
+      /* pay button emphasis */
+      #payBtn { font-size: 1rem; min-height: 56px; }
+
+      /* locker search button */
+      #lockerSearchBtn { min-height: 52px; }
+
+      /* toggle rows: keep label legible */
+      .toggle-copy h4 { font-size: .88rem; }
+      .toggle-copy p  { font-size: .8rem; }
+
+      /* review blocks */
+      .done-block { padding: 12px; border-radius: 14px; }
+      .done-block p,
+      .done-block li { font-size: .84rem; }
+      .review-line { font-size: .84rem; }
+
+      /* mobile summary bar */
+      .mobile-summary-bar { padding: 12px 14px; }
+      .mobile-summary-copy strong { font-size: .92rem; }
     }
   </style>
 </head>
