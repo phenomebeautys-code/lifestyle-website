@@ -620,6 +620,8 @@
               <div class="field" id="field-phone">
                 <label for="f-phone">Phone number</label>
                 <input id="f-phone" type="tel" autocomplete="tel" placeholder="e.g. 082 123 4567" />
+                <!-- Phase 4a: format hint so users know what is accepted -->
+                <div class="hint" id="hint-phone">e.g. 082 123 4567 or +27 82 123 4567</div>
                 <div class="error-text" id="err-phone">Please enter a valid phone number.</div>
               </div>
             </div>
@@ -984,6 +986,54 @@
 
         observer.observe(doorFields,   { attributes: true, attributeFilter: ['style'] });
         observer.observe(lockerFields, { attributes: true, attributeFilter: ['style'] });
+      });
+    })();
+
+    // Phase 4a: blur validation for Step 1 contact fields
+    // Each field self-validates when the user leaves it, giving immediate feedback
+    // without waiting for the Continue button tap.
+    (function() {
+      var PHONE_RE = /^[0-9 +\-()]{7,}$/;
+      var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      function blurValidateField(fieldId, errId, isInvalid, msg) {
+        var field = document.getElementById(fieldId);
+        var err   = document.getElementById(errId);
+        if (!field || !err) return;
+        // Only show the error if the field has been touched (has a value or was blurred non-empty once)
+        var val = field.value.trim();
+        if (isInvalid(val)) {
+          field.closest('[id^="field-"]') && field.closest('[id^="field-"]').classList.add('error');
+          err.textContent = msg;
+          err.classList.add('show');
+        } else {
+          field.closest('[id^="field-"]') && field.closest('[id^="field-"]').classList.remove('error');
+          err.classList.remove('show');
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        var nameInput  = document.getElementById('f-name');
+        var phoneInput = document.getElementById('f-phone');
+        var emailInput = document.getElementById('f-email');
+
+        if (nameInput) {
+          nameInput.addEventListener('blur', function() {
+            blurValidateField('field-name', 'err-name', function(v) { return !v; }, 'Please enter your name.');
+          });
+        }
+
+        if (phoneInput) {
+          phoneInput.addEventListener('blur', function() {
+            blurValidateField('field-phone', 'err-phone', function(v) { return !PHONE_RE.test(v); }, 'Please enter a valid phone number.');
+          });
+        }
+
+        if (emailInput) {
+          emailInput.addEventListener('blur', function() {
+            blurValidateField('field-email', 'err-email', function(v) { return !EMAIL_RE.test(v); }, 'Please enter a valid email address.');
+          });
+        }
       });
     })();
   </script>
