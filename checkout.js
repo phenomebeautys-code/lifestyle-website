@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v6 — renderDeliveryOptions targets static price spans.
+   Cache-bust v7 — locker search uses data.results; index-based selection.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -23,18 +23,15 @@ let yocoSDK          = null;
 let yocoCard         = null;
 let specialOpen      = false;
 
+/* Locker search results — stored here so cards only pass an index to onclick */
+let _lockerResults = [];
+
 /* Live shipping quote state */
-let shippingQuote        = null;   // { box, locker_fee, door_fee, total_weight_kg }
+let shippingQuote        = null;
 let shippingQuoteLoading = false;
 let shippingQuoteError   = null;
 
 /* -- Delivery pricing ----------------------------------------------------- */
-
-/**
- * Returns the delivery fee to charge for the currently selected method.
- * Uses the live Pudo quote when available, otherwise falls back to the
- * hardcoded constants so the UI is never blank.
- */
 function deliveryFee() {
   if (shippingQuote) {
     const fee = deliveryMethod === 'locker'
@@ -45,11 +42,6 @@ function deliveryFee() {
   return deliveryMethod === 'locker' ? FALLBACK_LOCKER_PRICE : FALLBACK_DOOR_PRICE;
 }
 
-/**
- * Calls the get-shipping-quote edge function with the current cart items.
- * Updates shippingQuote and re-renders the summary and delivery option cards
- * once the response arrives.
- */
 async function loadShippingQuote() {
   if (!cart.length) return;
 
@@ -260,15 +252,6 @@ function restoreDraft() {
 }
 
 /* -- Delivery options render ---------------------------------------------- */
-
-/**
- * Updates the price labels on the two static delivery cards in checkout.html.
- * Targets id="door-price-display" and id="locker-price-display" directly
- * rather than rewriting a container element.
- *
- * While the quote is loading, both show "Calculating...".
- * Once loaded, shows the live fee; on error, shows the fallback constants.
- */
 function renderDeliveryOptions() {
   const doorSpan   = document.getElementById('door-price-display');
   const lockerSpan = document.getElementById('locker-price-display');
@@ -277,18 +260,12 @@ function renderDeliveryOptions() {
     if (doorSpan)   doorSpan.textContent   = 'Calculating...';
     if (lockerSpan) lockerSpan.textContent = 'Calculating...';
   } else {
-    const doorPrice   = shippingQuote
-      ? Number(shippingQuote.door_fee)
-      : FALLBACK_DOOR_PRICE;
-    const lockerPrice = shippingQuote
-      ? Number(shippingQuote.locker_fee)
-      : FALLBACK_LOCKER_PRICE;
-
+    const doorPrice   = shippingQuote ? Number(shippingQuote.door_fee)   : FALLBACK_DOOR_PRICE;
+    const lockerPrice = shippingQuote ? Number(shippingQuote.locker_fee) : FALLBACK_LOCKER_PRICE;
     if (doorSpan)   doorSpan.textContent   = `R${doorPrice.toFixed(2)}`;
     if (lockerSpan) lockerSpan.textContent = `R${lockerPrice.toFixed(2)}`;
   }
 
-  // Keep field visibility in sync
   const doorFields   = document.getElementById('door-fields');
   const lockerFields = document.getElementById('locker-fields');
   if (doorFields)   doorFields.style.display   = deliveryMethod === 'door'   ? '' : 'none';
@@ -357,24 +334,21 @@ function renderSummary() {
     }).join('');
   }
 
-  // Also keep the sidebar totals in sync for pages that use the sidebar IDs
-  const rvSubtotal = document.getElementById('rv-subtotal');
-  const rvDelivery = document.getElementById('rv-delivery');
-  const rvTotal    = document.getElementById('rv-total');
+  const rvSubtotal  = document.getElementById('rv-subtotal');
+  const rvDelivery  = document.getElementById('rv-delivery');
+  const rvTotal     = document.getElementById('rv-total');
   const payBtnTotal = document.getElementById('payBtnTotal');
   if (rvSubtotal)  rvSubtotal.textContent  = `R${sub.toFixed(2)}`;
   if (rvDelivery)  rvDelivery.textContent  = shippingQuoteLoading ? 'Calculating...' : `R${fee.toFixed(2)}`;
   if (rvTotal)     rvTotal.textContent     = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
   if (payBtnTotal) payBtnTotal.textContent = tot.toFixed(2);
 
-  // Mobile summary bar
   const msTotalDisplay = document.getElementById('msTotalDisplay');
   if (msTotalDisplay) msTotalDisplay.textContent = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
 }
 
 /* -- Delivery date estimate ----------------------------------------------- */
 function renderDeliveryDate() {
-  // Targets the element used in the sidebar delivery window
   const targets = [
     document.getElementById('deliveryDateText2'),
     document.getElementById('deliveryDateEstimate'),
@@ -399,7 +373,6 @@ function renderDeliveryDate() {
 
   targets.forEach(el => { if (el) el.textContent = text; });
 
-  // Review step date
   const rvDate = document.getElementById('rv-delivery-date');
   if (rvDate) rvDate.textContent = text;
 }
@@ -413,7 +386,6 @@ function renderReview() {
   const doneContact = document.getElementById('done-contact-val');
   if (doneContact) doneContact.textContent = [name, phone, email].filter(Boolean).join(' | ');
 
-  // Also update the sidebar secondary contact label if present
   const doneContact2 = document.getElementById('done-contact-val-2');
   if (doneContact2) doneContact2.textContent = email;
 
@@ -435,24 +407,22 @@ function renderReview() {
   const rvDeliveryLabel = document.getElementById('rv-delivery-label');
   if (rvDeliveryLabel) rvDeliveryLabel.textContent = deliveryMethod === 'locker' ? 'Pudo locker' : 'Door delivery';
 
-  // Gift message block
   const giftMsg   = document.getElementById('f-gift-message')?.value || '';
   const giftBlock = document.getElementById('giftReviewBlock');
   const giftBody  = document.getElementById('giftReviewBody');
   if (giftBlock) giftBlock.style.display = giftMsg ? '' : 'none';
   if (giftBody)  giftBody.textContent    = giftMsg;
 
-  // Totals
   renderSummary();
 }
 
 /* -- Sidebar / mobile summary render ------------------------------------- */
 function renderSidebarItems() {
-  const summaryItems = document.getElementById('summaryItems');
-  const summaryTotals = document.getElementById('summaryTotals');
+  const summaryItems   = document.getElementById('summaryItems');
+  const summaryTotals  = document.getElementById('summaryTotals');
   const itemCountLabel = document.getElementById('itemCountLabel');
-  const mobileItems  = document.getElementById('mobileItems');
-  const mobileTotals = document.getElementById('mobileTotals');
+  const mobileItems    = document.getElementById('mobileItems');
+  const mobileTotals   = document.getElementById('mobileTotals');
 
   const sub = cartSubtotal();
   const fee = deliveryFee();
@@ -498,7 +468,7 @@ function toggleMobileSummary() {
 
 /* -- Gift toggle ---------------------------------------------------------- */
 function toggleGift() {
-  const reveal  = document.getElementById('giftReveal');
+  const reveal   = document.getElementById('giftReveal');
   const checkbox = document.getElementById('f-is-gift');
   const switches = document.querySelectorAll('#giftToggleRow .switch');
   if (!reveal) return;
@@ -710,8 +680,10 @@ window.initPlaces = async function() {
     lac.addListener('place_changed', function() {
       const p = lac.getPlace();
       if (p.geometry) {
-        window.lockerSearchLat = p.geometry.location.lat();
-        window.lockerSearchLng = p.geometry.location.lng();
+        lockerSearchLat = p.geometry.location.lat();
+        lockerSearchLng = p.geometry.location.lng();
+        window.lockerSearchLat = lockerSearchLat;
+        window.lockerSearchLng = lockerSearchLng;
         searchLockers();
       }
     });
@@ -747,32 +719,46 @@ async function searchLockers(query) {
       { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
     );
     const data = await resp.json();
-    const lockers = Array.isArray(data) ? data : (data.lockers || []);
+
+    // Handle all three possible response shapes:
+    //   - plain array          (legacy / direct)
+    //   - { results: [...] }   (current edge function)
+    //   - { lockers: [...] }   (alternate shape)
+    const lockers = Array.isArray(data)
+      ? data
+      : Array.isArray(data.results)
+        ? data.results
+        : Array.isArray(data.lockers)
+          ? data.lockers
+          : [];
+
+    // Store in module-level array so card onclick can pass a safe numeric index
+    _lockerResults = lockers;
 
     if (!lockers.length) {
       list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">No lockers found nearby. Try a different address.</div>';
       return;
     }
 
-    list.innerHTML = lockers.map(l => {
-      const id      = l.id || l.locker_id || '';
-      const name    = l.name || l.locker_name || 'Locker';
-      const address = l.address || l.locker_address || '';
-      const boxSize = l.box_size || l.boxSize || '';
-      const addrJ   = JSON.stringify(address);
-      const nameJ   = JSON.stringify(name);
-      const sizeUnknown = !boxSize;
+    list.innerHTML = lockers.map((l, i) => {
+      const name    = l.name    || 'Locker';
+      const address = l.address || '';
+      const dist    = l.distance_km != null ? `${l.distance_km} km away` : '';
+      const sizeTag = (l.available_sizes && l.available_sizes.length)
+        ? l.available_sizes.join(', ')
+        : '';
       return `
-        <div class="locker-item" onclick="selectLocker('${id}', ${nameJ}, ${addrJ}, '${boxSize}', ${sizeUnknown})">
+        <div class="locker-item" onclick="selectLockerByIndex(${i})">
           <div class="locker-item-top">
             <div>
               <h4>${name}</h4>
               <p>${address}</p>
+              ${dist ? `<p class="locker-dist">${dist}</p>` : ''}
             </div>
-            ${boxSize ? `<span class="locker-tag">${boxSize}</span>` : ''}
+            ${sizeTag ? `<span class="locker-tag">${sizeTag}</span>` : ''}
           </div>
           <div class="locker-cta">
-            <button type="button" class="mini-btn" onclick="event.stopPropagation();selectLocker('${id}', ${nameJ}, ${addrJ}, '${boxSize}', ${sizeUnknown})">Select</button>
+            <button type="button" class="mini-btn" onclick="event.stopPropagation();selectLockerByIndex(${i})">Select</button>
           </div>
         </div>
       `;
@@ -784,17 +770,62 @@ async function searchLockers(query) {
     window.lockerSearchLng = null;
 
   } catch(e) {
+    console.error('[checkout] Locker search failed:', e);
     list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Search failed. Please try again.</div>';
   }
 }
 
+/* Selects a locker by its index in _lockerResults. Safe for any name/address. */
+function selectLockerByIndex(i) {
+  const l = _lockerResults[i];
+  if (!l) return;
+
+  const boxSize     = (l.available_sizes && l.available_sizes.length) ? l.available_sizes.join(', ') : '';
+  const sizeUnknown = !boxSize;
+
+  selectedLocker = {
+    id:        l.id      || '',
+    name:      l.name    || '',
+    address:   l.address || '',
+    boxSize,
+    sizeUnknown,
+  };
+
+  const display  = document.getElementById('lockerSelectedDisplay');
+  const nameEl   = document.getElementById('lockerSelectedName');
+  const addrEl   = document.getElementById('lockerSelectedAddr');
+  const errEl    = document.getElementById('err-locker');
+  const sizeNote = document.getElementById('lockerSelectedSizeNote');
+
+  if (display) display.style.display = '';
+  if (nameEl)  nameEl.textContent = selectedLocker.name;
+  if (addrEl)  addrEl.textContent = selectedLocker.address;
+  if (errEl)   errEl.classList.remove('show');
+
+  if (sizeNote) {
+    if (sizeUnknown) {
+      sizeNote.textContent   = 'Box size not confirmed for this locker. Our team will contact you if there is a sizing issue.';
+      sizeNote.className     = 'locker-size-note locker-size-note--unknown';
+      sizeNote.style.display = '';
+    } else {
+      sizeNote.textContent   = `Box size: ${boxSize}`;
+      sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
+      sizeNote.style.display = '';
+    }
+  }
+
+  const list = document.getElementById('lockerResults');
+  if (list) list.innerHTML = '';
+}
+
+/* Keep old name as alias in case any inline HTML still references it */
 function selectLocker(id, name, address, boxSize, sizeUnknown) {
   selectedLocker = { id, name, address, boxSize, sizeUnknown };
 
-  const display = document.getElementById('lockerSelectedDisplay');
-  const nameEl  = document.getElementById('lockerSelectedName');
-  const addrEl  = document.getElementById('lockerSelectedAddr');
-  const errEl   = document.getElementById('err-locker');
+  const display  = document.getElementById('lockerSelectedDisplay');
+  const nameEl   = document.getElementById('lockerSelectedName');
+  const addrEl   = document.getElementById('lockerSelectedAddr');
+  const errEl    = document.getElementById('err-locker');
   const sizeNote = document.getElementById('lockerSelectedSizeNote');
 
   if (display) display.style.display = '';
