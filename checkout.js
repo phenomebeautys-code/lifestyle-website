@@ -1,395 +1,748 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Checkout | PhenomeBeauty</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
-  <style>
-    /* ── Checkout-specific overrides ── */
-    body { background: var(--bg); }
-    .co-wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
-    .co-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
-    .co-logo { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent-strong); text-decoration: none; }
-    .step-pills { display: flex; align-items: center; gap: 8px; }
-    .step-pill { display: flex; align-items: center; gap: 6px; font-size: .8rem; font-weight: 600; color: var(--text-faint); transition: color .2s; }
-    .step-pill .pill-num { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: .72rem; font-weight: 700; flex-shrink: 0; }
-    .step-pill.active { color: var(--accent-strong); }
-    .step-pill.done   { color: var(--accent); }
-    .step-pill.done .pill-num { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .step-pill-sep { color: var(--text-faint); font-size: .75rem; }
-    .co-layout { display: grid; grid-template-columns: 1fr 320px; gap: 24px; align-items: start; }
-    .co-main { display: flex; flex-direction: column; gap: 0; }
-    .step { display: none; }
-    .step.active { display: block; }
-    .step-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius-card); padding: 28px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    .step-title { font-family: var(--font-display); font-size: 1.35rem; color: var(--accent-strong); margin-bottom: 6px; }
-    .step-copy  { font-size: .88rem; color: var(--text-soft); margin-bottom: 22px; line-height: 1.6; }
-    .field-group { margin-bottom: 16px; }
-    .field-group label { display: block; font-size: .8rem; font-weight: 600; color: var(--text-soft); margin-bottom: 6px; letter-spacing: .03em; text-transform: uppercase; }
-    .field-group input,
-    .field-group select,
-    .field-group textarea { width: 100%; padding: 11px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text); font-size: .95rem; font-family: var(--font-body); transition: border-color .18s, box-shadow .18s; outline: none; }
-    .field-group input::placeholder { color: var(--text-faint); }
-    .field-group input:focus { border-color: rgba(255,255,255,0.3); box-shadow: 0 0 0 3px rgba(255,255,255,0.06); }
-    .field-group.error input { border-color: #f87171; }
-    .field-err { display: none; font-size: .78rem; color: #f87171; margin-top: 5px; }
-    .field-err.show { display: block; }
-    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .field-grid.contact { grid-template-columns: 1fr 1fr; }
-    .delivery-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin-bottom: 18px; }
-    .delivery-card {
-      position: relative; padding: 18px; border-radius: var(--radius-card); border: 1px solid var(--glass-border);
-      background: rgba(255,255,255,0.04); cursor: pointer; transition: border-color .2s, transform .2s, background .2s;
-    }
-    .delivery-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.18); }
-    .delivery-card.selected { border-color: rgba(255,255,255,0.38); background: linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.04)); box-shadow: 0 0 0 1px rgba(255,255,255,0.10) inset; }
-    .delivery-card h3 { margin: 0 0 6px; font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); font-weight: 700; }
-    .delivery-card p  { margin: 0; color: var(--text-soft); font-size: .86rem; line-height: 1.55; }
-    .delivery-price { display: inline-flex; align-items: center; margin-top: 12px; padding: 7px 12px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); font-weight: 700; font-size: .84rem; color: var(--accent); }
-    .delivery-chip { position: absolute; top: 14px; right: 14px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); }
-    .delivery-card.selected .delivery-chip { border-color: var(--accent-strong); background: var(--accent-strong); }
-    .delivery-meta { margin-top: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
-    .delivery-meta strong { display: block; margin-bottom: 5px; color: var(--accent-strong); font-family: var(--font-body); }
-    .delivery-meta p { margin: 0; color: var(--text-soft); font-size: .88rem; line-height: 1.55; }
-    .delivery-window { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: var(--radius-pill); background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.18); color: #d8fff0; font-size: .8rem; font-weight: 700; white-space: nowrap; font-family: var(--font-body); }
-    .section-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin: 22px 0 12px; }
-    .special-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: none; color: var(--text-soft); font-size: .84rem; cursor: pointer; padding: 0; font-family: var(--font-body); transition: color .18s; }
-    .special-toggle:hover { color: var(--accent-strong); }
-    .special-toggle-icon { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: .9rem; transition: background .18s, border-color .18s; flex-shrink: 0; }
-    .special-toggle.on .special-toggle-icon { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .locker-search-row { display: flex; gap: 10px; align-items: flex-end; }
-    .locker-search-row .field-group { flex: 1; margin-bottom: 0; }
-    .locker-results { margin-top: 14px; max-height: 300px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.18); }
-    .locker-item { padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 12px; transition: background .15s; }
-    .locker-item:last-child { border-bottom: none; }
-    .locker-item:hover { background: rgba(255,255,255,0.04); }
-    .locker-item-info strong { display: block; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); }
-    .locker-item-info p { margin: 3px 0 0; font-size: .8rem; color: var(--text-soft); }
-    .locker-size-badge { margin-left: auto; flex-shrink: 0; padding: 4px 10px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border); font-size: .75rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
-    .locker-selected { padding: 14px 16px; border-radius: 12px; background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.2); }
-    .locker-selected strong { display: block; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); margin-bottom: 3px; }
-    .locker-selected p { margin: 0; font-size: .82rem; color: var(--text-soft); }
-    .co-promise-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 22px; }
-    .co-promise { padding: 13px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); text-align: center; }
-    .co-promise-icon { font-size: 1.3rem; margin-bottom: 4px; }
-    .co-promise h4 { font-size: .78rem; font-weight: 700; color: var(--accent-strong); margin-bottom: 2px; font-family: var(--font-body); }
-    .co-promise p  { font-size: .74rem; color: var(--text-soft); margin: 0; line-height: 1.45; }
-    .review-section { margin-bottom: 20px; }
-    .review-section h4 { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 8px; }
-    .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .review-cell { padding: 12px 14px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); }
-    .review-cell label { display: block; font-size: .72rem; color: var(--text-faint); margin-bottom: 3px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-    .review-cell p { margin: 0; font-size: .88rem; color: var(--accent-strong); line-height: 1.5; }
-    .review-totals { margin-top: 18px; padding: 16px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); }
-    .review-total-row { display: flex; justify-content: space-between; font-size: .88rem; color: var(--text-soft); margin-bottom: 8px; }
-    .review-total-row.grand { font-size: 1rem; font-weight: 700; color: var(--accent-strong); margin-bottom: 0; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); }
-    .yoco-wrap { margin-top: 22px; }
-    .yoco-wrap h4 { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 12px; }
-    #yoco-card-frame { min-height: 52px; }
-    .payment-error { display: none; margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; font-size: .85rem; }
-    .step-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; gap: 12px; flex-wrap: wrap; }
-    .co-sidebar { position: sticky; top: 20px; }
-    .sidebar-card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius-card); padding: 22px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-    .sidebar-title { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 16px; }
-    .sum-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    .sum-item img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; flex-shrink: 0; background: rgba(255,255,255,0.04); }
-    .sum-item-info { flex: 1; font-size: .84rem; color: var(--accent-strong); line-height: 1.4; }
-    .sum-qty { font-size: .76rem; color: var(--text-soft); }
-    .sum-item-price { font-size: .84rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
-    .sum-divider { border: none; border-top: 1px solid var(--glass-border); margin: 14px 0; }
-    .sum-row { display: flex; justify-content: space-between; font-size: .84rem; color: var(--text-soft); margin-bottom: 7px; }
-    .sum-row.total { font-size: .96rem; font-weight: 700; color: var(--accent-strong); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); }
-    .co-empty { text-align: center; padding: 60px 20px; }
-    .co-empty h2 { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong); margin-bottom: 10px; }
-    .co-empty p  { color: var(--text-soft); margin-bottom: 24px; font-size: .95rem; }
-    @media (max-width: 760px) {
-      .co-layout { grid-template-columns: 1fr; }
-      .co-sidebar { position: static; order: -1; }
-      .co-promise-grid,.delivery-grid,.field-grid,.field-grid.contact,.review-grid { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 480px) {
-      .co-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .step-card { padding: 20px 16px; }
-    }
-  </style>
-</head>
-<body>
+/* ============================================================
+   PhenomeBeauty — checkout.js
+   Cache-bust v5 — live Pudo shipping quote replaces hardcoded fees.
+   ============================================================ */
 
-<div class="co-wrap">
+/* -- Constants ------------------------------------------------------------ */
+const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
-  <!-- Header -->
-  <header class="co-header">
-    <a href="shop.html" class="co-logo">PhenomeBeauty</a>
-    <nav class="step-pills" aria-label="Checkout steps">
-      <div class="step-pill active" id="pill-1"><span class="pill-num">1</span> Contact</div>
-      <span class="step-pill-sep" aria-hidden="true">›</span>
-      <div class="step-pill" id="pill-2"><span class="pill-num">2</span> Delivery</div>
-      <span class="step-pill-sep" aria-hidden="true">›</span>
-      <div class="step-pill" id="pill-3"><span class="pill-num">3</span> Payment</div>
-    </nav>
-  </header>
+/* Fallback prices shown while the live quote is loading or if the API fails */
+const FALLBACK_DOOR_PRICE   = 99;
+const FALLBACK_LOCKER_PRICE = 59;
 
-  <!-- Empty cart fallback -->
-  <div id="emptyCartMsg" style="display:none;" class="co-empty">
-    <h2>Your cart is empty</h2>
-    <p>Add a few products before checking out. Once you have something you love, come back here and we'll guide you through delivery and payment.</p>
-      <a class="primary-btn" href="index.html" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back to home</a>
-  </div>
+/* -- State ---------------------------------------------------------------- */
+let currentStep      = 1;
+let cart             = [];
+let deliveryMethod   = 'door';   // 'door' | 'locker'
+let selectedLocker   = null;
+let lockerSearchLat  = null;
+let lockerSearchLng  = null;
+let _lockerSearchTimer = null;
+let yocoSDK          = null;
+let yocoCard         = null;
+let specialOpen      = false;
 
-  <div class="co-layout" id="coLayout">
+/* Live shipping quote state */
+let shippingQuote        = null;   // { box, locker_fee, door_fee, total_weight_kg, ... }
+let shippingQuoteLoading = false;
+let shippingQuoteError   = null;
 
-    <!-- Main steps -->
-    <main class="co-main">
+/* -- Delivery pricing ----------------------------------------------------- */
 
-      <!-- Step 1: Contact -->
-      <div class="step active" id="panel-1">
-        <div class="step-card">
-          <h2 class="step-title">Your details</h2>
-          <p class="step-copy">We'll use these for your order confirmation, delivery updates and payment notifications.</p>
+/**
+ * Returns the delivery fee to charge for the currently selected method.
+ * Uses the live Pudo quote when available, otherwise falls back to the
+ * hardcoded constants so the UI is never blank.
+ */
+function deliveryFee() {
+  if (shippingQuote) {
+    const fee = deliveryMethod === 'locker'
+      ? Number(shippingQuote.locker_fee)
+      : Number(shippingQuote.door_fee);
+    if (Number.isFinite(fee) && fee > 0) return fee;
+  }
+  return deliveryMethod === 'locker' ? FALLBACK_LOCKER_PRICE : FALLBACK_DOOR_PRICE;
+}
 
-          <div class="field-grid contact">
-            <div class="field-group" id="field-name">
-              <label for="f-name">Full name</label>
-              <input id="f-name" type="text" autocomplete="name" placeholder="Your full name" />
-              <div class="field-err" id="err-name"></div>
-            </div>
-            <div class="field-group" id="field-phone">
-              <label for="f-phone">Phone number</label>
-              <input id="f-phone" type="tel" autocomplete="tel" placeholder="+27 or 0XX XXX XXXX" />
-              <div class="field-err" id="err-phone"></div>
-            </div>
-          </div>
-          <div class="field-group" id="field-email">
-            <label for="f-email">Email address</label>
-            <input id="f-email" type="email" autocomplete="email" placeholder="your@email.com" />
-            <div class="field-err" id="err-email"></div>
-          </div>
+/**
+ * Calls the get-shipping-quote edge function with the current cart items.
+ * Updates shippingQuote and re-renders the summary and delivery option cards
+ * once the response arrives.
+ */
+async function loadShippingQuote() {
+  if (!cart.length) return;
 
-          <div class="step-actions">
-            <span></span>
-            <button class="primary-btn" onclick="goToStep(2)" style="display:inline-flex;align-items:center;gap:6px;">Continue to delivery <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-          </div>
-        </div>
-      </div>
+  shippingQuoteLoading = true;
+  shippingQuoteError   = null;
+  shippingQuote        = null;
 
-      <!-- Step 2: Delivery -->
-      <div class="step" id="panel-2">
-        <div class="step-card">
-          <h2 class="step-title">Delivery</h2>
+  // Show "Calculating..." immediately so the user knows something is happening
+  renderSummary();
+  renderDeliveryOptions();
 
-          <!-- Delivery option cards (rendered by JS) -->
-          <div class="delivery-grid" id="deliveryOptions"></div>
-
-          <div class="delivery-meta" id="deliveryMeta" style="display:none;">
-            <div>
-              <strong id="deliveryMetaTitle">Door delivery selected</strong>
-              <p id="deliveryMetaText">Enter your address and we will estimate a delivery window based on business days and local holidays.</p>
-            </div>
-            <div class="delivery-window" id="deliveryWindow"><span id="deliveryDateText">Estimating&hellip;</span></div>
-          </div>
-
-            <!-- Door delivery address fields -->
-            <div id="door-fields" style="display:none;margin-top:18px;">
-              <div class="field-grid">
-                <div class="field-group" id="field-street" style="grid-column:1/-1;">
-                  <label for="f-street">Street address</label>
-                  <input id="f-street" type="text" autocomplete="off" placeholder="Street address" />
-                  <div id="placesHint" style="display:none;font-size:.78rem;color:var(--text-muted);margin-top:4px;">Start typing and select from the suggestions to auto-fill your address.</div>
-                  <div class="field-err" id="err-street"></div>
-                </div>
-                <div class="field-group" id="field-suburb">
-                  <label for="f-suburb">Suburb</label>
-                  <input id="f-suburb" type="text" autocomplete="address-level3" placeholder="Suburb" />
-                  <div class="field-err" id="err-suburb"></div>
-                </div>
-                <div class="field-group" id="field-city">
-                  <label for="f-city">City</label>
-                  <input id="f-city" type="text" autocomplete="address-level2" placeholder="City" />
-                  <div class="field-err" id="err-city"></div>
-                </div>
-                <div class="field-group" id="field-postal">
-                  <label for="f-postal">Postal code</label>
-                  <input id="f-postal" type="text" autocomplete="postal-code" placeholder="Postal code" />
-                  <div class="field-err" id="err-postal"></div>
-                </div>
-                <div class="field-group" id="field-province">
-                  <label for="f-province">Province</label>
-                  <input id="f-province" type="text" autocomplete="address-level1" placeholder="Province" />
-                  <div class="field-err" id="err-province"></div>
-                </div>
-              </div>
-
-              <div class="section-label">Special instructions (optional)</div>
-              <button class="special-toggle" id="specialToggle" onclick="toggleSpecial()" type="button">
-                <span class="special-toggle-icon">+</span>
-                Add gate code, building name, or other instructions
-              </button>
-              <div id="specialFieldWrap" style="display:none;margin-top:14px;">
-                <div class="field-group">
-                  <label for="f-special">Instructions</label>
-                  <textarea id="f-special" rows="2" placeholder="e.g. Gate code #1234, leave at door, call on arrival…" style="resize:vertical;"></textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Locker delivery fields -->
-            <div id="locker-fields" style="display:none;margin-top:18px;">
-              <div id="lockerPlacesHint" style="display:none;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted);padding:6px 0;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                Address autocomplete is active &#8212; type your street or suburb to find nearby lockers.
-              </div>
-              <div class="locker-search-row">
-                <div class="field-group">
-                  <label for="f-locker-search">Search by address or area</label>
-                  <input id="f-locker-search" type="text" placeholder="e.g. 14 Main Rd, Cape Town or Claremont" autocomplete="off" />
-                </div>
-                <button class="ghost-btn" onclick="useMyLocation()" type="button" id="lockerSearchBtn" style="white-space:nowrap;margin-bottom:16px;">Use my location</button>
-              </div>
-              <div class="locker-results" id="lockerResults"></div>
-              <div class="field-err" id="err-locker" style="margin-top:8px;">Please select a locker to continue.</div>
-              <div class="locker-selected" id="lockerSelectedDisplay" style="display:none;">
-                <strong id="lockerSelectedName"></strong>
-                <p id="lockerSelectedAddr"></p>
-              </div>
-              <div class="locker-size-notice" id="lockerSizeNotice" style="display:none;margin-top:12px;"></div>
-            </div>
-
-          <div class="step-actions">
-            <button class="ghost-btn" onclick="goToStep(1)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
-            <button class="primary-btn" onclick="goToStep(3)" style="display:inline-flex;align-items:center;gap:6px;">Review order <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 3: Review & Pay -->
-      <div class="step" id="panel-3">
-        <div class="step-card">
-          <h2 class="step-title">Review &amp; pay</h2>
-
-          <div class="co-promise-grid">
-            <div class="co-promise">
-              <div class="co-promise-icon">🔒</div>
-              <h4>Secure payment</h4>
-              <p>Powered by Yoco. Your card details are never stored.</p>
-            </div>
-            <div class="co-promise">
-              <div class="co-promise-icon">📦</div>
-              <h4>Fast dispatch</h4>
-              <p>Orders placed before 12:00 ship the same business day.</p>
-            </div>
-            <div class="co-promise">
-              <div class="co-promise-icon">↩️</div>
-              <h4>Easy returns</h4>
-              <p>30-day return policy on all sealed products.</p>
-            </div>
-          </div>
-
-          <div class="review-section">
-            <h4>Contact</h4>
-            <div class="review-grid">
-              <div class="review-cell"><label>Name</label><p id="r-name"></p></div>
-              <div class="review-cell"><label>Phone</label><p id="r-phone"></p></div>
-              <div class="review-cell" style="grid-column:1/-1;"><label>Email</label><p id="r-email"></p></div>
-            </div>
-          </div>
-
-          <div class="review-section">
-            <h4>Delivery</h4>
-            <div class="review-cell"><label id="deliveryMethodLabel">Door delivery</label><div id="r-delivery"></div></div>
-          </div>
-
-          <div class="review-section">
-            <h4>Special instructions</h4>
-            <div class="review-cell"><p id="r-special" style="color:var(--text-soft);font-size:.85rem;"></p></div>
-          </div>
-
-          <div class="review-totals">
-            <div class="review-total-row"><span>Subtotal</span><span id="r-subtotal"></span></div>
-            <div class="review-total-row"><span>Delivery</span><span id="r-delivery-fee"></span></div>
-            <div class="review-total-row grand"><span>Total</span><span id="r-total"></span></div>
-          </div>
-
-          <div class="yoco-wrap">
-            <h4>Card details &mdash; Total: <span id="yoco-amount-display"></span></h4>
-            <div id="yoco-card-frame"></div>
-            <div class="payment-error" id="payment-error"></div>
-          </div>
-
-          <div class="step-actions">
-            <button class="ghost-btn" onclick="goToStep(2)" style="display:inline-flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</button>
-            <button class="primary-btn" id="payBtn" onclick="submitPayment()" style="display:inline-flex;align-items:center;gap:6px;">Pay now <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
-          </div>
-        </div>
-      </div>
-
-    </main>
-
-    <!-- Sidebar summary -->
-    <aside class="co-sidebar">
-      <div class="sidebar-card">
-        <div class="sidebar-title">Order summary</div>
-        <div id="sum-items"></div>
-        <hr class="sum-divider" />
-        <div class="sum-row"><span>Subtotal</span><span id="sum-subtotal"></span></div>
-        <div class="sum-row"><span>Delivery</span><span id="sum-delivery"></span></div>
-        <div class="sum-row total"><span>Total</span><span id="sum-total"></span></div>
-      </div>
-    </aside>
-
-  </div><!-- /.co-layout -->
-
-</div><!-- /.co-wrap -->
-
-  <script src="checkout.js?v=7"></script>
-
-  <script>
-    function toggleSpecial() {
-      const btn  = document.getElementById('specialToggle');
-      const wrap = document.getElementById('specialFieldWrap');
-      if (!btn || !wrap) return;
-      btn.classList.toggle('on');
-      wrap.style.display = btn.classList.contains('on') ? '' : 'none';
-      if (btn.classList.contains('on')) document.getElementById('f-special')?.focus();
-    }
-
-    function useMyLocation() {
-      if (!navigator.geolocation) return;
-      const btn = document.getElementById('lockerSearchBtn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Locating...'; }
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          window.lockerSearchLat = pos.coords.latitude;
-          window.lockerSearchLng = pos.coords.longitude;
-          searchLockers();
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-shipping-quote`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
         },
-        function() {
-          if (btn) { btn.disabled = false; btn.textContent = 'Search'; }
-        }
-      );
+        body: JSON.stringify({
+          items: cart.map(i => ({
+            productId: i.productId || i.id || '',
+            qty:       Number(i.qty) || 1,
+          })),
+        }),
+      }
+    );
+
+    const data = await resp.json();
+
+    if (!resp.ok || data.error) {
+      shippingQuoteError = data.error || 'Could not retrieve delivery rates.';
+      console.warn('[checkout] Shipping quote error:', shippingQuoteError);
+    } else {
+      shippingQuote = data;
+      console.log('[checkout] Shipping quote received:', data);
+    }
+  } catch (e) {
+    shippingQuoteError = 'Network error fetching delivery rates.';
+    console.warn('[checkout] Shipping quote fetch failed:', e);
+  } finally {
+    shippingQuoteLoading = false;
+    renderSummary();
+    renderDeliveryOptions();
+  }
+}
+
+/* -- Cart helpers --------------------------------------------------------- */
+function loadCart() {
+  try {
+    const raw = sessionStorage.getItem('pb_cart')
+             || localStorage.getItem('pb_cart')
+             || localStorage.getItem('phenome_cart')
+             || '[]';
+    cart = JSON.parse(raw);
+    if (!Array.isArray(cart)) cart = [];
+    // Migrate legacy key and normalise imageUrl -> image
+    cart = cart.map(item => {
+      if (item.imageUrl && !item.image) { item.image = item.imageUrl; delete item.imageUrl; }
+      return item;
+    });
+    localStorage.setItem('pb_cart', JSON.stringify(cart));
+    localStorage.removeItem('phenome_cart');
+  } catch(e) { cart = []; }
+}
+
+function cartSubtotal() {
+  return cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.qty) || 1), 0);
+}
+
+function cartTotal() {
+  return cartSubtotal() + deliveryFee();
+}
+
+/* -- Step navigation ------------------------------------------------------ */
+function goToStep(n) {
+  if (n === 2 && !validateStep1()) return;
+  if (n === 3 && !validateStep2()) return;
+
+  // Save progress in sessionStorage so we can restore on back-nav
+  saveDraft();
+
+  currentStep = n;
+
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById('panel-' + n);
+  if (panel) panel.classList.add('active');
+
+  document.querySelectorAll('.step-pill').forEach((pill, i) => {
+    pill.classList.remove('active', 'done');
+    if (i + 1 < n)  pill.classList.add('done');
+    if (i + 1 === n) pill.classList.add('active');
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (n === 3) {
+    renderReview();
+    initYoco();
+  }
+
+  renderDeliveryDate();
+  renderSummary();
+}
+
+/* -- Validation ----------------------------------------------------------- */
+function validateStep1() {
+  let ok = true;
+
+  const name  = document.getElementById('f-name')?.value.trim()  || '';
+  const phone = document.getElementById('f-phone')?.value.trim() || '';
+  const email = document.getElementById('f-email')?.value.trim() || '';
+
+  setFieldError('field-name',  'err-name',  !name,  'Please enter your name.');
+  setFieldError('field-phone', 'err-phone', !/^[0-9 +\-()]{7,}$/.test(phone), 'Please enter a valid phone number.');
+  setFieldError('field-email', 'err-email', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), 'Please enter a valid email address.');
+
+  if (!name || !/^[0-9 +\-()]{7,}$/.test(phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ok = false;
+  return ok;
+}
+
+function validateStep2() {
+  let ok = true;
+  if (deliveryMethod === 'door') {
+    const street = document.getElementById('f-street')?.value.trim() || '';
+    const suburb = document.getElementById('f-suburb')?.value.trim() || '';
+    const city   = document.getElementById('f-city')?.value.trim()   || '';
+    const postal = document.getElementById('f-postal')?.value.trim() || '';
+    const prov   = document.getElementById('f-province')?.value.trim() || '';
+
+    setFieldError('field-street',   'err-street',   !street, 'Please enter your street address.');
+    setFieldError('field-suburb',   'err-suburb',   !suburb, 'Please enter your suburb.');
+    setFieldError('field-city',     'err-city',     !city,   'Please enter your city.');
+    setFieldError('field-postal',   'err-postal',   !postal, 'Please enter your postal code.');
+    setFieldError('field-province', 'err-province', !prov,   'Please enter your province.');
+
+    if (!street || !suburb || !city || !postal || !prov) ok = false;
+  } else {
+    if (!selectedLocker) {
+      const err = document.getElementById('err-locker');
+      if (err) err.classList.add('show');
+      ok = false;
+    }
+  }
+  return ok;
+}
+
+function setFieldError(fieldId, errId, show, msg) {
+  const field = document.getElementById(fieldId);
+  const err   = document.getElementById(errId);
+  if (!field || !err) return;
+  if (show) {
+    field.classList.add('error');
+    err.textContent = msg;
+    err.classList.add('show');
+  } else {
+    field.classList.remove('error');
+    err.classList.remove('show');
+  }
+}
+
+/* -- Draft save / restore ------------------------------------------------- */
+function saveDraft() {
+  try {
+    const draft = {
+      name:     document.getElementById('f-name')?.value    || '',
+      phone:    document.getElementById('f-phone')?.value   || '',
+      email:    document.getElementById('f-email')?.value   || '',
+      street:   document.getElementById('f-street')?.value  || '',
+      suburb:   document.getElementById('f-suburb')?.value  || '',
+      city:     document.getElementById('f-city')?.value    || '',
+      postal:   document.getElementById('f-postal')?.value  || '',
+      province: document.getElementById('f-province')?.value || '',
+      special:  document.getElementById('f-special')?.value  || '',
+      method:   deliveryMethod,
+      locker:   selectedLocker,
+    };
+    sessionStorage.setItem('pb_checkout_draft', JSON.stringify(draft));
+  } catch(e) {}
+}
+
+function restoreDraft() {
+  try {
+    const raw = sessionStorage.getItem('pb_checkout_draft');
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('f-name',     d.name);
+    set('f-phone',    d.phone);
+    set('f-email',    d.email);
+    set('f-street',   d.street);
+    set('f-suburb',   d.suburb);
+    set('f-city',     d.city);
+    set('f-postal',   d.postal);
+    set('f-province', d.province);
+    set('f-special',  d.special);
+    if (d.method) selectDelivery(d.method, true);
+    if (d.locker) {
+      selectedLocker = d.locker;
+      const display = document.getElementById('lockerSelectedDisplay');
+      const nameEl  = document.getElementById('lockerSelectedName');
+      const addrEl  = document.getElementById('lockerSelectedAddr');
+      if (display) display.style.display = '';
+      if (nameEl)  nameEl.textContent = d.locker.name    || '';
+      if (addrEl)  addrEl.textContent = d.locker.address || '';
+    }
+    return true;
+  } catch(e) { return false; }
+}
+
+/* -- Delivery options render ---------------------------------------------- */
+
+/**
+ * Renders the two delivery option cards (door / locker).
+ * While the quote is loading, prices show "Calculating...".
+ * If the quote failed, prices fall back to the hardcoded constants.
+ */
+function renderDeliveryOptions() {
+  const container = document.getElementById('deliveryOptions');
+  if (!container) return;
+
+  const doorLabel   = shippingQuoteLoading
+    ? 'Calculating...'
+    : `R${deliveryMethod === 'door'
+        ? deliveryFee().toFixed(2)
+        : (shippingQuote ? Number(shippingQuote.door_fee).toFixed(2) : FALLBACK_DOOR_PRICE.toFixed(2))}`;
+
+  const lockerLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : `R${deliveryMethod === 'locker'
+        ? deliveryFee().toFixed(2)
+        : (shippingQuote ? Number(shippingQuote.locker_fee).toFixed(2) : FALLBACK_LOCKER_PRICE.toFixed(2))}`;
+
+  container.innerHTML = `
+    <div class="delivery-card ${deliveryMethod === 'door' ? 'selected' : ''}" id="opt-door" onclick="selectDelivery('door')">
+      <div class="delivery-chip"></div>
+      <h3>Door delivery</h3>
+      <p>We deliver straight to your door anywhere in South Africa.</p>
+      <div class="delivery-price">${doorLabel}</div>
+    </div>
+    <div class="delivery-card ${deliveryMethod === 'locker' ? 'selected' : ''}" id="opt-locker" onclick="selectDelivery('locker')">
+      <div class="delivery-chip"></div>
+      <h3>Pudo locker</h3>
+      <p>Collect at a Pudo locker near you at a time that suits you.</p>
+      <div class="delivery-price">${lockerLabel}</div>
+    </div>
+  `;
+
+  // Show the meta bar and set initial state
+  const meta = document.getElementById('deliveryMeta');
+  if (meta) meta.style.display = '';
+
+  // Show correct fields based on current method
+  const doorFields   = document.getElementById('door-fields');
+  const lockerFields = document.getElementById('locker-fields');
+  if (doorFields)   doorFields.style.display   = deliveryMethod === 'door'   ? '' : 'none';
+  if (lockerFields) lockerFields.style.display = deliveryMethod === 'locker' ? '' : 'none';
+}
+
+/* -- Delivery method selection -------------------------------------------- */
+function selectDelivery(method, silent) {
+  deliveryMethod = method;
+
+  const optDoor   = document.getElementById('opt-door');
+  const optLocker = document.getElementById('opt-locker');
+  const doorFields   = document.getElementById('door-fields');
+  const lockerFields = document.getElementById('locker-fields');
+
+  if (optDoor)   optDoor.classList.toggle('selected',   method === 'door');
+  if (optLocker) optLocker.classList.toggle('selected', method === 'locker');
+  if (doorFields)   doorFields.style.display   = method === 'door'   ? '' : 'none';
+  if (lockerFields) lockerFields.style.display = method === 'locker' ? '' : 'none';
+
+  const metaTitle = document.getElementById('deliveryMetaTitle');
+  const metaText  = document.getElementById('deliveryMetaText');
+  const methodLabel = document.getElementById('deliveryMethodLabel');
+
+  if (method === 'door') {
+    if (metaTitle) metaTitle.textContent = 'Door delivery selected';
+    if (metaText)  metaText.textContent  = 'Enter your address and we will estimate a delivery window based on business days and local holidays.';
+    if (methodLabel) methodLabel.textContent = '';
+  } else {
+    if (metaTitle) metaTitle.textContent = 'Pudo locker selected';
+    if (metaText)  metaText.textContent  = 'Search for a locker near you and select it to confirm.';
+    if (methodLabel) methodLabel.textContent = 'Pudo locker';
+  }
+
+  renderSummary();
+}
+
+/* -- Cart summary render -------------------------------------------------- */
+function renderSummary() {
+  const subtotalEl  = document.getElementById('sum-subtotal');
+  const deliveryEl  = document.getElementById('sum-delivery');
+  const totalEl     = document.getElementById('sum-total');
+  const itemsEl     = document.getElementById('sum-items');
+
+  const sub = cartSubtotal();
+  const fee = deliveryFee();
+  const tot = sub + fee;
+
+  if (subtotalEl) subtotalEl.textContent = `R${sub.toFixed(2)}`;
+  if (deliveryEl) deliveryEl.textContent = shippingQuoteLoading ? 'Calculating...' : `R${fee.toFixed(2)}`;
+  if (totalEl)    totalEl.textContent    = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
+
+  if (itemsEl) {
+    itemsEl.innerHTML = cart.map(item => {
+      const price = (Number(item.price) || 0) * (Number(item.qty) || 1);
+      return `
+        <div class="sum-item">
+          <img src="${item.image || ''}" alt="${item.name || ''}" onerror="this.style.display='none'">
+          <div class="sum-item-info">
+            <span>${item.name || 'Product'}</span>
+            ${item.qty > 1 ? `<span class="sum-qty">x${item.qty}</span>` : ''}
+          </div>
+          <span class="sum-item-price">R${price.toFixed(2)}</span>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+/* -- Delivery date estimate ----------------------------------------------- */
+function renderDeliveryDate() {
+  const el = document.getElementById('deliveryDateEstimate');
+  if (!el) return;
+
+  // Simple business day estimate: 3-5 days from today, skipping weekends
+  const today = new Date();
+  let added = 0;
+  let date = new Date(today);
+  while (added < 3) {
+    date.setDate(date.getDate() + 1);
+    if (date.getDay() !== 0 && date.getDay() !== 6) added++;
+  }
+  const earliest = new Date(date);
+  while (added < 5) {
+    date.setDate(date.getDate() + 1);
+    if (date.getDay() !== 0 && date.getDay() !== 6) added++;
+  }
+  const latest = new Date(date);
+
+  const fmt = d => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+  el.textContent = `Estimated delivery: ${fmt(earliest)} - ${fmt(latest)}`;
+}
+
+/* -- Review panel render -------------------------------------------------- */
+function renderReview() {
+  const name  = document.getElementById('f-name')?.value    || '';
+  const phone = document.getElementById('f-phone')?.value   || '';
+  const email = document.getElementById('f-email')?.value   || '';
+
+  const rName  = document.getElementById('r-name');
+  const rPhone = document.getElementById('r-phone');
+  const rEmail = document.getElementById('r-email');
+
+  if (rName)  rName.textContent  = name;
+  if (rPhone) rPhone.textContent = phone;
+  if (rEmail) rEmail.textContent = email;
+
+  const rDelivery = document.getElementById('r-delivery');
+  if (rDelivery) {
+    let deliveryHTML = '';
+    if (deliveryMethod === 'door') {
+      const street   = document.getElementById('f-street')?.value   || '';
+      const suburb   = document.getElementById('f-suburb')?.value   || '';
+      const city     = document.getElementById('f-city')?.value     || '';
+      const postal   = document.getElementById('f-postal')?.value   || '';
+      const province = document.getElementById('f-province')?.value || '';
+      deliveryHTML = `<p>${street}</p><p>${suburb}, ${city}, ${postal}</p><p>${province}</p>`;
+    } else {
+      deliveryHTML = `<p>${selectedLocker.name}</p><p style="font-size:.84rem;color:var(--text-muted);margin-top:4px;">${selectedLocker.address}</p>`;
+    }
+    rDelivery.innerHTML = deliveryHTML;
+  }
+
+  const rSpecial = document.getElementById('r-special');
+  const special  = document.getElementById('f-special')?.value || '';
+  if (rSpecial) rSpecial.textContent = special || 'None';
+
+  const rSubtotal    = document.getElementById('r-subtotal');
+  const rDeliveryFee = document.getElementById('r-delivery-fee');
+  const rTotal       = document.getElementById('r-total');
+  const rYocoTotal   = document.getElementById('yoco-amount-display');
+
+  const sub = cartSubtotal();
+  const fee = deliveryFee();
+  const tot = sub + fee;
+
+  if (rSubtotal)    rSubtotal.textContent    = `R${sub.toFixed(2)}`;
+  if (rDeliveryFee) rDeliveryFee.textContent = `R${fee.toFixed(2)}`;
+  if (rTotal)       rTotal.textContent       = `R${tot.toFixed(2)}`;
+  if (rYocoTotal)   rYocoTotal.textContent   = `R${tot.toFixed(2)}`;
+}
+
+/* -- Yoco payment init ---------------------------------------------------- */
+async function initYoco() {
+  try {
+    if (!window.YocoSDK) {
+      console.warn('Yoco SDK not loaded');
+      return;
+    }
+    if (yocoSDK && yocoCard) return; // already initialised
+
+    yocoSDK = new window.YocoSDK({ publicKey: 'pk_live_0c4e5cd8PJGgxIlxfcb6c4e1' });
+    yocoCard = yocoSDK.inline({
+      layout: 'field',
+      showErrors: true,
+    });
+
+    const mountEl = document.getElementById('yoco-card-frame');
+    if (mountEl && mountEl.children.length === 0) {
+      yocoCard.mount('#yoco-card-frame');
+    }
+  } catch(e) {
+    console.error('Yoco init error:', e);
+  }
+}
+
+/* -- Payment submission --------------------------------------------------- */
+async function submitPayment() {
+  const btn = document.getElementById('payBtn');
+  const errEl = document.getElementById('payment-error');
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+  if (errEl) errEl.style.display = 'none';
+
+  try {
+    if (!yocoCard) throw new Error('Card not ready. Please refresh.');
+
+    const sub = cartSubtotal();
+    const fee = deliveryFee();
+    const tot = sub + fee;
+    const amountCents = Math.round(tot * 100);
+
+    // Create Yoco token
+    const result = await yocoCard.createToken();
+    if (result.error) throw new Error(result.error.message || 'Card error');
+    const token = result.id;
+
+    // Gather order data
+    const name  = document.getElementById('f-name')?.value.trim()  || '';
+    const phone = document.getElementById('f-phone')?.value.trim() || '';
+    const email = document.getElementById('f-email')?.value.trim() || '';
+
+    const address = deliveryMethod === 'door' ? {
+      street:   document.getElementById('f-street')?.value.trim()   || '',
+      suburb:   document.getElementById('f-suburb')?.value.trim()   || '',
+      city:     document.getElementById('f-city')?.value.trim()     || '',
+      postal:   document.getElementById('f-postal')?.value.trim()   || '',
+      province: document.getElementById('f-province')?.value.trim() || '',
+    } : null;
+
+    const special = document.getElementById('f-special')?.value.trim() || '';
+
+    const orderPayload = {
+      token,
+      amount_cents: amountCents,
+      customer: { name, phone, email },
+      delivery_method: deliveryMethod,
+      delivery_address: address,
+      delivery_fee: fee,
+      locker_id:      selectedLocker?.id      || '',
+      locker_name:    selectedLocker?.name    || '',
+      locker_address: selectedLocker?.address || '',
+      special_instructions: special,
+      cart: cart.map(item => ({
+        id:    item.id    || '',
+        name:  item.name  || '',
+        price: item.price || 0,
+        qty:   item.qty   || 1,
+        image: item.image || '',
+      })),
+    };
+
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/create-order`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+        body: JSON.stringify(orderPayload),
+      }
+    );
+
+    const data = await resp.json();
+    if (!resp.ok || data.error) throw new Error(data.error || data.message || 'Payment failed');
+
+    // Clear cart
+    localStorage.removeItem('pb_cart');
+    sessionStorage.removeItem('pb_cart');
+    sessionStorage.removeItem('pb_checkout_draft');
+
+    // Redirect to success
+    const orderRef = data.order_ref || data.id || '';
+    window.location.href = `shop-success.html?ref=${encodeURIComponent(orderRef)}&email=${encodeURIComponent(email)}`;
+
+  } catch(e) {
+    if (errEl) {
+      errEl.textContent = e.message || 'Something went wrong. Please try again.';
+      errEl.style.display = '';
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Pay now'; }
+  }
+}
+
+/* -- DOMContentLoaded ----------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', function() {
+  loadCart();
+
+  if (!cart.length) {
+    // Empty cart — redirect back to shop
+    window.location.href = 'shop.html';
+    return;
+  }
+
+  renderDeliveryOptions();
+  renderSummary();
+  renderDeliveryDate();
+  restoreDraft();
+
+  // Kick off the live shipping quote as soon as the page loads
+  loadShippingQuote();
+
+  // Clear field errors on input
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    el.addEventListener('input', () => {
+      const fieldWrap = el.closest('[id^="field-"]');
+      if (fieldWrap) {
+        fieldWrap.classList.remove('error');
+        const errId = fieldWrap.id.replace('field-', 'err-');
+        const err = document.getElementById(errId);
+        if (err) err.classList.remove('show');
+      }
+    });
+  });
+});
+
+/* -- Google Places autocomplete callback ---------------------------------- */
+window.initPlaces = async function() {
+  if (typeof google === 'undefined') return;
+
+  const { Autocomplete } = await google.maps.importLibrary('places');
+
+  // Street address autocomplete (door delivery)
+  const streetInput = document.getElementById('f-street');
+  if (streetInput) {
+    const ac = new Autocomplete(streetInput, {
+      componentRestrictions: { country: 'za' },
+      fields: ['address_components'],
+      types: ['address'],
+    });
+
+    const hint = document.getElementById('placesHint');
+    if (hint) hint.style.display = '';
+
+    ac.addListener('place_changed', function() {
+      const place = ac.getPlace();
+      if (!place.address_components) return;
+
+      const get = (types) => {
+        const comp = place.address_components.find(c => types.some(t => c.types.includes(t)));
+        return comp ? comp.long_name : '';
+      };
+
+      const streetNum  = get(['street_number']);
+      const route      = get(['route']);
+      const suburb     = get(['sublocality', 'sublocality_level_1', 'neighborhood']);
+      const city       = get(['locality', 'administrative_area_level_2']);
+      const province   = get(['administrative_area_level_1']);
+      const postalCode = get(['postal_code']);
+
+      const streetEl   = document.getElementById('f-street');
+      const suburbEl   = document.getElementById('f-suburb');
+      const cityEl     = document.getElementById('f-city');
+      const provinceEl = document.getElementById('f-province');
+      const postalEl   = document.getElementById('f-postal');
+
+      if (streetEl)   streetEl.value   = [streetNum, route].filter(Boolean).join(' ');
+      if (suburbEl)   suburbEl.value   = suburb;
+      if (cityEl)     cityEl.value     = city;
+      if (provinceEl) provinceEl.value = province;
+      if (postalEl)   postalEl.value   = postalCode;
+    });
+  }
+
+  // Locker search autocomplete — initialised independently so it works
+  // even when the user goes straight to locker delivery without visiting
+  // the door-delivery fields first.
+  const lockerInput = document.getElementById('f-locker-search');
+  if (lockerInput) {
+    const lacHint = document.getElementById('lockerPlacesHint');
+    if (lacHint) lacHint.style.display = 'flex';
+    const lac = new Autocomplete(lockerInput, {
+      componentRestrictions: { country: 'za' },
+      fields: ['geometry', 'formatted_address'],
+      types: ['geocode'],
+    });
+    lac.addListener('place_changed', function() {
+      const p = lac.getPlace();
+      if (p.geometry) {
+        window.lockerSearchLat = p.geometry.location.lat();
+        window.lockerSearchLng = p.geometry.location.lng();
+        searchLockers();
+      }
+    });
+  }
+};
+
+/* -- Locker search -------------------------------------------------------- */
+async function searchLockers(query) {
+  if (query === undefined) {
+    query = document.getElementById('f-locker-search')?.value.trim() || '';
+  }
+  const list = document.getElementById('lockerResults');
+  if (!list) return;
+
+  const lat = lockerSearchLat ?? window.lockerSearchLat ?? null;
+  const lng = lockerSearchLng ?? window.lockerSearchLng ?? null;
+  const useCoords = lat !== null && lng !== null;
+  if (!useCoords && (!query || query.length < 3)) return;
+
+  list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Searching&hellip;</div>';
+
+  try {
+    const params = new URLSearchParams({ limit: '20' });
+    if (useCoords) {
+      params.set('lat', lat);
+      params.set('lng', lng);
+    } else {
+      params.set('q', query);
     }
 
-    // Gift reveal accordion via max-height
-    document.addEventListener('DOMContentLoaded', function() {
-      const reveal = document.getElementById('giftReveal');
-      if (!reveal) return;
-      var obs = new MutationObserver(function() {
-        reveal.style.maxHeight = reveal.classList.contains('open')
-          ? reveal.scrollHeight + 'px' : '0';
-      });
-      obs.observe(reveal, { attributes: true, attributeFilter: ['class'] });
-    });
-  </script>
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/pudo-locker-search?${params}`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    const data = await resp.json();
+    const lockers = Array.isArray(data) ? data : (data.lockers || []);
 
-  <!-- Google Maps JavaScript API — async bootstrap loader (best-practice pattern) -->
-  <script>
-    (g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.googleapis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
-    ({key: "AIzaSyD4ppkEev2iDFGBrAabVGMHesepRq98vql", v: "weekly", callback: "initPlaces"});
-  </script>
+    if (!lockers.length) {
+      list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">No lockers found nearby. Try a different address.</div>';
+      return;
+    }
 
-</body>
-</html>
+    list.innerHTML = lockers.map(l => {
+      const id      = l.id || l.locker_id || '';
+      const name    = l.name || l.locker_name || 'Locker';
+      const address = l.address || l.locker_address || '';
+      const boxSize = l.box_size || l.boxSize || '';
+      const sizeUnknown = !boxSize;
+      const addrJ   = JSON.stringify(address);
+      const nameJ   = JSON.stringify(name);
+      return `
+        <div class="locker-item" onclick="selectLocker('${id}', ${nameJ}, ${addrJ}, '${boxSize}', ${sizeUnknown})">
+          <div class="locker-item-info">
+            <strong>${name}</strong>
+            <p>${address}</p>
+          </div>
+          ${boxSize ? `<span class="locker-size-badge">${boxSize}</span>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // Reset coords after search so next text search works
+    lockerSearchLat = null;
+    lockerSearchLng = null;
+    window.lockerSearchLat = null;
+    window.lockerSearchLng = null;
+
+  } catch(e) {
+    list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Search failed. Please try again.</div>';
+  }
+}
+
+function selectLocker(id, name, address, boxSize, sizeUnknown) {
+  selectedLocker = { id, name, address, boxSize, sizeUnknown };
+
+  const display = document.getElementById('lockerSelectedDisplay');
+  const nameEl  = document.getElementById('lockerSelectedName');
+  const addrEl  = document.getElementById('lockerSelectedAddr');
+  const errEl   = document.getElementById('err-locker');
+
+  if (display) display.style.display = '';
+  if (nameEl)  nameEl.textContent = name;
+  if (addrEl)  addrEl.textContent = address;
+  if (errEl)   errEl.classList.remove('show');
+
+  // Clear locker list
+  const list = document.getElementById('lockerResults');
+  if (list) list.innerHTML = '';
+}
