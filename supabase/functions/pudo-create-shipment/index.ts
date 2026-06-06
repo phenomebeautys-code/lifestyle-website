@@ -1,21 +1,26 @@
 /**
- * pudo-create-shipment
- * Called after Yoco payment confirms (payment_status = 'paid').
+ * get-shipping-quote
+ * Returns live Pudo L2L and L2D delivery prices for a given cart.
  * Packaging engine is inlined (no _shared import — dashboard deploy compatible).
  *
- * POST body: { order_id: string }
+ * POST body: { items: [{ productId: string, qty: number }] }
+ * Returns:   { box, service_l2l, service_l2d, locker_fee, door_fee, total_weight_kg }
+ *
+ * Pricing strategy:
+ *   Calls GET https://api-pudo.co.za/api/v1/service-levels with the merchant
+ *   Bearer token. This returns the live rate card for the account (same data
+ *   shown in the TCG Locker portal). We filter for the two ECO service level
+ *   codes that match the determined box size and return their prices.
+ *   No address payload required — base ECO rates are not route-dependent.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ALLOWED_ORIGINS = ['https://www.phenomebeauty.co.za', 'https://phenomebeauty.co.za'];
-const PHENOME_LOCKER_TERMINAL = 'CG0000';
-const COLLECTION_CONTACT = { name: 'PhenomeBeauty', email: 'hello@phenomebeauty.co.za', mobile_number: '+27745115725' };
-const ZONE_MAP: Record<string, string> = {
-  'Western Cape': 'WC', 'Eastern Cape': 'EC', 'Northern Cape': 'NC',
-  'Gauteng': 'GP', 'KwaZulu-Natal': 'KZN', 'Free State': 'FS',
-  'Limpopo': 'LP', 'Mpumalanga': 'MP', 'North West': 'NW',
-};
+// ── CORS ──────────────────────────────────────────────────────────────────────
+const ALLOWED_ORIGINS = [
+  'https://www.phenomebeauty.co.za',
+  'https://phenomebeauty.co.za',
+];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CartItem          { productId: string; qty: number; }
@@ -24,6 +29,7 @@ interface PackedItem        { id: string; qty: number; l: number; w: number; h: 
 interface PudoBox           { code: string; serviceL2L: string; serviceL2D: string; boxL: number; boxW: number; boxH: number; maxKg: number; }
 
 // ── Pudo box definitions ──────────────────────────────────────────────────────
+// Service level codes match exactly what TCG returns from /api/v1/service-levels
 const PUDO_BOXES: PudoBox[] = [
   { code: 'XS', serviceL2L: 'L2LXS - ECO', serviceL2D: 'L2DXS - ECO', boxL: 60, boxW: 17, boxH: 8,  maxKg: 2  },
   { code: 'S',  serviceL2L: 'L2LS - ECO',  serviceL2D: 'L2DS - ECO',  boxL: 60, boxW: 41, boxH: 8,  maxKg: 5  },
@@ -86,6 +92,51 @@ function determineBox(cartItems: CartItem[], productDimensions: ProductDimension
   return { box: PUDO_BOXES[PUDO_BOXES.length - 1], totalWeightKg, packed: packedItems, fits: false };
 }
 
+// ── Fetch live service levels from Pudo merchant account ──────────────────────
+async function fetchServiceLevels(apiKey: string): Promise<{ data?: any[]; error?: string }> {
+  try {
+    const res = await fetch('https://api-pudo.co.za/api/v1/service-levels', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+        'requested-from': 'portal',
+      },
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      console.error(`[get-shipping-quote] Pudo service-levels ${res.status}:`, text.slice(0, 300));
+      return { error: `Pudo API error ${res.status}: ${text.slice(0, 200)}` };
+    }
+    let parsed: any;
+    try { parsed = JSON.parse(text); } catch { return { error: 'Invalid JSON from Pudo' }; }
+    // Response may be a bare array or wrapped: { data: [...] } or { service_levels: [...] }
+    const levels: any[] = Array.isArray(parsed)
+      ? parsed
+      : (parsed.data ?? parsed.service_levels ?? parsed.rates ?? []);
+    console.log(`[get-shipping-quote] Pudo returned ${levels.length} service levels`);
+    return { data: levels };
+  } catch (err) {
+    return { error: `Network error: ${String(err)}` };
+  }
+}
+
+// Find the price for a given service level code from the Pudo response.
+// Handles multiple possible response shapes from the API.
+function extractPrice(levels: any[], code: string): number | null {
+  const match = levels.find((l: any) =>
+    l.code === code ||
+    l.service_level_code === code ||
+    l.name === code ||
+    l.service_level?.code === code
+  );
+  if (!match) return null;
+  // Price field names vary across API versions
+  const raw = match.price ?? match.rate ?? match.amount ?? match.total ?? match.cost;
+  if (raw == null) return null;
+  return Math.round(Number(raw) * 100) / 100;
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
   const origin        = req.headers.get('origin') ?? '';
@@ -100,140 +151,70 @@ Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
   if (req.method !== 'POST')   return respond({ error: 'Method not allowed' }, 405, corsHeaders);
 
-  let body: { order_id?: string };
-  try { body = await req.json(); } catch { return respond({ error: 'Invalid JSON body' }, 400, corsHeaders); }
+  let body: { items?: CartItem[] };
+  try { body = await req.json(); } catch { return respond({ error: 'Invalid JSON' }, 400, corsHeaders); }
 
-  const { order_id } = body;
-  if (!order_id) return respond({ error: 'order_id is required' }, 400, corsHeaders);
+  const { items } = body;
+  if (!Array.isArray(items) || items.length === 0)
+    return respond({ error: 'items array required' }, 400, corsHeaders);
 
+  // Step 1: Fetch product dimensions from Supabase
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-  const { data: order, error: orderErr } = await supabase
-    .from('shop_orders')
-    .select('id, customer_name, customer_email, customer_phone, delivery_method, delivery_meta, items, pudo_shipment_id')
-    .eq('id', order_id)
-    .single();
-
-  if (orderErr || !order) {
-    console.error('[pudo-create-shipment] Order fetch error:', orderErr);
-    return respond({ error: 'Order not found' }, 404, corsHeaders);
-  }
-
-  if (!['locker', 'door'].includes(order.delivery_method))
-    return respond({ skipped: true, reason: `Unknown delivery_method: ${order.delivery_method}` }, 200, corsHeaders);
-
-  if (order.pudo_shipment_id) {
-    console.log('[pudo-create-shipment] Already exists:', order.pudo_shipment_id);
-    return respond({ skipped: true, reason: 'Shipment already created', pudo_shipment_id: order.pudo_shipment_id }, 200, corsHeaders);
-  }
-
-  const meta       = (order.delivery_meta ?? {}) as Record<string, string>;
-  const orderItems: any[] = Array.isArray(order.items) ? order.items : [];
-  const parcelDesc = orderItems.map((i: any) => `${i.name} x${i.qty}`).join(', ') || 'Beauty products';
-  const phone      = (order.customer_phone ?? '').replace(/\s/g, '');
-
-  // ── Packaging engine ──────────────────────────────────────────────────────
-  const cartItems: CartItem[] = orderItems.map((i: any) => ({ productId: i.productId ?? i.id, qty: Number(i.qty) || 1 }));
-  const productIds = [...new Set(cartItems.map(i => i.productId))];
   const { data: products, error: prodErr } = await supabase
     .from('products')
     .select('id, weight_kg, length_cm, width_cm, height_cm, pack_flat')
-    .in('id', productIds);
-
-  let serviceLevelCode: string;
-  let parcelWeight: number;
-  let parcelL: number, parcelW: number, parcelH: number;
+    .in('id', items.map(i => i.productId));
 
   if (prodErr || !products?.length) {
-    console.warn('[pudo-create-shipment] Dimension fetch failed — using XS fallback');
-    serviceLevelCode = order.delivery_method === 'locker' ? 'L2LXS - ECO' : 'L2DXS - ECO';
-    parcelWeight = 1; parcelL = 60; parcelW = 17; parcelH = 8;
-  } else {
-    const dimensions: ProductDimensions[] = products.map((p: any) => ({
-      id: p.id, weight_kg: Number(p.weight_kg), length_cm: Number(p.length_cm),
-      width_cm: Number(p.width_cm), height_cm: Number(p.height_cm), pack_flat: Boolean(p.pack_flat),
-    }));
-    const packResult = determineBox(cartItems, dimensions);
-    const { box } = packResult;
-    console.log(`[pudo-create-shipment] Box: ${box.code} | ${packResult.totalWeightKg}kg | fits: ${packResult.fits}`);
-    serviceLevelCode = order.delivery_method === 'locker' ? box.serviceL2L : box.serviceL2D;
-    parcelWeight = packResult.totalWeightKg;
-    parcelL = box.boxL; parcelW = box.boxW; parcelH = box.boxH;
+    console.error('[get-shipping-quote] Product fetch error:', prodErr);
+    return respond({ error: 'Could not fetch product dimensions' }, 500, corsHeaders);
   }
 
-  const parcels = [{
-    submitted_length_cm: parcelL, submitted_width_cm: parcelW,
-    submitted_height_cm: parcelH, submitted_weight_kg: parcelWeight,
-    parcel_description: parcelDesc, alternative_tracking_reference: '',
-  }];
+  // Step 2: Determine box size from cart dimensions
+  const dimensions: ProductDimensions[] = products.map((p: any) => ({
+    id: p.id, weight_kg: Number(p.weight_kg), length_cm: Number(p.length_cm),
+    width_cm: Number(p.width_cm), height_cm: Number(p.height_cm), pack_flat: Boolean(p.pack_flat),
+  }));
 
-  // ── Build payload ─────────────────────────────────────────────────────────
-  let payload: Record<string, unknown>;
+  const result = determineBox(items, dimensions);
+  console.log(`[get-shipping-quote] Box: ${result.box.code} | ${result.totalWeightKg}kg | fits: ${result.fits}`);
 
-  if (order.delivery_method === 'locker') {
-    if (!meta.locker_id) return respond({ error: 'delivery_meta.locker_id missing' }, 422, corsHeaders);
-    console.log(`[pudo-create-shipment] L2L | order=${order_id} | svc=${serviceLevelCode} | dest=${meta.locker_id}`);
-    payload = {
-      service_level_code: serviceLevelCode,
-      collection_address: { terminal_id: PHENOME_LOCKER_TERMINAL },
-      collection_contact: COLLECTION_CONTACT,
-      delivery_address:   { terminal_id: meta.locker_id },
-      delivery_contact:   { name: order.customer_name, email: order.customer_email, mobile_number: phone },
-      parcels, opt_in_rates: [], opt_in_time_based_rates: [],
-    };
-  } else {
-    if (!meta.street || !meta.city) return respond({ error: 'delivery_meta missing street/city' }, 422, corsHeaders);
-    const zone           = ZONE_MAP[meta.province ?? ''] ?? 'WC';
-    const enteredAddress = `${meta.street}, ${meta.suburb}, ${meta.city}, ${meta.postal}, South Africa`;
-    console.log(`[pudo-create-shipment] L2D | order=${order_id} | svc=${serviceLevelCode} | dest=${enteredAddress}`);
-    payload = {
-      service_level_code: serviceLevelCode,
-      collection_address: { terminal_id: PHENOME_LOCKER_TERMINAL },
-      collection_contact: COLLECTION_CONTACT,
-      delivery_address: {
-        type: 'residential', street_address: meta.street, local_area: meta.suburb,
-        suburb: meta.suburb, city: meta.city, code: meta.postal,
-        zone, country: 'South Africa', entered_address: enteredAddress,
-        ...(meta.lat && meta.lng ? { lat: meta.lat, lng: meta.lng } : {}),
-      },
-      delivery_contact: { name: order.customer_name, email: order.customer_email, mobile_number: phone },
-      parcels, opt_in_rates: [], opt_in_time_based_rates: [],
-    };
-  }
+  if (!result.fits)
+    return respond({ error: 'Cart exceeds maximum Pudo box size. Please contact us.', box: result.box.code }, 422, corsHeaders);
 
-  // ── Call Pudo API ─────────────────────────────────────────────────────────
+  // Step 3: Fetch live service level prices from Pudo merchant account
   const pudoKey = Deno.env.get('PUDO_API_KEY') ?? '';
   if (!pudoKey) return respond({ error: 'PUDO_API_KEY not configured' }, 500, corsHeaders);
 
-  let shipmentData: any;
-  try {
-    const res = await fetch('https://api-pudo.co.za/shipments', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${pudoKey}`, 'Accept': 'application/json', 'Content-Type': 'application/json', 'requested-from': 'portal' },
-      body: JSON.stringify(payload),
-    });
-    const responseText = await res.text();
-    console.log(`[pudo-create-shipment] Pudo ${res.status}: ${responseText.slice(0, 600)}`);
-    if (!res.ok) {
-      await supabase.from('shop_orders').update({ pudo_error: `${res.status}: ${responseText.slice(0,500)}` }).eq('id', order_id);
-      return respond({ error: 'Pudo API error', status: res.status, detail: responseText.slice(0,500) }, 502, corsHeaders);
-    }
-    try { shipmentData = JSON.parse(responseText); }
-    catch { return respond({ error: 'Invalid JSON from Pudo', raw: responseText.slice(0,300) }, 502, corsHeaders); }
-  } catch (err) {
-    console.error('[pudo-create-shipment] Network error:', err);
-    return respond({ error: 'Network error', detail: String(err) }, 502, corsHeaders);
+  const { data: levels, error: levelsErr } = await fetchServiceLevels(pudoKey);
+
+  if (levelsErr || !levels?.length) {
+    console.error('[get-shipping-quote] Service levels error:', levelsErr);
+    return respond({ error: 'Could not retrieve delivery rates. Please try again.' }, 502, corsHeaders);
   }
 
-  const shipmentId  = shipmentData?.id ?? null;
-  const trackingRef = shipmentData?.custom_tracking_reference ?? shipmentData?.tracking_reference ?? String(shipmentId) ?? null;
+  // Step 4: Extract the price for the determined box size
+  const { box } = result;
+  const lockerFee = extractPrice(levels, box.serviceL2L);
+  const doorFee   = extractPrice(levels, box.serviceL2D);
 
-  await supabase.from('shop_orders').update({
-    pudo_shipment_id: String(shipmentId), pudo_tracking_ref: trackingRef, pudo_error: null,
-  }).eq('id', order_id);
+  if (lockerFee === null || doorFee === null) {
+    // Log available codes to help diagnose code mismatches
+    const available = levels.map((l: any) => l.code ?? l.service_level_code ?? l.name ?? '?').join(', ');
+    console.error(`[get-shipping-quote] Could not find ${box.serviceL2L} or ${box.serviceL2D} in response. Available: ${available}`);
+    return respond({ error: 'Rate data not found in Pudo response.' }, 502, corsHeaders);
+  }
 
-  console.log(`[pudo-create-shipment] order=${order_id} | method=${order.delivery_method} | shipment=${shipmentId} | tracking=${trackingRef}`);
-  return respond({ success: true, pudo_shipment_id: String(shipmentId), pudo_tracking_ref: trackingRef, service_level: serviceLevelCode, parcel_weight_kg: parcelWeight }, 200, corsHeaders);
+  console.log(`[get-shipping-quote] L2L: R${lockerFee} | L2D: R${doorFee}`);
+  return respond({
+    box: box.code,
+    service_l2l: box.serviceL2L,
+    service_l2d: box.serviceL2D,
+    locker_fee: lockerFee,
+    door_fee: doorFee,
+    total_weight_kg: result.totalWeightKg,
+  }, 200, corsHeaders);
 });
 
 function respond(body: unknown, status: number, headers: Record<string, string>): Response {
