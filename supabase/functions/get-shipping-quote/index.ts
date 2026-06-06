@@ -5,6 +5,13 @@
  *
  * POST body: { items: [{ productId: string, qty: number }] }
  * Returns:   { box, service_l2l, service_l2d, locker_fee, door_fee, total_weight_kg }
+ *
+ * Pricing strategy:
+ *   Calls GET https://api-pudo.co.za/api/v1/service-levels with the merchant
+ *   Bearer token. This returns the live rate card for the account (same data
+ *   shown in the TCG Locker portal). We filter for the two ECO service level
+ *   codes that match the determined box size and return their prices.
+ *   No address payload required — base ECO rates are not route-dependent.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -15,29 +22,6 @@ const ALLOWED_ORIGINS = [
   'https://phenomebeauty.co.za',
 ];
 
-// ── Pudo rate-quote addresses ─────────────────────────────────────────────────
-// Collection: PhenomeBeauty's own Pudo locker terminal
-const COLLECTION_TERMINAL_ID = 'CG0000';
-
-// Quote destination for L2L: any locker (used only to get the rate — not the real delivery locker)
-const QUOTE_L2L_DEST_TERMINAL = 'CG107';
-
-// Quote destination for L2D: a representative residential address (Cape Town)
-// Pudo requires a full address object with lat/lng for L2D rate quotes
-const QUOTE_L2D_DEST_ADDRESS = {
-  type: 'residential',
-  street_address: '1 Adderley Street',
-  local_area: 'Cape Town City Centre',
-  suburb: 'Cape Town City Centre',
-  city: 'Cape Town',
-  code: '8001',
-  zone: 'WC',
-  country: 'South Africa',
-  entered_address: '1 Adderley St, Cape Town City Centre, Cape Town, 8001, South Africa',
-  lat: '-33.9248685',
-  lng: '18.4240553',
-};
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CartItem          { productId: string; qty: number; }
 interface ProductDimensions { id: string; weight_kg: number; length_cm: number; width_cm: number; height_cm: number; pack_flat: boolean; }
@@ -45,6 +29,7 @@ interface PackedItem        { id: string; qty: number; l: number; w: number; h: 
 interface PudoBox           { code: string; serviceL2L: string; serviceL2D: string; boxL: number; boxW: number; boxH: number; maxKg: number; }
 
 // ── Pudo box definitions ──────────────────────────────────────────────────────
+// Service level codes match exactly what TCG returns from /api/v1/service-levels
 const PUDO_BOXES: PudoBox[] = [
   { code: 'XS', serviceL2L: 'L2LXS - ECO', serviceL2D: 'L2DXS - ECO', boxL: 60, boxW: 17, boxH: 8,  maxKg: 2  },
   { code: 'S',  serviceL2L: 'L2LS - ECO',  serviceL2D: 'L2DS - ECO',  boxL: 60, boxW: 41, boxH: 8,  maxKg: 5  },
@@ -107,6 +92,51 @@ function determineBox(cartItems: CartItem[], productDimensions: ProductDimension
   return { box: PUDO_BOXES[PUDO_BOXES.length - 1], totalWeightKg, packed: packedItems, fits: false };
 }
 
+// ── Fetch live service levels from Pudo merchant account ──────────────────────
+async function fetchServiceLevels(apiKey: string): Promise<{ data?: any[]; error?: string }> {
+  try {
+    const res = await fetch('https://api-pudo.co.za/api/v1/service-levels', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json',
+        'requested-from': 'portal',
+      },
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      console.error(`[get-shipping-quote] Pudo service-levels ${res.status}:`, text.slice(0, 300));
+      return { error: `Pudo API error ${res.status}: ${text.slice(0, 200)}` };
+    }
+    let parsed: any;
+    try { parsed = JSON.parse(text); } catch { return { error: 'Invalid JSON from Pudo' }; }
+    // Response may be a bare array or wrapped: { data: [...] } or { service_levels: [...] }
+    const levels: any[] = Array.isArray(parsed)
+      ? parsed
+      : (parsed.data ?? parsed.service_levels ?? parsed.rates ?? []);
+    console.log(`[get-shipping-quote] Pudo returned ${levels.length} service levels`);
+    return { data: levels };
+  } catch (err) {
+    return { error: `Network error: ${String(err)}` };
+  }
+}
+
+// Find the price for a given service level code from the Pudo response.
+// Handles multiple possible response shapes from the API.
+function extractPrice(levels: any[], code: string): number | null {
+  const match = levels.find((l: any) =>
+    l.code === code ||
+    l.service_level_code === code ||
+    l.name === code ||
+    l.service_level?.code === code
+  );
+  if (!match) return null;
+  // Price field names vary across API versions
+  const raw = match.price ?? match.rate ?? match.amount ?? match.total ?? match.cost;
+  if (raw == null) return null;
+  return Math.round(Number(raw) * 100) / 100;
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
   const origin        = req.headers.get('origin') ?? '';
@@ -128,6 +158,7 @@ Deno.serve(async (req: Request) => {
   if (!Array.isArray(items) || items.length === 0)
     return respond({ error: 'items array required' }, 400, corsHeaders);
 
+  // Step 1: Fetch product dimensions from Supabase
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   const { data: products, error: prodErr } = await supabase
@@ -140,6 +171,7 @@ Deno.serve(async (req: Request) => {
     return respond({ error: 'Could not fetch product dimensions' }, 500, corsHeaders);
   }
 
+  // Step 2: Determine box size from cart dimensions
   const dimensions: ProductDimensions[] = products.map((p: any) => ({
     id: p.id, weight_kg: Number(p.weight_kg), length_cm: Number(p.length_cm),
     width_cm: Number(p.width_cm), height_cm: Number(p.height_cm), pack_flat: Boolean(p.pack_flat),
@@ -151,42 +183,26 @@ Deno.serve(async (req: Request) => {
   if (!result.fits)
     return respond({ error: 'Cart exceeds maximum Pudo box size. Please contact us.', box: result.box.code }, 422, corsHeaders);
 
+  // Step 3: Fetch live service level prices from Pudo merchant account
   const pudoKey = Deno.env.get('PUDO_API_KEY') ?? '';
   if (!pudoKey) return respond({ error: 'PUDO_API_KEY not configured' }, 500, corsHeaders);
 
-  const { box } = result;
+  const { data: levels, error: levelsErr } = await fetchServiceLevels(pudoKey);
 
-  // L2L: locker terminal to locker terminal — Pudo returns all L2L service levels, pick by code
-  const l2lPayload = {
-    collection_address: { terminal_id: COLLECTION_TERMINAL_ID },
-    delivery_address:   { terminal_id: QUOTE_L2L_DEST_TERMINAL },
-    opt_in_rates: [],
-    opt_in_time_based_rates: [],
-  };
-
-  // L2D: locker terminal to residential address — Pudo returns all L2D service levels, pick by code
-  const l2dPayload = {
-    collection_address: { terminal_id: COLLECTION_TERMINAL_ID },
-    delivery_address:   QUOTE_L2D_DEST_ADDRESS,
-    opt_in_rates: [],
-    opt_in_time_based_rates: [],
-  };
-
-  const [l2lRes, l2dRes] = await Promise.all([
-    fetchRates(pudoKey, l2lPayload),
-    fetchRates(pudoKey, l2dPayload),
-  ]);
-
-  if (l2lRes.error || l2dRes.error) {
-    console.error('[get-shipping-quote] Pudo rate error:', l2lRes.error ?? l2dRes.error);
+  if (levelsErr || !levels?.length) {
+    console.error('[get-shipping-quote] Service levels error:', levelsErr);
     return respond({ error: 'Could not retrieve delivery rates. Please try again.' }, 502, corsHeaders);
   }
 
-  const lockerFee = extractRate(l2lRes.data, box.serviceL2L);
-  const doorFee   = extractRate(l2dRes.data, box.serviceL2D);
+  // Step 4: Extract the price for the determined box size
+  const { box } = result;
+  const lockerFee = extractPrice(levels, box.serviceL2L);
+  const doorFee   = extractPrice(levels, box.serviceL2D);
 
   if (lockerFee === null || doorFee === null) {
-    console.error('[get-shipping-quote] Rate not found. L2L:', JSON.stringify(l2lRes.data).slice(0, 300), 'L2D:', JSON.stringify(l2dRes.data).slice(0, 300));
+    // Log available codes to help diagnose code mismatches
+    const available = levels.map((l: any) => l.code ?? l.service_level_code ?? l.name ?? '?').join(', ');
+    console.error(`[get-shipping-quote] Could not find ${box.serviceL2L} or ${box.serviceL2D} in response. Available: ${available}`);
     return respond({ error: 'Rate data not found in Pudo response.' }, 502, corsHeaders);
   }
 
@@ -200,44 +216,6 @@ Deno.serve(async (req: Request) => {
     total_weight_kg: result.totalWeightKg,
   }, 200, corsHeaders);
 });
-
-async function fetchRates(apiKey: string, payload: Record<string, unknown>): Promise<{ data?: any; error?: string }> {
-  try {
-    const res  = await fetch('https://api-pudo.co.za/rates', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'requested-from': 'portal',
-      },
-      body: JSON.stringify(payload),
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.error(`Pudo ${res.status}:`, text.slice(0, 300));
-      return { error: `Pudo API error ${res.status}` };
-    }
-    try { return { data: JSON.parse(text) }; } catch { return { error: 'Invalid JSON from Pudo' }; }
-  } catch (err) {
-    return { error: `Network error: ${String(err)}` };
-  }
-}
-
-// Pudo returns { rates: [ { rate: "68.75", service_level: { code: "L2LXS - ECO" }, ... } ] }
-function extractRate(data: any, serviceLevelCode: string): number | null {
-  if (!data) return null;
-  const rates: any[] = Array.isArray(data) ? data : (data.rates ?? data.data ?? []);
-  const match = rates.find((r: any) =>
-    r.service_level?.code === serviceLevelCode ||
-    r.service_level_code  === serviceLevelCode ||
-    r.code                === serviceLevelCode
-  );
-  if (!match) return null;
-  const amount = match.rate ?? match.total ?? match.price ?? match.amount;
-  if (amount == null) return null;
-  return Math.round(Number(amount) * 100) / 100;
-}
 
 function respond(body: unknown, status: number, headers: Record<string, string>): Response {
   return new Response(JSON.stringify(body), { status, headers: { ...headers, 'Content-Type': 'application/json' } });
