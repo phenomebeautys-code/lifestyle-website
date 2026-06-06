@@ -81,7 +81,8 @@ async function loadShippingQuote() {
 
   renderSummary();
   renderDeliveryOptions();
-
+   renderSidebarItems();
+   
   try {
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/get-shipping-quote`,
