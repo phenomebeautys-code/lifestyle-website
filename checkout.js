@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v7 — locker search uses data.results; index-based selection.
+   Cache-bust v8 — lazy-load Maps on Step 2; 3-char autocomplete guard.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -30,6 +30,36 @@ let _lockerResults = [];
 let shippingQuote        = null;
 let shippingQuoteLoading = false;
 let shippingQuoteError   = null;
+
+/* Maps lazy-load guard */
+let _mapsLoaded = false;
+
+/* -- Google Maps lazy loader --------------------------------------------- */
+async function loadMapsIfNeeded() {
+  if (_mapsLoaded) return;
+  _mapsLoaded = true;
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-places-key`,
+      {
+        headers: {
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        }
+      }
+    );
+    const data = await resp.json();
+    if (!data.key) throw new Error('No key returned');
+    const s = document.createElement('script');
+    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + data.key + '&libraries=places&loading=async&callback=initPlaces';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  } catch(e) {
+    console.warn('[checkout] Could not load Maps API:', e);
+    _mapsLoaded = false;
+  }
+}
 
 /* -- Delivery pricing ----------------------------------------------------- */
 function deliveryFee() {
@@ -118,6 +148,7 @@ function cartTotal() {
 
 /* -- Step navigation ------------------------------------------------------ */
 function goToStep(n) {
+  if (n === 2) loadMapsIfNeeded();
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
 
@@ -638,6 +669,15 @@ window.initPlaces = async function() {
     const hint = document.getElementById('placesHint');
     if (hint) hint.style.display = '';
 
+    /* Suppress dropdown until 3 characters have been typed */
+    streetInput.addEventListener('input', function() {
+      if (this.value.length < 3) {
+        const saved = this.value;
+        this.value = '';
+        requestAnimationFrame(() => { this.value = saved; });
+      }
+    });
+
     ac.addListener('place_changed', function() {
       const place = ac.getPlace();
       if (!place.address_components) return;
@@ -677,6 +717,16 @@ window.initPlaces = async function() {
       fields: ['geometry', 'formatted_address'],
       types: ['geocode'],
     });
+
+    /* Suppress dropdown until 3 characters have been typed */
+    lockerInput.addEventListener('input', function() {
+      if (this.value.length < 3) {
+        const saved = this.value;
+        this.value = '';
+        requestAnimationFrame(() => { this.value = saved; });
+      }
+    });
+
     lac.addListener('place_changed', function() {
       const p = lac.getPlace();
       if (p.geometry) {
@@ -720,10 +770,6 @@ async function searchLockers(query) {
     );
     const data = await resp.json();
 
-    // Handle all three possible response shapes:
-    //   - plain array          (legacy / direct)
-    //   - { results: [...] }   (current edge function)
-    //   - { lockers: [...] }   (alternate shape)
     const lockers = Array.isArray(data)
       ? data
       : Array.isArray(data.results)
@@ -732,7 +778,6 @@ async function searchLockers(query) {
           ? data.lockers
           : [];
 
-    // Store in module-level array so card onclick can pass a safe numeric index
     _lockerResults = lockers;
 
     if (!lockers.length) {

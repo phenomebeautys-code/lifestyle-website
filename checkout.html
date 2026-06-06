@@ -606,31 +606,5 @@
     });
   </script>
 
-  <!-- Load Google Maps via secure edge function -->
-  <script>
-    (async function() {
-      try {
-        const resp = await fetch(
-          'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/get-places-key',
-          {
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc',
-            }
-          }
-        );
-        const data = await resp.json();
-        if (!data.key) throw new Error('No key returned');
-        const s = document.createElement('script');
-        s.src = 'https://maps.googleapis.com/maps/api/js?key=' + data.key + '&libraries=places&loading=async&callback=initPlaces';
-        s.async = true;
-        s.defer = true;
-        document.head.appendChild(s);
-      } catch(e) {
-        console.warn('[checkout] Could not load Maps API:', e);
-      }
-    })();
-  </script>
-
 </body>
 </html>
