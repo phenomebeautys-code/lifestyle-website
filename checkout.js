@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v5 — live Pudo shipping quote replaces hardcoded fees.
+   Cache-bust v6 — renderDeliveryOptions targets static price spans.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -24,7 +24,7 @@ let yocoCard         = null;
 let specialOpen      = false;
 
 /* Live shipping quote state */
-let shippingQuote        = null;   // { box, locker_fee, door_fee, total_weight_kg, ... }
+let shippingQuote        = null;   // { box, locker_fee, door_fee, total_weight_kg }
 let shippingQuoteLoading = false;
 let shippingQuoteError   = null;
 
@@ -57,7 +57,6 @@ async function loadShippingQuote() {
   shippingQuoteError   = null;
   shippingQuote        = null;
 
-  // Show "Calculating..." immediately so the user knows something is happening
   renderSummary();
   renderDeliveryOptions();
 
@@ -108,7 +107,6 @@ function loadCart() {
              || '[]';
     cart = JSON.parse(raw);
     if (!Array.isArray(cart)) cart = [];
-    // Migrate legacy key and normalise imageUrl -> image
     cart = cart.map(item => {
       if (item.imageUrl && !item.image) { item.image = item.imageUrl; delete item.imageUrl; }
       return item;
@@ -131,7 +129,6 @@ function goToStep(n) {
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
 
-  // Save progress in sessionStorage so we can restore on back-nav
   saveDraft();
 
   currentStep = n;
@@ -265,46 +262,33 @@ function restoreDraft() {
 /* -- Delivery options render ---------------------------------------------- */
 
 /**
- * Renders the two delivery option cards (door / locker).
- * While the quote is loading, prices show "Calculating...".
- * If the quote failed, prices fall back to the hardcoded constants.
+ * Updates the price labels on the two static delivery cards in checkout.html.
+ * Targets id="door-price-display" and id="locker-price-display" directly
+ * rather than rewriting a container element.
+ *
+ * While the quote is loading, both show "Calculating...".
+ * Once loaded, shows the live fee; on error, shows the fallback constants.
  */
 function renderDeliveryOptions() {
-  const container = document.getElementById('deliveryOptions');
-  if (!container) return;
+  const doorSpan   = document.getElementById('door-price-display');
+  const lockerSpan = document.getElementById('locker-price-display');
 
-  const doorLabel   = shippingQuoteLoading
-    ? 'Calculating...'
-    : `R${deliveryMethod === 'door'
-        ? deliveryFee().toFixed(2)
-        : (shippingQuote ? Number(shippingQuote.door_fee).toFixed(2) : FALLBACK_DOOR_PRICE.toFixed(2))}`;
+  if (shippingQuoteLoading) {
+    if (doorSpan)   doorSpan.textContent   = 'Calculating...';
+    if (lockerSpan) lockerSpan.textContent = 'Calculating...';
+  } else {
+    const doorPrice   = shippingQuote
+      ? Number(shippingQuote.door_fee)
+      : FALLBACK_DOOR_PRICE;
+    const lockerPrice = shippingQuote
+      ? Number(shippingQuote.locker_fee)
+      : FALLBACK_LOCKER_PRICE;
 
-  const lockerLabel = shippingQuoteLoading
-    ? 'Calculating...'
-    : `R${deliveryMethod === 'locker'
-        ? deliveryFee().toFixed(2)
-        : (shippingQuote ? Number(shippingQuote.locker_fee).toFixed(2) : FALLBACK_LOCKER_PRICE.toFixed(2))}`;
+    if (doorSpan)   doorSpan.textContent   = `R${doorPrice.toFixed(2)}`;
+    if (lockerSpan) lockerSpan.textContent = `R${lockerPrice.toFixed(2)}`;
+  }
 
-  container.innerHTML = `
-    <div class="delivery-card ${deliveryMethod === 'door' ? 'selected' : ''}" id="opt-door" onclick="selectDelivery('door')">
-      <div class="delivery-chip"></div>
-      <h3>Door delivery</h3>
-      <p>We deliver straight to your door anywhere in South Africa.</p>
-      <div class="delivery-price">${doorLabel}</div>
-    </div>
-    <div class="delivery-card ${deliveryMethod === 'locker' ? 'selected' : ''}" id="opt-locker" onclick="selectDelivery('locker')">
-      <div class="delivery-chip"></div>
-      <h3>Pudo locker</h3>
-      <p>Collect at a Pudo locker near you at a time that suits you.</p>
-      <div class="delivery-price">${lockerLabel}</div>
-    </div>
-  `;
-
-  // Show the meta bar and set initial state
-  const meta = document.getElementById('deliveryMeta');
-  if (meta) meta.style.display = '';
-
-  // Show correct fields based on current method
+  // Keep field visibility in sync
   const doorFields   = document.getElementById('door-fields');
   const lockerFields = document.getElementById('locker-fields');
   if (doorFields)   doorFields.style.display   = deliveryMethod === 'door'   ? '' : 'none';
@@ -315,27 +299,27 @@ function renderDeliveryOptions() {
 function selectDelivery(method, silent) {
   deliveryMethod = method;
 
-  const optDoor   = document.getElementById('opt-door');
-  const optLocker = document.getElementById('opt-locker');
+  const optDoor      = document.getElementById('opt-door');
+  const optLocker    = document.getElementById('opt-locker');
   const doorFields   = document.getElementById('door-fields');
   const lockerFields = document.getElementById('locker-fields');
 
-  if (optDoor)   optDoor.classList.toggle('selected',   method === 'door');
-  if (optLocker) optLocker.classList.toggle('selected', method === 'locker');
+  if (optDoor)      optDoor.classList.toggle('selected',   method === 'door');
+  if (optLocker)    optLocker.classList.toggle('selected', method === 'locker');
   if (doorFields)   doorFields.style.display   = method === 'door'   ? '' : 'none';
   if (lockerFields) lockerFields.style.display = method === 'locker' ? '' : 'none';
 
-  const metaTitle = document.getElementById('deliveryMetaTitle');
-  const metaText  = document.getElementById('deliveryMetaText');
+  const metaTitle   = document.getElementById('deliveryMetaTitle');
+  const metaText    = document.getElementById('deliveryMetaText');
   const methodLabel = document.getElementById('deliveryMethodLabel');
 
   if (method === 'door') {
-    if (metaTitle) metaTitle.textContent = 'Door delivery selected';
-    if (metaText)  metaText.textContent  = 'Enter your address and we will estimate a delivery window based on business days and local holidays.';
+    if (metaTitle)   metaTitle.textContent   = 'Door delivery selected';
+    if (metaText)    metaText.textContent    = 'Enter your address and we will estimate a delivery window based on business days and local holidays.';
     if (methodLabel) methodLabel.textContent = '';
   } else {
-    if (metaTitle) metaTitle.textContent = 'Pudo locker selected';
-    if (metaText)  metaText.textContent  = 'Search for a locker near you and select it to confirm.';
+    if (metaTitle)   metaTitle.textContent   = 'Pudo locker selected';
+    if (metaText)    metaText.textContent    = 'Search for a locker near you and select it to confirm.';
     if (methodLabel) methodLabel.textContent = 'Pudo locker';
   }
 
@@ -372,17 +356,33 @@ function renderSummary() {
       `;
     }).join('');
   }
+
+  // Also keep the sidebar totals in sync for pages that use the sidebar IDs
+  const rvSubtotal = document.getElementById('rv-subtotal');
+  const rvDelivery = document.getElementById('rv-delivery');
+  const rvTotal    = document.getElementById('rv-total');
+  const payBtnTotal = document.getElementById('payBtnTotal');
+  if (rvSubtotal)  rvSubtotal.textContent  = `R${sub.toFixed(2)}`;
+  if (rvDelivery)  rvDelivery.textContent  = shippingQuoteLoading ? 'Calculating...' : `R${fee.toFixed(2)}`;
+  if (rvTotal)     rvTotal.textContent     = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
+  if (payBtnTotal) payBtnTotal.textContent = tot.toFixed(2);
+
+  // Mobile summary bar
+  const msTotalDisplay = document.getElementById('msTotalDisplay');
+  if (msTotalDisplay) msTotalDisplay.textContent = shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`;
 }
 
 /* -- Delivery date estimate ----------------------------------------------- */
 function renderDeliveryDate() {
-  const el = document.getElementById('deliveryDateEstimate');
-  if (!el) return;
+  // Targets the element used in the sidebar delivery window
+  const targets = [
+    document.getElementById('deliveryDateText2'),
+    document.getElementById('deliveryDateEstimate'),
+  ];
 
-  // Simple business day estimate: 3-5 days from today, skipping weekends
   const today = new Date();
   let added = 0;
-  let date = new Date(today);
+  let date  = new Date(today);
   while (added < 3) {
     date.setDate(date.getDate() + 1);
     if (date.getDay() !== 0 && date.getDay() !== 6) added++;
@@ -392,59 +392,127 @@ function renderDeliveryDate() {
     date.setDate(date.getDate() + 1);
     if (date.getDay() !== 0 && date.getDay() !== 6) added++;
   }
-  const latest = new Date(date);
+  const latest = date;
 
   const fmt = d => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
-  el.textContent = `Estimated delivery: ${fmt(earliest)} - ${fmt(latest)}`;
+  const text = `${fmt(earliest)} - ${fmt(latest)}`;
+
+  targets.forEach(el => { if (el) el.textContent = text; });
+
+  // Review step date
+  const rvDate = document.getElementById('rv-delivery-date');
+  if (rvDate) rvDate.textContent = text;
 }
 
 /* -- Review panel render -------------------------------------------------- */
 function renderReview() {
-  const name  = document.getElementById('f-name')?.value    || '';
-  const phone = document.getElementById('f-phone')?.value   || '';
-  const email = document.getElementById('f-email')?.value   || '';
+  const name  = document.getElementById('f-name')?.value  || '';
+  const phone = document.getElementById('f-phone')?.value || '';
+  const email = document.getElementById('f-email')?.value || '';
 
-  const rName  = document.getElementById('r-name');
-  const rPhone = document.getElementById('r-phone');
-  const rEmail = document.getElementById('r-email');
+  const doneContact = document.getElementById('done-contact-val');
+  if (doneContact) doneContact.textContent = [name, phone, email].filter(Boolean).join(' | ');
 
-  if (rName)  rName.textContent  = name;
-  if (rPhone) rPhone.textContent = phone;
-  if (rEmail) rEmail.textContent = email;
+  // Also update the sidebar secondary contact label if present
+  const doneContact2 = document.getElementById('done-contact-val-2');
+  if (doneContact2) doneContact2.textContent = email;
 
-  const rDelivery = document.getElementById('r-delivery');
-  if (rDelivery) {
-    let deliveryHTML = '';
-    if (deliveryMethod === 'door') {
-      const street   = document.getElementById('f-street')?.value   || '';
-      const suburb   = document.getElementById('f-suburb')?.value   || '';
-      const city     = document.getElementById('f-city')?.value     || '';
-      const postal   = document.getElementById('f-postal')?.value   || '';
-      const province = document.getElementById('f-province')?.value || '';
-      deliveryHTML = `<p>${street}</p><p>${suburb}, ${city}, ${postal}</p><p>${province}</p>`;
-    } else {
-      deliveryHTML = `<p>${selectedLocker.name}</p><p style="font-size:.84rem;color:var(--text-muted);margin-top:4px;">${selectedLocker.address}</p>`;
-    }
-    rDelivery.innerHTML = deliveryHTML;
+  let deliveryText = '';
+  if (deliveryMethod === 'door') {
+    const street   = document.getElementById('f-street')?.value   || '';
+    const suburb   = document.getElementById('f-suburb')?.value   || '';
+    const city     = document.getElementById('f-city')?.value     || '';
+    const postal   = document.getElementById('f-postal')?.value   || '';
+    const province = document.getElementById('f-province')?.value || '';
+    deliveryText = [street, suburb, city, postal, province].filter(Boolean).join(', ');
+  } else if (selectedLocker) {
+    deliveryText = `${selectedLocker.name} -- ${selectedLocker.address}`;
   }
 
-  const rSpecial = document.getElementById('r-special');
-  const special  = document.getElementById('f-special')?.value || '';
-  if (rSpecial) rSpecial.textContent = special || 'None';
+  const doneDelivery = document.getElementById('done-delivery-val');
+  if (doneDelivery) doneDelivery.textContent = deliveryText;
 
-  const rSubtotal    = document.getElementById('r-subtotal');
-  const rDeliveryFee = document.getElementById('r-delivery-fee');
-  const rTotal       = document.getElementById('r-total');
-  const rYocoTotal   = document.getElementById('yoco-amount-display');
+  const rvDeliveryLabel = document.getElementById('rv-delivery-label');
+  if (rvDeliveryLabel) rvDeliveryLabel.textContent = deliveryMethod === 'locker' ? 'Pudo locker' : 'Door delivery';
+
+  // Gift message block
+  const giftMsg   = document.getElementById('f-gift-message')?.value || '';
+  const giftBlock = document.getElementById('giftReviewBlock');
+  const giftBody  = document.getElementById('giftReviewBody');
+  if (giftBlock) giftBlock.style.display = giftMsg ? '' : 'none';
+  if (giftBody)  giftBody.textContent    = giftMsg;
+
+  // Totals
+  renderSummary();
+}
+
+/* -- Sidebar / mobile summary render ------------------------------------- */
+function renderSidebarItems() {
+  const summaryItems = document.getElementById('summaryItems');
+  const summaryTotals = document.getElementById('summaryTotals');
+  const itemCountLabel = document.getElementById('itemCountLabel');
+  const mobileItems  = document.getElementById('mobileItems');
+  const mobileTotals = document.getElementById('mobileTotals');
 
   const sub = cartSubtotal();
   const fee = deliveryFee();
   const tot = sub + fee;
 
-  if (rSubtotal)    rSubtotal.textContent    = `R${sub.toFixed(2)}`;
-  if (rDeliveryFee) rDeliveryFee.textContent = `R${fee.toFixed(2)}`;
-  if (rTotal)       rTotal.textContent       = `R${tot.toFixed(2)}`;
-  if (rYocoTotal)   rYocoTotal.textContent   = `R${tot.toFixed(2)}`;
+  const itemsHTML = cart.map(item => {
+    const price = (Number(item.price) || 0) * (Number(item.qty) || 1);
+    return `
+      <div class="cart-item">
+        <img src="${item.image || ''}" alt="${item.name || ''}" onerror="this.style.display='none'" />
+        <div>
+          <h4>${item.name || 'Product'}</h4>
+          <div class="cart-meta">${item.qty > 1 ? `Qty: ${item.qty}` : ''}</div>
+        </div>
+        <div class="cart-price">R${price.toFixed(2)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const totalsHTML = `
+    <div class="total-row"><span>Subtotal</span><span>R${sub.toFixed(2)}</span></div>
+    <div class="total-row"><span>Delivery</span><span>${shippingQuoteLoading ? 'Calculating...' : `R${fee.toFixed(2)}`}</span></div>
+    <div class="total-row grand"><span>Total</span><span>${shippingQuoteLoading ? 'Calculating...' : `R${tot.toFixed(2)}`}</span></div>
+  `;
+
+  if (summaryItems)  summaryItems.innerHTML  = itemsHTML;
+  if (summaryTotals) summaryTotals.innerHTML = totalsHTML;
+  if (mobileItems)   mobileItems.innerHTML   = itemsHTML;
+  if (mobileTotals)  mobileTotals.innerHTML  = totalsHTML;
+  if (itemCountLabel) {
+    const n = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+    itemCountLabel.textContent = `${n} item${n === 1 ? '' : 's'} in your cart`;
+  }
+}
+
+function toggleMobileSummary() {
+  const body    = document.getElementById('mobileSummaryBody');
+  const chevron = document.getElementById('msChevron');
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+/* -- Gift toggle ---------------------------------------------------------- */
+function toggleGift() {
+  const reveal  = document.getElementById('giftReveal');
+  const checkbox = document.getElementById('f-is-gift');
+  const switches = document.querySelectorAll('#giftToggleRow .switch');
+  if (!reveal) return;
+
+  const isOpen = reveal.classList.toggle('open');
+  if (checkbox) checkbox.checked = isOpen;
+  switches.forEach(sw => sw.classList.toggle('on', isOpen));
+  reveal.style.maxHeight = isOpen ? reveal.scrollHeight + 'px' : '0';
+}
+
+/* -- Exit nudge ----------------------------------------------------------- */
+function dismissNudge() {
+  const nudge = document.getElementById('exitNudge');
+  if (nudge) nudge.classList.remove('show');
 }
 
 /* -- Yoco payment init ---------------------------------------------------- */
@@ -454,7 +522,7 @@ async function initYoco() {
       console.warn('Yoco SDK not loaded');
       return;
     }
-    if (yocoSDK && yocoCard) return; // already initialised
+    if (yocoSDK && yocoCard) return;
 
     yocoSDK = new window.YocoSDK({ publicKey: 'pk_live_0c4e5cd8PJGgxIlxfcb6c4e1' });
     yocoCard = yocoSDK.inline({
@@ -471,27 +539,20 @@ async function initYoco() {
   }
 }
 
-/* -- Payment submission --------------------------------------------------- */
-async function submitPayment() {
-  const btn = document.getElementById('payBtn');
-  const errEl = document.getElementById('payment-error');
-  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
-  if (errEl) errEl.style.display = 'none';
+/* -- Payment handler ------------------------------------------------------ */
+async function handlePay() {
+  const btn   = document.getElementById('payBtn');
+  const alert = document.getElementById('alert-3');
+
+  if (btn)   { btn.disabled = true; }
+  if (alert) { alert.classList.remove('show'); }
 
   try {
-    if (!yocoCard) throw new Error('Card not ready. Please refresh.');
-
     const sub = cartSubtotal();
     const fee = deliveryFee();
     const tot = sub + fee;
     const amountCents = Math.round(tot * 100);
 
-    // Create Yoco token
-    const result = await yocoCard.createToken();
-    if (result.error) throw new Error(result.error.message || 'Card error');
-    const token = result.id;
-
-    // Gather order data
     const name  = document.getElementById('f-name')?.value.trim()  || '';
     const phone = document.getElementById('f-phone')?.value.trim() || '';
     const email = document.getElementById('f-email')?.value.trim() || '';
@@ -507,15 +568,14 @@ async function submitPayment() {
     const special = document.getElementById('f-special')?.value.trim() || '';
 
     const orderPayload = {
-      token,
-      amount_cents: amountCents,
-      customer: { name, phone, email },
-      delivery_method: deliveryMethod,
-      delivery_address: address,
-      delivery_fee: fee,
-      locker_id:      selectedLocker?.id      || '',
-      locker_name:    selectedLocker?.name    || '',
-      locker_address: selectedLocker?.address || '',
+      amount_cents:         amountCents,
+      customer:             { name, phone, email },
+      delivery_method:      deliveryMethod,
+      delivery_address:     address,
+      delivery_fee:         fee,
+      locker_id:            selectedLocker?.id      || '',
+      locker_name:          selectedLocker?.name    || '',
+      locker_address:       selectedLocker?.address || '',
       special_instructions: special,
       cart: cart.map(item => ({
         id:    item.id    || '',
@@ -542,21 +602,19 @@ async function submitPayment() {
     const data = await resp.json();
     if (!resp.ok || data.error) throw new Error(data.error || data.message || 'Payment failed');
 
-    // Clear cart
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_checkout_draft');
 
-    // Redirect to success
     const orderRef = data.order_ref || data.id || '';
     window.location.href = `shop-success.html?ref=${encodeURIComponent(orderRef)}&email=${encodeURIComponent(email)}`;
 
   } catch(e) {
-    if (errEl) {
-      errEl.textContent = e.message || 'Something went wrong. Please try again.';
-      errEl.style.display = '';
+    if (alert) {
+      alert.textContent = e.message || 'Something went wrong. Please try again.';
+      alert.classList.add('show');
     }
-    if (btn) { btn.disabled = false; btn.textContent = 'Pay now'; }
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -565,20 +623,21 @@ document.addEventListener('DOMContentLoaded', function() {
   loadCart();
 
   if (!cart.length) {
-    // Empty cart — redirect back to shop
-    window.location.href = 'shop.html';
+    const emptyState = document.getElementById('emptyState');
+    const coLayout   = document.getElementById('coLayout');
+    if (emptyState) emptyState.classList.add('show');
+    if (coLayout)   coLayout.style.display = 'none';
     return;
   }
 
   renderDeliveryOptions();
   renderSummary();
+  renderSidebarItems();
   renderDeliveryDate();
   restoreDraft();
 
-  // Kick off the live shipping quote as soon as the page loads
   loadShippingQuote();
 
-  // Clear field errors on input
   document.querySelectorAll('input, select, textarea').forEach(el => {
     el.addEventListener('input', () => {
       const fieldWrap = el.closest('[id^="field-"]');
@@ -598,7 +657,6 @@ window.initPlaces = async function() {
 
   const { Autocomplete } = await google.maps.importLibrary('places');
 
-  // Street address autocomplete (door delivery)
   const streetInput = document.getElementById('f-street');
   if (streetInput) {
     const ac = new Autocomplete(streetInput, {
@@ -640,9 +698,6 @@ window.initPlaces = async function() {
     });
   }
 
-  // Locker search autocomplete — initialised independently so it works
-  // even when the user goes straight to locker delivery without visiting
-  // the door-delivery fields first.
   const lockerInput = document.getElementById('f-locker-search');
   if (lockerInput) {
     const lacHint = document.getElementById('lockerPlacesHint');
@@ -704,21 +759,25 @@ async function searchLockers(query) {
       const name    = l.name || l.locker_name || 'Locker';
       const address = l.address || l.locker_address || '';
       const boxSize = l.box_size || l.boxSize || '';
-      const sizeUnknown = !boxSize;
       const addrJ   = JSON.stringify(address);
       const nameJ   = JSON.stringify(name);
+      const sizeUnknown = !boxSize;
       return `
         <div class="locker-item" onclick="selectLocker('${id}', ${nameJ}, ${addrJ}, '${boxSize}', ${sizeUnknown})">
-          <div class="locker-item-info">
-            <strong>${name}</strong>
-            <p>${address}</p>
+          <div class="locker-item-top">
+            <div>
+              <h4>${name}</h4>
+              <p>${address}</p>
+            </div>
+            ${boxSize ? `<span class="locker-tag">${boxSize}</span>` : ''}
           </div>
-          ${boxSize ? `<span class="locker-size-badge">${boxSize}</span>` : ''}
+          <div class="locker-cta">
+            <button type="button" class="mini-btn" onclick="event.stopPropagation();selectLocker('${id}', ${nameJ}, ${addrJ}, '${boxSize}', ${sizeUnknown})">Select</button>
+          </div>
         </div>
       `;
     }).join('');
 
-    // Reset coords after search so next text search works
     lockerSearchLat = null;
     lockerSearchLng = null;
     window.lockerSearchLat = null;
@@ -736,13 +795,33 @@ function selectLocker(id, name, address, boxSize, sizeUnknown) {
   const nameEl  = document.getElementById('lockerSelectedName');
   const addrEl  = document.getElementById('lockerSelectedAddr');
   const errEl   = document.getElementById('err-locker');
+  const sizeNote = document.getElementById('lockerSelectedSizeNote');
 
   if (display) display.style.display = '';
   if (nameEl)  nameEl.textContent = name;
   if (addrEl)  addrEl.textContent = address;
   if (errEl)   errEl.classList.remove('show');
 
-  // Clear locker list
+  if (sizeNote) {
+    if (sizeUnknown) {
+      sizeNote.textContent   = 'Box size not confirmed for this locker. Our team will contact you if there is a sizing issue.';
+      sizeNote.className     = 'locker-size-note locker-size-note--unknown';
+      sizeNote.style.display = '';
+    } else if (boxSize) {
+      sizeNote.textContent   = `Box size: ${boxSize}`;
+      sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
+      sizeNote.style.display = '';
+    } else {
+      sizeNote.style.display = 'none';
+    }
+  }
+
   const list = document.getElementById('lockerResults');
   if (list) list.innerHTML = '';
+}
+
+function clearLockerSelection() {
+  selectedLocker = null;
+  const display = document.getElementById('lockerSelectedDisplay');
+  if (display) display.style.display = 'none';
 }
