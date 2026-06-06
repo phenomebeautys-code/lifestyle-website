@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
     const productIds: string[] = (order.items ?? []).map((i: { productId: string }) => i.productId);
 
     const { data: products, error: prodErr } = await supabase
-      .from("shop_products")
+      .from("products")
       .select("id, price")
       .in("id", productIds);
 
@@ -88,12 +88,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── Use the delivery fee already stored on the order ──────────────────
-    // The fee was set correctly at order creation time:
-    //   locker orders  → R70
-    //   door delivery  → R99  (or legacy R80)
-    // Never override with a hardcoded constant here.
-    const deliveryFee   = Number(order.delivery_fee);
-    const serverTotal   = serverSubtotal + deliveryFee;
+    const deliveryFee = Number(order.delivery_fee);
+    const serverTotal = serverSubtotal + deliveryFee;
 
     // ── Correct any tampered subtotal/total (fee stays as-is) ────────────
     const { error: updateErr } = await supabase
@@ -116,11 +112,11 @@ Deno.serve(async (req: Request) => {
         "Authorization": `Bearer ${Deno.env.get("YOCO_SECRET_KEY")}`,
       },
       body: JSON.stringify({
-        amount:    Math.round(serverTotal * 100), // Yoco expects cents, integer
-        currency:  "ZAR",
-        cancelUrl: cancel_url,
+        amount:     Math.round(serverTotal * 100),
+        currency:   "ZAR",
+        cancelUrl:  cancel_url,
         successUrl: success_url,
-        metadata:  { order_id, customer_email: order.customer_email },
+        metadata:   { order_id, customer_email: order.customer_email },
       }),
     });
 
