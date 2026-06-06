@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v10 — fix productId mapping in handlePay cart payload.
+   Cache-bust v11 — fix success_url/cancel_url params to match shop-success.html.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -625,8 +625,8 @@ async function handlePay() {
         },
         body: JSON.stringify({
           order_id:    orderId,
-          success_url: `${window.location.origin}/shop-success.html?ref=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`,
-          cancel_url:  `${window.location.origin}/checkout.html`,
+          success_url: `${window.location.origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&ct=${encodeURIComponent(orderData.customer_token || '')}&name=${encodeURIComponent(name)}`,
+          cancel_url:  `${window.location.origin}/shop-success.html?payment=cancelled`,
         }),
       }
     );
