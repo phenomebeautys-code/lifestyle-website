@@ -194,31 +194,32 @@ Deno.serve(async (req: Request) => {
         type: 'residential', street_address: meta.street, local_area: meta.suburb,
         suburb: meta.suburb, city: meta.city, code: meta.postal,
         zone, country: 'South Africa', entered_address: enteredAddress,
+        ...(meta.lat && meta.lng ? { lat: meta.lat, lng: meta.lng } : {}),
       },
       delivery_contact: { name: order.customer_name, email: order.customer_email, mobile_number: phone },
       parcels, opt_in_rates: [], opt_in_time_based_rates: [],
     };
   }
 
-  // ── Call TCG API ──────────────────────────────────────────────────────────
+  // ── Call Pudo API ─────────────────────────────────────────────────────────
   const pudoKey = Deno.env.get('PUDO_API_KEY') ?? '';
   if (!pudoKey) return respond({ error: 'PUDO_API_KEY not configured' }, 500, corsHeaders);
 
   let shipmentData: any;
   try {
-    const res = await fetch('https://api-tcg.co.za/shipments', {
+    const res = await fetch('https://api-pudo.co.za/shipments', {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${pudoKey}`, 'Accept': 'application/json', 'Content-Type': 'application/json', 'requested-from': 'portal' },
       body: JSON.stringify(payload),
     });
     const responseText = await res.text();
-    console.log(`[pudo-create-shipment] TCG ${res.status}: ${responseText.slice(0, 600)}`);
+    console.log(`[pudo-create-shipment] Pudo ${res.status}: ${responseText.slice(0, 600)}`);
     if (!res.ok) {
       await supabase.from('shop_orders').update({ pudo_error: `${res.status}: ${responseText.slice(0,500)}` }).eq('id', order_id);
-      return respond({ error: 'TCG API error', status: res.status, detail: responseText.slice(0,500) }, 502, corsHeaders);
+      return respond({ error: 'Pudo API error', status: res.status, detail: responseText.slice(0,500) }, 502, corsHeaders);
     }
     try { shipmentData = JSON.parse(responseText); }
-    catch { return respond({ error: 'Invalid JSON from TCG', raw: responseText.slice(0,300) }, 502, corsHeaders); }
+    catch { return respond({ error: 'Invalid JSON from Pudo', raw: responseText.slice(0,300) }, 502, corsHeaders); }
   } catch (err) {
     console.error('[pudo-create-shipment] Network error:', err);
     return respond({ error: 'Network error', detail: String(err) }, 502, corsHeaders);
