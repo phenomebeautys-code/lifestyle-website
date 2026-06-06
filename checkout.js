@@ -166,6 +166,10 @@ function goToStep(n) {
     if (i + 1 === n) pill.classList.add('active');
   });
 
+  if (n === 2) {
+    renderDeliveryOptions();
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (n === 3) {
