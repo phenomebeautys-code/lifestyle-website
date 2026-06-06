@@ -1,6 +1,7 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v11 — fix success_url/cancel_url params to match shop-success.html.
+   Cache-bust v12 — fallback price update, summary card step visibility,
+   dynamic fee on delivery method toggle.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -8,8 +9,8 @@ const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
 /* Fallback prices shown while the live quote is loading or if the API fails */
-const FALLBACK_DOOR_PRICE   = 99;
-const FALLBACK_LOCKER_PRICE = 59;
+const FALLBACK_DOOR_PRICE   = 117.50;
+const FALLBACK_LOCKER_PRICE = 69;
 
 /* -- State ---------------------------------------------------------------- */
 let currentStep      = 1;
@@ -33,6 +34,13 @@ let shippingQuoteError   = null;
 
 /* Maps lazy-load guard */
 let _mapsLoaded = false;
+
+/* -- Summary card visibility --------------------------------------------- */
+function renderSummaryCardVisibility() {
+  const summaryCard = document.getElementById('summaryCard');
+  if (!summaryCard) return;
+  summaryCard.style.display = currentStep >= 2 ? '' : 'none';
+}
 
 /* -- Google Maps lazy loader --------------------------------------------- */
 async function loadMapsIfNeeded() {
@@ -81,8 +89,8 @@ async function loadShippingQuote() {
 
   renderSummary();
   renderDeliveryOptions();
-   renderSidebarItems();
-   
+  renderSidebarItems();
+
   try {
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/get-shipping-quote`,
@@ -118,7 +126,7 @@ async function loadShippingQuote() {
     shippingQuoteLoading = false;
     renderSummary();
     renderDeliveryOptions();
-     renderSidebarItems();
+    renderSidebarItems();
   }
 }
 
@@ -181,6 +189,7 @@ function goToStep(n) {
 
   renderDeliveryDate();
   renderSummary();
+  renderSummaryCardVisibility();
 }
 
 /* -- Validation ----------------------------------------------------------- */
@@ -338,6 +347,7 @@ function selectDelivery(method, silent) {
   }
 
   renderSummary();
+  renderSidebarItems();
 }
 
 /* -- Cart summary render -------------------------------------------------- */
@@ -664,6 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
+  renderSummaryCardVisibility();
   renderDeliveryOptions();
   renderSummary();
   renderSidebarItems();
