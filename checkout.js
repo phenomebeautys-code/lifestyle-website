@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v13 — fix summary visibility IDs (orderSidebar, mobileSummary)
+   Cache-bust v14 — cart editor panel (open/close/render)
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -155,12 +155,101 @@ function loadCart() {
   } catch(e) { cart = []; }
 }
 
+function saveCart() {
+  try {
+    localStorage.setItem('pb_cart', JSON.stringify(cart));
+    sessionStorage.setItem('pb_cart', JSON.stringify(cart));
+  } catch(e) {}
+}
+
 function cartSubtotal() {
   return cart.reduce((s, item) => s + (Number(item.price) || 0) * (Number(item.qty) || 1), 0);
 }
 
 function cartTotal() {
   return cartSubtotal() + deliveryFee();
+}
+
+/* -- Cart editor ---------------------------------------------------------- */
+function openCartEditor() {
+  const panel = document.getElementById('cartEditorPanel');
+  if (!panel) return;
+  renderCartEditor();
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function closeCartEditor() {
+  const panel = document.getElementById('cartEditorPanel');
+  if (panel) panel.classList.remove('open');
+}
+
+function renderCartEditor() {
+  const container = document.getElementById('cartEditorItems');
+  if (!container) return;
+
+  if (!cart.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;padding:8px 0;">Your cart is empty.</p>';
+    return;
+  }
+
+  container.innerHTML = cart.map((item, i) => {
+    const unitPrice = Number(item.price) || 0;
+    const qty       = Number(item.qty)   || 1;
+    const lineTotal = unitPrice * qty;
+    const name      = item.name  || 'Product';
+    const img       = item.image || '';
+    return `
+      <div class="ce-item" id="ce-item-${i}">
+        <img class="ce-item-img" src="${img}" alt="${name}" onerror="this.style.display='none'" />
+        <div class="ce-item-info">
+          <div class="ce-item-name" title="${name}">${name}</div>
+          <div class="ce-item-price">R${lineTotal.toFixed(2)}</div>
+        </div>
+        <div class="ce-item-actions">
+          <div class="ce-qty-controls">
+            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},-1)" aria-label="Decrease quantity" ${qty <= 1 ? 'disabled' : ''}>&#8722;</button>
+            <span class="ce-qty-val">${qty}</span>
+            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},1)" aria-label="Increase quantity">&#43;</button>
+          </div>
+          <button class="ce-remove-btn" onclick="cartEditorRemove(${i})">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function cartEditorChangeQty(index, delta) {
+  if (!cart[index]) return;
+  const newQty = Math.max(1, (Number(cart[index].qty) || 1) + delta);
+  cart[index].qty = newQty;
+  saveCart();
+  renderCartEditor();
+  renderSidebarItems();
+  renderSummary();
+  loadShippingQuote();
+}
+
+function cartEditorRemove(index) {
+  if (!cart[index]) return;
+  cart.splice(index, 1);
+  saveCart();
+
+  if (!cart.length) {
+    closeCartEditor();
+    const emptyState = document.getElementById('emptyState');
+    const coLayout   = document.getElementById('coLayout');
+    const cartEditorPanel = document.getElementById('cartEditorPanel');
+    if (emptyState) emptyState.classList.add('show');
+    if (coLayout)   coLayout.style.display = 'none';
+    if (cartEditorPanel) cartEditorPanel.classList.remove('open');
+    return;
+  }
+
+  renderCartEditor();
+  renderSidebarItems();
+  renderSummary();
+  loadShippingQuote();
 }
 
 /* -- Step navigation ------------------------------------------------------ */
