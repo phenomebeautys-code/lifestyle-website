@@ -132,13 +132,20 @@
     .delivery-meta { margin-top: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
     .delivery-meta strong { display: block; margin-bottom: 5px; color: var(--accent-strong); font-family: var(--font-body); }
     .delivery-meta p { margin: 0; color: var(--text-soft); font-size: .88rem; line-height: 1.55; }
+    /* Phase 5a: vertical separator between meta text and date pill */
+    .delivery-meta-sep {
+      width: 1px;
+      align-self: stretch;
+      background: var(--glass-border);
+      flex-shrink: 0;
+    }
     .delivery-window { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; border-radius: var(--radius-pill); background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.18); color: #d8fff0; font-size: .8rem; font-weight: 700; white-space: nowrap; font-family: var(--font-body); }
     .co-divider { height: 1px; background: var(--glass-border); margin: 20px 0; }
     .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); }
     .toggle-copy h4 { margin: 0 0 3px; font-size: .95rem; color: var(--accent-strong); font-family: var(--font-body); }
     .toggle-copy p  { margin: 0; color: var(--text-soft); font-size: .84rem; line-height: 1.5; }
     .switch { position: relative; width: 56px; height: 32px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.10); border: 1px solid var(--glass-border); padding: 0; cursor: pointer; transition: background .18s ease; flex-shrink: 0; }
-    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; box-shadow: 0  4px 10px rgba(0,0,0,0.3); }
     .switch.on { background: var(--accent); border-color: var(--accent); }
     .switch.on::after { transform: translateX(24px); }
     .nav-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 26px; align-items: center; flex-wrap: wrap; }
@@ -457,8 +464,9 @@
       .field-grid.contact,
       .review-grid { grid-template-columns: 1fr; }
 
-      /* delivery meta stacks vertically */
+      /* delivery meta stacks vertically -- hide the separator */
       .delivery-meta { flex-direction: column; gap: 10px; }
+      .delivery-meta-sep { display: none; }
       .delivery-window { align-self: flex-start; }
 
       /* delivery cards: make tap targets taller */
@@ -662,7 +670,13 @@
                 <strong id="deliveryMetaTitle">Door delivery selected</strong>
                 <p id="deliveryMetaText">Enter your address and we'll estimate a delivery window based on business days and local holidays.</p>
               </div>
-              <div class="delivery-window" id="deliveryWindow"><span id="deliveryDateText2">Estimating&hellip;</span></div>
+              <!-- Phase 5a: vertical separator (hidden on mobile via CSS) -->
+              <div class="delivery-meta-sep" aria-hidden="true"></div>
+              <!-- Phase 5a: calendar icon added inside the date pill -->
+              <div class="delivery-window" id="deliveryWindow">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="deliveryDateText2">Estimating&hellip;</span>
+              </div>
             </div>
 
             <!-- Door fields -->
