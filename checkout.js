@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v8 — lazy-load Maps on Step 2; 3-char autocomplete guard.
+   Cache-bust v9 — create-order + yoco-shop-checkout two-step pay.
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -546,17 +546,16 @@ async function initYoco() {
 
 /* -- Payment handler ------------------------------------------------------ */
 async function handlePay() {
-  const btn   = document.getElementById('payBtn');
-  const alert = document.getElementById('alert-3');
+  const btn      = document.getElementById('payBtn');
+  const alertEl  = document.getElementById('alert-3');
 
-  if (btn)   { btn.disabled = true; }
-  if (alert) { alert.classList.remove('show'); }
+  if (btn)     { btn.disabled = true; }
+  if (alertEl) { alertEl.classList.remove('show'); }
 
   try {
     const sub = cartSubtotal();
     const fee = deliveryFee();
     const tot = sub + fee;
-    const amountCents = Math.round(tot * 100);
 
     const name  = document.getElementById('f-name')?.value.trim()  || '';
     const phone = document.getElementById('f-phone')?.value.trim() || '';
@@ -571,9 +570,11 @@ async function handlePay() {
     } : null;
 
     const special = document.getElementById('f-special')?.value.trim() || '';
+    const giftMsg = document.getElementById('f-gift-message')?.value.trim() || '';
+    const isGift  = !!document.getElementById('f-is-gift')?.checked;
 
     const orderPayload = {
-      amount_cents:         amountCents,
+      amount_cents:         Math.round(tot * 100),
       customer:             { name, phone, email },
       delivery_method:      deliveryMethod,
       delivery_address:     address,
@@ -582,6 +583,8 @@ async function handlePay() {
       locker_name:          selectedLocker?.name    || '',
       locker_address:       selectedLocker?.address || '',
       special_instructions: special,
+      is_gift:              isGift,
+      gift_message:         giftMsg || null,
       cart: cart.map(item => ({
         id:    item.id    || '',
         name:  item.name  || '',
@@ -591,7 +594,8 @@ async function handlePay() {
       })),
     };
 
-    const resp = await fetch(
+    /* ── Step 1: create the order row ── */
+    const orderResp = await fetch(
       `${SUPABASE_URL}/functions/v1/create-order`,
       {
         method: 'POST',
@@ -604,20 +608,43 @@ async function handlePay() {
       }
     );
 
-    const data = await resp.json();
-    if (!resp.ok || data.error) throw new Error(data.error || data.message || 'Payment failed');
+    const orderData = await orderResp.json();
+    if (!orderResp.ok || orderData.error) throw new Error(orderData.error || 'Could not create order.');
 
+    const orderId = orderData.order_id;
+
+    /* ── Step 2: create Yoco payment session ── */
+    const yocoResp = await fetch(
+      `${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+        body: JSON.stringify({
+          order_id:    orderId,
+          success_url: `${window.location.origin}/shop-success.html?ref=${encodeURIComponent(orderId)}&email=${encodeURIComponent(email)}`,
+          cancel_url:  `${window.location.origin}/checkout.html`,
+        }),
+      }
+    );
+
+    const yocoData = await yocoResp.json();
+    if (!yocoResp.ok || yocoData.error) throw new Error(yocoData.error || 'Payment session failed.');
+
+    /* ── Step 3: clear cart and redirect to Yoco ── */
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_checkout_draft');
 
-    const orderRef = data.order_ref || data.id || '';
-    window.location.href = `shop-success.html?ref=${encodeURIComponent(orderRef)}&email=${encodeURIComponent(email)}`;
+    window.location.href = yocoData.redirectUrl;
 
   } catch(e) {
-    if (alert) {
-      alert.textContent = e.message || 'Something went wrong. Please try again.';
-      alert.classList.add('show');
+    if (alertEl) {
+      alertEl.textContent = e.message || 'Something went wrong. Please try again.';
+      alertEl.classList.add('show');
     }
     if (btn) btn.disabled = false;
   }
@@ -673,7 +700,6 @@ window.initPlaces = async function() {
     const hint = document.getElementById('placesHint');
     if (hint) hint.style.display = '';
 
-    /* Suppress dropdown until 3 characters have been typed */
     streetInput.addEventListener('input', function() {
       if (this.value.length < 3) {
         const saved = this.value;
@@ -722,7 +748,6 @@ window.initPlaces = async function() {
       types: ['geocode'],
     });
 
-    /* Suppress dropdown until 3 characters have been typed */
     lockerInput.addEventListener('input', function() {
       if (this.value.length < 3) {
         const saved = this.value;
