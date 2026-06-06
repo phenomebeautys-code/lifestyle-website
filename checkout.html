@@ -72,10 +72,14 @@
     .step-num { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.07); font-size: .76rem; }
     .step-pill.active .step-num { background: rgba(255,255,255,0.15); }
     .step-pill.done  .step-num  { background: rgba(52,211,153,0.18); }
+    /* Phase 3: checkmark SVG inside done pill step-num */
+    .step-pill.done .step-num svg { display: block; }
     .step-arrow { opacity: .35; font-size: .9rem; color: var(--text-muted); }
     .step { display: none; animation: co-fade .26s ease; }
     .step.active { display: block; }
     @keyframes co-fade { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    /* Phase 3: delivery field reveal animation */
+    .fields-reveal { animation: co-fade .26s ease; }
     .step-tag { font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-family: var(--font-body); }
     .step-title { margin: 6px 0 0; font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong); }
     .step-copy { margin: 8px 0 22px; color: var(--text-soft); line-height: 1.65; font-size: .9rem; }
@@ -787,8 +791,8 @@
                 <p style="margin-top:4px;font-size:.82rem;color:var(--text-muted);">Est. <span id="rv-delivery-date"></span></p>
               </div>
               <div class="done-block" style="display:grid;gap:6px;">
-                <div class="review-line"><span id="rv-delivery-label">Delivery</span><span id="rv-delivery"></span></div>
                 <div class="review-line"><span>Subtotal </span><span id="rv-subtotal"></span></div>
+                <div class="review-line"><span id="rv-delivery-label">Delivery</span><span id="rv-delivery"></span></div>
                 <div class="review-line" style="font-weight:800;font-size:1rem;color:var(--accent-strong);border-top:1px solid var(--glass-border);padding-top:8px;margin-top:4px;"><span>Total</span><span id="rv-total"></span></div>
               </div>
               <div class="done-block" id="giftReviewBlock" style="display:none;">
@@ -900,8 +904,11 @@
 
     function useMyLocation() {
       if (!navigator.geolocation) return;
-      const btn = document.getElementById('lockerSearchBtn');
-      if (btn) { btn.disabled = true; btn.textContent = 'Locating...'; }
+      const btn  = document.getElementById('lockerSearchBtn');
+      const hint = document.getElementById('lockerPlacesHint');
+      if (btn)  { btn.disabled = true; btn.textContent = 'Locating...'; }
+      // Phase 3: show inline feedback immediately so users know geolocation is running
+      if (hint) { hint.style.display = 'flex'; }
       navigator.geolocation.getCurrentPosition(
         function(pos) {
           window.lockerSearchLat = pos.coords.latitude;
@@ -909,7 +916,8 @@
           searchLockers();
         },
         function() {
-          if (btn) { btn.disabled = false; btn.textContent = 'Search'; }
+          if (btn)  { btn.disabled = false; btn.textContent = 'Search'; }
+          if (hint) { hint.style.display = 'none'; }
         }
       );
     }
@@ -924,6 +932,60 @@
       });
       obs.observe(reveal, { attributes: true, attributeFilter: ['class'] });
     });
+
+    // Phase 3: Zeigarnik checkmark - swap step-num content to checkmark when pill gains "done" class
+    (function() {
+      var CHECKMARK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+      var NUMS = { 'breadcrumb-1': '1', 'breadcrumb-2': '2', 'breadcrumb-3': '3' };
+
+      function syncPill(pill) {
+        var numEl = pill.querySelector('.step-num');
+        if (!numEl) return;
+        if (pill.classList.contains('done')) {
+          numEl.innerHTML = CHECKMARK;
+        } else {
+          numEl.innerHTML = NUMS[pill.id] || numEl.innerHTML;
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        ['breadcrumb-1','breadcrumb-2','breadcrumb-3'].forEach(function(id) {
+          var pill = document.getElementById(id);
+          if (!pill) return;
+          // Sync on load in case state was restored
+          syncPill(pill);
+          // Watch for class changes made by checkout.js goToStep()
+          var obs = new MutationObserver(function() { syncPill(pill); });
+          obs.observe(pill, { attributes: true, attributeFilter: ['class'] });
+        });
+      });
+    })();
+
+    // Phase 3: fields-reveal animation when delivery method switches
+    (function() {
+      document.addEventListener('DOMContentLoaded', function() {
+        var doorFields   = document.getElementById('door-fields');
+        var lockerFields = document.getElementById('locker-fields');
+        if (!doorFields || !lockerFields) return;
+
+        var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(m) {
+            if (m.type !== 'attributes' || m.attributeName !== 'style') return;
+            var el = m.target;
+            var isVisible = el.style.display !== 'none' && el.style.display !== '';
+            if (isVisible) {
+              el.classList.remove('fields-reveal');
+              // Force reflow so animation replays each time
+              void el.offsetWidth;
+              el.classList.add('fields-reveal');
+            }
+          });
+        });
+
+        observer.observe(doorFields,   { attributes: true, attributeFilter: ['style'] });
+        observer.observe(lockerFields, { attributes: true, attributeFilter: ['style'] });
+      });
+    })();
   </script>
 
 </body>
