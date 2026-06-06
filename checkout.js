@@ -1,7 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v12 — fallback price update, summary card step visibility,
-   dynamic fee on delivery method toggle.
+   Cache-bust v13 — fix summary visibility IDs (orderSidebar, mobileSummary)
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -36,10 +35,18 @@ let shippingQuoteError   = null;
 let _mapsLoaded = false;
 
 /* -- Summary card visibility --------------------------------------------- */
+/*
+ * Targets:
+ *   #orderSidebar  — desktop aside panel
+ *   #mobileSummary — sticky mobile bar
+ * Both are hidden on step 1 and visible on steps 2 and 3.
+ */
 function renderSummaryCardVisibility() {
-  const summaryCard = document.getElementById('summaryCard');
-  if (!summaryCard) return;
-  summaryCard.style.display = currentStep >= 2 ? '' : 'none';
+  const show = currentStep >= 2;
+  const sidebar = document.getElementById('orderSidebar');
+  const mobile  = document.getElementById('mobileSummary');
+  if (sidebar) sidebar.style.display = show ? '' : 'none';
+  if (mobile)  mobile.style.display  = show ? '' : 'none';
 }
 
 /* -- Google Maps lazy loader --------------------------------------------- */
