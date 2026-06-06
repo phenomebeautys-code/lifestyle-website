@@ -1035,3 +1035,28 @@ function clearLockerSelection() {
   const display = document.getElementById('lockerSelectedDisplay');
   if (display) display.style.display = 'none';
 }
+
+/* -- Phase 4b: blur validation for Step 2 address fields ----------------- */
+/* Attaches on DOMContentLoaded so the elements are guaranteed to exist.    */
+/* Reuses the existing setFieldError() helper -- no duplication.            */
+(function() {
+  var ADDR_FIELDS = [
+    { inputId: 'f-street',   fieldId: 'field-street',   errId: 'err-street',   msg: 'Please enter your street address.' },
+    { inputId: 'f-suburb',   fieldId: 'field-suburb',   errId: 'err-suburb',   msg: 'Please enter your suburb.'         },
+    { inputId: 'f-city',     fieldId: 'field-city',     errId: 'err-city',     msg: 'Please enter your city.'           },
+    { inputId: 'f-postal',   fieldId: 'field-postal',   errId: 'err-postal',   msg: 'Please enter your postal code.'    },
+    { inputId: 'f-province', fieldId: 'field-province', errId: 'err-province', msg: 'Please enter your province.'       },
+  ];
+
+  document.addEventListener('DOMContentLoaded', function() {
+    ADDR_FIELDS.forEach(function(cfg) {
+      var input = document.getElementById(cfg.inputId);
+      if (!input) return;
+      input.addEventListener('blur', function() {
+        /* Only validate when door delivery is active -- locker users never fill these */
+        if (deliveryMethod !== 'door') return;
+        setFieldError(cfg.fieldId, cfg.errId, !input.value.trim(), cfg.msg);
+      });
+    });
+  });
+})();
