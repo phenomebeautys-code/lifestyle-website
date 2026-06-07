@@ -871,8 +871,10 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                   Finding your location&hellip;
                 </div>
-                <input type="hidden" id="lockerSearchLat" />
-                <input type="hidden" id="lockerSearchLng" />
+                <label for="lockerSearchLat" class="sr-only">Locker latitude</label>
+                <input type="hidden" id="lockerSearchLat" aria-hidden="true" />
+                <label for="lockerSearchLng" class="sr-only">Locker longitude</label>
+                <input type="hidden" id="lockerSearchLng" aria-hidden="true" />
                 <div id="lockerSizeNotice"></div>
                 <div class="locker-results" id="lockerResults"></div>
                 <div id="lockerSelectedDisplay" class="locker-selected" style="display:none;">
@@ -910,6 +912,7 @@
                   <h4>This is a gift</h4>
                   <p>Add a personalised message to include with the order.</p>
                 </div>
+                <label for="f-is-gift" class="sr-only">This is a gift</label>
                 <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
                 <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
               </div>
@@ -1025,4 +1028,34 @@
   <div class="cart-editor" id="cartEditorPanel" role="dialog" aria-modal="true" aria-label="Edit your cart">
     <div class="cart-editor-header">
       <h3>Edit cart</h3>
-      <button class="cart-editor-close" onclick="closeCartEditor()" aria-label="Close
+      <button class="cart-editor-close" onclick="closeCartEditor()" aria-label="Close cart editor">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="cart-editor-items" id="cartEditorItems"></div>
+    <div class="cart-editor-footer">
+      <div class="ce-footer-subtotal">
+        <span>Subtotal</span>
+        <strong id="ceSubtotal">R0</strong>
+      </div>
+      <button class="primary-btn" onclick="closeCartEditor()" style="padding:11px 22px;">Done</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <div class="loading" id="loadingOverlay">
+    <div class="loading-card">
+      <div class="loading-ring"></div>
+      <h3>Processing&hellip;</h3>
+      <p>Please wait while we prepare your payment.</p>
+    </div>
+  </div>
+
+  <script>
+    /* sr-only utility -- ensures .sr-only labels are visually hidden but accessible */
+    (function(){
+      var s = document.createElement('style');
+      s.textContent = '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}';
+      document.head.appendChild(s);
+    })();
+  </script>
