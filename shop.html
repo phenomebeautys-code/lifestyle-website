@@ -80,7 +80,7 @@
       text-align: center;
     }
     .shop-hero-panel h1 { font-family: var(--font-display); font-size: clamp(2.8rem,8vw,5rem); line-height:1; color: var(--accent-strong); margin-bottom:12px; }
-    .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto 24px; line-height:1.7; }
+    .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto; line-height:1.7; }
 
     .cart-float {
       display: inline-flex; align-items: center; gap:8px;
@@ -126,6 +126,15 @@
       font-family: var(--font-body);
     }
     .segment-card:hover { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.28); transform: translateY(-4px); }
+    .segment-card-img {
+      width: 100%; aspect-ratio: 16/9;
+      border-radius: 10px; overflow: hidden; margin-bottom: 4px;
+    }
+    .segment-card-img img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
+      transition: transform 0.4s ease;
+    }
+    .segment-card:hover .segment-card-img img { transform: scale(1.04); }
     .segment-card-title {
       font-family: var(--font-display);
       font-size: clamp(1.2rem, 2.5vw, 1.55rem);
@@ -166,9 +175,23 @@
     }
     .segment-switch-btn:hover { color: var(--accent-strong); }
 
+    /* ── Mobile: triangle layout ── */
     @media (max-width: 600px) {
-      .segment-cards { grid-template-columns: 1fr; }
-      .segment-card { padding: 22px 18px; }
+      .shop-hero { padding: 12px 0 6px; }
+      .shop-hero-panel { padding: 20px 18px; border-radius: 20px; }
+      .shop-hero-panel p { display: none; }
+      .segment-selector { padding: 6px 0 0; }
+      .segment-selector-inner {
+        background: none; border: none;
+        backdrop-filter: none; -webkit-backdrop-filter: none;
+        padding: 0; gap: 12px;
+      }
+      .segment-selector-inner h2 { display: none; }
+      .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .segment-card { padding: 14px 12px; gap: 8px; }
+      .segment-card-desc { display: none; }
+      .segment-card-img { aspect-ratio: 4/3; }
+      .segment-card-cta { padding: 8px 12px; font-size: 0.75rem; }
     }
 
     .shop-section { padding: 10px 0 40px; }
@@ -491,10 +514,6 @@
           <span class="section-kicker">Make Yourself A Priority.</span>
           <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help others do the same.</p>
-          <button class="btn btn-secondary" onclick="openCart()" aria-label="View cart">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-            View Cart (<span id="heroCartCount">0</span>)
-          </button>
         </div>
       </div>
     </section>
