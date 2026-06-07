@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0a0e" />
 
   <!-- Primary SEO -->
-  <title>Shop | PhenomeBeauty – Professional Skincare &amp; Wax Supplies Cape Town</title>
+  <title>Shop | PhenomeBeauty &ndash; Professional Skincare &amp; Wax Supplies Cape Town</title>
   <meta name="description" content="Shop professional skincare and wax supplies from PhenomeBeauty. Curated beauty products delivered to your door across Cape Town." />
   <meta name="keywords" content="PhenomeBeauty shop, skincare Cape Town, wax supplies Cape Town, professional beauty products, buy beauty products online South Africa" />
   <meta name="author" content="PhenomeBeauty" />
@@ -16,21 +16,21 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="PhenomeBeauty" />
-  <meta property="og:title" content="Shop | PhenomeBeauty – Professional Skincare &amp; Wax Supplies Cape Town" />
+  <meta property="og:title" content="Shop | PhenomeBeauty &ndash; Professional Skincare &amp; Wax Supplies Cape Town" />
   <meta property="og:description" content="Shop professional skincare and wax supplies from PhenomeBeauty. Curated beauty products delivered to your door across Cape Town." />
   <meta property="og:image" content="https://iili.io/fpLVF9e.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="PhenomeBeauty shop – skincare and wax supplies" />
+  <meta property="og:image:alt" content="PhenomeBeauty shop &ndash; skincare and wax supplies" />
   <meta property="og:url" content="https://phenomebeauty.co.za/shop.html" />
   <meta property="og:locale" content="en_ZA" />
 
   <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Shop | PhenomeBeauty – Professional Skincare &amp; Wax Supplies Cape Town" />
+  <meta name="twitter:title" content="Shop | PhenomeBeauty &ndash; Professional Skincare &amp; Wax Supplies Cape Town" />
   <meta name="twitter:description" content="Shop professional skincare and wax supplies from PhenomeBeauty. Curated beauty products delivered to your door across Cape Town." />
   <meta name="twitter:image" content="https://iili.io/fpLVF9e.png" />
-  <meta name="twitter:image:alt" content="PhenomeBeauty shop – skincare and wax supplies" />
+  <meta name="twitter:image:alt" content="PhenomeBeauty shop &ndash; skincare and wax supplies" />
 
   <!-- Geo / Local SEO -->
   <meta name="geo.region" content="ZA-WC" />
@@ -38,7 +38,7 @@
   <meta name="geo.position" content="-33.9249;18.4241" />
   <meta name="ICBM" content="-33.9249, 18.4241" />
 
-  <!-- JSON-LD Structured Data — Product page -->
+  <!-- JSON-LD Structured Data &mdash; Product page -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -81,6 +81,16 @@
     }
     .shop-hero-panel h1 { font-family: var(--font-display); font-size: clamp(2.8rem,8vw,5rem); line-height:1; color: var(--accent-strong); margin-bottom:12px; }
     .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto; line-height:1.7; }
+
+    .hero-sub-prompt {
+      margin-top: 18px !important;
+      font-size: 0.82rem !important;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted) !important;
+      max-width: 100% !important;
+    }
 
     .cart-float {
       display: inline-flex; align-items: center; gap:8px;
@@ -180,6 +190,7 @@
       .shop-hero { padding: 12px 0 6px; }
       .shop-hero-panel { padding: 20px 18px; border-radius: 20px; }
       .shop-hero-panel p { display: none; }
+      .hero-sub-prompt { display: none !important; }
       .segment-selector { padding: 6px 0 0; }
       .segment-selector-inner {
         background: none; border: none;
@@ -514,6 +525,7 @@
           <span class="section-kicker">Make Yourself A Priority.</span>
           <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help others do the same.</p>
+          <p class="hero-sub-prompt" id="heroSubPrompt">Who are you shopping for?</p>
         </div>
       </div>
     </section>
@@ -762,6 +774,8 @@
       localStorage.setItem(SEGMENT_KEY, segment);
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = 'none';
+      const prompt = document.getElementById('heroSubPrompt');
+      if (prompt) prompt.style.display = 'none';
       applySegment(segment);
       fetchProducts();
     }
@@ -770,6 +784,8 @@
       localStorage.removeItem(SEGMENT_KEY);
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = 'none';
+      const prompt = document.getElementById('heroSubPrompt');
+      if (prompt) prompt.style.display = 'none';
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
       updateShopHero(null);
       fetchProducts();
@@ -782,6 +798,8 @@
       if (grid) grid.innerHTML = '';
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = '';
+      const prompt = document.getElementById('heroSubPrompt');
+      if (prompt) prompt.style.display = '';
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
       updateShopHero(null);
     }
@@ -1047,6 +1065,8 @@
       if (savedSegment) {
         const mount = document.getElementById('segmentSelectorMount');
         if (mount) mount.style.display = 'none';
+        const prompt = document.getElementById('heroSubPrompt');
+        if (prompt) prompt.style.display = 'none';
         applySegment(savedSegment);
         fetchProducts();
       }
