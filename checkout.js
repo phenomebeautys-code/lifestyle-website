@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v15 — cart editor modal (overlay, overflow, live subtotal)
+   Cache-bust v16 — add useMyLocation, fix ceFooterSubtotal
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -251,9 +251,9 @@ function renderCartEditor() {
         </div>
         <div class="ce-item-actions">
           <div class="ce-qty-controls">
-            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},-1)" aria-label="Decrease quantity" ${qty <= 1 ? 'disabled' : ''}>&#8722;</button>
+            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},-1)" aria-label="Decrease quantity" ${qty <= 1 ? 'disabled' : ''}>&minus;</button>
             <span class="ce-qty-val">${qty}</span>
-            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},1)" aria-label="Increase quantity">&#43;</button>
+            <button class="ce-qty-btn" onclick="cartEditorChangeQty(${i},1)" aria-label="Increase quantity">&plus;</button>
           </div>
           <button class="ce-remove-btn" onclick="cartEditorRemove(${i})">Remove</button>
         </div>
@@ -1053,6 +1053,41 @@ async function searchLockers(query) {
     console.error('[checkout] Locker search failed:', e);
     list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Search failed. Please try again.</div>';
   }
+}
+
+/* -- Use my location ----------------------------------------------------- */
+function useMyLocation() {
+  const hint = document.getElementById('lockerPlacesHint');
+  const list = document.getElementById('lockerResults');
+
+  if (!navigator.geolocation) {
+    if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Geolocation is not supported by your browser.</div>';
+    return;
+  }
+
+  if (hint) {
+    hint.style.display = 'flex';
+    hint.querySelector && (hint.querySelector('span') || hint).textContent && (hint.lastChild.textContent = 'Finding your location\u2026');
+  }
+
+  if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Detecting your location&hellip;</div>';
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      lockerSearchLat = pos.coords.latitude;
+      lockerSearchLng = pos.coords.longitude;
+      window.lockerSearchLat = lockerSearchLat;
+      window.lockerSearchLng = lockerSearchLng;
+      if (hint) hint.style.display = 'none';
+      searchLockers('');
+    },
+    function(err) {
+      if (hint) hint.style.display = 'none';
+      if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Could not detect your location. Please search manually.</div>';
+      console.warn('[checkout] Geolocation error:', err);
+    },
+    { timeout: 10000, maximumAge: 60000 }
+  );
 }
 
 function selectLockerByIndex(i) {
