@@ -1036,7 +1036,7 @@
     <div class="cart-editor-footer">
       <div class="ce-footer-subtotal">
         <span>Subtotal</span>
-        <strong id="ceSubtotal">R0</strong>
+        <strong id="ceFooterSubtotal">R0</strong>
       </div>
       <button class="primary-btn" onclick="closeCartEditor()" style="padding:11px 22px;">Done</button>
     </div>
@@ -1052,10 +1052,13 @@
   </div>
 
   <script>
-    /* sr-only utility -- ensures .sr-only labels are visually hidden but accessible */
     (function(){
       var s = document.createElement('style');
       s.textContent = '.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}';
       document.head.appendChild(s);
     })();
   </script>
+
+  <script src="checkout.js"></script>
+</body>
+</html>
