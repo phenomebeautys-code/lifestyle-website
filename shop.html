@@ -744,7 +744,7 @@
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = 'none';
       applySegment(segment);
-      if (window._products) renderProducts(window._products);
+      fetchProducts();
     }
 
     function browseAll() {
@@ -753,11 +753,14 @@
       if (mount) mount.style.display = 'none';
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
       updateShopHero(null);
-      if (window._products) renderProducts(window._products);
+      fetchProducts();
     }
 
     function resetSegment() {
       localStorage.removeItem(SEGMENT_KEY);
+      window._products = null;
+      const grid = document.getElementById('productGrid');
+      if (grid) grid.innerHTML = '';
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = '';
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
@@ -1026,8 +1029,8 @@
         const mount = document.getElementById('segmentSelectorMount');
         if (mount) mount.style.display = 'none';
         applySegment(savedSegment);
+        fetchProducts();
       }
-      fetchProducts();
       updateBadges();
       if (cart.length) showStickyBar();
       if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
