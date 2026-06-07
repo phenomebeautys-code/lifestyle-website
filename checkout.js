@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v14 — cart editor panel (open/close/render)
+   Cache-bust v15 — cart editor modal (overlay, overflow, live subtotal)
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -23,7 +23,7 @@ let yocoSDK          = null;
 let yocoCard         = null;
 let specialOpen      = false;
 
-/* Locker search results — stored here so cards only pass an index to onclick */
+/* Locker search results -- stored here so cards only pass an index to onclick */
 let _lockerResults = [];
 
 /* Live shipping quote state */
@@ -34,15 +34,12 @@ let shippingQuoteError   = null;
 /* Maps lazy-load guard */
 let _mapsLoaded = false;
 
+/* Cart editor overflow state -- true once the user expands beyond 5 items */
+let _ceOverflowOpen = false;
+
 /* -- Summary card visibility --------------------------------------------- */
-/*
- * Targets:
- *   #orderSidebar  — desktop aside panel
- *   #mobileSummary — sticky mobile bar
- * Both are hidden on step 1 and visible on steps 2 and 3.
- */
 function renderSummaryCardVisibility() {
-  const show = currentStep >= 2;
+  const show    = currentStep >= 2;
   const sidebar = document.getElementById('orderSidebar');
   const mobile  = document.getElementById('mobileSummary');
   if (sidebar) sidebar.style.display = show ? '' : 'none';
@@ -171,29 +168,75 @@ function cartTotal() {
 }
 
 /* -- Cart editor ---------------------------------------------------------- */
+
+/*
+ * openCartEditor
+ * Resets the overflow state each time the modal opens so the list always
+ * starts collapsed at 5 items. Toggles both the backdrop overlay and the
+ * modal card. Traps focus inside the dialog for accessibility.
+ */
 function openCartEditor() {
-  const panel = document.getElementById('cartEditorPanel');
+  const overlay = document.getElementById('cartEditorOverlay');
+  const panel   = document.getElementById('cartEditorPanel');
   if (!panel) return;
+
+  _ceOverflowOpen = false;
   renderCartEditor();
+
+  if (overlay) overlay.classList.add('open');
   panel.classList.add('open');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  /* Prevent body scroll while modal is open */
+  document.body.style.overflow = 'hidden';
+
+  /* Move focus into the dialog */
+  const firstBtn = panel.querySelector('button');
+  if (firstBtn) firstBtn.focus();
 }
 
+/*
+ * closeCartEditor
+ * Removes .open from both overlay and card, restores body scroll.
+ */
 function closeCartEditor() {
-  const panel = document.getElementById('cartEditorPanel');
-  if (panel) panel.classList.remove('open');
+  const overlay = document.getElementById('cartEditorOverlay');
+  const panel   = document.getElementById('cartEditorPanel');
+  if (overlay) overlay.classList.remove('open');
+  if (panel)   panel.classList.remove('open');
+  document.body.style.overflow = '';
 }
 
+/*
+ * updateCartEditorFooter  (Doherty Threshold)
+ * Synchronously updates the live subtotal in the modal footer.
+ * Called after every qty change or remove so the number is instant.
+ */
+function updateCartEditorFooter() {
+  const el = document.getElementById('ceFooterSubtotal');
+  if (el) el.textContent = `R${cartSubtotal().toFixed(2)}`;
+}
+
+/*
+ * renderCartEditor
+ * Builds the item list with a 5-item cap (Miller's Law).
+ * Items 6+ are placed inside .ce-overflow which starts hidden.
+ * An overflow toggle button is injected when needed.
+ */
 function renderCartEditor() {
   const container = document.getElementById('cartEditorItems');
   if (!container) return;
+
+  updateCartEditorFooter();
 
   if (!cart.length) {
     container.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;padding:8px 0;">Your cart is empty.</p>';
     return;
   }
 
-  container.innerHTML = cart.map((item, i) => {
+  const VISIBLE_CAP = 5;
+  const hasOverflow = cart.length > VISIBLE_CAP;
+
+  function itemHTML(item, i) {
     const unitPrice = Number(item.price) || 0;
     const qty       = Number(item.qty)   || 1;
     const lineTotal = unitPrice * qty;
@@ -216,7 +259,47 @@ function renderCartEditor() {
         </div>
       </div>
     `;
-  }).join('');
+  }
+
+  const visibleItems  = cart.slice(0, VISIBLE_CAP);
+  const overflowItems = cart.slice(VISIBLE_CAP);
+
+  let html = visibleItems.map((item, i) => itemHTML(item, i)).join('');
+
+  if (hasOverflow) {
+    const overflowCount = overflowItems.length;
+    const openClass     = _ceOverflowOpen ? 'open' : '';
+    html += `<div class="ce-overflow ${openClass}" id="ceOverflow">`;
+    html += overflowItems.map((item, i) => itemHTML(item, VISIBLE_CAP + i)).join('');
+    html += `</div>`;
+    if (!_ceOverflowOpen) {
+      html += `<button class="ce-overflow-toggle" id="ceOverflowToggle" onclick="toggleCeOverflow()">Show all (${cart.length} items)</button>`;
+    } else {
+      html += `<button class="ce-overflow-toggle" id="ceOverflowToggle" onclick="toggleCeOverflow()">Show less</button>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+/*
+ * toggleCeOverflow
+ * Expands or collapses the hidden items beyond the 5-item cap.
+ * Updates the toggle button label in place without a full re-render
+ * to avoid scroll-jump inside the modal.
+ */
+function toggleCeOverflow() {
+  _ceOverflowOpen = !_ceOverflowOpen;
+
+  const overflow = document.getElementById('ceOverflow');
+  const toggle   = document.getElementById('ceOverflowToggle');
+
+  if (overflow) overflow.classList.toggle('open', _ceOverflowOpen);
+  if (toggle) {
+    toggle.textContent = _ceOverflowOpen
+      ? 'Show less'
+      : `Show all (${cart.length} items)`;
+  }
 }
 
 function cartEditorChangeQty(index, delta) {
@@ -225,6 +308,7 @@ function cartEditorChangeQty(index, delta) {
   cart[index].qty = newQty;
   saveCart();
   renderCartEditor();
+  updateCartEditorFooter();
   renderSidebarItems();
   renderSummary();
   loadShippingQuote();
@@ -237,16 +321,15 @@ function cartEditorRemove(index) {
 
   if (!cart.length) {
     closeCartEditor();
-    const emptyState = document.getElementById('emptyState');
-    const coLayout   = document.getElementById('coLayout');
-    const cartEditorPanel = document.getElementById('cartEditorPanel');
+    const emptyState      = document.getElementById('emptyState');
+    const coLayout        = document.getElementById('coLayout');
     if (emptyState) emptyState.classList.add('show');
     if (coLayout)   coLayout.style.display = 'none';
-    if (cartEditorPanel) cartEditorPanel.classList.remove('open');
     return;
   }
 
   renderCartEditor();
+  updateCartEditorFooter();
   renderSidebarItems();
   renderSummary();
   loadShippingQuote();
@@ -511,7 +594,7 @@ function renderDeliveryDate() {
   }
   const latest = date;
 
-  const fmt = d => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
+  const fmt  = d => d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
   const text = `${fmt(earliest)} - ${fmt(latest)}`;
 
   targets.forEach(el => { if (el) el.textContent = text; });
@@ -622,11 +705,28 @@ function toggleGift() {
   reveal.style.maxHeight = isOpen ? reveal.scrollHeight + 'px' : '0';
 }
 
+/* -- Special instructions toggle ----------------------------------------- */
+function toggleSpecial() {
+  specialOpen = !specialOpen;
+  const wrap = document.getElementById('specialFieldWrap');
+  const btn  = document.getElementById('specialToggle');
+  if (wrap) wrap.style.display = specialOpen ? '' : 'none';
+  if (btn)  btn.classList.toggle('on', specialOpen);
+}
+
 /* -- Exit nudge ----------------------------------------------------------- */
 function dismissNudge() {
   const nudge = document.getElementById('exitNudge');
   if (nudge) nudge.classList.remove('show');
 }
+
+/* -- Keyboard: close modal on Escape ------------------------------------- */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const panel = document.getElementById('cartEditorPanel');
+    if (panel && panel.classList.contains('open')) closeCartEditor();
+  }
+});
 
 /* -- Yoco payment init ---------------------------------------------------- */
 async function initYoco() {
@@ -654,8 +754,8 @@ async function initYoco() {
 
 /* -- Payment handler ------------------------------------------------------ */
 async function handlePay() {
-  const btn      = document.getElementById('payBtn');
-  const alertEl  = document.getElementById('alert-3');
+  const btn     = document.getElementById('payBtn');
+  const alertEl = document.getElementById('alert-3');
 
   if (btn)     { btn.disabled = true; }
   if (alertEl) { alertEl.classList.remove('show'); }
@@ -702,7 +802,6 @@ async function handlePay() {
       })),
     };
 
-    /* -- Step 1: create the order row -- */
     const orderResp = await fetch(
       `${SUPABASE_URL}/functions/v1/create-order`,
       {
@@ -721,7 +820,6 @@ async function handlePay() {
 
     const orderId = orderData.order_id;
 
-    /* -- Step 2: create Yoco payment session -- */
     const yocoResp = await fetch(
       `${SUPABASE_URL}/functions/v1/yoco-shop-checkout`,
       {
@@ -742,7 +840,6 @@ async function handlePay() {
     const yocoData = await yocoResp.json();
     if (!yocoResp.ok || yocoData.error) throw new Error(yocoData.error || 'Payment session failed.');
 
-    /* -- Step 3: clear cart and redirect to Yoco -- */
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_checkout_draft');
@@ -958,7 +1055,6 @@ async function searchLockers(query) {
   }
 }
 
-/* Selects a locker by its index in _lockerResults. Safe for any name/address. */
 function selectLockerByIndex(i) {
   const l = _lockerResults[i];
   if (!l) return;
@@ -999,7 +1095,6 @@ function selectLockerByIndex(i) {
   if (list) list.innerHTML = '';
 }
 
-/* Keep old name as alias in case any inline HTML still references it */
 function selectLocker(id, name, address, boxSize, sizeUnknown) {
   selectedLocker = { id, name, address, boxSize, sizeUnknown };
 
@@ -1037,8 +1132,6 @@ function clearLockerSelection() {
 }
 
 /* -- Phase 4b: blur validation for Step 2 address fields ----------------- */
-/* Attaches on DOMContentLoaded so the elements are guaranteed to exist.    */
-/* Reuses the existing setFieldError() helper -- no duplication.            */
 (function() {
   var ADDR_FIELDS = [
     { inputId: 'f-street',   fieldId: 'field-street',   errId: 'err-street',   msg: 'Please enter your street address.' },
@@ -1053,7 +1146,6 @@ function clearLockerSelection() {
       var input = document.getElementById(cfg.inputId);
       if (!input) return;
       input.addEventListener('blur', function() {
-        /* Only validate when door delivery is active -- locker users never fill these */
         if (deliveryMethod !== 'door') return;
         setFieldError(cfg.fieldId, cfg.errId, !input.value.trim(), cfg.msg);
       });
