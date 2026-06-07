@@ -155,6 +155,31 @@
     .mini-btn:hover { background: rgba(255,255,255,0.10); }
     .chip-btn { appearance: none; border: 1px solid var(--glass-border); border-radius: var(--radius-pill); padding: 9px 13px; font-size: .8rem; font-family: var(--font-body); font-weight: 600; background: rgba(255,255,255,0.04); color: var(--text-muted); cursor: pointer; transition: background .18s ease; }
     .chip-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* ---- Edit cart button (Von Restorff) ---- */
+    .edit-cart-btn {
+      appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: var(--radius-pill);
+      padding: 8px 14px;
+      font-size: .82rem;
+      font-family: var(--font-body);
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      color: var(--accent-strong);
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease;
+      white-space: nowrap;
+    }
+    .edit-cart-btn:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.36);
+    }
+    .edit-cart-btn svg { flex-shrink: 0; opacity: .85; }
+
     .summary-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
     .summary-title h2 { margin: 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--accent-strong); }
     .summary-title p  { margin: 5px 0 0; color: var(--text-soft); font-size: .84rem; }
@@ -205,6 +230,7 @@
     .locker-size-note { padding: 8px 12px; border-radius: 10px; font-size: .8rem; line-height: 1.5; }
     .locker-size-note--confirmed { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); color: #d8fff0; }
     .locker-size-note--unknown { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #ffe0ad; }
+
     /* Phase 5b: Optional add-ons group */
     .addons-label {
       margin: 0 0 12px;
@@ -224,6 +250,7 @@
       display: grid;
       gap: 12px;
     }
+
     /* Phase 6: trust signals bar */
     .trust-bar {
       display: flex;
@@ -247,6 +274,7 @@
     }
     .trust-item svg { flex-shrink: 0; opacity: .7; }
     .trust-item .yoco-svg { flex-shrink: 0; opacity: .85; fill: currentColor; }
+
     .exit-nudge {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-100%);
       z-index: 999; background: rgba(10,10,14,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -261,6 +289,7 @@
     .exit-nudge p { margin: 0; color: var(--text); font-size: .9rem; }
     .exit-nudge strong { color: var(--accent-strong); }
     .exit-nudge-actions { display: flex; gap: 8px; }
+
     .mobile-summary-bar { display: none; }
     .mobile-summary-body { overflow: hidden; max-height: 0; transition: max-height .3s ease; padding: 0 4px; }
     .mobile-summary-body.open { max-height: 800px; }
@@ -268,6 +297,7 @@
     .mobile-summary-copy { display: grid; gap: 2px; text-align: left; }
     .mobile-summary-copy span  { font-size: .74rem; color: var(--text-muted); font-family: var(--font-body); }
     .mobile-summary-copy strong { font-size: .98rem; color: var(--accent-strong); font-family: var(--font-body); }
+
     .toast {
       position: fixed; left: 50%; transform: translateX(-50%);
       bottom: 18px; z-index: 50;
@@ -286,6 +316,7 @@
     .loading-card h3 { margin: 0 0 8px; font-family: var(--font-display); font-size: 1.3rem; color: var(--accent-strong); }
     .loading-card p  { margin: 0; color: var(--text-soft); line-height: 1.6; font-size: .9rem; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
     .pac-container {
       background: rgba(10,10,14,0.97); border: 1px solid var(--glass-border);
       border-radius: 14px; margin-top: 4px; box-shadow: var(--shadow-lg);
@@ -297,26 +328,60 @@
     .pac-icon { display: none; }
     .hdpi.pac-logo::after, .pac-logo::after { display: none; }
 
-    /* ---- Cart editor panel ---- */
-    .cart-editor {
-      display: none;
-      margin-top: 16px;
-      padding: 22px;
-      border-radius: 24px;
-      background: linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03));
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-lg);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      animation: co-fade .22s ease;
+    /* ========================================================
+       Cart editor -- modal overlay (Laws of UX refactor)
+       ======================================================== */
+
+    /* Backdrop */
+    .cart-editor-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(4,4,6,0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease;
     }
-    .cart-editor.open { display: block; }
+    .cart-editor-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Modal card -- desktop: centred */
+    .cart-editor {
+      position: fixed;
+      z-index: 61;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -48%) scale(0.97);
+      width: min(92vw, 560px);
+      max-height: 82vh;
+      overflow-y: auto;
+      padding: 28px;
+      border-radius: 28px;
+      background: linear-gradient(180deg,rgba(22,22,30,0.98),rgba(12,12,18,0.98));
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease, transform .24s cubic-bezier(.4,0,.2,1);
+    }
+    .cart-editor.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
     .cart-editor-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
     .cart-editor-header h3 {
       margin: 0;
@@ -328,8 +393,8 @@
       appearance: none;
       border: 1px solid var(--glass-border);
       border-radius: 50%;
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       background: rgba(255,255,255,0.05);
       color: var(--text-muted);
       cursor: pointer;
@@ -340,7 +405,10 @@
       transition: background .18s ease, color .18s ease;
     }
     .cart-editor-close:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
     .cart-editor-items { display: grid; gap: 10px; }
+
+    /* Individual item rows */
     .ce-item {
       display: grid;
       grid-template-columns: 52px 1fr auto;
@@ -358,7 +426,7 @@
       object-fit: cover;
       flex-shrink: 0;
     }
-    .ce-item-info { display: grid; gap: 6px; min-width: 0; }
+    .ce-item-info { display: grid; gap: 4px; min-width: 0; }
     .ce-item-name {
       font-size: .9rem;
       font-weight: 600;
@@ -377,7 +445,7 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
     }
     .ce-qty-controls {
@@ -385,19 +453,21 @@
       align-items: center;
       gap: 6px;
     }
+
+    /* Fitts's Law: min tap target 36px desktop */
     .ce-qty-btn {
       appearance: none;
       border: 1px solid var(--glass-border);
       border-radius: 50%;
-      width: 28px;
-      height: 28px;
+      width: 36px;
+      height: 36px;
       background: rgba(255,255,255,0.06);
       color: var(--text);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: .9rem;
+      font-size: .92rem;
       font-weight: 700;
       line-height: 1;
       transition: background .15s ease;
@@ -405,34 +475,85 @@
     }
     .ce-qty-btn:hover { background: rgba(255,255,255,0.14); }
     .ce-qty-btn:disabled { opacity: .35; cursor: not-allowed; }
+
     .ce-qty-val {
-      min-width: 20px;
+      min-width: 22px;
       text-align: center;
       font-size: .9rem;
       font-weight: 700;
       color: var(--accent-strong);
       font-family: var(--font-body);
     }
+
+    /* Hick's Law: remove hidden by default on non-touch devices */
     .ce-remove-btn {
       appearance: none;
       border: none;
       background: none;
-      padding: 2px 4px;
+      padding: 3px 4px;
       font-size: .75rem;
       color: var(--text-muted);
       cursor: pointer;
       font-family: var(--font-body);
       letter-spacing: .02em;
-      transition: color .15s ease;
+      transition: color .15s ease, opacity .15s ease;
       white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .ce-item:hover .ce-remove-btn,
+    .ce-item:focus-within .ce-remove-btn {
+      opacity: 1;
+      pointer-events: auto;
     }
     .ce-remove-btn:hover { color: #fca5a5; }
+
+    /* Miller's Law: overflow toggle */
+    .ce-overflow { display: none; }
+    .ce-overflow.open { display: contents; }
+    .ce-overflow-toggle {
+      appearance: none;
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-pill);
+      padding: 9px 16px;
+      font-size: .82rem;
+      font-family: var(--font-body);
+      font-weight: 600;
+      background: rgba(255,255,255,0.04);
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      transition: background .18s ease, color .18s ease;
+      margin-top: 4px;
+    }
+    .ce-overflow-toggle:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+
+    /* Footer: live subtotal + Done button */
     .cart-editor-footer {
-      margin-top: 18px;
-      padding-top: 14px;
+      margin-top: 20px;
+      padding-top: 16px;
       border-top: 1px solid var(--glass-border);
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .ce-footer-subtotal {
+      display: grid;
+      gap: 2px;
+    }
+    .ce-footer-subtotal span {
+      font-size: .76rem;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+    }
+    .ce-footer-subtotal strong {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--accent-strong);
+      font-family: var(--font-body);
     }
 
     /* ---- mobile nav fixes ---- */
@@ -479,7 +600,6 @@
         border: 1px solid var(--glass-border);
         box-shadow: var(--shadow-lg); gap: 0;
       }
-      .cart-editor { margin-top: 12px; }
     }
 
     /* ---- 760px: core mobile layout ---- */
@@ -511,8 +631,35 @@
       .secure-badge { width: 100%; justify-content: center; margin-top: 8px; }
       .exit-nudge   { width: calc(100% - 32px); border-radius: 0 0 16px 16px; }
       .mobile-summary-bar { bottom: 8px; border-radius: 16px; }
+
+      /* Mobile: remove always visible (no hover on touch) */
+      .ce-remove-btn {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Mobile: bottom sheet */
+      .cart-editor {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: 88vh;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+        /* reset desktop translate */
+        position: fixed;
+      }
+      .cart-editor.open {
+        transform: translateY(0);
+      }
+
       .ce-item { grid-template-columns: 44px 1fr auto; gap: 10px; padding: 10px; }
       .ce-item-img { width: 44px; height: 44px; border-radius: 8px; }
+      /* Fitts: 40px on mobile */
+      .ce-qty-btn { width: 40px; height: 40px; font-size: .88rem; }
     }
 
     /* ---- 480px: small phones ---- */
@@ -541,12 +688,11 @@
       .review-line { font-size: .84rem; }
       .mobile-summary-bar { padding: 12px 14px; }
       .mobile-summary-copy strong { font-size: .92rem; }
-      .cart-editor { padding: 16px; border-radius: 18px; }
+      .cart-editor { padding: 20px; }
       .cart-editor-header h3 { font-size: 1.1rem; }
       .ce-item { grid-template-columns: 40px 1fr auto; gap: 8px; padding: 9px; }
       .ce-item-img { width: 40px; height: 40px; }
       .ce-item-name { font-size: .84rem; }
-      .ce-qty-btn { width: 26px; height: 26px; font-size: .82rem; }
     }
   </style>
 </head>
@@ -839,25 +985,14 @@
             <p id="itemCountLabel">0 items in your cart</p>
             <p id="done-contact-val-2" style="font-size:.8rem;color:var(--text-muted);margin-top:2px;"></p>
           </div>
-          <button class="mini-btn" onclick="openCartEditor()">Edit cart</button>
+          <button class="edit-cart-btn" onclick="openCartEditor()" aria-label="Edit your cart">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit cart
+          </button>
         </div>
         <div class="summary-rows" id="summaryItems"></div>
         <div class="co-totals" id="summaryTotals"></div>
       </aside>
-    </div>
-
-    <!-- Cart editor panel -->
-    <div class="cart-editor" id="cartEditorPanel" aria-label="Edit your cart">
-      <div class="cart-editor-header">
-        <h3>Edit cart</h3>
-        <button class="cart-editor-close" onclick="closeCartEditor()" aria-label="Close cart editor">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="cart-editor-items" id="cartEditorItems"></div>
-      <div class="cart-editor-footer">
-        <button class="primary-btn" onclick="closeCartEditor()" style="padding:11px 24px;">Done</button>
-      </div>
     </div>
 
     <!-- Mobile summary bar -->
@@ -868,7 +1003,10 @@
           <strong id="msTotalDisplay">R0</strong>
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-          <button type="button" class="mini-btn" style="padding:7px 12px;font-size:.78rem;" onclick="event.stopPropagation();openCartEditor()">Edit cart</button>
+          <button type="button" class="edit-cart-btn" style="padding:7px 12px;font-size:.78rem;" onclick="event.stopPropagation();openCartEditor()" aria-label="Edit your cart">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
           <svg id="msChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition:transform .2s ease"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </button>
@@ -880,175 +1018,11 @@
 
   </div>
 
-  <!-- Loading overlay -->
-  <div class="loading" id="coLoading">
-    <div class="loading-card">
-      <div class="loading-ring"></div>
-      <h3>Processing your order</h3>
-      <p id="loadingMsg">Please wait&hellip;</p>
-    </div>
-  </div>
+  <!-- Cart editor modal overlay -->
+  <div class="cart-editor-overlay" id="cartEditorOverlay" onclick="closeCartEditor()" aria-hidden="true"></div>
 
-  <!-- Toast -->
-  <div class="toast" id="coToast">Your details have been restored.</div>
-
-  <script src="checkout.js"></script>
-
-  <script>
-    // Burger toggle for checkout navbar
-    (function() {
-      var btn    = document.getElementById('menuToggle');
-      var navbar = document.getElementById('navbar');
-      if (!btn || !navbar) return;
-      btn.addEventListener('click', function() {
-        var open = navbar.classList.toggle('menu-open');
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-      var links = document.querySelectorAll('#navMenu a');
-      links.forEach(function(link) {
-        link.addEventListener('click', function() {
-          navbar.classList.remove('menu-open');
-          btn.setAttribute('aria-expanded', 'false');
-        });
-      });
-    })();
-
-    function toggleSpecial() {
-      const btn  = document.getElementById('specialToggle');
-      const wrap = document.getElementById('specialFieldWrap');
-      if (!btn || !wrap) return;
-      btn.classList.toggle('on');
-      wrap.style.display = btn.classList.contains('on') ? '' : 'none';
-      if (btn.classList.contains('on')) document.getElementById('f-special')?.focus();
-    }
-
-    // Phase 5b: geolocation feedback
-    function useMyLocation() {
-      if (!navigator.geolocation) return;
-      const btn  = document.getElementById('lockerSearchBtn');
-      const hint = document.getElementById('lockerPlacesHint');
-      if (btn)  { btn.disabled = true; btn.textContent = 'Locating...'; }
-      if (hint) { hint.style.display = 'flex'; }
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          window.lockerSearchLat = pos.coords.latitude;
-          window.lockerSearchLng = pos.coords.longitude;
-          searchLockers();
-        },
-        function() {
-          if (btn)  { btn.disabled = false; btn.textContent = 'Search'; }
-          if (hint) { hint.style.display = 'none'; }
-        }
-      );
-    }
-
-    // Gift reveal accordion via max-height
-    document.addEventListener('DOMContentLoaded', function() {
-      const reveal = document.getElementById('giftReveal');
-      if (!reveal) return;
-      var obs = new MutationObserver(function() {
-        reveal.style.maxHeight = reveal.classList.contains('open')
-          ? reveal.scrollHeight + 'px' : '0';
-      });
-      obs.observe(reveal, { attributes: true, attributeFilter: ['class'] });
-    });
-
-    // Phase 3: Zeigarnik checkmark
-    (function() {
-      var CHECKMARK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
-      var NUMS = { 'breadcrumb-1': '1', 'breadcrumb-2': '2', 'breadcrumb-3': '3' };
-
-      function syncPill(pill) {
-        var numEl = pill.querySelector('.step-num');
-        if (!numEl) return;
-        if (pill.classList.contains('done')) {
-          numEl.innerHTML = CHECKMARK;
-        } else {
-          numEl.innerHTML = NUMS[pill.id] || numEl.innerHTML;
-        }
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-        ['breadcrumb-1','breadcrumb-2','breadcrumb-3'].forEach(function(id) {
-          var pill = document.getElementById(id);
-          if (!pill) return;
-          syncPill(pill);
-          var obs = new MutationObserver(function() { syncPill(pill); });
-          obs.observe(pill, { attributes: true, attributeFilter: ['class'] });
-        });
-      });
-    })();
-
-    // Phase 3: fields-reveal animation
-    (function() {
-      document.addEventListener('DOMContentLoaded', function() {
-        var doorFields   = document.getElementById('door-fields');
-        var lockerFields = document.getElementById('locker-fields');
-        if (!doorFields || !lockerFields) return;
-
-        var observer = new MutationObserver(function(mutations) {
-          mutations.forEach(function(m) {
-            if (m.type !== 'attributes' || m.attributeName !== 'style') return;
-            var el = m.target;
-            var isVisible = el.style.display !== 'none' && el.style.display !== '';
-            if (isVisible) {
-              el.classList.remove('fields-reveal');
-              void el.offsetWidth;
-              el.classList.add('fields-reveal');
-            }
-          });
-        });
-
-        observer.observe(doorFields,   { attributes: true, attributeFilter: ['style'] });
-        observer.observe(lockerFields, { attributes: true, attributeFilter: ['style'] });
-      });
-    })();
-
-    // Phase 4a: blur validation for Step 1 contact fields
-    (function() {
-      var PHONE_RE = /^[0-9 +\-()]{7,}$/;
-      var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-      function blurValidateField(fieldId, errId, isInvalid, msg) {
-        var field = document.getElementById(fieldId);
-        var err   = document.getElementById(errId);
-        if (!field || !err) return;
-        var val = field.value.trim();
-        if (isInvalid(val)) {
-          field.closest('[id^="field-"]') && field.closest('[id^="field-"]').classList.add('error');
-          err.textContent = msg;
-          err.classList.add('show');
-        } else {
-          field.closest('[id^="field-"]') && field.closest('[id^="field-"]').classList.remove('error');
-          err.classList.remove('show');
-        }
-      }
-
-      document.addEventListener('DOMContentLoaded', function() {
-        var nameInput  = document.getElementById('f-name');
-        var phoneInput = document.getElementById('f-phone');
-        var emailInput = document.getElementById('f-email');
-
-        if (nameInput) {
-          nameInput.addEventListener('blur', function() {
-            blurValidateField('field-name', 'err-name', function(v) { return !v; }, 'Please enter your name.');
-          });
-        }
-
-        if (phoneInput) {
-          phoneInput.addEventListener('blur', function() {
-            blurValidateField('field-phone', 'err-phone', function(v) { return !PHONE_RE.test(v); }, 'Please enter a valid phone number.');
-          });
-        }
-
-        if (emailInput) {
-          emailInput.addEventListener('blur', function() {
-            blurValidateField('field-email', 'err-email', function(v) { return !EMAIL_RE.test(v); }, 'Please enter a valid email address.');
-          });
-        }
-      });
-    })();
-  </script>
-
-</body>
-</html>
+  <!-- Cart editor modal card -->
+  <div class="cart-editor" id="cartEditorPanel" role="dialog" aria-modal="true" aria-label="Edit your cart">
+    <div class="cart-editor-header">
+      <h3>Edit cart</h3>
+      <button class="cart-editor-close" onclick="closeCartEditor()" aria-label="Close
