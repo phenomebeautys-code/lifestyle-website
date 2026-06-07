@@ -758,7 +758,7 @@
     }
 
     function addToCart(pid, cardEl) {
-      const p = window._products?.find(x => x.id === pid);
+      const p = window._products?.find(x => String(x.id) === String(pid));
       if (!p) return;
       const variantEl = cardEl.querySelector('.v-pill.active');
       const sizeEl    = cardEl.querySelector('.s-pill.active');
@@ -1000,10 +1000,10 @@
     function selectVariant(btn, pid) {
       btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
       btn.classList.add('active');
-      const p = window._products?.find(x => x.id === pid);
+      const p = window._products?.find(x => String(x.id) === String(pid));
       if (p) {
-        const variant  = btn.dataset.variant || '';
-        const imgEl    = document.getElementById('card-img-' + pid);
+        const variant = btn.dataset.variant || '';
+        const imgEl   = document.getElementById('card-img-' + pid);
         if (imgEl) imgEl.src = getVariantImage(p, variant);
       }
       updateCardPrice(pid, btn.closest('.product-card'));
@@ -1015,7 +1015,7 @@
     }
 
     function updateCardPrice(pid, cardEl) {
-      const p = window._products?.find(x => x.id === pid);
+      const p = window._products?.find(x => String(x.id) === String(pid));
       if (!p || !cardEl) return;
       const priceEl   = cardEl.querySelector(`#price-${pid}`);
       if (!priceEl) return;
