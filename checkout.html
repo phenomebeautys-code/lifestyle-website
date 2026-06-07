@@ -145,7 +145,7 @@
     .toggle-copy h4 { margin: 0 0 3px; font-size: .95rem; color: var(--accent-strong); font-family: var(--font-body); }
     .toggle-copy p  { margin: 0; color: var(--text-soft); font-size: .84rem; line-height: 1.5; }
     .switch { position: relative; width: 56px; height: 32px; border-radius: var(--radius-pill); background: rgba(255,255,255,0.10); border: 1px solid var(--glass-border); padding: 0; cursor: pointer; transition: background .18s ease; flex-shrink: 0; }
-    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; box-shadow: 0  4px 10px rgba(0,0,0,0.3); }
+    .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .18s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .switch.on { background: var(--accent); border-color: var(--accent); }
     .switch.on::after { transform: translateX(24px); }
     .nav-actions { display: flex; justify-content: space-between; gap: 14px; margin-top: 26px; align-items: center; flex-wrap: wrap; }
@@ -208,6 +208,25 @@
     .locker-size-note { padding: 8px 12px; border-radius: 10px; font-size: .8rem; line-height: 1.5; }
     .locker-size-note--confirmed { background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); color: #d8fff0; }
     .locker-size-note--unknown { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #ffe0ad; }
+    /* Phase 5b: Optional add-ons group */
+    .addons-label {
+      margin: 0 0 12px;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+    }
+    .addons-group {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.02);
+      display: grid;
+      gap: 12px;
+    }
     .exit-nudge {
       position: fixed; top: 0; left: 50%; transform: translateX(-50%) translateY(-100%);
       z-index: 999; background: rgba(10,10,14,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -732,9 +751,10 @@
                   <button type="button" class="primary-btn" id="lockerSearchBtn" style="padding:11px 18px;" onclick="searchLockers()">Search</button>
                   <button type="button" class="mini-btn" onclick="useMyLocation()">Use my location</button>
                 </div>
+                <!-- Phase 5b: updated hint text to "Finding your location..." for immediate geolocation feedback -->
                 <div id="lockerPlacesHint" style="display:none;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted);padding:6px 0;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                  Location detected &#8212; searching nearby lockers&hellip;
+                  Finding your location&hellip;
                 </div>
                 <input type="hidden" id="lockerSearchLat" />
                 <input type="hidden" id="lockerSearchLng" />
@@ -750,37 +770,43 @@
               </div>
             </div>
 
-            <div id="deliverySpecialWrap" style="margin-top:18px;">
-              <div class="toggle-row">
-                <div class="toggle-copy">
-                  <h4>Special delivery instructions</h4>
-                  <p>Gate code, building access, leave at door, etc.</p>
-                </div>
-                <button type="button" class="switch" id="specialToggle" aria-label="Toggle special instructions" onclick="toggleSpecial()"></button>
-              </div>
-              <div id="specialFieldWrap" style="display:none;margin-top:14px;">
-                <div class="field">
-                  <label for="f-special">Instructions</label>
-                  <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
-                </div>
-              </div>
-            </div>
+            <!-- Phase 5b: Optional add-ons group (Hick's Law / Law of Common Region) -->
+            <div class="addons-group" id="optionalAddons">
+              <p class="addons-label">Optional add-ons</p>
 
-            <div class="toggle-row" id="giftToggleRow" style="margin-top:18px;" onclick="toggleGift()">
-              <div class="toggle-copy">
-                <h4>This is a gift</h4>
-                <p>Add a personalised message to include with the order.</p>
-              </div>
-              <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
-              <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
-            </div>
-            <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
-              <div style="padding-top:14px;">
-                <div class="field">
-                  <label for="f-gift-message">Gift message</label>
-                  <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
+              <div id="deliverySpecialWrap">
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <h4>Special delivery instructions</h4>
+                    <p>Gate code, building access, leave at door, etc.</p>
+                  </div>
+                  <button type="button" class="switch" id="specialToggle" aria-label="Toggle special instructions" onclick="toggleSpecial()"></button>
+                </div>
+                <div id="specialFieldWrap" style="display:none;margin-top:14px;">
+                  <div class="field">
+                    <label for="f-special">Instructions</label>
+                    <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
+                  </div>
                 </div>
               </div>
+
+              <div class="toggle-row" id="giftToggleRow" onclick="toggleGift()">
+                <div class="toggle-copy">
+                  <h4>This is a gift</h4>
+                  <p>Add a personalised message to include with the order.</p>
+                </div>
+                <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
+                <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
+              </div>
+              <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
+                <div style="padding-top:14px;">
+                  <div class="field">
+                    <label for="f-gift-message">Gift message</label>
+                    <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div class="nav-actions">
@@ -918,12 +944,12 @@
       if (btn.classList.contains('on')) document.getElementById('f-special')?.focus();
     }
 
+    // Phase 5b: geolocation feedback -- hint shows "Finding your location..." immediately on click
     function useMyLocation() {
       if (!navigator.geolocation) return;
       const btn  = document.getElementById('lockerSearchBtn');
       const hint = document.getElementById('lockerPlacesHint');
       if (btn)  { btn.disabled = true; btn.textContent = 'Locating...'; }
-      // Phase 3: show inline feedback immediately so users know geolocation is running
       if (hint) { hint.style.display = 'flex'; }
       navigator.geolocation.getCurrentPosition(
         function(pos) {
