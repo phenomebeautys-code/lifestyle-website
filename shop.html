@@ -99,6 +99,136 @@
       display:flex; align-items:center; justify-content:center;
     }
 
+    /* ── Segment Selector ── */
+    .segment-selector {
+      padding: 10px 0 0;
+    }
+    .segment-selector-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      padding: var(--section-pad);
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      text-align: center;
+    }
+    .segment-selector-inner h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      color: var(--accent-strong);
+      line-height: 1;
+      margin: 0;
+    }
+    .segment-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      width: 100%;
+      max-width: 760px;
+    }
+    .segment-card {
+      padding: 28px 24px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--glass-border);
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+      font-family: var(--font-body);
+    }
+    .segment-card:hover {
+      background: rgba(255,255,255,0.10);
+      border-color: rgba(255,255,255,0.28);
+      transform: translateY(-4px);
+    }
+    .segment-card-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.5vw, 1.55rem);
+      color: var(--accent-strong);
+      line-height: 1.1;
+    }
+    .segment-card-desc {
+      font-size: 0.88rem;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+    .segment-card-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 6px;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(180deg, #ffffff 0%, #ece5da 100%);
+      color: #000;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      width: fit-content;
+      transition: opacity 0.2s;
+    }
+    .segment-card:hover .segment-card-cta { opacity: 0.88; }
+    .segment-browse-link {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: var(--font-body);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
+      padding: 4px 0;
+    }
+    .segment-browse-link:hover { color: var(--text-soft); }
+
+    /* ── Active segment pill ── */
+    .segment-active-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      border-radius: var(--radius-pill);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--glass-border);
+      margin-bottom: 6px;
+    }
+    .segment-active-bar.visible { display: flex; }
+    .segment-active-label {
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      letter-spacing: 0.05em;
+    }
+    .segment-active-label strong {
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+    .segment-switch-btn {
+      background: none;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.2s;
+      padding: 0;
+    }
+    .segment-switch-btn:hover { color: var(--accent-strong); }
+
+    @media (max-width: 600px) {
+      .segment-cards { grid-template-columns: 1fr; }
+      .segment-card { padding: 22px 18px; }
+    }
+
     .shop-section { padding: 10px 0 40px; }
     .product-grid {
       display: grid;
@@ -267,7 +397,6 @@
     .shop-error { grid-column: 1/-1; text-align:center; padding:48px 24px; color:var(--text-muted); }
     .shop-error p { margin-bottom:16px; }
 
-    /* ── No-JS fallback ── */
     .noscript-notice {
       grid-column: 1/-1; text-align: center; padding: 48px 24px;
       color: var(--text-muted); font-size: 0.9rem; line-height: 1.7;
@@ -388,12 +517,9 @@
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:4px; }
 
-    /* ── Responsive: match site's 768px breakpoint ── */
     @media(max-width:767px) { .product-grid { grid-template-columns:1fr; } }
 
-    /* ═══════════════════════════════════════════════════════
-       STICKY BOTTOM CART BAR
-    ═══════════════════════════════════════════════════════ */
+    /* ── Sticky bottom cart bar ── */
     body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 
     .sticky-cart-bar {
@@ -452,14 +578,11 @@
 </head>
 <body>
 
-  <!-- SKIP TO CONTENT -->
   <a href="#main-content" class="sr-only">Skip to main content</a>
 
-  <!-- FULL-BLEED BACKGROUND LAYER -->
   <div id="bg-image" aria-hidden="true"></div>
   <div id="bg-overlay" aria-hidden="true"></div>
 
-  <!-- NAVBAR -->
   <nav class="navbar" id="navbar">
     <div class="container">
       <div class="navbar-inner">
@@ -489,7 +612,6 @@
     </div>
   </nav>
 
-  <!-- CANCELLATION BANNER -->
   <div class="container">
     <div class="banner" id="cancelBanner">Payment was cancelled &mdash; your cart is still saved. Try again when ready.</div>
   </div>
@@ -501,8 +623,8 @@
       <div class="container">
         <div class="shop-hero-panel">
           <span class="section-kicker">Curated Skincare &amp; Wax Supplies</span>
-          <h1>The Phenome<br/>Collection</h1>
-          <p>Professional-grade products crafted for radiant skin and effortless treatments. Delivered to your door.</p>
+          <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
+          <p id="shopHeroDesc">Professional-grade products crafted for radiant skin and effortless treatments. Delivered to your door.</p>
           <button class="btn btn-secondary" onclick="openCart()" aria-label="View cart">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
             View Cart (<span id="heroCartCount">0</span>)
@@ -511,9 +633,17 @@
       </div>
     </section>
 
+    <!-- SEGMENT SELECTOR MOUNT -->
+    <div id="segmentSelectorMount"></div>
+
     <!-- PRODUCTS -->
     <section class="shop-section" aria-label="Products">
       <div class="container">
+        <!-- ACTIVE SEGMENT BAR -->
+        <div class="segment-active-bar" id="segmentActiveBar" aria-live="polite">
+          <span class="segment-active-label">Shopping as: <strong id="segmentActiveLabel"></strong></span>
+          <button class="segment-switch-btn" onclick="resetSegment()">Switch</button>
+        </div>
         <div class="product-grid" id="productGrid">
           <noscript>
             <div class="noscript-notice">
@@ -527,10 +657,8 @@
 
   </main>
 
-  <!-- OVERLAY -->
   <div class="overlay" id="overlay" onclick="closeCart()" aria-hidden="true"></div>
 
-  <!-- CART DRAWER -->
   <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping cart" aria-modal="true" role="dialog">
     <div class="drawer-header">
       <button class="drawer-back-btn" onclick="closeCart()" aria-label="Continue shopping">
@@ -563,7 +691,6 @@
     </div>
   </aside>
 
-  <!-- STICKY BOTTOM CART BAR -->
   <div class="sticky-cart-bar" id="stickyCartBar" role="complementary" aria-label="Cart summary" aria-hidden="true">
     <div class="scb-thumbs" id="scbThumbs"></div>
     <div class="scb-info">
@@ -578,61 +705,47 @@
 
   <script src="script.js"></script>
   <script>
-    /* ════════════════════════════════════════════════
-       SHOP PAGE — inline JS
-       Supabase fetch + cart logic
-    ════════════════════════════════════════════════ */
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
-    /* ── Cart persistence ── */
     function loadCart() {
       try { return JSON.parse(localStorage.getItem('pb_cart') || '[]'); }
       catch(e) { return []; }
     }
     function saveCart(cart) {
-      try { localStorage.setItem('pb_cart', JSON.stringify(cart)); } catch(e) { /* sandboxed – silently ignore */ }
+      try { localStorage.setItem('pb_cart', JSON.stringify(cart)); } catch(e) {}
     }
 
-    /* ── Cart state ── */
     let cart = loadCart();
 
-    /* ── Cart UI helpers ── */
     function cartTotal() {
       return cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
     }
 
     function updateBadges() {
       const total = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
-      document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => {
-        if (el) el.textContent = total;
-      });
+      document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => { if (el) el.textContent = total; });
       updateStickyBar();
     }
 
     function renderCartDrawer() {
-      const itemsEl   = document.getElementById('cartItems');
-      const footerEl  = document.getElementById('cartFooter');
+      const itemsEl    = document.getElementById('cartItems');
+      const footerEl   = document.getElementById('cartFooter');
       const subtotalEl = document.getElementById('subtotalDisplay');
       if (!itemsEl) return;
-
       if (!cart.length) {
         itemsEl.innerHTML = '<p class="cart-empty">Your cart is empty.</p>';
         if (footerEl) footerEl.style.display = 'none';
         return;
       }
-
       if (footerEl) footerEl.style.display = '';
       if (subtotalEl) subtotalEl.textContent = 'R' + cartTotal().toFixed(2);
-
       itemsEl.innerHTML = '';
       cart.forEach((item, idx) => {
         const row = document.createElement('div');
         row.className = 'cart-item';
-
         const thumb = buildCartThumb(item.image, item.name, 72);
         row.appendChild(thumb);
-
         const info = document.createElement('div');
         info.className = 'cart-item-info';
         info.innerHTML = `
@@ -653,8 +766,7 @@
     function buildCartThumb(imageUrl, altText, size) {
       const thumb = document.createElement('div');
       thumb.className = 'cart-item-thumb';
-      thumb.style.width = size + 'px';
-      thumb.style.height = size + 'px';
+      thumb.style.width = size + 'px'; thumb.style.height = size + 'px';
       if (imageUrl) {
         const img = document.createElement('img'); img.src = imageUrl; img.alt = altText || ''; img.loading = 'lazy'; thumb.appendChild(img);
       } else {
@@ -666,16 +778,11 @@
     function changeQty(idx, delta) {
       if (!cart[idx]) return;
       cart[idx].qty = Math.max(1, (Number(cart[idx].qty) || 1) + delta);
-      saveCart(cart);
-      renderCartDrawer();
-      updateBadges();
+      saveCart(cart); renderCartDrawer(); updateBadges();
     }
 
     function removeItem(idx) {
-      cart.splice(idx, 1);
-      saveCart(cart);
-      renderCartDrawer();
-      updateBadges();
+      cart.splice(idx, 1); saveCart(cart); renderCartDrawer(); updateBadges();
     }
 
     function openCart() {
@@ -691,17 +798,13 @@
       document.body.style.overflow = '';
     }
 
-    /* ── Add to cart ── */
     function addToCart(pid, cardEl) {
       const p = window._products?.find(x => x.id === pid);
       if (!p) return;
-
       const variantEl = cardEl.querySelector('.v-pill.active');
       const sizeEl    = cardEl.querySelector('.s-pill.active');
       const variant   = variantEl?.dataset.variant || '';
       const sizeName  = sizeEl?.dataset.size       || '';
-
-      // Price resolution
       let unitPrice = Number(p.price) || 0;
       if (variant && p.variants) {
         const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant);
@@ -711,17 +814,12 @@
         const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);
         if (sObj && sObj.price != null) unitPrice = Number(sObj.price);
       }
-
-      const imageUrl  = getVariantImage(p, variant);
-      const key       = `${pid}__${variant}__${sizeName}`;
-      const ex        = cart.find(i => i.key === key);
+      const imageUrl = getVariantImage(p, variant);
+      const key      = `${pid}__${variant}__${sizeName}`;
+      const ex       = cart.find(i => i.key === key);
       if (ex) { ex.qty++; if (!ex.image && imageUrl) ex.image = imageUrl; }
       else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, image: imageUrl || '' });
-
-      saveCart(cart);
-      updateBadges();
-
-      // Button feedback
+      saveCart(cart); updateBadges();
       const btn = cardEl.querySelector('.btn-add-to-cart');
       if (btn) {
         const orig = btn.innerHTML;
@@ -729,7 +827,6 @@
         btn.disabled = true;
         setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1400);
       }
-
       showStickyBar();
     }
 
@@ -739,14 +836,11 @@
       return vObj?.image || p.image_urls?.[0] || p.image_url || '';
     }
 
-    /* ── Sticky bottom cart bar ── */
     function showStickyBar() {
       const bar = document.getElementById('stickyCartBar');
       if (!bar || !cart.length) return;
-      bar.classList.add('visible');
-      bar.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('cart-bar-active');
-      updateStickyBar();
+      bar.classList.add('visible'); bar.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('cart-bar-active'); updateStickyBar();
     }
 
     function updateStickyBar() {
@@ -754,48 +848,81 @@
       const thumbsEl = document.getElementById('scbThumbs');
       const countEl  = document.getElementById('scbCount');
       const totalEl  = document.getElementById('scbTotal');
-
       if (!bar) return;
-
       if (!cart.length) {
-        bar.classList.remove('visible');
-        bar.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('cart-bar-active');
-        return;
+        bar.classList.remove('visible'); bar.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('cart-bar-active'); return;
       }
-
       const qty   = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
       const total = cartTotal();
       if (countEl) countEl.textContent = qty + ' item' + (qty !== 1 ? 's' : '');
       if (totalEl) totalEl.textContent = 'R' + total.toFixed(2);
-
-      // Thumbnails (max 3 shown + overflow badge)
       if (thumbsEl) {
-        const shown = cart.slice(0, 3);
-        const extra = cart.length - shown.length;
+        const shown = cart.slice(0, 3); const extra = cart.length - shown.length;
         thumbsEl.innerHTML = '';
         shown.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'scb-thumb';
-          if (item.image) {
-            const img = document.createElement('img'); img.src = item.image; img.alt = item.name || ''; img.loading = 'eager'; div.appendChild(img);
-          } else {
-            div.innerHTML = '<svg class="scb-thumb-placeholder" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-          }
+          const div = document.createElement('div'); div.className = 'scb-thumb';
+          if (item.image) { const img = document.createElement('img'); img.src = item.image; img.alt = item.name || ''; img.loading = 'eager'; div.appendChild(img); }
+          else { div.innerHTML = '<svg class="scb-thumb-placeholder" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>'; }
           thumbsEl.appendChild(div);
         });
-        if (extra > 0) {
-          const more = document.createElement('div');
-          more.className = 'scb-thumb-more';
-          more.textContent = '+' + extra;
-          thumbsEl.appendChild(more);
-        }
+        if (extra > 0) { const more = document.createElement('div'); more.className = 'scb-thumb-more'; more.textContent = '+' + extra; thumbsEl.appendChild(more); }
       }
     }
 
-    /* ════════════════════════════════════════════════
-       PRODUCT RENDERING
-    ════════════════════════════════════════════════ */
+    /* ════ SEGMENT LOGIC ════ */
+    const SEGMENT_KEY = 'pb_segment';
+
+    function getSegment() {
+      return localStorage.getItem(SEGMENT_KEY) || null;
+    }
+
+    function selectSegment(segment) {
+      localStorage.setItem(SEGMENT_KEY, segment);
+      const mount = document.getElementById('segmentSelectorMount');
+      if (mount) mount.style.display = 'none';
+      applySegment(segment);
+      if (window._products) renderProducts(window._products);
+    }
+
+    function resetSegment() {
+      localStorage.removeItem(SEGMENT_KEY);
+      const mount = document.getElementById('segmentSelectorMount');
+      if (mount) mount.style.display = '';
+      document.getElementById('segmentActiveBar')?.classList.remove('visible');
+      updateShopHero(null);
+    }
+
+    function applySegment(segment) {
+      const bar      = document.getElementById('segmentActiveBar');
+      const label    = document.getElementById('segmentActiveLabel');
+      const labelMap = { self_care: 'Self-Care', professional: 'Professional', all: 'All Products' };
+      if (segment && segment !== 'all') {
+        bar?.classList.add('visible');
+        if (label) label.textContent = labelMap[segment] || segment;
+      } else {
+        bar?.classList.remove('visible');
+      }
+      updateShopHero(segment);
+    }
+
+    function updateShopHero(segment) {
+      const heroTitle = document.getElementById('shopHeroTitle');
+      const heroDesc  = document.getElementById('shopHeroDesc');
+      if (!heroTitle || !heroDesc) return;
+      if (segment === 'self_care') {
+        heroTitle.innerHTML = 'Your Routine.<br/>Your Rules.';
+        heroDesc.textContent = 'The products behind your self-care. No salon needed, no compromise on results.';
+      } else if (segment === 'professional') {
+        heroTitle.innerHTML = 'Built for<br/>Professionals.';
+        heroDesc.textContent = 'Trade-grade supplies for the therapist who holds the standard for every woman entrusted in their care.';
+      } else {
+        heroTitle.innerHTML = 'The Phenome<br/>Collection';
+        heroDesc.textContent = 'Professional-grade products crafted for radiant skin and effortless treatments. Delivered to your door.';
+      }
+    }
+
+    /* ════ PRODUCT RENDERING ════ */
     function renderSkeletons(n) {
       const grid = document.getElementById('productGrid');
       if (!grid) return;
@@ -814,7 +941,6 @@
 
     function htmlDesc(raw) {
       if (!raw) return '';
-      // If already HTML, return as-is; otherwise convert newlines
       if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
       return raw.split(/\n+/).map(l => `<p>${l}</p>`).join('');
     }
@@ -824,18 +950,22 @@
       const grid = document.getElementById('productGrid');
       if (!grid) return;
 
+      const segment = getSegment();
+      if (segment && segment !== 'all') {
+        products = products.filter(p => !p.market || p.market === segment || p.market === 'both');
+      }
+
       if (!products.length) {
         grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
         return;
       }
 
       grid.innerHTML = products.map(p => {
-        const pid        = p.id;
-        const images     = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
-        const available  = p.available !== false;
+        const pid       = p.id;
+        const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
+        const available = p.available !== false;
         const unavailableClass = available ? '' : ' is-unavailable';
 
-        /* ── Image area ── */
         let imgHTML = '';
         if (images.length > 1) {
           const slides = images.map((src, si) =>
@@ -858,11 +988,10 @@
           imgHTML = `<div class="no-img-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
         }
 
-        /* ── Variants ── */
         let variantHTML = '';
         if (p.variants && p.variants.length) {
           const pills = p.variants.map((v, vi) => {
-            const label   = v.name || v.label || v.value || ('Option ' + (vi+1));
+            const label    = v.name || v.label || v.value || ('Option ' + (vi+1));
             const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
             const actClass = vi === 0 && !outClass ? ' active' : '';
             return `<button class="v-pill${actClass}${outClass}" data-variant="${label}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
@@ -870,18 +999,16 @@
           variantHTML = `<div><div class="variant-label">Variant</div><div class="pill-group">${pills}</div></div>`;
         }
 
-        /* ── Sizes ── */
         let sizeHTML = '';
         if (p.sizes && p.sizes.length) {
           const pills = p.sizes.map((s, si) => {
-            const label = s.name || s.label || s.value || ('Size ' + (si+1));
+            const label    = s.name || s.label || s.value || ('Size ' + (si+1));
             const actClass = si === 0 ? ' active' : '';
             return `<button class="s-pill${actClass}" data-size="${label}" onclick="selectSize(this,'${pid}')">${label}</button>`;
           }).join('');
           sizeHTML = `<div><div class="variant-label">Size</div><div class="pill-group">${pills}</div></div>`;
         }
 
-        /* ── Description ── */
         const descRaw  = p.description || '';
         const descHTML = htmlDesc(descRaw);
         const isLong   = descRaw.length > 180;
@@ -890,12 +1017,9 @@
              <button class="desc-toggle" onclick="toggleDesc('${pid}')">Read more</button>`
           : `<div class="product-desc">${descHTML}</div>`;
 
-        /* ── Price ── */
-        const price = Number(p.price) || 0;
+        const price      = Number(p.price) || 0;
         const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
-
-        /* ── Availability badge ── */
-        const badge = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
+        const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
 
         return `
         <article class="product-card${unavailableClass}" data-pid="${pid}">
@@ -922,17 +1046,14 @@
       if (cart.length) showStickyBar();
     }
 
-    /* ── Variant / size selection ── */
     function selectVariant(btn, pid) {
       btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      updateCardPrice(pid, btn.closest('.product-card'));
+      btn.classList.add('active'); updateCardPrice(pid, btn.closest('.product-card'));
     }
 
     function selectSize(btn, pid) {
       btn.closest('.pill-group').querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      updateCardPrice(pid, btn.closest('.product-card'));
+      btn.classList.add('active'); updateCardPrice(pid, btn.closest('.product-card'));
     }
 
     function updateCardPrice(pid, cardEl) {
@@ -940,48 +1061,30 @@
       if (!p || !cardEl) return;
       const priceEl   = cardEl.querySelector(`#price-${pid}`);
       if (!priceEl) return;
-
       const variantEl = cardEl.querySelector('.v-pill.active');
       const sizeEl    = cardEl.querySelector('.s-pill.active');
       const variant   = variantEl?.dataset.variant || '';
       const sizeName  = sizeEl?.dataset.size       || '';
-
       let price = Number(p.price) || 0;
-      if (variant && p.variants) {
-        const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant);
-        if (vObj && vObj.price != null) price = Number(vObj.price);
-      }
-      if (sizeName && p.sizes) {
-        const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);
-        if (sObj && sObj.price != null) price = Number(sObj.price);
-      }
+      if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
+      if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
       priceEl.textContent = price > 0 ? 'R' + price.toFixed(2) : 'Contact for price';
     }
 
-    /* ── Description toggle ── */
     function toggleDesc(pid) {
       const el  = document.getElementById('desc-' + pid);
       const btn = el?.nextElementSibling;
       if (!el) return;
-      if (el.style.maxHeight === 'none') {
-        el.style.maxHeight = '4.5em'; el.style.overflow = 'hidden';
-        if (btn) btn.textContent = 'Read more';
-      } else {
-        el.style.maxHeight = 'none'; el.style.overflow = '';
-        if (btn) btn.textContent = 'Show less';
-      }
+      if (el.style.maxHeight === 'none') { el.style.maxHeight = '4.5em'; el.style.overflow = 'hidden'; if (btn) btn.textContent = 'Read more'; }
+      else { el.style.maxHeight = 'none'; el.style.overflow = ''; if (btn) btn.textContent = 'Show less'; }
     }
 
-    /* ── Carousel ── */
     let _dragStartX = null, _dragStartIndex = null, _isDragging = false;
 
     function carouselGoTo(dotBtn, idx) {
-      const carousel = dotBtn.closest('.shop-carousel');
-      if (!carousel) return;
-      const track = carousel.querySelector('.shop-carousel-track');
-      if (!track) return;
-      track.style.transform = `translateX(-${idx * 100}%)`;
-      carousel.dataset.index = idx;
+      const carousel = dotBtn.closest('.shop-carousel'); if (!carousel) return;
+      const track    = carousel.querySelector('.shop-carousel-track'); if (!track) return;
+      track.style.transform = `translateX(-${idx * 100}%)`; carousel.dataset.index = idx;
       carousel.querySelectorAll('.shop-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
     }
 
@@ -1013,9 +1116,7 @@
       _dragStartX = null; _isDragging = false;
     }
 
-    /* ════════════════════════════════════════════════
-       SUPABASE FETCH
-    ════════════════════════════════════════════════ */
+    /* ════ SUPABASE FETCH ════ */
     async function fetchProducts() {
       renderSkeletons(4);
       try {
@@ -1037,12 +1138,29 @@
       }
     }
 
-    /* ── Init ── */
-    document.addEventListener('DOMContentLoaded', function() {
+    async function loadSegmentSelector() {
+      try {
+        const res  = await fetch('segment-selector.html');
+        const html = await res.text();
+        const mount = document.getElementById('segmentSelectorMount');
+        if (mount) mount.innerHTML = html;
+      } catch(e) {
+        console.warn('Segment selector failed to load:', e);
+      }
+    }
+
+    /* ════ INIT ════ */
+    document.addEventListener('DOMContentLoaded', async function() {
+      await loadSegmentSelector();
+      const savedSegment = getSegment();
+      if (savedSegment) {
+        const mount = document.getElementById('segmentSelectorMount');
+        if (mount) mount.style.display = 'none';
+        applySegment(savedSegment);
+      }
       fetchProducts();
       updateBadges();
       if (cart.length) showStickyBar();
-
       if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
         document.getElementById('cancelBanner').classList.add('show');
         window.history.replaceState({}, '', 'shop.html');

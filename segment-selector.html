@@ -1,0 +1,29 @@
+<section class="segment-selector" id="segmentSelector" aria-label="Shop segment selector">
+  <div class="container">
+    <div class="segment-selector-inner">
+      <h2>Who are you shopping for?</h2>
+      <div class="segment-cards">
+
+        <button class="segment-card" onclick="selectSegment('self_care')" aria-label="Shop self-care products">
+          <span class="segment-card-title">I take care of myself</span>
+          <span class="segment-card-desc">For the woman who keeps her routine non-negotiable. Products that work, delivered to your door.</span>
+          <span class="segment-card-cta">
+            Shop Self-Care
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </span>
+        </button>
+
+        <button class="segment-card" onclick="selectSegment('professional')" aria-label="Shop professional supplies">
+          <span class="segment-card-title">I supply other women's self-care</span>
+          <span class="segment-card-desc">Supplies for the therapist who holds the standard for every woman entrusted in their care.</span>
+          <span class="segment-card-cta">
+            Shop Professional
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </span>
+        </button>
+
+      </div>
+      <button class="segment-browse-link" onclick="selectSegment('all')">Not sure? Browse everything.</button>
+    </div>
+  </div>
+</section>
