@@ -325,7 +325,7 @@
       width: 100%; height: 100%;
       object-fit: cover; object-position: center;
       display: block;
-      transition: transform 0.42s ease;
+      transition: transform 0.42s ease, opacity 0.25s ease;
     }
     .product-card:hover .product-img > img { transform: scale(1.05); }
     .no-img-placeholder {
@@ -333,39 +333,6 @@
       inset: 0;
       display: flex; align-items: center; justify-content: center;
       width: 100%; height: 100%; opacity: 0.15;
-    }
-
-    /* Carousel */
-    .shop-carousel { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; touch-action: none; }
-    .shop-carousel-track {
-      display: flex; height: 100%;
-      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
-      will-change: transform; width: 100%;
-    }
-    .shop-carousel-track.dragging { transition: none; }
-    .shop-carousel-slide { flex: 0 0 100%; width: 100%; height: 100%; overflow: hidden; }
-    .shop-carousel-slide img {
-      width: 100%; height: 100%; object-fit: cover; object-position: center; display: block;
-      transition: transform 0.4s ease; pointer-events: none;
-      user-select: none; -webkit-user-drag: none; -webkit-user-select: none;
-    }
-    .product-card:hover .shop-carousel-slide img { transform: scale(1.05); }
-    .shop-carousel-dots {
-      position: absolute; bottom: 84px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px; z-index: 3;
-      padding: 5px 10px; border-radius: var(--radius-pill);
-      background: rgba(4,4,6,0.45); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.10); box-shadow: 0 2px 12px rgba(0,0,0,0.35);
-    }
-    .shop-carousel-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(255,255,255,0.30); border: 1px solid rgba(255,255,255,0.15);
-      cursor: pointer; padding: 0;
-      transition: background 0.22s, transform 0.22s, border-color 0.22s;
-    }
-    .shop-carousel-dot.active {
-      background: var(--accent-strong); border-color: var(--accent-strong);
-      transform: scale(1.4); box-shadow: 0 0 6px rgba(255,255,255,0.35);
     }
 
     /* Text overlay — anchored to bottom of card */
@@ -429,8 +396,7 @@
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
       pointer-events: none; user-select: none;
     }
-    .product-card.is-unavailable .product-img > img,
-    .product-card.is-unavailable .shop-carousel-slide img { opacity: 0.45; filter: grayscale(35%); }
+    .product-card.is-unavailable .product-img > img { opacity: 0.45; filter: grayscale(35%); }
 
     .shop-error { grid-column: 1/-1; text-align:center; padding:48px 24px; color:var(--text-muted); }
     .shop-error p { margin-bottom:16px; }
@@ -976,23 +942,8 @@
         const unavailableClass = available ? '' : ' is-unavailable';
 
         let imgHTML = '';
-        if (images.length > 1) {
-          const slides = images.map((src, si) =>
-            `<div class="shop-carousel-slide"><img src="${src}" alt="${p.name || ''} image ${si+1}" loading="${si===0?'eager':'lazy'}" width="600" height="800" /></div>`
-          ).join('');
-          const dots = images.map((_, di) =>
-            `<button class="shop-carousel-dot${di===0?' active':''}" onclick="carouselGoTo(this,${di})" aria-label="Image ${di+1}"></button>`
-          ).join('');
-          imgHTML = `<div class="shop-carousel" data-index="0"
-            onmousedown="carouselDragStart(event,this)" ontouchstart="carouselDragStart(event,this)"
-            onmousemove="carouselDragMove(event,this)" ontouchmove="carouselDragMove(event,this)"
-            onmouseup="carouselDragEnd(event,this)" ontouchend="carouselDragEnd(event,this)"
-            onmouseleave="carouselDragEnd(event,this)">
-            <div class="shop-carousel-track">${slides}</div>
-            <div class="shop-carousel-dots">${dots}</div>
-          </div>`;
-        } else if (images.length === 1) {
-          imgHTML = `<img src="${images[0]}" alt="${p.name || ''}" loading="eager" width="600" height="800" />`;
+        if (images.length >= 1) {
+          imgHTML = `<img id="card-img-${pid}" src="${images[0]}" alt="${p.name || ''}" loading="eager" width="600" height="800" />`;
         } else {
           imgHTML = `<div class="no-img-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
         }
@@ -1048,7 +999,14 @@
 
     function selectVariant(btn, pid) {
       btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active'); updateCardPrice(pid, btn.closest('.product-card'));
+      btn.classList.add('active');
+      const p = window._products?.find(x => x.id === pid);
+      if (p) {
+        const variant  = btn.dataset.variant || '';
+        const imgEl    = document.getElementById('card-img-' + pid);
+        if (imgEl) imgEl.src = getVariantImage(p, variant);
+      }
+      updateCardPrice(pid, btn.closest('.product-card'));
     }
 
     function selectSize(btn, pid) {
@@ -1069,43 +1027,6 @@
       if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
       if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
       priceEl.textContent = price > 0 ? 'R' + price.toFixed(2) : 'Contact for price';
-    }
-
-    let _dragStartX = null, _dragStartIndex = null, _isDragging = false;
-
-    function carouselGoTo(dotBtn, idx) {
-      const carousel = dotBtn.closest('.shop-carousel'); if (!carousel) return;
-      const track    = carousel.querySelector('.shop-carousel-track'); if (!track) return;
-      track.style.transform = `translateX(-${idx * 100}%)`; carousel.dataset.index = idx;
-      carousel.querySelectorAll('.shop-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
-    }
-
-    function carouselDragStart(e, el) {
-      _isDragging = false;
-      _dragStartX = (e.touches ? e.touches[0].clientX : e.clientX);
-      _dragStartIndex = parseInt(el.dataset.index || '0', 10);
-    }
-
-    function carouselDragMove(e, el) {
-      if (_dragStartX === null) return;
-      const dx = (e.touches ? e.touches[0].clientX : e.clientX) - _dragStartX;
-      if (Math.abs(dx) > 5) _isDragging = true;
-    }
-
-    function carouselDragEnd(e, el) {
-      if (_dragStartX === null) return;
-      const dx = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - _dragStartX;
-      if (_isDragging) {
-        const slides = el.querySelectorAll('.shop-carousel-slide').length;
-        let next = _dragStartIndex;
-        if (dx < -40 && next < slides - 1) next++;
-        else if (dx > 40 && next > 0) next--;
-        const track = el.querySelector('.shop-carousel-track');
-        if (track) track.style.transform = `translateX(-${next * 100}%)`;
-        el.dataset.index = next;
-        el.querySelectorAll('.shop-carousel-dot').forEach((d, i) => d.classList.toggle('active', i === next));
-      }
-      _dragStartX = null; _isDragging = false;
     }
 
     async function fetchProducts() {
