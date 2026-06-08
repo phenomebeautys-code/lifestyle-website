@@ -411,3 +411,26 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-cta:hover  { opacity: 0.88; }
 .scb-cta:active { opacity: 0.75; transform: scale(0.97); }
 @media (min-width: 769px) { .scb-thumbs { display: none; } .scb-info { padding-left: 0; } }
+
+/* Small phone tweaks for sticky cart bar */
+@media (max-width: 400px) {
+  .sticky-cart-bar {
+    padding: 0 12px;
+  }
+  .scb-info {
+    padding: 0 10px;
+  }
+  .scb-cta {
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
+}
+
+.scb-info {
+  flex: 1;
+  min-width: 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
