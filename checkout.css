@@ -85,7 +85,7 @@
   color: var(--text);
   outline: none;
   font-family: var(--font-body);
-  font-size: .93rem;
+  font-size: 1rem;
   transition: border-color .18s ease, box-shadow .18s ease;
 }
 .field textarea { min-height: 110px; resize: vertical; }
@@ -191,7 +191,14 @@
 /* ── Locker search ── */
 .search-wrap { display: grid; gap: 12px; }
 .search-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.locker-results { display: grid; gap: 12px; margin-top: 14px; }
+.locker-results {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  max-height: 380px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .locker-item { padding: 16px; border-radius: 16px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.03); display: grid; gap: 8px; }
 .locker-item-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
 .locker-item h4 { margin: 0; font-size: .94rem; color: var(--accent-strong); font-family: var(--font-body); }
@@ -236,9 +243,12 @@
 .exit-nudge p { margin: 0; color: var(--text); font-size: .9rem; }
 .exit-nudge strong { color: var(--accent-strong); }
 .exit-nudge-actions { display: flex; gap: 8px; }
+.exit-nudge-actions .primary-btn,
+.exit-nudge-actions .ghost-btn { min-height: 44px; }
 
 /* ── Mobile summary bar ── */
 .mobile-summary-bar { display: none; }
+body.ce-open .mobile-summary-bar { display: none !important; }
 .mobile-summary-body { overflow: hidden; max-height: 0; transition: max-height .3s ease; padding: 0 4px; }
 .mobile-summary-body.open { max-height: 800px; }
 .mobile-summary-toggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: none; border: none; cursor: pointer; padding: 0; color: var(--text); font-family: var(--font-body); }
@@ -373,6 +383,10 @@
     background: rgba(4,4,6,0.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
     border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg); gap: 0;
   }
+}
+
+@media (pointer: coarse) {
+  .ce-remove-btn { opacity: 1; pointer-events: auto; }
 }
 
 @media (max-width: 760px) {
