@@ -37,6 +37,62 @@ function cartTotal() {
 function updateBadges() {
   const total = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
   document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => { if (el) el.textContent = total; });
+  updateStickyBar();
+}
+
+/* ── Sticky cart bar ───────────────────────────────────────── */
+
+function buildScbThumb(imageUrl, altText) {
+  const wrap = document.createElement('div');
+  wrap.className = 'scb-thumb';
+  if (imageUrl) {
+    const img = document.createElement('img');
+    img.src = imageUrl; img.alt = altText || ''; img.loading = 'lazy';
+    wrap.appendChild(img);
+  } else {
+    wrap.innerHTML = '<svg class="scb-thumb-placeholder" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+  }
+  return wrap;
+}
+
+function showStickyBar() {
+  const bar = document.getElementById('stickyCartBar');
+  if (!bar) return;
+  bar.classList.add('visible');
+  document.body.classList.add('cart-bar-active');
+}
+
+function updateStickyBar() {
+  const bar      = document.getElementById('stickyCartBar');
+  const thumbsEl = document.getElementById('scbThumbs');
+  const countEl  = document.getElementById('scbCount');
+  const totalEl  = document.getElementById('scbTotal');
+  if (!bar) return;
+
+  if (!cart.length) {
+    bar.classList.remove('visible');
+    document.body.classList.remove('cart-bar-active');
+    return;
+  }
+
+  showStickyBar();
+
+  if (thumbsEl) {
+    thumbsEl.innerHTML = '';
+    const MAX_THUMBS = 3;
+    const shown = cart.slice(0, MAX_THUMBS);
+    shown.forEach(item => thumbsEl.appendChild(buildScbThumb(item.image, item.name)));
+    if (cart.length > MAX_THUMBS) {
+      const more = document.createElement('div');
+      more.className = 'scb-thumb-more';
+      more.textContent = '+' + (cart.length - MAX_THUMBS);
+      thumbsEl.appendChild(more);
+    }
+  }
+
+  const totalQty = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+  if (countEl) countEl.textContent = totalQty + (totalQty === 1 ? ' item' : ' items');
+  if (totalEl) totalEl.textContent = 'R' + cartTotal().toFixed(2);
 }
 
 /* ── Cart drawer ──────────────────────────────────────────── */
@@ -104,12 +160,14 @@ function openCart() {
   renderCartDrawer();
   document.getElementById('cartDrawer')?.classList.add('open');
   document.getElementById('overlay')?.classList.add('open');
+  document.body.classList.add('cart-open');
   document.body.style.overflow = 'hidden';
 }
 
 function closeCart() {
   document.getElementById('cartDrawer')?.classList.remove('open');
   document.getElementById('overlay')?.classList.remove('open');
+  document.body.classList.remove('cart-open');
   document.body.style.overflow = '';
 }
 
@@ -142,7 +200,7 @@ function addToCart(pid, cardEl) {
   const ex       = cart.find(i => i.key === key);
   if (ex) { ex.qty++; if (!ex.image && imageUrl) ex.image = imageUrl; }
   else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, image: imageUrl || '' });
-  saveCart(cart); updateBadges();
+  saveCart(cart); updateBadges(); showStickyBar();
   const btn = cardEl.querySelector('.btn-add-to-cart');
   if (btn) {
     const orig = btn.innerHTML;
@@ -398,6 +456,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     fetchProducts();
   }
   updateBadges();
+  if (cart.length) showStickyBar();
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
     document.getElementById('cancelBanner').classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
