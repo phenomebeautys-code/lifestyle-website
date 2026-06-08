@@ -1,4 +1,4 @@
-// checkout.js — v19
+// checkout.js — v20
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24,6 +24,7 @@ let selectedLocker = null;
 let giftOn         = false;
 let specialOn      = false;
 let addonsOpen     = false;
+let currentStep    = 1;
 let yocoSDK;
 
 /* ── Boot ── */
@@ -263,6 +264,7 @@ function updateDeliveryWindow() {
 function goToStep(n) {
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
+  currentStep = n;
   document.querySelectorAll('.step').forEach((el, i) => el.classList.toggle('active', i + 1 === n));
   document.querySelectorAll('.step-pill').forEach((el, i) => {
     el.classList.remove('active', 'done');
@@ -657,12 +659,16 @@ function showToast(msg, duration = 3200) {
 }
 
 /* ── Exit nudge ── */
+// Only show the nudge if the user has progressed past step 1 (i.e. they have
+// started entering delivery or payment details). Firing on step 1 is
+// antagonistic because the user may be deliberately navigating away.
 function setupBeforeUnload() {}
 function setupVisibilityNudge() {
   let paid = false;
   const nudge = document.getElementById('exitNudge');
   document.addEventListener('visibilitychange', () => {
     if (paid) return;
+    if (currentStep < 2) return;
     if (document.visibilityState === 'hidden') nudge?.classList.add('show');
   });
   window.markPaid = () => { paid = true; };
