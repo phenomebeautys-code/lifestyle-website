@@ -32,62 +32,11 @@ function cartTotal() {
   return cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
 }
 
-/* ── Badge + sticky bar ───────────────────────────────────── */
+/* ── Badge ────────────────────────────────────────────────── */
 
 function updateBadges() {
   const total = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
   document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => { if (el) el.textContent = total; });
-  updateStickyBar();
-}
-
-function showStickyBar() {
-  const bar = document.getElementById('stickyCartBar');
-  if (!bar || !cart.length) return;
-  bar.classList.add('visible');
-  bar.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('cart-bar-active');
-  updateStickyBar();
-}
-
-function updateStickyBar() {
-  const bar      = document.getElementById('stickyCartBar');
-  const thumbsEl = document.getElementById('scbThumbs');
-  const countEl  = document.getElementById('scbCount');
-  const totalEl  = document.getElementById('scbTotal');
-  if (!bar) return;
-  if (!cart.length) {
-    bar.classList.remove('visible');
-    bar.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('cart-bar-active');
-    return;
-  }
-  const qty   = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
-  const total = cartTotal();
-  if (countEl) countEl.textContent = qty + ' item' + (qty !== 1 ? 's' : '');
-  if (totalEl) totalEl.textContent = 'R' + total.toFixed(2);
-  if (thumbsEl) {
-    const shown = cart.slice(0, 3);
-    const extra = cart.length - shown.length;
-    thumbsEl.innerHTML = '';
-    shown.forEach(item => {
-      const div = document.createElement('div');
-      div.className = 'scb-thumb';
-      if (item.image) {
-        const img = document.createElement('img');
-        img.src = item.image; img.alt = item.name || ''; img.loading = 'eager';
-        div.appendChild(img);
-      } else {
-        div.innerHTML = '<svg class="scb-thumb-placeholder" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-      }
-      thumbsEl.appendChild(div);
-    });
-    if (extra > 0) {
-      const more = document.createElement('div');
-      more.className = 'scb-thumb-more';
-      more.textContent = '+' + extra;
-      thumbsEl.appendChild(more);
-    }
-  }
 }
 
 /* ── Cart drawer ──────────────────────────────────────────── */
@@ -201,7 +150,6 @@ function addToCart(pid, cardEl) {
     btn.disabled = true;
     setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1400);
   }
-  showStickyBar();
 }
 
 /* ── Segment logic ────────────────────────────────────────── */
@@ -365,7 +313,6 @@ function renderProducts(products) {
   }).join('');
 
   updateBadges();
-  if (cart.length) showStickyBar();
 }
 
 function selectVariant(btn, pid) {
@@ -451,7 +398,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     fetchProducts();
   }
   updateBadges();
-  if (cart.length) showStickyBar();
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
     document.getElementById('cancelBanner').classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
