@@ -1,12 +1,18 @@
-// checkout.js — v21
+// checkout.js — v22
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
+// Restores: get-shipping-quote engine, live delivery fees, box_size forwarding
+//           to pudo-locker-search, draft save/restore, importLibrary Places API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Constants ── */
 const SUPABASE_URL    = 'https://papdxjcfimeyjgzmatpl.supabase.co';
 const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 const YOCO_PUBLIC_KEY = 'pk_live_1e7a49ddCHsIxIuU83d0';
+
+const FALLBACK_DOOR_FEE   = 120;
+const FALLBACK_LOCKER_FEE = 80;
+
 const SA_HOLIDAYS = [
   '2025-01-01','2025-03-21','2025-04-18','2025-04-21','2025-04-28',
   '2025-05-01','2025-06-16','2025-08-09','2025-09-24','2025-12-16',
@@ -17,19 +23,80 @@ const SA_HOLIDAYS = [
 ];
 
 /* ── State ── */
-let cart           = [];
-let deliveryMethod = 'door';
-let deliveryFee    = 0;
-let selectedLocker = null;
-let giftOn         = false;
-let specialOn      = false;
-let addonsOpen     = false;
-let currentStep    = 1;
+let cart             = [];
+let deliveryMethod   = 'door';
+let selectedLocker   = null;
+let giftOn           = false;
+let specialOn        = false;
+let addonsOpen       = false;
+let currentStep      = 1;
 let yocoSDK;
+
+/* Shipping quote state */
+let shippingQuote        = null;  // { box, locker_fee, door_fee, total_weight_kg, packed_dims }
+let shippingQuoteLoading = false;
+let shippingQuoteError   = null;
 
 /* Maps lazy-load guard */
 let _mapsLoaded  = false;
 let _mapsLoading = false;
+
+/* ── Delivery fee resolver ── */
+function deliveryFee() {
+  if (shippingQuote) {
+    const fee = deliveryMethod === 'locker'
+      ? Number(shippingQuote.locker_fee)
+      : Number(shippingQuote.door_fee);
+    if (Number.isFinite(fee) && fee >= 0) return fee;
+  }
+  return deliveryMethod === 'locker' ? FALLBACK_LOCKER_FEE : FALLBACK_DOOR_FEE;
+}
+
+/* ── Shipping quote loader ── */
+async function loadShippingQuote() {
+  if (!cart.length) return;
+  shippingQuoteLoading = true;
+  shippingQuoteError   = null;
+  shippingQuote        = null;
+  renderTotals();
+  renderMobileSummary();
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-shipping-quote`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`,
+        },
+        body: JSON.stringify({
+          items: cart.map(i => ({
+            productId: i.productId || i.id || '',
+            qty:       Number(i.qty) || 1,
+          })),
+        }),
+      }
+    );
+    const data = await resp.json();
+    if (!resp.ok || data.error) {
+      shippingQuoteError = data.error || 'Could not retrieve delivery rates.';
+      console.warn('[checkout] Shipping quote error:', shippingQuoteError);
+    } else {
+      shippingQuote = data;
+      console.log('[checkout] Shipping quote:', data);
+    }
+  } catch (e) {
+    shippingQuoteError = 'Network error fetching delivery rates.';
+    console.warn('[checkout] Shipping quote fetch failed:', e);
+  } finally {
+    shippingQuoteLoading = false;
+    calcDelivery();
+    renderTotals();
+    renderMobileSummary();
+    updateDeliveryPriceDisplay();
+  }
+}
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
@@ -39,10 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMobileSummary();
   calcDelivery();
   prefillContact();
+  restoreDraft();
   attachInputListeners();
   setupBeforeUnload();
   setupVisibilityNudge();
   yocoSDK = new YocoSDK({ publicKey: YOCO_PUBLIC_KEY });
+  loadShippingQuote();
 });
 
 /* ── Google Maps lazy loader ── */
@@ -77,9 +146,14 @@ function loadCart() {
   try {
     const raw = sessionStorage.getItem('pb_cart')
              || localStorage.getItem('pb_cart')
+             || localStorage.getItem('phenome_cart')
              || '[]';
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const arr = Array.isArray(parsed) ? parsed : [];
+    return arr.map(item => {
+      if (item.imageUrl && !item.image) { item.image = item.imageUrl; delete item.imageUrl; }
+      return item;
+    });
   } catch { return []; }
 }
 function saveCart() {
@@ -87,10 +161,12 @@ function saveCart() {
   localStorage.setItem('pb_cart', json);
   sessionStorage.setItem('pb_cart', json);
 }
-function cartTotal() {
-  return cart.reduce((s, i) => s + i.price * i.qty, 0);
+function cartSubtotal() {
+  return cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
 }
-function cartSubtotal() { return cartTotal(); }
+function cartTotal() {
+  return cartSubtotal() + deliveryFee();
+}
 
 /* ── Empty state ── */
 function showEmpty() {
@@ -117,11 +193,17 @@ function renderSidebar() {
 function renderTotals() {
   const tot = document.getElementById('summaryTotals');
   const sub = cartSubtotal();
-  const feeLabel = deliveryFee === 0 ? 'Free' : 'R' + deliveryFee.toLocaleString('en-ZA');
+  const fee = deliveryFee();
+  const feeLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
+  const totalLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : 'R' + (sub + fee).toLocaleString('en-ZA');
   tot.innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
-    <div class="total-row grand"><span>Total</span><span>R${(sub + deliveryFee).toLocaleString('en-ZA')}</span></div>`;
+    <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
 }
 function updateItemCount() {
   const total = cart.reduce((s, i) => s + i.qty, 0);
@@ -135,6 +217,7 @@ function renderMobileSummary() {
   const totals = document.getElementById('mobileTotals');
   const grand  = document.getElementById('msTotalDisplay');
   const sub    = cartSubtotal();
+  const fee    = deliveryFee();
   if (items) items.innerHTML = cart.map(item => `
     <div class="cart-item" style="margin-bottom:8px">
       <img src="${item.image}" alt="${item.name}" loading="lazy" />
@@ -144,12 +227,17 @@ function renderMobileSummary() {
       </div>
       <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
     </div>`).join('');
-  const feeLabel = deliveryFee === 0 ? 'Free' : 'R' + deliveryFee.toLocaleString('en-ZA');
+  const feeLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
+  const totalLabel = shippingQuoteLoading
+    ? 'Calculating...'
+    : 'R' + (sub + fee).toLocaleString('en-ZA');
   if (totals) totals.innerHTML = `
     <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
-    <div class="total-row grand"><span>Total</span><span>R${(sub + deliveryFee).toLocaleString('en-ZA')}</span></div>`;
-  if (grand) grand.textContent = 'R' + (sub + deliveryFee).toLocaleString('en-ZA');
+    <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
+  if (grand) grand.textContent = shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA');
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -218,6 +306,7 @@ function ceChangeQty(idx, delta) {
   renderMobileSummary();
   renderTotals();
   updateItemCount();
+  loadShippingQuote();
 }
 function ceRemove(idx) {
   cart.splice(idx, 1);
@@ -227,23 +316,28 @@ function ceRemove(idx) {
   renderMobileSummary();
   renderTotals();
   updateItemCount();
+  if (cart.length) loadShippingQuote();
 }
 
 /* ── Delivery calc ── */
 function calcDelivery() {
-  const sub = cartSubtotal();
-  if (deliveryMethod === 'door') {
-    deliveryFee = sub >= 1500 ? 0 : 120;
-    document.getElementById('door-price-display').textContent = sub >= 1500 ? 'Free' : 'R120';
-    document.getElementById('locker-price-display').textContent = 'R80';
-  } else {
-    deliveryFee = 80;
-    document.getElementById('door-price-display').textContent = sub >= 1500 ? 'Free' : 'R120';
-    document.getElementById('locker-price-display').textContent = 'R80';
-  }
+  updateDeliveryPriceDisplay();
   renderTotals();
   renderMobileSummary();
   updateDeliveryWindow();
+}
+function updateDeliveryPriceDisplay() {
+  const sub = cartSubtotal();
+  const doorLabel   = shippingQuoteLoading ? 'Calculating...'
+    : shippingQuote ? 'R' + Number(shippingQuote.door_fee).toLocaleString('en-ZA')
+    : (sub >= 1500 ? 'Free' : 'R' + FALLBACK_DOOR_FEE);
+  const lockerLabel = shippingQuoteLoading ? 'Calculating...'
+    : shippingQuote ? 'R' + Number(shippingQuote.locker_fee).toLocaleString('en-ZA')
+    : 'R' + FALLBACK_LOCKER_FEE;
+  const dp = document.getElementById('door-price-display');
+  const lp = document.getElementById('locker-price-display');
+  if (dp) dp.textContent = doorLabel;
+  if (lp) lp.textContent = lockerLabel;
 }
 function selectDelivery(method) {
   deliveryMethod = method;
@@ -254,13 +348,15 @@ function selectDelivery(method) {
   const metaTitle = document.getElementById('deliveryMetaTitle');
   const metaText  = document.getElementById('deliveryMetaText');
   if (method === 'door') {
-    metaTitle.textContent = 'Door delivery selected';
-    metaText.textContent  = 'Enter your address and we\u2019ll estimate a delivery window based on business days and local holidays.';
+    if (metaTitle) metaTitle.textContent = 'Door delivery selected';
+    if (metaText)  metaText.textContent  = 'Enter your address and we will estimate a delivery window based on business days and local holidays.';
   } else {
-    metaTitle.textContent = 'Pudo locker selected';
-    metaText.textContent  = 'Search for your nearest locker and we\u2019ll estimate a collection window.';
+    if (metaTitle) metaTitle.textContent = 'Pudo locker selected';
+    if (metaText)  metaText.textContent  = 'Search for your nearest locker and we will estimate a collection window.';
   }
-  calcDelivery();
+  renderTotals();
+  renderMobileSummary();
+  updateDeliveryPriceDisplay();
 }
 
 /* ── Delivery window ── */
@@ -279,7 +375,7 @@ function formatDate(date) {
   return date.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' });
 }
 function updateDeliveryWindow() {
-  const now  = new Date();
+  const now    = new Date();
   const cutoff = new Date(now); cutoff.setHours(12, 0, 0, 0);
   const start  = now < cutoff ? addBusinessDays(now, 2) : addBusinessDays(now, 3);
   const end    = addBusinessDays(start, 2);
@@ -290,11 +386,59 @@ function updateDeliveryWindow() {
   if (rvEl) rvEl.textContent = label;
 }
 
+/* ── Draft save / restore ── */
+function saveDraft() {
+  try {
+    const draft = {
+      name:     document.getElementById('f-name')?.value     || '',
+      phone:    document.getElementById('f-phone')?.value    || '',
+      email:    document.getElementById('f-email')?.value    || '',
+      street:   document.getElementById('f-street')?.value   || '',
+      suburb:   document.getElementById('f-suburb')?.value   || '',
+      city:     document.getElementById('f-city')?.value     || '',
+      postal:   document.getElementById('f-postal')?.value   || '',
+      province: document.getElementById('f-province')?.value || '',
+      special:  document.getElementById('f-special')?.value  || '',
+      method:   deliveryMethod,
+      locker:   selectedLocker,
+    };
+    sessionStorage.setItem('pb_checkout_draft', JSON.stringify(draft));
+  } catch(e) {}
+}
+function restoreDraft() {
+  try {
+    const raw = sessionStorage.getItem('pb_checkout_draft');
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('f-name',     d.name);
+    set('f-phone',    d.phone);
+    set('f-email',    d.email);
+    set('f-street',   d.street);
+    set('f-suburb',   d.suburb);
+    set('f-city',     d.city);
+    set('f-postal',   d.postal);
+    set('f-province', d.province);
+    set('f-special',  d.special);
+    if (d.method) selectDelivery(d.method);
+    if (d.locker) {
+      selectedLocker = d.locker;
+      const display = document.getElementById('lockerSelectedDisplay');
+      const nameEl  = document.getElementById('lockerSelectedName');
+      const addrEl  = document.getElementById('lockerSelectedAddr');
+      if (display) display.style.display = '';
+      if (nameEl)  nameEl.textContent = d.locker.name    || '';
+      if (addrEl)  addrEl.textContent = d.locker.address || '';
+    }
+  } catch(e) {}
+}
+
 /* ── Steps ── */
 function goToStep(n) {
   if (n === 2) loadMapsIfNeeded();
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
+  saveDraft();
   currentStep = n;
   document.querySelectorAll('.step').forEach((el, i) => el.classList.toggle('active', i + 1 === n));
   document.querySelectorAll('.step-pill').forEach((el, i) => {
@@ -416,30 +560,44 @@ function toggleSpecial() {
 }
 
 /* ── Locker search ── */
-function searchLockers() {
+async function searchLockers() {
   const query = document.getElementById('f-locker-search').value.trim();
   const lat   = document.getElementById('lockerSearchLat').value;
   const lng   = document.getElementById('lockerSearchLng').value;
   if (!query && !lat) { showToast('Enter a location to search for lockers.'); return; }
+
   const btn = document.getElementById('lockerSearchBtn');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Searching\u2026';
-  const sub = cartSubtotal();
-  const params = new URLSearchParams({ subtotal: sub });
+
+  const params = new URLSearchParams();
   if (lat && lng) { params.set('lat', lat); params.set('lng', lng); }
   else            { params.set('q', query); }
-  fetch(`${SUPABASE_URL}/functions/v1/pudo-lockers?${params}`, {
-    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
-  })
-  .then(r => r.json())
-  .then(data => renderLockers(data))
-  .catch(() => showToast('Could not fetch lockers. Please try again.'))
-  .finally(() => { btn.disabled = false; btn.textContent = 'Search'; });
+
+  /* Forward box_size from shipping quote so the function can filter and flag compatibility */
+  if (shippingQuote && shippingQuote.box) {
+    params.set('box_size', shippingQuote.box);
+  }
+
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/pudo-locker-search?${params}`,
+      { headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON } }
+    );
+    const data = await resp.json();
+    renderLockers(data);
+  } catch {
+    showToast('Could not fetch lockers. Please try again.');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = 'Search';
+  }
 }
+
 function useMyLocation() {
   if (!navigator.geolocation) { showToast('Geolocation is not supported by your browser.'); return; }
   const hint = document.getElementById('lockerPlacesHint');
-  if (hint) { hint.style.display = 'flex'; }
+  if (hint) hint.style.display = 'flex';
   navigator.geolocation.getCurrentPosition(
     pos => {
       document.getElementById('lockerSearchLat').value = pos.coords.latitude;
@@ -453,49 +611,71 @@ function useMyLocation() {
     }
   );
 }
+
 function renderLockers(data) {
-  const container   = document.getElementById('lockerResults');
-  const sizeNotice  = document.getElementById('lockerSizeNotice');
-  const lockers     = data.lockers || [];
-  const boxCategory = data.box_category || null;
-  const filtered    = data.filtered    || false;
+  const container  = document.getElementById('lockerResults');
+  const sizeNotice = document.getElementById('lockerSizeNotice');
+
+  /* Correct response keys from pudo-locker-search */
+  const lockers           = data.results            || [];
+  const requiredBoxSize   = data.required_box_size  || null;
+  const sizeFilterApplied = data.size_filter_applied || false;
+
   if (sizeNotice) {
-    if (boxCategory) {
-      const cls = filtered ? 'locker-size-notice locker-size-notice--filtered' : 'locker-size-notice';
+    if (requiredBoxSize) {
+      const cls = sizeFilterApplied
+        ? 'locker-size-notice locker-size-notice--filtered'
+        : 'locker-size-notice';
       sizeNotice.className = cls;
-      sizeNotice.innerHTML = filtered
-        ? `Your order fits a <strong>${boxCategory}</strong> locker. Showing only compatible locations.`
-        : `Your order fits a <strong>${boxCategory}</strong> locker.`;
+      sizeNotice.innerHTML = sizeFilterApplied
+        ? `Your order fits a <strong>${requiredBoxSize}</strong> locker. Showing only compatible locations.`
+        : `Your order fits a <strong>${requiredBoxSize}</strong> locker.`;
       sizeNotice.style.display = '';
     } else {
       sizeNotice.style.display = 'none';
     }
   }
+
   if (!lockers.length) {
     container.innerHTML = '<p style="color:var(--text-muted);font-size:.88rem;">No lockers found near that location.</p>';
     return;
   }
-  container.innerHTML = lockers.map(l => {
+
+  /* Store results on window so selectLocker can reference by index safely */
+  window._lockerResults = lockers;
+
+  container.innerHTML = lockers.map((l, idx) => {
     const distLabel = l.distance_km != null ? `${l.distance_km.toFixed(1)} km away` : '';
-    const sizeNote  = l.size_compatible === false
-      ? `<div class="locker-item-size-warn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> May not fit your order size</div>`
-      : '';
+    /* size_availability_unknown: true means the API has no data — treat as neutral
+       size_availability_unknown: false means data confirmed — locker fits            */
+    const sizeWarn = l.size_availability_unknown === false
+      ? ''  /* confirmed fit — no warning */
+      : (requiredBoxSize && l.size_availability_unknown === true)
+        ? `<div class="locker-item-size-warn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> May not fit your order size</div>`
+        : '';
     return `
       <div class="locker-item">
         <div class="locker-item-top">
-          <div><h4>${l.name}</h4><p>${l.address}</p>${sizeNote}</div>
+          <div><h4>${l.name}</h4><p>${l.address}</p>${sizeWarn}</div>
           <div class="locker-badges">
             ${distLabel ? `<span class="locker-tag">${distLabel}</span>` : ''}
-            ${l.available_sizes ? l.available_sizes.map(s => `<span class="locker-tag">${s}</span>`).join('') : ''}
+            ${Array.isArray(l.available_sizes) ? l.available_sizes.map(s => `<span class="locker-tag">${s}</span>`).join('') : ''}
           </div>
         </div>
         <div class="locker-cta">
-          <span style="font-size:.82rem;color:var(--text-muted);">R80 delivery</span>
-          <button type="button" class="mini-btn" onclick='selectLocker(${JSON.stringify(l)})'>Select this locker</button>
+          <span style="font-size:.82rem;color:var(--text-muted);">R${shippingQuote ? Number(shippingQuote.locker_fee).toLocaleString('en-ZA') : FALLBACK_LOCKER_FEE} delivery</span>
+          <button type="button" class="mini-btn" onclick="selectLockerByIndex(${idx})">Select this locker</button>
         </div>
       </div>`;
   }).join('');
 }
+
+function selectLockerByIndex(idx) {
+  const locker = (window._lockerResults || [])[idx];
+  if (!locker) return;
+  selectLocker(locker);
+}
+
 function selectLocker(locker) {
   selectedLocker = locker;
   document.getElementById('lockerResults').innerHTML = '';
@@ -505,19 +685,22 @@ function selectLocker(locker) {
   document.getElementById('lockerSelectedName').textContent = locker.name;
   document.getElementById('lockerSelectedAddr').textContent = locker.address;
   const sizeNote = document.getElementById('lockerSelectedSizeNote');
-  if (locker.size_compatible === false) {
-    sizeNote.textContent   = 'This locker may not fit all items in your order.';
-    sizeNote.className     = 'locker-size-note locker-size-note--unknown';
-    sizeNote.style.display = '';
-  } else if (locker.size_compatible === true) {
-    sizeNote.textContent   = 'This locker fits your order.';
-    sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
-    sizeNote.style.display = '';
-  } else {
-    sizeNote.style.display = 'none';
+  if (sizeNote) {
+    if (locker.size_availability_unknown === false) {
+      sizeNote.textContent   = 'This locker fits your order.';
+      sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
+      sizeNote.style.display = '';
+    } else if (locker.size_availability_unknown === true && shippingQuote?.box) {
+      sizeNote.textContent   = 'This locker may not fit all items in your order.';
+      sizeNote.className     = 'locker-size-note locker-size-note--unknown';
+      sizeNote.style.display = '';
+    } else {
+      sizeNote.style.display = 'none';
+    }
   }
   document.getElementById('err-locker')?.classList.remove('show');
 }
+
 function clearLockerSelection() {
   selectedLocker = null;
   document.getElementById('lockerSelectedDisplay').style.display = 'none';
@@ -525,33 +708,54 @@ function clearLockerSelection() {
 }
 
 /* ── Google Places autocomplete callback (invoked by Maps script) ── */
-window.initPlaces = function() {
+window.initPlaces = async function() {
   _mapsLoaded  = true;
   _mapsLoading = false;
-  const streetInput = document.getElementById('f-street');
-  const lockerInput = document.getElementById('f-locker-search');
-  if (!streetInput || !lockerInput) return;
-  if (typeof google === 'undefined' || !google.maps || !google.maps.places) return;
+  if (typeof google === 'undefined' || !google.maps) return;
+
   try {
-    const opts = { componentRestrictions: { country: 'za' }, fields: ['address_components','formatted_address','geometry'] };
-    const acDoor = new google.maps.places.Autocomplete(streetInput, opts);
-    acDoor.addListener('place_changed', () => {
-      const place = acDoor.getPlace();
-      if (!place.address_components) return;
-      autofillAddress(place.address_components);
-      document.getElementById('placesHint').style.display = 'none';
-    });
-    streetInput.addEventListener('input', () => {
-      if (streetInput.value.length > 2) document.getElementById('placesHint').style.display = 'block';
-    });
-    const acLocker = new google.maps.places.Autocomplete(lockerInput, { componentRestrictions: { country: 'za' }, fields: ['geometry','formatted_address'] });
-    acLocker.addListener('place_changed', () => {
-      const place = acLocker.getPlace();
-      if (!place.geometry) return;
-      document.getElementById('lockerSearchLat').value = place.geometry.location.lat();
-      document.getElementById('lockerSearchLng').value = place.geometry.location.lng();
-    });
-  } catch (e) { console.warn('Places autocomplete init failed:', e); }
+    const { Autocomplete } = await google.maps.importLibrary('places');
+
+    /* Door delivery — street address */
+    const streetInput = document.getElementById('f-street');
+    if (streetInput) {
+      const acDoor = new Autocomplete(streetInput, {
+        componentRestrictions: { country: 'za' },
+        fields: ['address_components', 'formatted_address', 'geometry'],
+      });
+      const hint = document.getElementById('placesHint');
+      acDoor.addListener('place_changed', () => {
+        const place = acDoor.getPlace();
+        if (!place.address_components) return;
+        autofillAddress(place.address_components);
+        if (hint) hint.style.display = 'none';
+      });
+      streetInput.addEventListener('input', () => {
+        if (streetInput.value.length > 2 && hint) hint.style.display = 'block';
+      });
+    }
+
+    /* Locker search — initialised independently so it is ready regardless of
+       which delivery method the user selects first */
+    const lockerInput = document.getElementById('f-locker-search');
+    if (lockerInput) {
+      const lacHint = document.getElementById('lockerPlacesHint');
+      if (lacHint) lacHint.style.display = 'flex';
+      const acLocker = new Autocomplete(lockerInput, {
+        componentRestrictions: { country: 'za' },
+        fields: ['geometry', 'formatted_address'],
+      });
+      acLocker.addListener('place_changed', () => {
+        const place = acLocker.getPlace();
+        if (!place.geometry) return;
+        document.getElementById('lockerSearchLat').value = place.geometry.location.lat();
+        document.getElementById('lockerSearchLng').value = place.geometry.location.lng();
+        searchLockers();
+      });
+    }
+  } catch (e) {
+    console.warn('[checkout] Places autocomplete init failed:', e);
+  }
 };
 
 function autofillAddress(components) {
@@ -577,14 +781,15 @@ function populateReview() {
   const phone   = document.getElementById('f-phone').value.trim();
   const email   = document.getElementById('f-email').value.trim();
   const sub     = cartSubtotal();
-  const total   = sub + deliveryFee;
-  const feeLabel = deliveryFee === 0 ? 'Free' : 'R' + deliveryFee.toLocaleString('en-ZA');
+  const fee     = deliveryFee();
+  const total   = sub + fee;
+  const feeLabel = shippingQuoteLoading ? 'Calculating...' : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
   document.getElementById('done-contact-val').textContent   = `${name} | ${phone} | ${email}`;
   document.getElementById('done-contact-val-2').textContent = `${name} | ${email}`;
   document.getElementById('rv-subtotal').textContent        = 'R' + sub.toLocaleString('en-ZA');
   document.getElementById('rv-delivery').textContent        = feeLabel;
-  document.getElementById('rv-total').textContent           = 'R' + total.toLocaleString('en-ZA');
-  document.getElementById('payBtnTotal').textContent        = total.toLocaleString('en-ZA');
+  document.getElementById('rv-total').textContent           = shippingQuoteLoading ? 'Calculating...' : 'R' + total.toLocaleString('en-ZA');
+  document.getElementById('payBtnTotal').textContent        = shippingQuoteLoading ? '...' : total.toLocaleString('en-ZA');
   let deliveryVal = '';
   if (deliveryMethod === 'door') {
     const street = document.getElementById('f-street').value.trim();
@@ -601,10 +806,10 @@ function populateReview() {
   const giftBlock = document.getElementById('giftReviewBlock');
   const giftBody  = document.getElementById('giftReviewBody');
   if (giftOn) {
-    giftBlock.style.display = '';
-    giftBody.textContent    = document.getElementById('f-gift-message').value.trim() || '(No message entered)';
+    if (giftBlock) giftBlock.style.display = '';
+    if (giftBody)  giftBody.textContent    = document.getElementById('f-gift-message').value.trim() || '(No message entered)';
   } else {
-    giftBlock.style.display = 'none';
+    if (giftBlock) giftBlock.style.display = 'none';
   }
   const reviewItems = document.getElementById('reviewItems');
   reviewItems.innerHTML = cart.map(item => `
@@ -622,16 +827,18 @@ function populateReview() {
 /* ── Pay ── */
 async function handlePay() {
   const btn = document.getElementById('payBtn');
-  btn.disabled = true;
+  btn.disabled    = true;
   btn.textContent = 'Processing\u2026';
   const alertEl = document.getElementById('alert-3');
   alertEl.classList.remove('show','warn');
+
   const name    = document.getElementById('f-name').value.trim();
   const phone   = document.getElementById('f-phone').value.trim();
   const email   = document.getElementById('f-email').value.trim();
   const special = specialOn ? document.getElementById('f-special').value.trim() : '';
   const gift    = giftOn    ? document.getElementById('f-gift-message').value.trim() : '';
   const notes   = document.getElementById('f-notes')?.value.trim() || '';
+
   let deliveryAddress = {};
   if (deliveryMethod === 'door') {
     deliveryAddress = {
@@ -644,7 +851,10 @@ async function handlePay() {
   } else {
     deliveryAddress = { locker: selectedLocker };
   }
-  const total = cartSubtotal() + deliveryFee;
+
+  const fee   = deliveryFee();
+  const total = cartSubtotal() + fee;
+
   try {
     const tokenResult = await yocoSDK.showPopup({
       amountInCents: total * 100,
@@ -653,18 +863,22 @@ async function handlePay() {
       description:   `Order for ${name}`
     });
     if (!tokenResult || tokenResult.error) throw new Error(tokenResult?.error?.message || 'Payment cancelled.');
+
     const payload = {
-      token:          tokenResult.id,
-      amount:         total * 100,
-      currency:       'ZAR',
+      token:            tokenResult.id,
+      amount:           total * 100,
+      currency:         'ZAR',
       name, phone, email,
       cart,
       delivery_method:  deliveryMethod,
       delivery_address: deliveryAddress,
-      delivery_fee:     deliveryFee,
-      notes, special_instructions: special,
-      gift_message: gift
+      delivery_fee:     fee,
+      box_size:         shippingQuote?.box || null,
+      notes,
+      special_instructions: special,
+      gift_message:     gift
     };
+
     const res  = await fetch(`${SUPABASE_URL}/functions/v1/create-charge`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON },
@@ -672,14 +886,16 @@ async function handlePay() {
     });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Payment failed.');
+
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
+    sessionStorage.removeItem('pb_checkout_draft');
     window.location.href = `thank-you.html?order=${encodeURIComponent(data.order_id || '')}&name=${encodeURIComponent(name)}`;
   } catch (err) {
     alertEl.textContent = err.message || 'Something went wrong. Please try again.';
     alertEl.classList.add('show');
-    btn.disabled    = false;
-    btn.innerHTML   = 'Pay R<span id="payBtnTotal">' + (cartSubtotal() + deliveryFee).toLocaleString('en-ZA') + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    btn.disabled  = false;
+    btn.innerHTML = 'Pay R<span id="payBtnTotal">' + (cartSubtotal() + fee).toLocaleString('en-ZA') + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
   }
 }
 
