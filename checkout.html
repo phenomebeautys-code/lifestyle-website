@@ -216,36 +216,43 @@
 
             <!-- Optional add-ons -->
             <div class="addons-group" id="optionalAddons">
-              <p class="addons-label">Optional add-ons</p>
-              <div id="deliverySpecialWrap">
-                <div class="toggle-row">
-                  <div class="toggle-copy">
-                    <h4>Special delivery instructions</h4>
-                    <p>Gate code, building access, leave at door, etc.</p>
+              <button type="button" class="addons-toggle" id="addonsToggle" onclick="toggleAddons()" aria-expanded="false" aria-controls="addonsBody">
+                <span class="addons-label">Optional add-ons</span>
+                <svg class="addons-chevron" id="addonsChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div id="addonsBody" style="overflow:hidden;max-height:0;transition:max-height .35s ease;">
+                <div style="padding-top:14px;display:grid;gap:12px;">
+                  <div id="deliverySpecialWrap">
+                    <div class="toggle-row">
+                      <div class="toggle-copy">
+                        <h4>Special delivery instructions</h4>
+                        <p>Gate code, building access, leave at door, etc.</p>
+                      </div>
+                      <button type="button" class="switch" id="specialToggle" aria-label="Toggle special instructions" onclick="toggleSpecial()"></button>
+                    </div>
+                    <div id="specialFieldWrap" style="display:none;margin-top:14px;">
+                      <div class="field">
+                        <label for="f-special">Instructions</label>
+                        <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
+                      </div>
+                    </div>
                   </div>
-                  <button type="button" class="switch" id="specialToggle" aria-label="Toggle special instructions" onclick="toggleSpecial()"></button>
-                </div>
-                <div id="specialFieldWrap" style="display:none;margin-top:14px;">
-                  <div class="field">
-                    <label for="f-special">Instructions</label>
-                    <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
+                  <div class="toggle-row" id="giftToggleRow" onclick="toggleGift()">
+                    <div class="toggle-copy">
+                      <h4>This is a gift</h4>
+                      <p>Add a personalised message to include with the order.</p>
+                    </div>
+                    <label for="f-is-gift" class="sr-only">This is a gift</label>
+                    <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
+                    <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
                   </div>
-                </div>
-              </div>
-              <div class="toggle-row" id="giftToggleRow" onclick="toggleGift()">
-                <div class="toggle-copy">
-                  <h4>This is a gift</h4>
-                  <p>Add a personalised message to include with the order.</p>
-                </div>
-                <label for="f-is-gift" class="sr-only">This is a gift</label>
-                <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
-                <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
-              </div>
-              <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
-                <div style="padding-top:14px;">
-                  <div class="field">
-                    <label for="f-gift-message">Gift message</label>
-                    <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
+                  <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
+                    <div style="padding-top:14px;">
+                      <div class="field">
+                        <label for="f-gift-message">Gift message</label>
+                        <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
