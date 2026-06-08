@@ -1,11 +1,11 @@
-// checkout.js — v18
+// checkout.js — v19
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Constants ── */
 const SUPABASE_URL    = 'https://papdxjcfimeyjgzmatpl.supabase.co';
-const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwNTUyMjMsImV4cCI6MjA1OTYzMTIyM30.5MkMiMJYCWCPyJuXDnT4JRioLMOmADGNIeqNNJHFiMg';
+const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 const YOCO_PUBLIC_KEY = 'pk_live_1e7a49ddCHsIxIuU83d0';
 const SA_HOLIDAYS = [
   '2025-01-01','2025-03-21','2025-04-18','2025-04-21','2025-04-28',
@@ -43,10 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Cart helpers ── */
 function loadCart() {
-  try { return JSON.parse(localStorage.getItem('pb_cart') || '[]'); } catch { return []; }
+  try {
+    const raw = sessionStorage.getItem('pb_cart')
+             || localStorage.getItem('pb_cart')
+             || '[]';
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
 }
 function saveCart() {
-  localStorage.setItem('pb_cart', JSON.stringify(cart));
+  const json = JSON.stringify(cart);
+  localStorage.setItem('pb_cart', json);
+  sessionStorage.setItem('pb_cart', json);
 }
 function cartTotal() {
   return cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -216,10 +224,10 @@ function selectDelivery(method) {
   const metaText  = document.getElementById('deliveryMetaText');
   if (method === 'door') {
     metaTitle.textContent = 'Door delivery selected';
-    metaText.textContent  = 'Enter your address and we'll estimate a delivery window based on business days and local holidays.';
+    metaText.textContent  = 'Enter your address and we\u2019ll estimate a delivery window based on business days and local holidays.';
   } else {
     metaTitle.textContent = 'Pudo locker selected';
-    metaText.textContent  = 'Search for your nearest locker and we'll estimate a collection window.';
+    metaText.textContent  = 'Search for your nearest locker and we\u2019ll estimate a collection window.';
   }
   calcDelivery();
 }
@@ -244,7 +252,7 @@ function updateDeliveryWindow() {
   const cutoff = new Date(now); cutoff.setHours(12, 0, 0, 0);
   const start  = now < cutoff ? addBusinessDays(now, 2) : addBusinessDays(now, 3);
   const end    = addBusinessDays(start, 2);
-  const label  = `${formatDate(start)} – ${formatDate(end)}`;
+  const label  = `${formatDate(start)} \u2013 ${formatDate(end)}`;
   const el2    = document.getElementById('deliveryDateText2');
   const rvEl   = document.getElementById('rv-delivery-date');
   if (el2)  el2.textContent  = label;
@@ -382,7 +390,7 @@ function searchLockers() {
   if (!query && !lat) { showToast('Enter a location to search for lockers.'); return; }
   const btn = document.getElementById('lockerSearchBtn');
   btn.disabled = true;
-  btn.textContent = 'Searching…';
+  btn.textContent = 'Searching\u2026';
   const sub = cartSubtotal();
   const params = new URLSearchParams({ subtotal: sub });
   if (lat && lng) { params.set('lat', lat); params.set('lng', lng); }
@@ -549,7 +557,7 @@ function populateReview() {
     deliveryVal  = [street, suburb, city].filter(Boolean).join(', ');
     document.getElementById('rv-delivery-label').textContent = 'Door delivery';
   } else {
-    deliveryVal = selectedLocker ? `${selectedLocker.name} – ${selectedLocker.address}` : 'Pudo locker';
+    deliveryVal = selectedLocker ? `${selectedLocker.name} \u2013 ${selectedLocker.address}` : 'Pudo locker';
     document.getElementById('rv-delivery-label').textContent = 'Pudo locker';
   }
   document.getElementById('done-delivery-val').textContent = deliveryVal;
@@ -579,7 +587,7 @@ function populateReview() {
 async function handlePay() {
   const btn = document.getElementById('payBtn');
   btn.disabled = true;
-  btn.textContent = 'Processing…';
+  btn.textContent = 'Processing\u2026';
   const alertEl = document.getElementById('alert-3');
   alertEl.classList.remove('show','warn');
   const name    = document.getElementById('f-name').value.trim();
@@ -629,6 +637,7 @@ async function handlePay() {
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Payment failed.');
     localStorage.removeItem('pb_cart');
+    sessionStorage.removeItem('pb_cart');
     window.location.href = `thank-you.html?order=${encodeURIComponent(data.order_id || '')}&name=${encodeURIComponent(name)}`;
   } catch (err) {
     alertEl.textContent = err.message || 'Something went wrong. Please try again.';
@@ -652,7 +661,6 @@ function setupBeforeUnload() {}
 function setupVisibilityNudge() {
   let paid = false;
   const nudge = document.getElementById('exitNudge');
-  const originalPay = window.handlePay;
   document.addEventListener('visibilitychange', () => {
     if (paid) return;
     if (document.visibilityState === 'hidden') nudge?.classList.add('show');
