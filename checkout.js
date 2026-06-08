@@ -1,6 +1,6 @@
 /* ============================================================
    PhenomeBeauty — checkout.js
-   Cache-bust v16 — add useMyLocation, fix ceFooterSubtotal
+   Cache-bust v17 — ce-open body class, safe location hint, select change listener
    ============================================================ */
 
 /* -- Constants ------------------------------------------------------------ */
@@ -171,9 +171,9 @@ function cartTotal() {
 
 /*
  * openCartEditor
- * Resets the overflow state each time the modal opens so the list always
- * starts collapsed at 5 items. Toggles both the backdrop overlay and the
- * modal card. Traps focus inside the dialog for accessibility.
+ * Resets overflow state, opens overlay + panel, prevents body scroll,
+ * adds ce-open to body so the mobile summary bar hides via CSS,
+ * and moves focus into the dialog.
  */
 function openCartEditor() {
   const overlay = document.getElementById('cartEditorOverlay');
@@ -186,17 +186,17 @@ function openCartEditor() {
   if (overlay) overlay.classList.add('open');
   panel.classList.add('open');
 
-  /* Prevent body scroll while modal is open */
   document.body.style.overflow = 'hidden';
+  document.body.classList.add('ce-open');
 
-  /* Move focus into the dialog */
   const firstBtn = panel.querySelector('button');
   if (firstBtn) firstBtn.focus();
 }
 
 /*
  * closeCartEditor
- * Removes .open from both overlay and card, restores body scroll.
+ * Removes .open from overlay and panel, restores body scroll,
+ * and removes ce-open from body so the mobile summary bar reappears.
  */
 function closeCartEditor() {
   const overlay = document.getElementById('cartEditorOverlay');
@@ -204,6 +204,7 @@ function closeCartEditor() {
   if (overlay) overlay.classList.remove('open');
   if (panel)   panel.classList.remove('open');
   document.body.style.overflow = '';
+  document.body.classList.remove('ce-open');
 }
 
 /*
@@ -876,8 +877,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   loadShippingQuote();
 
-  document.querySelectorAll('input, select, textarea').forEach(el => {
-    el.addEventListener('input', () => {
+  /* Clear field errors on input (text/textarea) and change (select) */
+  document.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', function() {
+      const fieldWrap = el.closest('[id^="field-"]');
+      if (fieldWrap) {
+        fieldWrap.classList.remove('error');
+        const errId = fieldWrap.id.replace('field-', 'err-');
+        const err = document.getElementById(errId);
+        if (err) err.classList.remove('show');
+      }
+    });
+  });
+
+  document.querySelectorAll('select').forEach(el => {
+    el.addEventListener('change', function() {
       const fieldWrap = el.closest('[id^="field-"]');
       if (fieldWrap) {
         fieldWrap.classList.remove('error');
@@ -1057,17 +1071,11 @@ async function searchLockers(query) {
 
 /* -- Use my location ----------------------------------------------------- */
 function useMyLocation() {
-  const hint = document.getElementById('lockerPlacesHint');
   const list = document.getElementById('lockerResults');
 
   if (!navigator.geolocation) {
     if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Geolocation is not supported by your browser.</div>';
     return;
-  }
-
-  if (hint) {
-    hint.style.display = 'flex';
-    hint.querySelector && (hint.querySelector('span') || hint).textContent && (hint.lastChild.textContent = 'Finding your location\u2026');
   }
 
   if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Detecting your location&hellip;</div>';
@@ -1078,11 +1086,9 @@ function useMyLocation() {
       lockerSearchLng = pos.coords.longitude;
       window.lockerSearchLat = lockerSearchLat;
       window.lockerSearchLng = lockerSearchLng;
-      if (hint) hint.style.display = 'none';
       searchLockers('');
     },
     function(err) {
-      if (hint) hint.style.display = 'none';
       if (list) list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:.82rem;">Could not detect your location. Please search manually.</div>';
       console.warn('[checkout] Geolocation error:', err);
     },
