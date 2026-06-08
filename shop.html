@@ -93,9 +93,13 @@
       color: var(--text-muted) !important;
       max-width: 100% !important;
     }
-    @media (min-width: 601px) {
-    .hero-sub-prompt { display: none !important; }
+    .hero-sub-prompt.hidden {
+      display: none !important;
     }
+    @media (min-width: 601px) {
+      .hero-sub-prompt { display: none !important; }
+    }
+
     /* ── Cart float ── */
     .cart-float {
       display: inline-flex; align-items: center; gap:8px;
@@ -843,7 +847,7 @@
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = 'none';
       const prompt = document.getElementById('heroSubPrompt');
-      if (prompt) prompt.style.display = 'none';
+      if (prompt) prompt.classList.add('hidden');
       applySegment(segment);
       fetchProducts();
     }
@@ -853,7 +857,7 @@
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = 'none';
       const prompt = document.getElementById('heroSubPrompt');
-      if (prompt) prompt.style.display = 'none';
+      if (prompt) prompt.classList.add('hidden');
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
       updateShopHero(null);
       fetchProducts();
@@ -867,7 +871,7 @@
       const mount = document.getElementById('segmentSelectorMount');
       if (mount) mount.style.display = '';
       const prompt = document.getElementById('heroSubPrompt');
-      if (prompt) prompt.style.display = '';
+      if (prompt) prompt.classList.remove('hidden');
       document.getElementById('segmentActiveBar')?.classList.remove('visible');
       updateShopHero(null);
     }
@@ -1070,7 +1074,7 @@
         const mount = document.getElementById('segmentSelectorMount');
         if (mount) mount.style.display = 'none';
         const prompt = document.getElementById('heroSubPrompt');
-        if (prompt) prompt.style.display = 'none';
+        if (prompt) prompt.classList.add('hidden');
         applySegment(savedSegment);
         fetchProducts();
       }
