@@ -1,4 +1,4 @@
-// checkout.js — v20
+// checkout.js — v21
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27,6 +27,10 @@ let addonsOpen     = false;
 let currentStep    = 1;
 let yocoSDK;
 
+/* Maps lazy-load guard */
+let _mapsLoaded  = false;
+let _mapsLoading = false;
+
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
   cart = loadCart();
@@ -35,12 +39,38 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMobileSummary();
   calcDelivery();
   prefillContact();
-  initPlacesAutocomplete();
   attachInputListeners();
   setupBeforeUnload();
   setupVisibilityNudge();
   yocoSDK = new YocoSDK({ publicKey: YOCO_PUBLIC_KEY });
 });
+
+/* ── Google Maps lazy loader ── */
+async function loadMapsIfNeeded() {
+  if (_mapsLoaded || _mapsLoading) return;
+  _mapsLoading = true;
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-places-key`,
+      {
+        headers: {
+          'apikey':        SUPABASE_ANON,
+          'Authorization': `Bearer ${SUPABASE_ANON}`
+        }
+      }
+    );
+    const data = await resp.json();
+    if (!data.key) throw new Error('No key returned');
+    const s = document.createElement('script');
+    s.src   = 'https://maps.googleapis.com/maps/api/js?key=' + data.key + '&libraries=places&loading=async&callback=initPlaces';
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  } catch (e) {
+    console.warn('[checkout] Could not load Maps API:', e);
+    _mapsLoading = false;
+  }
+}
 
 /* ── Cart helpers ── */
 function loadCart() {
@@ -262,6 +292,7 @@ function updateDeliveryWindow() {
 
 /* ── Steps ── */
 function goToStep(n) {
+  if (n === 2) loadMapsIfNeeded();
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
   currentStep = n;
@@ -475,12 +506,12 @@ function selectLocker(locker) {
   document.getElementById('lockerSelectedAddr').textContent = locker.address;
   const sizeNote = document.getElementById('lockerSelectedSizeNote');
   if (locker.size_compatible === false) {
-    sizeNote.textContent  = 'This locker may not fit all items in your order.';
-    sizeNote.className    = 'locker-size-note locker-size-note--unknown';
+    sizeNote.textContent   = 'This locker may not fit all items in your order.';
+    sizeNote.className     = 'locker-size-note locker-size-note--unknown';
     sizeNote.style.display = '';
   } else if (locker.size_compatible === true) {
-    sizeNote.textContent  = 'This locker fits your order.';
-    sizeNote.className    = 'locker-size-note locker-size-note--confirmed';
+    sizeNote.textContent   = 'This locker fits your order.';
+    sizeNote.className     = 'locker-size-note locker-size-note--confirmed';
     sizeNote.style.display = '';
   } else {
     sizeNote.style.display = 'none';
@@ -493,8 +524,10 @@ function clearLockerSelection() {
   document.getElementById('lockerSizeNotice').style.display = 'none';
 }
 
-/* ── Places autocomplete (door) ── */
-function initPlacesAutocomplete() {
+/* ── Google Places autocomplete callback (invoked by Maps script) ── */
+window.initPlaces = function() {
+  _mapsLoaded  = true;
+  _mapsLoading = false;
   const streetInput = document.getElementById('f-street');
   const lockerInput = document.getElementById('f-locker-search');
   if (!streetInput || !lockerInput) return;
@@ -519,7 +552,8 @@ function initPlacesAutocomplete() {
       document.getElementById('lockerSearchLng').value = place.geometry.location.lng();
     });
   } catch (e) { console.warn('Places autocomplete init failed:', e); }
-}
+};
+
 function autofillAddress(components) {
   const get = types => {
     const c = components.find(c => types.some(t => c.types.includes(t)));
@@ -659,9 +693,6 @@ function showToast(msg, duration = 3200) {
 }
 
 /* ── Exit nudge ── */
-// Only show the nudge if the user has progressed past step 1 (i.e. they have
-// started entering delivery or payment details). Firing on step 1 is
-// antagonistic because the user may be deliberately navigating away.
 function setupBeforeUnload() {}
 function setupVisibilityNudge() {
   let paid = false;
