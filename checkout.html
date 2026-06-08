@@ -41,7 +41,7 @@
   </nav>
 
   <div class="exit-nudge" id="exitNudge" role="alert" aria-live="polite">
-    <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet &#8212; go back and tap <strong>Pay</strong> to complete it.</p>
+    <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet. Go back and tap <strong>Pay</strong> to complete it.</p>
     <div class="exit-nudge-actions">
       <button class="primary-btn" style="padding:9px 16px;font-size:.84rem;" onclick="dismissNudge()">Complete payment</button>
       <button class="ghost-btn" style="padding:9px 14px;font-size:.84rem;" onclick="dismissNudge()">Dismiss</button>
@@ -66,9 +66,9 @@
         <section class="co-card" style="margin-top:24px;">
 
           <div class="co-steps" id="stepsBar">
-            <div class="step-pill active" id="breadcrumb-1"><span class="step-num">1</span> Contact</div>
+            <button type="button" class="step-pill active" id="breadcrumb-1" onclick="goToStep(1)"><span class="step-num">1</span> Contact</button>
             <span class="step-arrow" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-            <div class="step-pill" id="breadcrumb-2"><span class="step-num">2</span> Delivery</div>
+            <button type="button" class="step-pill" id="breadcrumb-2" onclick="goToStep(2)"><span class="step-num">2</span> Delivery</button>
             <span class="step-arrow" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
             <div class="step-pill" id="breadcrumb-3"><span class="step-num">3</span> Review &amp; Pay</div>
           </div>
@@ -86,7 +86,7 @@
               </div>
               <div class="field" id="field-phone">
                 <label for="f-phone">Phone number</label>
-                <input id="f-phone" type="tel" autocomplete="tel" placeholder="e.g. 082 123 4567" />
+                <input id="f-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="e.g. 082 123 4567" />
                 <div class="hint" id="hint-phone">e.g. 082 123 4567 or +27 82 123 4567</div>
                 <div class="error-text" id="err-phone">Please enter a valid phone number.</div>
               </div>
