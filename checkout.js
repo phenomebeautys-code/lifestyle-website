@@ -8,7 +8,6 @@
 /* ── Constants ── */
 const SUPABASE_URL    = 'https://papdxjcfimeyjgzmatpl.supabase.co';
 const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
-const YOCO_PUBLIC_KEY = 'pk_live_1e7a49ddCHsIxIuU83d0';
 
 const FALLBACK_DOOR_FEE   = 120;
 const FALLBACK_LOCKER_FEE = 80;
@@ -30,7 +29,6 @@ let giftOn           = false;
 let specialOn        = false;
 let addonsOpen       = false;
 let currentStep      = 1;
-let yocoSDK;
 
 /* Shipping quote state */
 let shippingQuote        = null;  // { box, locker_fee, door_fee, total_weight_kg, packed_dims }
@@ -110,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
   attachInputListeners();
   setupBeforeUnload();
   setupVisibilityNudge();
-  yocoSDK = new YocoSDK({ publicKey: YOCO_PUBLIC_KEY });
   loadShippingQuote();
 });
 
@@ -856,7 +853,11 @@ async function handlePay() {
   const gift    = giftOn    ? document.getElementById('f-gift-message').value.trim() : '';
   const notes   = document.getElementById('f-notes')?.value.trim() || '';
 
-  let deliveryAddress = {};
+  let deliveryAddress = null;
+  let lockerId        = '';
+  let lockerName      = '';
+  let lockerAddress   = '';
+
   if (deliveryMethod === 'door') {
     deliveryAddress = {
       street:   document.getElementById('f-street').value.trim(),
@@ -866,53 +867,88 @@ async function handlePay() {
       province: document.getElementById('f-province').value.trim()
     };
   } else {
-    deliveryAddress = { locker: selectedLocker };
+    lockerId      = selectedLocker?.locker_id || selectedLocker?.id || '';
+    lockerName    = selectedLocker?.name    || '';
+    lockerAddress = selectedLocker?.address || '';
   }
 
   const fee   = deliveryFee();
   const total = cartSubtotal() + fee;
 
+  // Combine special instructions and gift message into one notes string
+  const combinedNotes = [special, gift ? 'Gift message: ' + gift : '', notes]
+    .filter(Boolean).join(' | ');
+
+  // Map cart to the shape create-order expects
+  const orderCart = cart.map(i => ({
+    id:    i.productId || i.id || '',
+    name:  i.name,
+    price: Number(i.price),
+    qty:   Number(i.qty) || 1,
+    image: i.image || ''
+  }));
+
   try {
-    const tokenResult = await yocoSDK.showPopup({
-      amountInCents: total * 100,
-      currency:      'ZAR',
-      name:          'PhenomeBeauty',
-      description:   `Order for ${name}`
-    });
-    if (!tokenResult || tokenResult.error) throw new Error(tokenResult?.error?.message || 'Payment cancelled.');
-
-    const payload = {
-      token:            tokenResult.id,
-      amount:           total * 100,
-      currency:         'ZAR',
-      name, phone, email,
-      cart,
-      delivery_method:  deliveryMethod,
-      delivery_address: deliveryAddress,
-      delivery_fee:     fee,
-      box_size:         shippingQuote?.box || null,
-      notes,
-      special_instructions: special,
-      gift_message:     gift
-    };
-
-    const res  = await fetch(`${SUPABASE_URL}/functions/v1/create-charge`, {
+    // Step 1: Create order in Supabase
+    const orderRes = await fetch(`${SUPABASE_URL}/functions/v1/create-order`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json','apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON },
-      body: JSON.stringify(payload)
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+      },
+      body: JSON.stringify({
+        customer: { name, email, phone },
+        delivery_method:      deliveryMethod,
+        delivery_address:     deliveryAddress,
+        delivery_fee:         fee,
+        locker_id:            lockerId,
+        locker_name:          lockerName,
+        locker_address:       lockerAddress,
+        special_instructions: combinedNotes,
+        cart:                 orderCart,
+      }),
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'Payment failed.');
 
+    const orderData = await orderRes.json();
+    if (!orderRes.ok || orderData.error) throw new Error(orderData.error || 'Could not create your order.');
+
+    const orderId = orderData.order_id;
+
+    // Step 2: Create Yoco hosted checkout session
+    const origin     = window.location.origin;
+    const successUrl = `${origin}/thank-you.html?order=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
+    const cancelUrl  = `${origin}/checkout.html`;
+
+    const yocoRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+      },
+      body: JSON.stringify({
+        order_id:    orderId,
+        success_url: successUrl,
+        cancel_url:  cancelUrl,
+      }),
+    });
+
+    const yocoData = await yocoRes.json();
+    if (!yocoRes.ok || yocoData.error) throw new Error(yocoData.error || 'Payment provider error. Please try again.');
+
+    // Step 3: Clear cart and redirect to Yoco hosted page
     localStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_cart');
     sessionStorage.removeItem('pb_checkout_draft');
-    window.location.href = `thank-you.html?order=${encodeURIComponent(data.order_id || '')}&name=${encodeURIComponent(name)}`;
+    window.markPaid && window.markPaid();
+    window.location.href = yocoData.redirectUrl;
+
   } catch (err) {
     alertEl.textContent = err.message || 'Something went wrong. Please try again.';
     alertEl.classList.add('show');
     btn.disabled  = false;
-    btn.innerHTML = 'Pay R<span id="payBtnTotal">' + (cartSubtotal() + fee).toLocaleString('en-ZA') + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    btn.innerHTML = 'Pay R<span id="payBtnTotal">' + total.toLocaleString('en-ZA') + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
   }
 }
 
