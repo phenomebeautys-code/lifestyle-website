@@ -145,15 +145,30 @@ function renderCartDrawer() {
     itemsEl.appendChild(row);
   });
 }
+function changeCartQty(idx, delta) {
+  if (!cart[idx]) return;
+
+  const current = Number(cart[idx].qty) || 1;
+  const next = current + delta;
+
+  if (next <= 0) {
+    // Remove line if quantity would drop below 1
+    cart.splice(idx, 1);
+  } else {
+    cart[idx].qty = next;
+  }
+
+  saveCart(cart);
+  renderCartDrawer();
+  updateBadges();
+}
 
 function changeQty(idx, delta) {
-  if (!cart[idx]) return;
-  cart[idx].qty = Math.max(1, (Number(cart[idx].qty) || 1) + delta);
-  saveCart(cart); renderCartDrawer(); updateBadges();
+  changeCartQty(idx, delta);
 }
 
 function removeItem(idx) {
-  cart.splice(idx, 1); saveCart(cart); renderCartDrawer(); updateBadges();
+  changeCartQty(idx, -999);
 }
 
 function openCart() {
