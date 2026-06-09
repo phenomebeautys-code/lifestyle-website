@@ -155,27 +155,28 @@
   #shopHeroDesc { display: block !important; }
   .segment-selector { padding: 6px 0 0; }
   .segment-selector-inner {
-  display: flex; flex-direction: column; align-items: center;
-  padding: var(--section-pad);
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    display: flex; flex-direction: column; align-items: center;
+    padding: var(--section-pad);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   }
   /*.segment-selector-inner h2 { display: none; } */
   .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
   .segment-card { aspect-ratio: 3 / 4; }
-  .segment-card-overlay { 
-  inset: 14px 12px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
+  .segment-card-overlay {
+    inset: 14px 12px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+  }
   .segment-card-title { font-size: 0.95rem; }
   .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
-  }
+}
 
 /* ── Shop section ── */
 .shop-section { padding: 10px 0 40px; }
