@@ -168,6 +168,39 @@ function cartTotal() {
   return cartSubtotal() + deliveryFee();
 }
 
+/* Shared cart quantity helper for checkout */
+function changeCartQty(idx, delta) {
+  if (!cart[idx]) return;
+
+  const current = Number(cart[idx].qty) || 1;
+  const next = current + delta;
+
+  if (next <= 0) {
+    cart.splice(idx, 1);
+  } else {
+    cart[idx].qty = next;
+  }
+
+  if (!cart.length) {
+    saveCart();
+    renderSidebar();
+    renderMobileSummary();
+    renderTotals();
+    updateItemCount();
+    showEmpty();
+    closeCartEditor();
+    return;
+  }
+
+  saveCart();
+  renderCartEditor();
+  renderSidebar();
+  renderMobileSummary();
+  renderTotals();
+  updateItemCount();
+  loadShippingQuote();
+}
+
 /* ── Empty state ── */
 function showEmpty() {
   document.getElementById('emptyState').classList.add('show');
@@ -298,25 +331,10 @@ function toggleCeOverflow() {
   btn.textContent = open ? 'Show less' : `Show ${rem} more item${rem>1?'s':''}`;
 }
 function ceChangeQty(idx, delta) {
-  if (!cart[idx]) return;
-  cart[idx].qty = Math.max(1, cart[idx].qty + delta);
-  saveCart();
-  renderCartEditor();
-  renderSidebar();
-  renderMobileSummary();
-  renderTotals();
-  updateItemCount();
-  loadShippingQuote();
+  changeCartQty(idx, delta);
 }
 function ceRemove(idx) {
-  cart.splice(idx, 1);
-  saveCart();
-  renderCartEditor();
-  renderSidebar();
-  renderMobileSummary();
-  renderTotals();
-  updateItemCount();
-  if (cart.length) loadShippingQuote();
+  changeCartQty(idx, -999);
 }
 
 /* ── Delivery calc ── */
