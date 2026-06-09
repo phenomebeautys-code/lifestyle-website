@@ -310,7 +310,6 @@ function renderCartEditor() {
           <span class="ce-qty-val">${item.qty}</span>
           <button class="ce-qty-btn" onclick="ceChangeQty(${idx},1)" aria-label="Increase quantity">+</button>
         </div>
-        <button class="ce-remove-btn" onclick="ceRemove(${idx})">Remove</button>
       </div>
     </div>`;
   let html = inline.map((item, i) => renderItem(item, i)).join('');
