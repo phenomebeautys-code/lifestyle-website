@@ -6,6 +6,13 @@
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
+/* ── Image transform ──────────────────────────────────────── */
+
+function transformImage(url, width) {
+  if (!url || !url.includes('supabase.co/storage')) return url;
+  return url + '?width=' + (width || 400) + '&quality=75&format=webp';
+}
+
 /* ── Cart helpers ─────────────────────────────────────────── */
 
 function loadCart() {
@@ -200,24 +207,21 @@ function renderCartDrawer() {
     itemsEl.appendChild(row);
   });
 }
+
 function changeCartQty(idx, delta) {
   if (!cart[idx]) return;
-
-const current = Number(cart[idx].qty) || 1;
-const next = current + delta;
-
+  const current = Number(cart[idx].qty) || 1;
+  const next = current + delta;
   if (next <= 0) {
-    // Remove line if quantity would drop below 1
     cart.splice(idx, 1);
   } else {
     cart[idx].qty = next;
   }
-
   saveCart(cart);
   renderCartDrawer();
   updateBadges();
-const expanded = document.getElementById('scbExpanded');
-if (expanded?.classList.contains('open')) renderStickyExpanded();
+  const expanded = document.getElementById('scbExpanded');
+  if (expanded?.classList.contains('open')) renderStickyExpanded();
 }
 
 function changeQty(idx, delta) {
@@ -392,7 +396,7 @@ function renderProducts(products) {
 
     let imgHTML = '';
     if (images.length >= 1) {
-      imgHTML = `<img id="card-img-${pid}" src="${images[0]}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="600" height="800" />`;
+      imgHTML = `<img id="card-img-${pid}" src="${transformImage(images[0], 400)}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="400" height="533" />`;
     } else {
       imgHTML = `<div class="no-img-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
     }
@@ -452,7 +456,7 @@ function selectVariant(btn, pid) {
   if (p) {
     const variant = btn.dataset.variant || '';
     const imgEl   = document.getElementById('card-img-' + pid);
-    if (imgEl) imgEl.src = getVariantImage(p, variant);
+    if (imgEl) imgEl.src = transformImage(getVariantImage(p, variant), 400);
   }
   updateCardPrice(pid, btn.closest('.product-card'));
 }
@@ -530,7 +534,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   updateBadges();
   if (cart.length) showStickyBar();
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
-    document.getElementById('cancelBanner').classList.add('show');
+    document.getElementById('cancelBanner')?.classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
   }
 });
