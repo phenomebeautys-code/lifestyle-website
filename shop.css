@@ -155,9 +155,12 @@
   #shopHeroDesc { display: block !important; }
   .segment-selector { padding: 6px 0 0; }
   .segment-selector-inner {
-    background: none; border: none;
-    backdrop-filter: none; -webkit-backdrop-filter: none;
-    padding: 0; gap: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  padding: var(--section-pad);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   }
   /*.segment-selector-inner h2 { display: none; } */
   .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
