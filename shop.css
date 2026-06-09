@@ -174,11 +174,9 @@
   gap: 6px;
   text-align: center;
   }
-
-{  
+  
   .segment-card-title { font-size: 0.95rem; }
   .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
-}
 
 /* ── Shop section ── */
 .shop-section { padding: 10px 0 40px; }
