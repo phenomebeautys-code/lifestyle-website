@@ -1,7 +1,7 @@
 :root { --cart-bar-h: 72px; }
 
 /* ── Hero ── */
-.shop-hero { padding: 18px 0 10px; }
+.shop-hero { padding: clamp(24px, 3vw, 36px) 0 10px; }
 .shop-hero-panel {
   padding: var(--section-pad);
   border-radius: 32px;
@@ -149,7 +149,7 @@
 
 /* ── Mobile ── */
 @media (max-width: 600px) {
-  .shop-hero { padding: 12px 0 6px; }
+  .shop-hero { padding: 18px 0 6px; }
   .shop-hero-panel { padding: 20px 18px; border-radius: 20px; }
   .shop-hero-panel p { display: none; }
   #shopHeroDesc { display: block !important; }
@@ -370,15 +370,15 @@ body.cart-bar-active .cart-drawer { bottom: var(--cart-bar-h, 72px); }
 @media(max-width:480px)  { .product-grid { grid-template-columns: 1fr; } }
 
 /* ── Sticky cart bar ── */
-body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
+body.cart-bar-active { padding-bottom: var(--cart-bar-h); * 0.45); }
 .sticky-cart-bar {
   display: none; align-items: center; justify-content: space-between;
   position: fixed; bottom: 0; left: 0; right: 0;
   height: var(--cart-bar-h); z-index: 400; padding: 0 24px;
   background: linear-gradient(135deg, rgba(10,10,14,0.96), rgba(4,4,6,0.98));
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid rgba(255,255,255,0.14);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 -4px 32px rgba(0,0,0,0.55); animation: none;
+  box-shadow: 0 -2px 0 rgba(255,255,255,0.06), 0 -8px 48px rgba(0,0,0,0.72); animation: none;
 }
 .sticky-cart-bar.visible { display: flex; animation: cartBarSlideUp 0.35s cubic-bezier(.4,0,.2,1) forwards; }
 @keyframes cartBarSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
