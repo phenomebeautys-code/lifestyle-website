@@ -426,28 +426,28 @@ function renderProducts(products) {
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
     const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
 
-   return `
+  return `
 <article class="product-card${unavailableClass}" data-pid="${pid}">
   <div class="product-img">
     ${badge}
     ${imgHTML}
   </div>
   <div class="product-body">
+    <div class="product-name-row">
+      <h2 class="product-name">${p.name || 'Product'}</h2>
+      <div class="product-price" id="price-${pid}">${priceLabel}</div>
+    </div>
     ${p.category ? `<div class="product-tag">${p.category}</div>` : ''}
-    <h2 class="product-name">${p.name || 'Product'}</h2>
     ${variantHTML}
     ${sizeHTML}
-    <div class="product-card-footer">
-      <div class="product-price" id="price-${pid}">${priceLabel}</div>
-      <button class="btn btn-primary btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available?'':'disabled aria-disabled="true"'}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-        ${available ? 'Add to Cart' : 'Unavailable'}
-      </button>
-    </div>
+    <button class="btn btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
+      ${available ? 'Add to Cart' : 'Unavailable'}
+    </button>
   </div>
 </article>`;
 }).join('');
-  updateBadges();
+
+updateBadges();
 }
 
 function selectVariant(btn, pid) {
