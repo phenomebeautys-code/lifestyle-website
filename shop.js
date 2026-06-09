@@ -95,6 +95,62 @@ function updateStickyBar() {
   if (totalEl) totalEl.textContent = 'R' + cartTotal().toFixed(2);
 }
 
+/* ── Sticky cart expanded inline card ─────────────────────── */
+
+function renderStickyExpanded() {
+  const container = document.getElementById('scbExpanded');
+  if (!container) return;
+
+  if (!cart.length) {
+    container.innerHTML = '';
+    container.classList.remove('open');
+    container.setAttribute('aria-hidden', 'true');
+    return;
+  }
+
+  const items = cart.map((item, idx) => `
+    <div class="scb-line">
+      <img class="scb-line-img" src="${item.image || ''}" alt="${item.name || ''}" loading="lazy" />
+      <div class="scb-line-info">
+        <div class="scb-line-name">${item.name || 'Product'}</div>
+        ${item.variant ? `<div class="scb-line-variant">${item.variant}</div>` : ''}
+      </div>
+      <div class="scb-line-qty">
+        <button type="button" class="scb-qty-btn" onclick="changeCartQty(${idx},-1)" aria-label="Decrease quantity">-</button>
+        <span class="scb-qty-val">${item.qty}</span>
+        <button type="button" class="scb-qty-btn" onclick="changeCartQty(${idx},1)" aria-label="Increase quantity">+</button>
+      </div>
+      <div class="scb-line-price">R${((Number(item.price)||0)*(Number(item.qty)||1)).toFixed(2)}</div>
+    </div>`).join('');
+
+  const subtotal = cartTotal();
+
+  container.innerHTML = `
+    <div class="scb-expanded-items">${items}</div>
+    <div class="scb-expanded-footer">
+      <div class="scb-expanded-subtotal">
+        <span>Subtotal</span>
+        <span>R${subtotal.toFixed(2)}</span>
+      </div>
+      <p class="scb-expanded-note">Delivery calculated at checkout</p>
+      <a href="checkout.html" class="btn btn-primary scb-checkout-btn">Checkout</a>
+    </div>`;
+}
+
+function toggleStickyCart() {
+  const container = document.getElementById('scbExpanded');
+  if (!container) return;
+  const isOpen = container.classList.contains('open');
+  if (isOpen) {
+    container.classList.remove('open');
+    container.setAttribute('aria-hidden', 'true');
+  } else {
+    renderStickyExpanded();
+    container.classList.add('open');
+    container.setAttribute('aria-hidden', 'false');
+  }
+}
+
 /* ── Cart drawer ──────────────────────────────────────────── */
 
 function buildCartThumb(imageUrl, altText, size) {
@@ -147,8 +203,8 @@ function renderCartDrawer() {
 function changeCartQty(idx, delta) {
   if (!cart[idx]) return;
 
-  const current = Number(cart[idx].qty) || 1;
-  const next = current + delta;
+const current = Number(cart[idx].qty) || 1;
+const next = current + delta;
 
   if (next <= 0) {
     // Remove line if quantity would drop below 1
@@ -160,6 +216,8 @@ function changeCartQty(idx, delta) {
   saveCart(cart);
   renderCartDrawer();
   updateBadges();
+const expanded = document.getElementById('scbExpanded');
+if (expanded?.classList.contains('open')) renderStickyExpanded();
 }
 
 function changeQty(idx, delta) {
