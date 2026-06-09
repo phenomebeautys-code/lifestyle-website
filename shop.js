@@ -384,7 +384,7 @@ function renderProducts(products) {
     return;
   }
 
-  grid.innerHTML = products.map(p => {
+  grid.innerHTML = products.map((p, idx) => {
     const pid       = p.id;
     const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
     const available = p.available !== false;
@@ -392,7 +392,7 @@ function renderProducts(products) {
 
     let imgHTML = '';
     if (images.length >= 1) {
-      imgHTML = `<img id="card-img-${pid}" src="${images[0]}" alt="${p.name || ''}" loading="eager" width="600" height="800" />`;
+      imgHTML = `<img id="card-img-${pid}" src="${images[0]}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="600" height="800" />`;
     } else {
       imgHTML = `<div class="no-img-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
     }
