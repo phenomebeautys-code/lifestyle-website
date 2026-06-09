@@ -446,7 +446,7 @@ function renderProducts(products) {
     </div>
   </div>
 </article>`;
-
+}).join('');
   updateBadges();
 }
 
