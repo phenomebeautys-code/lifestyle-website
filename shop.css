@@ -159,7 +159,7 @@
     backdrop-filter: none; -webkit-backdrop-filter: none;
     padding: 0; gap: 12px;
   }
-  .segment-selector-inner h2 { display: none; }
+  /*.segment-selector-inner h2 { display: none; } */
   .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
   .segment-card { aspect-ratio: 3 / 4; }
   .segment-card-overlay { inset: auto 12px 14px 12px; gap: 6px; }
