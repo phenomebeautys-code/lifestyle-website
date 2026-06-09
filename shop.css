@@ -175,6 +175,7 @@
   text-align: center;
   .segment-card-title { font-size: 0.95rem; }
   .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
+  }
 
 /* ── Shop section ── */
 .shop-section { padding: 10px 0 40px; }
@@ -379,7 +380,7 @@ body.cart-bar-active .cart-drawer { bottom: var(--cart-bar-h, 72px); }
 @media(max-width:480px)  { .product-grid { grid-template-columns: 1fr; } }
 
 /* ── Sticky cart bar ── */
-body.cart-bar-active { padding-bottom: var(--cart-bar-h); * 0.45); }
+body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .sticky-cart-bar {
   display: none; align-items: center; justify-content: space-between;
   position: fixed; bottom: 0; left: 0; right: 0;
