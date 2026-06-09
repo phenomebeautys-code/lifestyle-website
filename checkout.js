@@ -917,7 +917,7 @@ async function handlePay() {
 
     // Step 2: Create Yoco hosted checkout session
     const origin     = window.location.origin;
-    const successUrl = `${origin}/thank-you.html?order=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
+    const successUrl = `${origin}/shop-success.html?order=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
     const cancelUrl  = `${origin}/checkout.html`;
 
     const yocoRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
