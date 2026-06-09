@@ -165,7 +165,17 @@
   /*.segment-selector-inner h2 { display: none; } */
   .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
   .segment-card { aspect-ratio: 3 / 4; }
-  .segment-card-overlay { inset: 14px 12px auto 12px; gap: 6px; align-items: center; gap: 6px; }
+  .segment-card-overlay { 
+  inset: 14px 12px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  }
+
+{  
   .segment-card-title { font-size: 0.95rem; }
   .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
 }
