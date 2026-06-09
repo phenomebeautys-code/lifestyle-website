@@ -139,7 +139,6 @@ function renderCartDrawer() {
         <button class="qty-btn" onclick="changeQty(${idx},-1)" aria-label="Decrease quantity">&#8722;</button>
         <span class="qty-num">${item.qty || 1}</span>
         <button class="qty-btn" onclick="changeQty(${idx},1)" aria-label="Increase quantity">&#43;</button>
-        <button class="remove-btn" onclick="removeItem(${idx})">Remove</button>
       </div>`;
     row.appendChild(info);
     itemsEl.appendChild(row);
