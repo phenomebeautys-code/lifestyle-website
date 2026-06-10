@@ -743,6 +743,8 @@ body.cart-bar-active .cart-drawer { bottom: var(--cart-bar-h, 72px); }
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 16px 24px;
   display: flex;
   flex-direction: column;
@@ -779,7 +781,7 @@ body.cart-bar-active .cart-drawer { bottom: var(--cart-bar-h, 72px); }
   font-size:0.78rem; text-decoration:underline; transition:color 0.18s; font-family:var(--font-body);
 }
 .remove-btn:hover { color:#f87171; }
-.cart-footer { padding: 20px 24px; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 14px; }
+.cart-footer { flex-shrink: 0; padding: 20px 24px; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 14px; }
 .total-row { display:flex; justify-content:space-between; font-size:0.88rem; color:var(--text-muted); }
 .total-row.grand { font-size:1.1rem; font-weight:700; color:var(--text); }
 .total-row.grand span:last-child { color:var(--accent); }
@@ -860,20 +862,50 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .cart-primary-cta { flex: 1; text-align: center; justify-content: center; }
 .continue-shopping { flex: 1; }
 
-/* Inline cart summary card under sticky bar */
+/* ============================================================
+   Inline cart summary (scb-expanded)
+   Items scroll independently; footer/checkout always pinned.
+   ============================================================ */
 .scb-expanded {
-  position: fixed; left: 0; right: 0; bottom: var(--cart-bar-h);
+  position: fixed;
+  left: 0; right: 0;
+  bottom: var(--cart-bar-h);
   background: #0f0f15;
   border-radius: 16px 16px 0 0;
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: 0 -16px 40px rgba(0,0,0,0.65);
-  padding: 14px 16px 16px;
-  max-height: 0; overflow: hidden;
-  transition: max-height 0.25s ease, opacity 0.25s ease;
-  opacity: 0; z-index: 395;
+  padding: 14px 16px 0;
+  /* Collapsed state */
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.28s ease, opacity 0.25s ease;
+  opacity: 0;
+  z-index: 395;
+  /* Inner layout: items scroll, footer pins */
+  display: flex;
+  flex-direction: column;
 }
-.scb-expanded.open { max-height: 420px; opacity: 1; }
-.scb-expanded-items { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.scb-expanded.open {
+  max-height: 72dvh;
+  opacity: 1;
+  overflow: visible;
+}
+
+.scb-expanded-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  /* Scroll the items list, never the footer */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  /* Cap so footer always fits on screen — accounts for bar + footer ~120px */
+  max-height: calc(72dvh - 130px);
+  padding-bottom: 10px;
+}
+.scb-expanded-items::-webkit-scrollbar { width: 3px; }
+.scb-expanded-items::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
+
 .scb-line {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -882,6 +914,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   align-items: center;
   padding: 8px 10px; border-radius: 10px;
   background: rgba(255,255,255,0.03);
+  flex-shrink: 0;
 }
 .scb-line-img {
   grid-row: 1 / span 2;
@@ -905,16 +938,22 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-qty-btn:hover { background: rgba(255,255,255,0.12); }
 .scb-qty-val { font-size: 0.8rem; font-weight: 600; min-width: 18px; text-align: center; }
 .scb-line-price { font-size: 0.86rem; font-weight: 600; color: var(--accent); text-align: right; }
+
+/* Footer always pinned — never scrolls away */
 .scb-expanded-footer {
+  flex-shrink: 0;
   border-top: 1px solid rgba(255,255,255,0.08);
-  padding-top: 10px;
-  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #0f0f15;
 }
 .scb-expanded-subtotal { display: flex; justify-content: space-between; font-size: 0.86rem; color: var(--text-soft); }
 .scb-expanded-subtotal span:last-child { font-weight: 700; color: var(--accent); }
 .scb-expanded-note { font-size: 0.72rem; color: var(--text-muted); text-align: right; }
 .scb-checkout-btn { width: 100%; justify-content: center; text-align: center; }
 @media (max-width: 400px) {
-  .scb-expanded { padding: 12px 12px 14px; }
+  .scb-expanded { padding: 12px 12px 0; }
   .scb-line { padding: 6px 8px; }
 }
