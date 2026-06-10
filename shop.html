@@ -120,33 +120,33 @@
           <span class="section-kicker">Make Yourself A Priority.</span>
           <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.</p>
+
+          <!-- Who are you shopping for — hidden once a segment is selected -->
+          <h2 class="hero-who-label" id="shopHeroWho">Who are you shopping for?</h2>
+
+          <!-- Segment toggle — always visible -->
+          <div class="segment-toggle-wrap" id="segmentToggleWrap">
+            <div class="segment-toggle" id="segmentToggle" role="group" aria-label="Shopping segment">
+              <button
+                class="segment-toggle-option"
+                id="toggleSelfCare"
+                onclick="selectSegment('self_care')"
+                aria-pressed="false"
+              >Self-Care</button>
+              <button
+                class="segment-toggle-option"
+                id="toggleProfessional"
+                onclick="selectSegment('professional')"
+                aria-pressed="false"
+              >Professional</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <div id="segmentSelectorMount"></div>
-
     <section class="shop-section" aria-label="Products">
       <div class="container">
-
-        <!-- Segment toggle bar -->
-        <div class="segment-active-bar" id="segmentActiveBar" aria-live="polite">
-          <div class="segment-toggle" id="segmentToggle" role="group" aria-label="Shopping segment">
-            <button
-              class="segment-toggle-option"
-              id="toggleSelfCare"
-              onclick="selectSegment('self_care')"
-              aria-pressed="false"
-            >Self-Care</button>
-            <button
-              class="segment-toggle-option"
-              id="toggleProfessional"
-              onclick="selectSegment('professional')"
-              aria-pressed="false"
-            >Professional</button>
-          </div>
-        </div>
-
         <div class="product-grid" id="productGrid">
           <noscript>
             <div class="noscript-notice">
