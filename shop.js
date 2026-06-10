@@ -362,7 +362,9 @@ function openProductDetail(pid) {
   if (!panel || !inner) return;
 
   const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
-  const available = p.available !== false;
+  const available = p.active === true &&
+  p.availability !== 'coming_soon' &&
+  p.availability !== 'out_of_stock';
   const price     = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
 
