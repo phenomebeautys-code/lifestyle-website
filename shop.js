@@ -571,6 +571,9 @@ function selectSegment(segment) {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
+  /* Hide the "Who are you shopping for?" label once a segment is chosen */
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) whoLabel.style.display = 'none';
   applySegment(segment);
   fetchProducts();
 }
@@ -582,6 +585,9 @@ function browseAll() {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
+  /* Hide the "Who are you shopping for?" label when browsing all */
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) whoLabel.style.display = 'none';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
@@ -598,6 +604,9 @@ function resetSegment() {
   if (mount) mount.style.display = '';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.remove('hidden');
+  /* Restore the "Who are you shopping for?" label on reset */
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) whoLabel.style.display = '';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
@@ -752,6 +761,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (mount) mount.style.display = 'none';
     const prompt = document.getElementById('heroSubPrompt');
     if (prompt) prompt.classList.add('hidden');
+    /* Hide the "Who are you shopping for?" label for returning visitors */
+    const whoLabel = document.getElementById('shopHeroWho');
+    if (whoLabel) whoLabel.style.display = 'none';
     applySegment(savedSegment);
     fetchProducts();
   }
