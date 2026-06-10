@@ -138,9 +138,12 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
+    <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" /></noscript>
+    <link rel="stylesheet" href="styles.css?v=1" />
 </head>
 <body>
 
@@ -446,7 +449,7 @@
                             <div class="phone-notch"></div>
                             <div class="phone-screen">
                                 <div class="phone-screen-content">
-                                    <img src="./PhenomeBeauty%20%20Book%20Online.png" class="phone-screenshot" alt="PhenomeBeauty online booking app screenshot" />
+                                    <img src="./PhenomeBeauty%20%20Book%20Online.png?v=1" class="phone-screenshot" alt="PhenomeBeauty online booking app screenshot" loading="lazy" width="390" height="844" />
                                 </div>
                             </div>
                         </a>
@@ -501,6 +504,6 @@
         </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=1" defer></script>
 </body>
 </html>
