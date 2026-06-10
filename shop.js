@@ -430,7 +430,6 @@ function openProductDetail(pid) {
       <div class="pdp-content">
         ${catHTML}
         <h2 class="pdp-name">${p.name || 'Product'}</h2>
-        <div class="pdp-price" id="pdpPrice">${priceLabel}</div>
         ${descHTML}
         ${variantHTML}
         ${sizeHTML}
@@ -532,9 +531,7 @@ function pdpUpdatePrice(pid) {
   if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
   if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
   const label = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
-  const priceEl       = document.getElementById('pdpPrice');
   const footerPriceEl = document.getElementById('pdpFooterPrice');
-  if (priceEl) priceEl.textContent = label;
   if (footerPriceEl) footerPriceEl.textContent = label;
 }
 
