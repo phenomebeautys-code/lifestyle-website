@@ -10,7 +10,26 @@
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
   text-align: center;
+
+  /* Stage 1: panel fades in on load */
+  animation: heroFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* Hero panel content — kicker, h1, p */
+.shop-hero-panel .section-kicker,
+.shop-hero-panel h1,
+.shop-hero-panel p {
+  animation: heroFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.shop-hero-panel .section-kicker { animation-delay: 0.05s; }
+.shop-hero-panel h1              { animation-delay: 0.15s; }
+.shop-hero-panel p               { animation-delay: 0.25s; }
+
+@keyframes heroFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .shop-hero-panel h1 { font-family: var(--font-display); font-size: clamp(1.8rem,5vw,3rem); line-height:1; color: var(--accent-strong); margin-bottom:12px; }
 .shop-hero-panel p  { color: var(--text-soft); font-size:1rem; max-width:480px; margin:0 auto; line-height:1.7; }
 
@@ -139,14 +158,82 @@
 .segment-active-bar.visible { display: flex; }
 
 /* ============================================================
-   Segment toggle  —  sliding pill indicator
+   Segment toggle bubble — Stage 2
+   Sits below the hero panel as its own glass card.
+   Fades + rises in after a delay once the hero has settled.
+   ============================================================ */
+
+/* "Who are you shopping for?" label — lives inside the hero panel,
+   hidden from view; the bubble below carries the full prompt. */
+.hero-who-label {
+  display: none;
+}
+
+/* The toggle wrap becomes its own floating bubble */
+.segment-toggle-wrap {
+  margin-top: 10px;
+  padding: clamp(20px, 3vw, 28px) clamp(20px, 4vw, 36px);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+
+  /* Stage 2: bubble fades up after hero has landed */
+  opacity: 0;
+  transform: translateY(14px);
+  animation: bubbleFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.8s forwards;
+}
+
+/* Inject the "Who are you shopping for?" prompt as a pseudo label above the toggle */
+.segment-toggle-wrap::before {
+  content: "Who are you shopping for?";
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--accent-strong);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+@keyframes bubbleFadeIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Once a segment is chosen, collapse the bubble smoothly */
+body.segment-chosen .segment-toggle-wrap {
+  animation: none;
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.5s ease, padding 0.4s ease, margin 0.4s ease;
+  max-height: 200px;
+  overflow: hidden;
+}
+body.segment-chosen .segment-toggle-wrap {
+  opacity: 0.5;
+  transform: scale(0.98);
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  gap: 0;
+}
+
+/* ============================================================
+   Segment toggle  —  sliding pill indicator (scaled up)
    ============================================================ */
 .segment-toggle {
   position: relative;
   display: inline-grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  padding: 4px;
+  padding: 5px;
   border-radius: var(--radius-pill);
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.10);
@@ -158,10 +245,10 @@
 .segment-toggle::before {
   content: '';
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
+  top: 5px;
+  bottom: 5px;
+  left: 5px;
+  width: calc(50% - 5px);
   border-radius: var(--radius-pill);
   background: rgba(255,255,255,0.14);
   border: 1px solid rgba(255,255,255,0.22);
@@ -175,13 +262,13 @@
 .segment-toggle-option {
   position: relative;
   z-index: 1;
-  padding: 9px 28px;
+  padding: 14px 44px;
   border-radius: var(--radius-pill);
   border: none;
   background: transparent;
   color: rgba(255,255,255,0.32);
   font-family: var(--font-body);
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -222,7 +309,8 @@
   }
   .segment-card-title { font-size: 0.95rem; }
   .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
-  .segment-toggle-option { padding: 9px 20px; font-size: 0.76rem; }
+  .segment-toggle-wrap { padding: 18px 16px; border-radius: 20px; margin-top: 8px; gap: 14px; }
+  .segment-toggle-option { padding: 13px 28px; font-size: 0.82rem; }
 }
 
 /* ── Shop section ── */
