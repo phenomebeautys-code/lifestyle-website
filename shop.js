@@ -13,6 +13,13 @@ function transformImage(url, width) {
   return url + '?width=' + (width || 400) + '&quality=75&format=webp';
 }
 
+/* ── Strip label prefix (e.g. "Scent: Bloom" → "Bloom") ───── */
+
+function stripPrefix(str) {
+  if (!str) return str;
+  return str.replace(/^[^:]+:\s*/i, '');
+}
+
 /* ── Cart helpers ─────────────────────────────────────────── */
 
 function loadCart() {
@@ -120,7 +127,7 @@ function renderStickyExpanded() {
       <img class="scb-line-img" src="${item.image || ''}" alt="${item.name || ''}" loading="lazy" />
       <div class="scb-line-info">
         <div class="scb-line-name">${item.name || 'Product'}</div>
-        ${item.variant ? `<div class="scb-line-variant">${item.variant}</div>` : ''}
+        ${item.variant ? `<div class="scb-line-variant">${stripPrefix(item.variant)}</div>` : ''}
       </div>
       <div class="scb-line-qty">
         <button type="button" class="scb-qty-btn" onclick="changeCartQty(${idx},-1)" aria-label="Decrease quantity">-</button>
@@ -194,9 +201,10 @@ function renderCartDrawer() {
     row.appendChild(thumb);
     const info = document.createElement('div');
     info.className = 'cart-item-info';
+    const variantDisplay = [stripPrefix(item.variant), stripPrefix(item.size)].filter(Boolean).join(' / ') || '';
     info.innerHTML = `
       <div class="cart-item-name">${item.name || 'Product'}</div>
-      <div class="cart-item-variant">${[item.variant, item.size].filter(Boolean).join(' / ') || ''}</div>
+      <div class="cart-item-variant">${variantDisplay}</div>
       <div class="cart-item-price">R${((Number(item.price)||0)*(Number(item.qty)||1)).toFixed(2)}</div>
       <div class="cart-item-qty">
         <button class="qty-btn" onclick="changeQty(${idx},-1)" aria-label="Decrease quantity">&#8722;</button>
@@ -409,10 +417,11 @@ function renderProducts(products) {
     let variantHTML = '';
     if (p.variants && p.variants.length) {
       const pills = p.variants.map((v, vi) => {
-        const label    = v.name || v.label || v.value || ('Option ' + (vi+1));
+        const raw      = v.name || v.label || v.value || ('Option ' + (vi+1));
+        const label    = stripPrefix(raw);
         const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
         const actClass = vi === 0 && !outClass ? ' active' : '';
-        return `<button class="v-pill${actClass}${outClass}" data-variant="${label}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
+        return `<button class="v-pill${actClass}${outClass}" data-variant="${raw}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
       }).join('');
       variantHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
     }
@@ -420,9 +429,10 @@ function renderProducts(products) {
     let sizeHTML = '';
     if (p.sizes && p.sizes.length) {
       const pills = p.sizes.map((s, si) => {
-        const label    = s.name || s.label || s.value || ('Size ' + (si+1));
+        const raw      = s.name || s.label || s.value || ('Size ' + (si+1));
+        const label    = stripPrefix(raw);
         const actClass = si === 0 ? ' active' : '';
-        return `<button class="s-pill${actClass}" data-size="${label}" onclick="selectSize(this,'${pid}')">${label}</button>`;
+        return `<button class="s-pill${actClass}" data-size="${raw}" onclick="selectSize(this,'${pid}')">${label}</button>`;
       }).join('');
       sizeHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
     }
