@@ -366,7 +366,7 @@ function openProductDetail(pid) {
   p.availability !== 'coming_soon' &&
   p.availability !== 'out_of_stock';
   const price     = Number(p.price) || 0;
-  const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
+  const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
   /* hero image */
   const heroSrc = images.length ? transformImage(images[0], 800) : '';
