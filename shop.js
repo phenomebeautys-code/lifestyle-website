@@ -289,7 +289,7 @@ function addToCartFromDetail(pid) {
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (!p || !panel) return;
 
-  const variantEl = panel.querySelector('.v-pill.active');
+  const variantEl = panel.querySelector('.pdp-thumb-col.active');
   const sizeEl    = panel.querySelector('.s-pill.active');
   const variant   = variantEl?.dataset.variant || '';
   const sizeName  = sizeEl?.dataset.size       || '';
@@ -326,7 +326,7 @@ function addToCartFromDetail(pid) {
 function addToCart(pid, cardEl) {
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (!p) return;
-  const variantEl = cardEl.querySelector('.v-pill.active');
+  const variantEl = cardEl.querySelector('.pdp-thumb-col.active');
   const sizeEl    = cardEl.querySelector('.s-pill.active');
   const variant   = variantEl?.dataset.variant || '';
   const sizeName  = sizeEl?.dataset.size       || '';
@@ -372,28 +372,30 @@ function openProductDetail(pid) {
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${heroSrc}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
     : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-  /* thumbnail strip (if multiple images) */
-  const thumbsHTML = images.length > 1
-    ? `<div class="pdp-thumbs" role="list">${images.map((img, i) =>
-        `<button class="pdp-thumb${i === 0 ? ' active' : ''}" role="listitem" onclick="pdpSelectImage(this,'${transformImage(img, 800)}')" aria-label="View image ${i+1}">
+  /* thumbnail strip with variant label beneath each thumb */
+  let thumbsHTML = '';
+  if (images.length > 1) {
+    const cols = images.map((img, i) => {
+      /* match variant by index if variants exist */
+      const variantObj  = p.variants && p.variants[i] ? p.variants[i] : null;
+      const variantRaw  = variantObj ? (variantObj.name || variantObj.label || variantObj.value || '') : '';
+      const variantLabel = variantRaw ? stripPrefix(variantRaw) : '';
+      const activeClass  = i === 0 ? ' active' : '';
+      const outClass     = (variantObj && variantObj.stock != null && variantObj.stock <= 0) ? ' out-of-stock' : '';
+      const labelHTML    = variantLabel
+        ? `<span class="pdp-thumb-label">${variantLabel}</span>`
+        : '';
+      return `<div class="pdp-thumb-col${activeClass}${outClass}" data-variant="${variantRaw}" data-img="${transformImage(img, 800)}" onclick="pdpSelectThumbCol(this,'${pid}')" role="button" tabindex="0" aria-label="${variantLabel || ('Image ' + (i+1))}" aria-pressed="${i === 0}">
+        <div class="pdp-thumb-img-wrap">
           <img src="${transformImage(img, 120)}" alt="" loading="lazy" width="120" height="80" />
-        </button>`).join('')}</div>`
-    : '';
-
-  /* variants */
-  let variantHTML = '';
-  if (p.variants && p.variants.length) {
-    const pills = p.variants.map((v, vi) => {
-      const raw      = v.name || v.label || v.value || ('Option ' + (vi+1));
-      const label    = stripPrefix(raw);
-      const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
-      const actClass = vi === 0 && !outClass ? ' active' : '';
-      return `<button class="v-pill${actClass}${outClass}" data-variant="${raw}" onclick="pdpSelectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
+        </div>
+        ${labelHTML}
+      </div>`;
     }).join('');
-    variantHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Variant</div><div class="pill-group">${pills}</div></div>`;
+    thumbsHTML = `<div class="pdp-thumbs" role="list">${cols}</div>`;
   }
 
-  /* sizes */
+  /* sizes only — variants are now in the thumb strip */
   let sizeHTML = '';
   if (p.sizes && p.sizes.length) {
     const pills = p.sizes.map((s, si) => {
@@ -403,6 +405,19 @@ function openProductDetail(pid) {
       return `<button class="s-pill${actClass}" data-size="${raw}" onclick="pdpSelectSize(this,'${pid}')">${label}</button>`;
     }).join('');
     sizeHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Size</div><div class="pill-group">${pills}</div></div>`;
+  }
+
+  /* fallback: if product has variants but only ONE image, render variant pills normally */
+  let variantHTML = '';
+  if (p.variants && p.variants.length && images.length <= 1) {
+    const pills = p.variants.map((v, vi) => {
+      const raw      = v.name || v.label || v.value || ('Option ' + (vi+1));
+      const label    = stripPrefix(raw);
+      const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
+      const actClass = vi === 0 && !outClass ? ' active' : '';
+      return `<button class="v-pill${actClass}${outClass}" data-variant="${raw}" onclick="pdpSelectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
+    }).join('');
+    variantHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Variant</div><div class="pill-group">${pills}</div></div>`;
   }
 
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
@@ -455,6 +470,25 @@ function closeProductDetail() {
   _pdpCurrentPid = null;
 }
 
+/* ── New: select by clicking the column (image + label together) ── */
+function pdpSelectThumbCol(col, pid) {
+  const thumbs = col.closest('.pdp-thumbs');
+  if (!thumbs) return;
+  thumbs.querySelectorAll('.pdp-thumb-col').forEach(c => {
+    c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  col.classList.add('active');
+  col.setAttribute('aria-pressed', 'true');
+
+  const src = col.dataset.img;
+  const heroImg = document.getElementById('pdpHeroImg');
+  if (heroImg && src) heroImg.src = src;
+
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (p) pdpUpdatePrice(pid);
+}
+
 function pdpSelectImage(btn, src) {
   const heroImg = document.getElementById('pdpHeroImg');
   if (heroImg) { heroImg.src = src; }
@@ -484,10 +518,12 @@ function pdpUpdatePrice(pid) {
   const panel = document.getElementById('pdpPanel');
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (!p || !panel) return;
-  const variantEl = panel.querySelector('.v-pill.active');
-  const sizeEl    = panel.querySelector('.s-pill.active');
-  const variant   = variantEl?.dataset.variant || '';
-  const sizeName  = sizeEl?.dataset.size       || '';
+  /* variant is now stored on the active thumb col */
+  const thumbColEl = panel.querySelector('.pdp-thumb-col.active');
+  const vPillEl    = panel.querySelector('.v-pill.active');
+  const sizeEl     = panel.querySelector('.s-pill.active');
+  const variant    = thumbColEl?.dataset.variant || vPillEl?.dataset.variant || '';
+  const sizeName   = sizeEl?.dataset.size || '';
   let price = Number(p.price) || 0;
   if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
   if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
