@@ -21,24 +21,20 @@ function stripPrefix(str) {
 
 /* —— Render structured description ————————————————————————— */
 
-function renderDescription(text) {
-  if (!text) return '';
-  const match = text.match(/^([\s\S]*?)\n?\s*Available in\s*:\s*\n([\s\S]*)$/i);
-  if (!match) {
-    return `<div class="product-desc"><p>${text}</p></div>`;
-  }
-  const body    = match[1].trim();
-  const rawList = match[2].trim();
-  const items   = rawList
-    .split('\n')
-    .map(l => l.replace(/^[\u2022\-\*]\s*/, '').trim())
-    .filter(Boolean);
-  const listHTML = items.map(item => `<li>${item}</li>`).join('');
-  return `<div class="product-desc">
-  <p>${body}</p>
-  <p class="desc-avail-label">Available in</p>
-  <ul>${listHTML}</ul>
-</div>`;
+function renderDescription(p) {
+  const text         = p.description || '';
+  const includesList  = Array.isArray(p.includes)    ? p.includes.filter(Boolean)    : [];
+  const availableList = Array.isArray(p.available_in) ? p.available_in.filter(Boolean) : [];
+
+  const includesHTML = includesList.length
+    ? `<p class="desc-avail-label">Includes</p><ul>${includesList.map(i => `<li>${i}</li>`).join('')}</ul>`
+    : '';
+
+  const availableHTML = availableList.length
+    ? `<p class="desc-avail-label">Available in</p><ul>${availableList.map(i => `<li>${i}</li>`).join('')}</ul>`
+    : '';
+
+  return `<div class="product-desc"><p>${text}</p>${includesHTML}${availableHTML}</div>`;
 }
 
 /* —— Cart helpers ———————————————————————————————————————————— */
@@ -363,9 +359,9 @@ function openProductDetail(pid) {
 
   const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
   const available = p.active === true &&
-  p.availability !== 'coming_soon' &&
-  p.availability !== 'out_of_stock';
-  const price     = Number(p.price) || 0;
+    p.availability !== 'coming_soon' &&
+    p.availability !== 'out_of_stock';
+  const price      = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
   /* hero image */
@@ -422,7 +418,7 @@ function openProductDetail(pid) {
   }
 
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
-  const descHTML = renderDescription(p.description);
+  const descHTML = renderDescription(p);
 
   /* Inject scrollable content + footer into inner */
   inner.innerHTML = `
@@ -669,8 +665,10 @@ function renderProducts(products) {
   grid.innerHTML = products.map((p, idx) => {
     const pid       = p.id;
     const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
-    const available = p.available !== false;
-    const price     = Number(p.price) || 0;
+    const available = p.active === true &&
+      p.availability !== 'coming_soon' &&
+      p.availability !== 'out_of_stock';
+    const price      = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
 
@@ -679,7 +677,7 @@ function renderProducts(products) {
       ? `<img src="${imgSrc}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
       : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Unavailable</div>`;
+    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
 
     return `
 <button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
