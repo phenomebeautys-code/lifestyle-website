@@ -23,7 +23,6 @@ function stripPrefix(str) {
 
 function renderDescription(p) {
   const text         = p.description || '';
-  // Use bracket notation to avoid shadowing Array.prototype.includes
   const includesList  = Array.isArray(p['includes'])    ? p['includes'].filter(Boolean)    : [];
   const availableList = Array.isArray(p['available_in']) ? p['available_in'].filter(Boolean) : [];
 
@@ -365,13 +364,11 @@ function openProductDetail(pid) {
   const price      = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
-  /* hero image */
   const heroSrc = images.length ? transformImage(images[0], 800) : '';
   const heroHTML = heroSrc
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${heroSrc}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
     : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-  /* thumbnail strip with variant label beneath each thumb */
   let thumbsHTML = '';
   if (images.length > 1) {
     const cols = images.map((img, i) => {
@@ -393,7 +390,6 @@ function openProductDetail(pid) {
     thumbsHTML = `<div class="pdp-thumbs" role="list">${cols}</div>`;
   }
 
-  /* sizes only */
   let sizeHTML = '';
   if (p.sizes && p.sizes.length) {
     const pills = p.sizes.map((s, si) => {
@@ -405,7 +401,6 @@ function openProductDetail(pid) {
     sizeHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Size</div><div class="pill-group">${pills}</div></div>`;
   }
 
-  /* fallback variant pills for single-image products */
   let variantHTML = '';
   if (p.variants && p.variants.length && images.length <= 1) {
     const pills = p.variants.map((v, vi) => {
@@ -421,7 +416,6 @@ function openProductDetail(pid) {
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
   const descHTML = renderDescription(p);
 
-  /* Inject scrollable content + footer into inner */
   inner.innerHTML = `
     <div class="pdp-scroll-area">
       <div class="pdp-image-block">
@@ -444,12 +438,6 @@ function openProductDetail(pid) {
       </button>
     </div>`;
 
-  /*
-    Close button is injected onto the panel itself (not inside .pdp-inner),
-    so it sits at the top-right corner of the card in a fixed position,
-    completely isolated from the scrollable content and the footer CTA.
-    Remove any existing close btn first to avoid duplicates.
-  */
   panel.querySelector('.pdp-close-btn')?.remove();
   const closeBtn = document.createElement('button');
   closeBtn.className = 'pdp-close-btn';
@@ -551,21 +539,21 @@ function getSegment() {
 
 function _setToggleState(segment) {
   const track = document.getElementById('segmentToggle');
-  const btnSelfCare    = document.getElementById('toggleSelfCare');
+  const btnSelfCare     = document.getElementById('toggleSelfCare');
   const btnProfessional = document.getElementById('toggleProfessional');
   if (!track || !btnSelfCare || !btnProfessional) return;
 
   const isSelfCare     = segment === 'self_care';
   const isProfessional = segment === 'professional';
 
-  btnSelfCare.setAttribute('aria-pressed',    String(isSelfCare));
-  btnProfessional.setAttribute('aria-pressed', String(isProfessional));
+  btnSelfCare.setAttribute('aria-pressed',     String(isSelfCare));
+  btnProfessional.setAttribute('aria-pressed',  String(isProfessional));
   track.style.setProperty('--_slide', isProfessional ? '1' : '0');
 }
 
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
-  /* Reveal product images now that a segment has been chosen */
+  /* Reveal products now that a segment has been actively chosen */
   document.body.classList.add('segment-chosen');
   const mount = document.getElementById('segmentSelectorMount');
   if (mount) mount.style.display = 'none';
@@ -585,7 +573,6 @@ function browseAll() {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  /* Hide the "Who are you shopping for?" label when browsing all */
   const whoLabel = document.getElementById('shopHeroWho');
   if (whoLabel) whoLabel.style.display = 'none';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
@@ -604,7 +591,6 @@ function resetSegment() {
   if (mount) mount.style.display = '';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.remove('hidden');
-  /* Restore the "Who are you shopping for?" label on reset */
   const whoLabel = document.getElementById('shopHeroWho');
   if (whoLabel) whoLabel.style.display = '';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
@@ -753,25 +739,29 @@ async function loadSegmentSelector() {
 
 document.addEventListener('DOMContentLoaded', async function() {
   await loadSegmentSelector();
-  const savedSegment = getSegment();
-  if (savedSegment) {
-    /* Returning visitor with a saved segment */
-    document.body.classList.add('segment-chosen');
-    const mount = document.getElementById('segmentSelectorMount');
-    if (mount) mount.style.display = 'none';
-    const prompt = document.getElementById('heroSubPrompt');
-    if (prompt) prompt.classList.add('hidden');
-    /* Hide the "Who are you shopping for?" label for returning visitors */
-    const whoLabel = document.getElementById('shopHeroWho');
-    if (whoLabel) whoLabel.style.display = 'none';
-    applySegment(savedSegment);
-    fetchProducts();
-  } else {
-    /* First-time visitor: set hero copy, initialise toggle, and load all products */
-    updateShopHero(null);
-    _setToggleState(null);
-    fetchProducts();
-  }
+
+  /*
+    Always reset to the opener state on every page load.
+    Saved segment is cleared so the hero, toggle, and product
+    visibility are consistent for both first-time and returning visitors.
+  */
+  localStorage.removeItem(SEGMENT_KEY);
+  document.body.classList.remove('segment-chosen');
+
+  /* Ensure "Who are you shopping for?" label is visible */
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) whoLabel.style.display = '';
+
+  /* Set opener hero copy */
+  updateShopHero(null);
+
+  /* Initialise toggle — pill at Self-Care position, neither button active */
+  _setToggleState(null);
+
+  /* Clear product grid — products only load once user picks a segment */
+  const grid = document.getElementById('productGrid');
+  if (grid) grid.innerHTML = '';
+
   updateBadges();
   if (cart.length) showStickyBar();
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
