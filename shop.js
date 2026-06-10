@@ -635,7 +635,7 @@ function updateShopHero(segment) {
     heroDesc.textContent = 'Supplies for the therapist who holds the standard for every woman entrusted in their care.';
   } else {
     heroTitle.innerHTML = 'The Phenome<br/>Collection';
-    heroDesc.textContent = 'Carefully curated essentials for women who maintain their standards, and the professionals who help others do the same.';
+    heroDesc.textContent = 'Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.';
   }
 }
 
@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   await loadSegmentSelector();
   const savedSegment = getSegment();
   if (savedSegment) {
-    /* Returning visitor with a saved segment: reveal images immediately */
+    /* Returning visitor with a saved segment */
     document.body.classList.add('segment-chosen');
     const mount = document.getElementById('segmentSelectorMount');
     if (mount) mount.style.display = 'none';
@@ -766,6 +766,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (whoLabel) whoLabel.style.display = 'none';
     applySegment(savedSegment);
     fetchProducts();
+  } else {
+    /* First-time visitor: JS owns the hero state from the start */
+    updateShopHero(null);
   }
   updateBadges();
   if (cart.length) showStickyBar();
