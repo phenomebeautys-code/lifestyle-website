@@ -21,20 +21,24 @@ function stripPrefix(str) {
 
 /* —— Render structured description ————————————————————————— */
 
-function renderDescription(p) {
-  const text         = p.description || '';
-  const includesList  = Array.isArray(p['includes'])    ? p['includes'].filter(Boolean)    : [];
-  const availableList = Array.isArray(p['available_in']) ? p['available_in'].filter(Boolean) : [];
-
-  const includesHTML = includesList.length
-    ? `<p class="desc-avail-label">Includes</p><ul>${includesList.map(i => `<li>${i}</li>`).join('')}</ul>`
-    : '';
-
-  const availableHTML = availableList.length
-    ? `<p class="desc-avail-label">Available in</p><ul>${availableList.map(i => `<li>${i}</li>`).join('')}</ul>`
-    : '';
-
-  return `<div class="product-desc"><p>${text}</p>${includesHTML}${availableHTML}</div>`;
+function renderDescription(text) {
+  if (!text) return '';
+  const match = text.match(/^([\s\S]*?)\n?\s*Available in\s*:\s*\n([\s\S]*)$/i);
+  if (!match) {
+    return `<div class="product-desc"><p>${text}</p></div>`;
+  }
+  const body    = match[1].trim();
+  const rawList = match[2].trim();
+  const items   = rawList
+    .split('\n')
+    .map(l => l.replace(/^[\u2022\-\*]\s*/, '').trim())
+    .filter(Boolean);
+  const listHTML = items.map(item => `<li>${item}</li>`).join('');
+  return `<div class="product-desc">
+  <p>${body}</p>
+  <p class="desc-avail-label">Available in</p>
+  <ul>${listHTML}</ul>
+</div>`;
 }
 
 /* —— Cart helpers ———————————————————————————————————————————— */
@@ -359,16 +363,18 @@ function openProductDetail(pid) {
 
   const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
   const available = p.active === true &&
-    p.availability !== 'coming_soon' &&
-    p.availability !== 'out_of_stock';
-  const price      = Number(p.price) || 0;
+  p.availability !== 'coming_soon' &&
+  p.availability !== 'out_of_stock';
+  const price     = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
+  /* hero image */
   const heroSrc = images.length ? transformImage(images[0], 800) : '';
   const heroHTML = heroSrc
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${heroSrc}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
     : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
+  /* thumbnail strip with variant label beneath each thumb */
   let thumbsHTML = '';
   if (images.length > 1) {
     const cols = images.map((img, i) => {
@@ -390,6 +396,7 @@ function openProductDetail(pid) {
     thumbsHTML = `<div class="pdp-thumbs" role="list">${cols}</div>`;
   }
 
+  /* sizes only */
   let sizeHTML = '';
   if (p.sizes && p.sizes.length) {
     const pills = p.sizes.map((s, si) => {
@@ -401,6 +408,7 @@ function openProductDetail(pid) {
     sizeHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Size</div><div class="pill-group">${pills}</div></div>`;
   }
 
+  /* fallback variant pills for single-image products */
   let variantHTML = '';
   if (p.variants && p.variants.length && images.length <= 1) {
     const pills = p.variants.map((v, vi) => {
@@ -414,8 +422,9 @@ function openProductDetail(pid) {
   }
 
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
-  const descHTML = renderDescription(p);
+  const descHTML = renderDescription(p.description);
 
+  /* Inject scrollable content + footer into inner */
   inner.innerHTML = `
     <div class="pdp-scroll-area">
       <div class="pdp-image-block">
@@ -425,6 +434,7 @@ function openProductDetail(pid) {
       <div class="pdp-content">
         ${catHTML}
         <h2 class="pdp-name">${p.name || 'Product'}</h2>
+        <div class="pdp-price" id="pdpPrice">${priceLabel}</div>
         ${descHTML}
         ${variantHTML}
         ${sizeHTML}
@@ -438,6 +448,12 @@ function openProductDetail(pid) {
       </button>
     </div>`;
 
+  /*
+    Close button is injected onto the panel itself (not inside .pdp-inner),
+    so it sits at the top-right corner of the card in a fixed position,
+    completely isolated from the scrollable content and the footer CTA.
+    Remove any existing close btn first to avoid duplicates.
+  */
   panel.querySelector('.pdp-close-btn')?.remove();
   const closeBtn = document.createElement('button');
   closeBtn.className = 'pdp-close-btn';
@@ -520,7 +536,9 @@ function pdpUpdatePrice(pid) {
   if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
   if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
   const label = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
+  const priceEl       = document.getElementById('pdpPrice');
   const footerPriceEl = document.getElementById('pdpFooterPrice');
+  if (priceEl) priceEl.textContent = label;
   if (footerPriceEl) footerPriceEl.textContent = label;
 }
 
@@ -539,30 +557,28 @@ function getSegment() {
 
 function _setToggleState(segment) {
   const track = document.getElementById('segmentToggle');
-  const btnSelfCare     = document.getElementById('toggleSelfCare');
+  const btnSelfCare    = document.getElementById('toggleSelfCare');
   const btnProfessional = document.getElementById('toggleProfessional');
   if (!track || !btnSelfCare || !btnProfessional) return;
 
   const isSelfCare     = segment === 'self_care';
   const isProfessional = segment === 'professional';
 
-  btnSelfCare.setAttribute('aria-pressed',     String(isSelfCare));
-  btnProfessional.setAttribute('aria-pressed',  String(isProfessional));
+  btnSelfCare.setAttribute('aria-pressed',    String(isSelfCare));
+  btnProfessional.setAttribute('aria-pressed', String(isProfessional));
   track.style.setProperty('--_slide', isProfessional ? '1' : '0');
 }
 
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
+  /* Reveal product images now that a segment has been chosen */
   document.body.classList.add('segment-chosen');
   const mount = document.getElementById('segmentSelectorMount');
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = 'none';
   applySegment(segment);
-  /* Filter from cache — no network request */
-  filterAndRender(segment);
+  fetchProducts();
 }
 
 function browseAll() {
@@ -572,13 +588,10 @@ function browseAll() {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = 'none';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
-  /* Filter from cache — no network request */
-  filterAndRender(null);
+  fetchProducts();
 }
 
 function resetSegment() {
@@ -591,8 +604,6 @@ function resetSegment() {
   if (mount) mount.style.display = '';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.remove('hidden');
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = '';
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
@@ -621,7 +632,7 @@ function updateShopHero(segment) {
     heroDesc.textContent = 'Supplies for the therapist who holds the standard for every woman entrusted in their care.';
   } else {
     heroTitle.innerHTML = 'The Phenome<br/>Collection';
-    heroDesc.textContent = 'Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.';
+    heroDesc.textContent = 'Carefully curated essentials for women who maintain their standards, and the professionals who help others do the same.';
   }
 }
 
@@ -641,10 +652,14 @@ function renderSkeletons(n) {
 }
 
 function renderProducts(products) {
-  /* Keep _products in sync so PDP lookups always work */
   window._products = products;
   const grid = document.getElementById('productGrid');
   if (!grid) return;
+
+  const segment = getSegment();
+  if (segment) {
+    products = products.filter(p => !p.market || p.market === segment);
+  }
 
   if (!products.length) {
     grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
@@ -654,10 +669,8 @@ function renderProducts(products) {
   grid.innerHTML = products.map((p, idx) => {
     const pid       = p.id;
     const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
-    const available = p.active === true &&
-      p.availability !== 'coming_soon' &&
-      p.availability !== 'out_of_stock';
-    const price      = Number(p.price) || 0;
+    const available = p.available !== false;
+    const price     = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
 
@@ -666,7 +679,7 @@ function renderProducts(products) {
       ? `<img src="${imgSrc}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
       : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
+    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Unavailable</div>`;
 
     return `
 <button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
@@ -684,25 +697,6 @@ function renderProducts(products) {
   updateBadges();
 }
 
-/* —— Filter from cache and render ——————————————————————————— */
-
-function filterAndRender(segment) {
-  const grid = document.getElementById('productGrid');
-  if (!grid) return;
-
-  /* No cache yet — fall back to a fresh fetch */
-  if (!window._allProducts) {
-    fetchProducts();
-    return;
-  }
-
-  const filtered = segment
-    ? window._allProducts.filter(p => !p.market || p.market === segment)
-    : window._allProducts;
-
-  renderProducts(filtered);
-}
-
 /* Compatibility shims */
 function selectVariant(btn, pid) {
   btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
@@ -714,7 +708,7 @@ function selectSize(btn, pid) {
 }
 function updateCardPrice(pid, cardEl) {}
 
-/* —— Product fetch (runs once on page load) ————————————————— */
+/* —— Product fetch ——————————————————————————————————————————— */
 
 async function fetchProducts() {
   renderSkeletons(6);
@@ -725,10 +719,7 @@ async function fetchProducts() {
     );
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    /* Cache the full unfiltered list */
-    window._allProducts = Array.isArray(data) ? data : [];
-    /* Render with whatever segment is currently active */
-    filterAndRender(getSegment());
+    renderProducts(Array.isArray(data) ? data : []);
   } catch(err) {
     console.error('fetchProducts error:', err);
     const grid = document.getElementById('productGrid');
@@ -757,37 +748,21 @@ async function loadSegmentSelector() {
 
 document.addEventListener('DOMContentLoaded', async function() {
   await loadSegmentSelector();
-
-  /*
-    Always reset to the opener state on every page load.
-    Saved segment is cleared so the hero, toggle, and product
-    visibility are consistent for both first-time and returning visitors.
-  */
-  localStorage.removeItem(SEGMENT_KEY);
-  document.body.classList.remove('segment-chosen');
-
-  /* Ensure "Who are you shopping for?" label is visible */
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = '';
-
-  /* Set opener hero copy */
-  updateShopHero(null);
-
-  /* Initialise toggle — pill at Self-Care position, neither button active */
-  _setToggleState(null);
-
-  /* Clear product grid — products only show once user picks a segment */
-  const grid = document.getElementById('productGrid');
-  if (grid) grid.innerHTML = '';
-
+  const savedSegment = getSegment();
+  if (savedSegment) {
+    /* Returning visitor with a saved segment: reveal images immediately */
+    document.body.classList.add('segment-chosen');
+    const mount = document.getElementById('segmentSelectorMount');
+    if (mount) mount.style.display = 'none';
+    const prompt = document.getElementById('heroSubPrompt');
+    if (prompt) prompt.classList.add('hidden');
+    applySegment(savedSegment);
+    fetchProducts();
+  }
   updateBadges();
   if (cart.length) showStickyBar();
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
     document.getElementById('cancelBanner')?.classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
   }
-
-  /* Prefetch all products in the background so the cache is warm
-     before the user picks a segment — toggle will be instant */
-  fetchProducts();
 });
