@@ -20,6 +20,28 @@ function stripPrefix(str) {
   return str.replace(/^[^:]+:\s*/i, '');
 }
 
+/* ── Render structured description ───────────────────────── */
+
+function renderDescription(text) {
+  if (!text) return '';
+  const match = text.match(/^([\s\S]*?)\n?\s*Available in\s*:\s*\n([\s\S]*)$/i);
+  if (!match) {
+    return `<div class="product-desc"><p>${text}</p></div>`;
+  }
+  const body    = match[1].trim();
+  const rawList = match[2].trim();
+  const items   = rawList
+    .split('\n')
+    .map(l => l.replace(/^[•\-\*]\s*/, '').trim())
+    .filter(Boolean);
+  const listHTML = items.map(item => `<li>${item}</li>`).join('');
+  return `<div class="product-desc">
+  <p>${body}</p>
+  <p class="desc-avail-label">Available in</p>
+  <ul>${listHTML}</ul>
+</div>`;
+}
+
 /* ── Cart helpers ─────────────────────────────────────────── */
 
 function loadCart() {
@@ -440,7 +462,7 @@ function renderProducts(products) {
     const price      = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
     const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
-    const descHTML   = p.description ? `<p class="product-desc">${p.description}</p>` : '';
+    const descHTML   = renderDescription(p.description);
     const catHTML    = p.category ? `<div class="product-tag">${p.category}</div>` : '';
 
     return `
