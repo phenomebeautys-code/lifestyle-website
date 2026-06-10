@@ -307,13 +307,13 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-overlay.open { opacity: 1; pointer-events: all; }
 
-/* ── Floating card ── */
+/* ── Floating card — inset on all sides so dark space shows above and below ── */
 .pdp-panel {
   position: fixed;
-  bottom: 16px;
-  left: 12px;
-  right: 12px;
-  max-height: calc(96dvh - 16px);
+  bottom: 24px;
+  left: 16px;
+  right: 16px;
+  max-height: calc(80dvh - 24px);
   z-index: 501;
   display: flex;
   flex-direction: column;
@@ -325,7 +325,7 @@ body.pdp-open { overflow: hidden; }
     0 2px 0 rgba(255,255,255,0.06) inset,
     0 32px 80px rgba(0,0,0,0.85),
     0 8px 24px rgba(0,0,0,0.60);
-  transform: translateY(calc(100% + 24px));
+  transform: translateY(calc(100% + 32px));
   transition: transform 0.46s cubic-bezier(0.16,1,0.3,1);
   will-change: transform;
 }
@@ -359,24 +359,17 @@ body.pdp-open { overflow: hidden; }
   position: relative;
 }
 
-/* ── Close row — sits above the scroll area, never overlapped by navbar ── */
-.pdp-close-row {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 14px 14px 0;
-}
-
-/* ── Close button ── */
+/* ── Close button — absolute top-right of the card, away from footer CTA ── */
 .pdp-close-btn {
-  /* no longer absolutely positioned — lives in pdp-close-row */
-  position: static;
-  width: 42px; height: 42px;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 36px; height: 36px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.60);
-  border: 1px solid rgba(255,255,255,0.16);
-  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.80);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s, color 0.2s, transform 0.2s;
