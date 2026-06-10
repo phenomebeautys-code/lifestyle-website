@@ -328,7 +328,7 @@
   margin-top: -2px;
 }
 
-/* Description — visible on card, 3 line clamp */
+/* Description */
 .product-desc {
   font-size: 0.78rem;
   line-height: 1.5;
@@ -353,6 +353,7 @@
 
 .v-pill {
   padding: 4px 11px;
+  min-height: 36px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255,255,255,0.18);
   font-size: 0.68rem; font-weight: 500;
@@ -361,6 +362,7 @@
   background: rgba(0,0,0,0.35);
   font-family: var(--font-body);
   transition: background 0.18s, border-color 0.18s, color 0.18s;
+  display: inline-flex; align-items: center;
 }
 .v-pill:hover { border-color: rgba(255,255,255,0.38); color: #fff; }
 .v-pill.active {
@@ -384,6 +386,7 @@
 
 .s-pill {
   padding: 4px 11px;
+  min-height: 36px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(255,255,255,0.18);
   font-size: 0.68rem; font-weight: 500;
@@ -392,6 +395,7 @@
   background: rgba(0,0,0,0.35);
   font-family: var(--font-body);
   transition: background 0.18s, border-color 0.18s, color 0.18s;
+  display: inline-flex; align-items: center;
 }
 .s-pill:hover { border-color: rgba(255,255,255,0.38); color: #fff; }
 .s-pill.active {
@@ -433,19 +437,22 @@
 /* ── Responsive ── */
 @media (max-width: 767px) {
   .product-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .product-card { min-height: 360px; }
-  .product-body { padding: 0 12px 12px; bottom: 50px; gap: 5px; }
-  .product-name { font-size: 0.95rem; }
-  .product-desc { -webkit-line-clamp: 2; font-size: 0.73rem; }
-  .btn-add-to-cart { min-height: 46px; font-size: 0.76rem; }
-}
-@media (max-width: 480px) {
-  .product-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .product-card { min-height: 320px; }
-}
-@media (max-width: 380px) {
-  .product-grid { grid-template-columns: 1fr; }
   .product-card { min-height: 380px; }
+  .product-body { padding: 0 12px 12px; bottom: 48px; gap: 4px; }
+  .product-name { font-size: 0.98rem; }
+  .product-desc { -webkit-line-clamp: 2; font-size: 0.73rem; }
+  .v-pill, .s-pill { min-height: 36px; font-size: 0.67rem; }
+  .btn-add-to-cart { min-height: 48px; font-size: 0.78rem; }
+}
+
+@media (max-width: 480px) {
+  .product-grid { grid-template-columns: 1fr; gap: 12px; }
+  .product-card { min-height: 400px; }
+  .product-body { padding: 0 14px 14px; bottom: 52px; gap: 5px; }
+  .product-name { font-size: clamp(1rem, 4vw, 1.2rem); }
+  .product-desc { -webkit-line-clamp: 3; font-size: 0.76rem; }
+  .v-pill, .s-pill { min-height: 40px; padding: 6px 14px; font-size: 0.72rem; }
+  .btn-add-to-cart { min-height: 52px; font-size: 0.82rem; }
 }
 
 
