@@ -414,7 +414,7 @@ function renderProducts(products) {
         const actClass = vi === 0 && !outClass ? ' active' : '';
         return `<button class="v-pill${actClass}${outClass}" data-variant="${label}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
       }).join('');
-      variantHTML = `<div class="card-pill-row"><div class="variant-label">Variant</div><div class="pill-group">${pills}</div></div>`;
+      variantHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
     }
 
     let sizeHTML = '';
@@ -424,7 +424,7 @@ function renderProducts(products) {
         const actClass = si === 0 ? ' active' : '';
         return `<button class="s-pill${actClass}" data-size="${label}" onclick="selectSize(this,'${pid}')">${label}</button>`;
       }).join('');
-      sizeHTML = `<div class="card-pill-row"><div class="variant-label">Size</div><div class="pill-group">${pills}</div></div>`;
+      sizeHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
     }
 
     const price      = Number(p.price) || 0;
