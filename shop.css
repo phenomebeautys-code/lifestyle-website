@@ -588,6 +588,15 @@ body.pdp-open { overflow: hidden; }
   letter-spacing: -0.01em;
 }
 
+/* Size row — sits between name and description */
+.pdp-size {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.38);
+}
+
 .pdp-price {
   font-size: 1.05rem;
   font-weight: 600;
@@ -602,6 +611,33 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-content .product-desc p { max-width: 100%; }
 .pdp-content .product-desc li { font-size: 0.84rem; }
+
+/* Section labels for Includes / Available in blocks */
+.pdp-content .product-desc .desc-section-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
+  margin-bottom: 6px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* List styling for includes / available-in */
+.pdp-content .product-desc ul {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+.pdp-content .product-desc ul li::before {
+  content: "\2014";
+  margin-right: 7px;
+  color: rgba(255,255,255,0.22);
+}
 
 /* Option groups */
 .pdp-option-group { display: flex; flex-direction: column; gap: 10px; }
