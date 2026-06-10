@@ -307,13 +307,13 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-overlay.open { opacity: 1; pointer-events: all; }
 
-/* ── Floating card — smaller on mobile so dark space breathes top and bottom ── */
+/* ── Floating card — inset on all sides so dark space shows above and below ── */
 .pdp-panel {
   position: fixed;
   bottom: 32px;
   left: 16px;
   right: 16px;
-  max-height: calc(72dvh - 16px);
+  max-height: calc(80dvh - 16px);
   z-index: 501;
   display: flex;
   flex-direction: column;
@@ -359,7 +359,7 @@ body.pdp-open { overflow: hidden; }
   position: relative;
 }
 
-/* ── Close button — absolute top-right of the PANEL card, away from footer CTA ── */
+/* ── Close button — top-right of the card, no focus ring ── */
 .pdp-close-btn {
   position: absolute;
   top: 14px;
@@ -373,9 +373,10 @@ body.pdp-open { overflow: hidden; }
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s, color 0.2s, transform 0.2s;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  outline: none;
   flex-shrink: 0;
 }
+.pdp-close-btn:focus-visible { outline: none; box-shadow: none; }
 .pdp-close-btn:hover { background: rgba(255,255,255,0.16); color: #fff; transform: scale(1.08); }
 
 /* ── Scrollable body ── */
@@ -389,9 +390,9 @@ body.pdp-open { overflow: hidden; }
 .pdp-scroll-area::-webkit-scrollbar { width: 3px; }
 .pdp-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 
-/* ── Hero image ── */
+/* ── Hero image — equal 16px inset on all sides ── */
 .pdp-image-block {
-  padding: 8px 16px 0;
+  padding: 16px 16px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
