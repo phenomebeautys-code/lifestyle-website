@@ -315,10 +315,9 @@ body.pdp-open { overflow: hidden; }
   right: 12px;
   max-height: calc(96dvh - 16px);
   z-index: 501;
-  /* flex column: scroll area grows, footer is fixed at bottom */
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* clips the card corners; scroll is on pdp-scroll-area */
+  overflow: hidden;
   background: linear-gradient(160deg, rgba(18,16,22,0.99) 0%, rgba(10,9,14,1) 100%);
   border: 1px solid rgba(255,255,255,0.11);
   border-radius: 28px;
@@ -332,7 +331,7 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-panel.open { transform: translateY(0); }
 
-/* ── Desktop: centred modal, slightly off-centre for disruption ── */
+/* ── Desktop: centred modal ── */
 @media (min-width: 640px) {
   .pdp-panel {
     top: 50%;
@@ -341,7 +340,6 @@ body.pdp-open { overflow: hidden; }
     bottom: auto;
     width: min(600px, 92vw);
     max-height: 88dvh;
-    /* shift slightly right of centre — breaks symmetry intentionally */
     transform: translate(-46%, -46%) scale(0.95);
     border-radius: 28px;
     transition: transform 0.40s cubic-bezier(0.16,1,0.3,1), opacity 0.30s ease;
@@ -356,7 +354,6 @@ body.pdp-open { overflow: hidden; }
 .pdp-inner {
   display: flex;
   flex-direction: column;
-  /* full height of .pdp-panel so scroll area can flex-grow */
   height: 100%;
   min-height: 0;
   position: relative;
@@ -380,10 +377,10 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-close-btn:hover { background: rgba(255,255,255,0.16); color: #fff; transform: scale(1.08); }
 
-/* ── Scrollable body — this is the only scroll region ── */
+/* ── Scrollable body ── */
 .pdp-scroll-area {
   flex: 1 1 auto;
-  min-height: 0; /* critical: allows flex child to shrink below content height */
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -391,7 +388,7 @@ body.pdp-open { overflow: hidden; }
 .pdp-scroll-area::-webkit-scrollbar { width: 3px; }
 .pdp-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 
-/* ── Hero image — inset floating block, breaks full-bleed expectation ── */
+/* ── Hero image — smaller, never dominates the card ── */
 .pdp-image-block {
   padding: 16px 16px 0;
   display: flex;
@@ -402,16 +399,17 @@ body.pdp-open { overflow: hidden; }
 .pdp-hero-img {
   display: block;
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
   object-fit: cover;
   object-position: center top;
   border-radius: 18px;
-  /* subtle inner shadow to ground the image in the card */
   box-shadow: 0 2px 16px rgba(0,0,0,0.45);
 }
 
 .pdp-hero-placeholder {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
+  max-height: 200px;
   border-radius: 18px;
   background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
@@ -441,7 +439,7 @@ body.pdp-open { overflow: hidden; }
 .pdp-thumb.active { border-color: var(--accent, rgba(255,255,255,0.7)); opacity: 1; }
 .pdp-thumb:hover { opacity: 1; }
 
-/* ── Content area — generous spacing ── */
+/* ── Content area ── */
 .pdp-content {
   padding: 28px 28px 0;
   display: flex;
@@ -463,7 +461,6 @@ body.pdp-open { overflow: hidden; }
   line-height: 1.08;
   color: var(--accent-strong);
   margin: 0;
-  /* deliberate tight tracking for luxury feel */
   letter-spacing: -0.01em;
 }
 
@@ -499,12 +496,53 @@ body.pdp-open { overflow: hidden; }
   display: flex; flex-wrap: wrap; gap: 8px;
 }
 
+/* ── Variant pills ── */
+.v-pill,
+.s-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.70);
+  font-family: var(--font-body);
+  font-size: 0.80rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.v-pill:hover,
+.s-pill:hover {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.30);
+  color: rgba(255,255,255,0.90);
+}
+.v-pill.active,
+.s-pill.active {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.70);
+  color: #fff;
+}
+.v-pill:disabled,
+.s-pill:disabled,
+.v-pill.unavailable,
+.s-pill.unavailable {
+  opacity: 0.28;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* spacer so last content never hides behind footer */
 .pdp-spacer { height: 32px; }
 
-/* ── Sticky footer CTA — always visible, never clipped ── */
+/* ── Sticky footer CTA ── */
 .pdp-footer {
-  flex-shrink: 0; /* never shrinks */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
