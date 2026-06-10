@@ -364,12 +364,17 @@ function renderSkeletons(n) {
   if (!grid) return;
   grid.innerHTML = Array(n).fill(0).map(() => `
     <div class="skeleton-card" aria-hidden="true">
-      <div class="skeleton-img"></div>
-      <div class="skeleton-body">
-        <div class="skeleton-line" style="height:12px;width:40%"></div>
-        <div class="skeleton-line" style="height:28px;width:70%"></div>
-        <div class="skeleton-line" style="height:36px;width:50%;margin-top:8px;border-radius:20px"></div>
+      <div class="skeleton-card-inner">
+        <div class="skeleton-img-sq"></div>
+        <div class="skeleton-body">
+          <div class="skeleton-line" style="height:10px;width:35%"></div>
+          <div class="skeleton-line" style="height:22px;width:65%"></div>
+          <div class="skeleton-line" style="height:14px;width:80%;margin-top:4px"></div>
+          <div class="skeleton-line" style="height:14px;width:60%"></div>
+          <div class="skeleton-line" style="height:30px;width:50%;margin-top:8px;border-radius:20px"></div>
+        </div>
       </div>
+      <div class="skeleton-line" style="height:44px;width:100%;border-radius:12px;margin-top:12px"></div>
     </div>`).join('');
 }
 
@@ -396,9 +401,9 @@ function renderProducts(products) {
 
     let imgHTML = '';
     if (images.length >= 1) {
-      imgHTML = `<img id="card-img-${pid}" src="${transformImage(images[0], 400)}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="400" height="533" />`;
+      imgHTML = `<img id="card-img-${pid}" src="${transformImage(images[0], 400)}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="400" height="400" />`;
     } else {
-      imgHTML = `<div class="no-img-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+      imgHTML = `<div class="no-img-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
     }
 
     let variantHTML = '';
@@ -409,7 +414,7 @@ function renderProducts(products) {
         const actClass = vi === 0 && !outClass ? ' active' : '';
         return `<button class="v-pill${actClass}${outClass}" data-variant="${label}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
       }).join('');
-      variantHTML = `<div><div class="variant-label">Variant</div><div class="pill-group">${pills}</div></div>`;
+      variantHTML = `<div class="card-pill-row"><div class="variant-label">Variant</div><div class="pill-group">${pills}</div></div>`;
     }
 
     let sizeHTML = '';
@@ -419,37 +424,40 @@ function renderProducts(products) {
         const actClass = si === 0 ? ' active' : '';
         return `<button class="s-pill${actClass}" data-size="${label}" onclick="selectSize(this,'${pid}')">${label}</button>`;
       }).join('');
-      sizeHTML = `<div><div class="variant-label">Size</div><div class="pill-group">${pills}</div></div>`;
+      sizeHTML = `<div class="card-pill-row"><div class="variant-label">Size</div><div class="pill-group">${pills}</div></div>`;
     }
 
     const price      = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
     const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
     const descHTML   = p.description ? `<p class="product-desc">${p.description}</p>` : '';
+    const catHTML    = p.category ? `<div class="product-tag">${p.category}</div>` : '';
 
-  return `
+    return `
 <article class="product-card${unavailableClass}" data-pid="${pid}">
-  <div class="product-img">
-    ${badge}
-    ${imgHTML}
-  </div>
-  <div class="product-body">
-    <div class="product-name-row">
-      <h2 class="product-name">${p.name || 'Product'}</h2>
-      <div class="product-price" id="price-${pid}">${priceLabel}</div>
+  <div class="card-top">
+    <div class="card-img-wrap">
+      ${badge}
+      ${imgHTML}
     </div>
-    ${p.category ? `<div class="product-tag">${p.category}</div>` : ''}
-    ${descHTML}
-    ${variantHTML}
-    ${sizeHTML}
+    <div class="card-meta">
+      ${catHTML}
+      <h2 class="product-name">${p.name || 'Product'}</h2>
+      ${variantHTML}
+      ${sizeHTML}
+    </div>
   </div>
-  <button class="btn btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
-    ${available ? 'Add to Cart' : 'Unavailable'}
-  </button>
+  ${descHTML}
+  <div class="card-footer-row">
+    <div class="product-price" id="price-${pid}">${priceLabel}</div>
+    <button class="btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
+      ${available ? 'Add to Cart' : 'Unavailable'}
+    </button>
+  </div>
 </article>`;
-}).join('');
+  }).join('');
 
-updateBadges();
+  updateBadges();
 }
 
 function selectVariant(btn, pid) {
