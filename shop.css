@@ -10,12 +10,9 @@
   box-shadow: var(--shadow-lg);
   backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
   text-align: center;
-
-  /* Stage 1: panel fades in on load */
   animation: heroFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Hero panel content — kicker, h1, p */
 .shop-hero-panel .section-kicker,
 .shop-hero-panel h1,
 .shop-hero-panel p {
@@ -158,18 +155,14 @@
 .segment-active-bar.visible { display: flex; }
 
 /* ============================================================
-   Segment toggle bubble — Stage 2
-   Sits below the hero panel as its own glass card.
-   Fades + rises in after a delay once the hero has settled.
+   Segment toggle bubble
+   Separate from the hero and always available for path switching.
+   Shorter fade-in so it feels prompt, not delayed.
    ============================================================ */
-
-/* "Who are you shopping for?" label — lives inside the hero panel,
-   hidden from view; the bubble below carries the full prompt. */
 .hero-who-label {
   display: none;
 }
 
-/* The toggle wrap becomes its own floating bubble */
 .segment-toggle-wrap {
   margin-top: 10px;
   padding: clamp(20px, 3vw, 28px) clamp(20px, 4vw, 36px);
@@ -183,14 +176,11 @@
   align-items: center;
   gap: 18px;
   text-align: center;
-
-  /* Stage 2: bubble fades up after hero has landed */
   opacity: 0;
-  transform: translateY(14px);
-  animation: bubbleFadeIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) 1.8s forwards;
+  transform: translateY(10px);
+  animation: bubbleFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
 }
 
-/* Inject the "Who are you shopping for?" prompt as a pseudo label above the toggle */
 .segment-toggle-wrap::before {
   content: "Who are you shopping for?";
   display: block;
@@ -202,31 +192,12 @@
 }
 
 @keyframes bubbleFadeIn {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Once a segment is chosen, collapse the bubble smoothly */
-body.segment-chosen .segment-toggle-wrap {
-  animation: none;
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.4s ease, transform 0.4s ease, max-height 0.5s ease, padding 0.4s ease, margin 0.4s ease;
-  max-height: 200px;
-  overflow: hidden;
-}
-body.segment-chosen .segment-toggle-wrap {
-  opacity: 0.5;
-  transform: scale(0.98);
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  margin-top: 0;
-  gap: 0;
-}
-
 /* ============================================================
-   Segment toggle  —  sliding pill indicator (scaled up)
+   Segment toggle  —  sliding pill indicator (persistent selector)
    ============================================================ */
 .segment-toggle {
   position: relative;
@@ -457,11 +428,6 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-overlay.open { opacity: 1; pointer-events: all; }
 
-/*
-  Floating card — reduced height and higher bottom offset so
-  the card sits with clear dark breathing room above and below
-  on mobile screens.
-*/
 .pdp-panel {
   position: fixed;
   bottom: 48px;
@@ -485,7 +451,6 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-panel.open { transform: translateY(0); }
 
-/* Desktop: centred modal */
 @media (min-width: 640px) {
   .pdp-panel {
     top: 50%;
@@ -513,11 +478,6 @@ body.pdp-open { overflow: hidden; }
   position: relative;
 }
 
-/*
-  Close button — anchored to .pdp-panel itself (not the scroll area),
-  positioned at the top-right corner of the card, well above the footer CTA.
-  On mobile it sits at the very top-right of the floating card.
-*/
 .pdp-close-btn {
   position: absolute;
   top: 14px;
@@ -537,7 +497,6 @@ body.pdp-open { overflow: hidden; }
 .pdp-close-btn:focus-visible { outline: none; box-shadow: none; }
 .pdp-close-btn:hover { background: rgba(255,255,255,0.16); color: #fff; transform: scale(1.08); }
 
-/* Scrollable body */
 .pdp-scroll-area {
   flex: 1 1 auto;
   min-height: 0;
@@ -548,7 +507,6 @@ body.pdp-open { overflow: hidden; }
 .pdp-scroll-area::-webkit-scrollbar { width: 3px; }
 .pdp-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 
-/* Hero image */
 .pdp-image-block {
   padding: 16px 16px 0;
   display: flex;
@@ -576,7 +534,6 @@ body.pdp-open { overflow: hidden; }
   color: rgba(255,255,255,0.18);
 }
 
-/* Thumbnail strip */
 .pdp-thumbs {
   display: flex;
   gap: 8px;
@@ -651,7 +608,6 @@ body.pdp-open { overflow: hidden; }
 .pdp-thumb.active { border-color: var(--accent, rgba(255,255,255,0.7)); opacity: 1; }
 .pdp-thumb:hover { opacity: 1; }
 
-/* Content area */
 .pdp-content {
   padding: 20px 28px 0;
   display: flex;
@@ -676,7 +632,6 @@ body.pdp-open { overflow: hidden; }
   letter-spacing: -0.01em;
 }
 
-/* Size row — sits between name and description */
 .pdp-size {
   font-size: 0.75rem;
   font-weight: 600;
@@ -684,9 +639,6 @@ body.pdp-open { overflow: hidden; }
   text-transform: uppercase;
   color: rgba(255,255,255,0.38);
 }
-
-/* .pdp-price is intentionally removed from the scroll area;
-   price lives only in .pdp-footer via #pdpFooterPrice */
 
 .pdp-content .product-desc {
   font-size: 0.875rem;
@@ -696,7 +648,6 @@ body.pdp-open { overflow: hidden; }
 .pdp-content .product-desc p { max-width: 100%; }
 .pdp-content .product-desc li { font-size: 0.84rem; }
 
-/* Section labels for Includes / Available in blocks */
 .pdp-content .product-desc .desc-avail-label {
   font-size: 0.63rem;
   font-weight: 700;
@@ -708,7 +659,6 @@ body.pdp-open { overflow: hidden; }
   display: block;
 }
 
-/* List styling for includes / available-in */
 .pdp-content .product-desc ul {
   padding-left: 0;
   list-style: none;
@@ -723,7 +673,6 @@ body.pdp-open { overflow: hidden; }
   color: rgba(255,255,255,0.22);
 }
 
-/* Option groups */
 .pdp-option-group { display: flex; flex-direction: column; gap: 10px; }
 .pdp-option-label {
   font-size: 0.65rem;
@@ -771,7 +720,6 @@ body.pdp-open { overflow: hidden; }
 
 .pdp-spacer { height: 32px; }
 
-/* Sticky footer CTA */
 .pdp-footer {
   flex-shrink: 0;
   display: flex;
@@ -820,11 +768,9 @@ body.pdp-open { overflow: hidden; }
 .pdp-atc-btn:active { transform: scale(0.97); }
 .pdp-atc-btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
-/* Errors */
 .shop-error { grid-column: 1/-1; text-align: center; padding: 48px 24px; color: var(--text-muted); }
 .shop-error p { margin-bottom: 16px; }
 
-/* Overlay + Cart drawer */
 .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); z-index:200; opacity:0; pointer-events:none; transition:opacity 0.3s; }
 .overlay.open { opacity:1; pointer-events:all; }
 .cart-drawer {
@@ -926,7 +872,6 @@ body.cart-bar-active .cart-drawer { bottom: var(--cart-bar-h, 72px); }
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-thumb { background:var(--glass-border); border-radius:4px; }
 
-/* Sticky cart bar */
 body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .sticky-cart-bar {
   display: none; align-items: center; justify-content: space-between;
@@ -982,10 +927,6 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .cart-primary-cta { flex: 1; text-align: center; justify-content: center; }
 .continue-shopping { flex: 1; }
 
-/* ============================================================
-   Inline cart summary (scb-expanded)
-   Items scroll independently; footer/checkout always pinned.
-   ============================================================ */
 .scb-expanded {
   position: fixed;
   left: 0; right: 0;
@@ -995,13 +936,11 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   border: 1px solid rgba(255,255,255,0.06);
   box-shadow: 0 -16px 40px rgba(0,0,0,0.65);
   padding: 14px 16px 0;
-  /* Collapsed state */
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.28s ease, opacity 0.25s ease;
   opacity: 0;
   z-index: 395;
-  /* Inner layout: items scroll, footer pins */
   display: flex;
   flex-direction: column;
 }
@@ -1015,11 +954,9 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   display: flex;
   flex-direction: column;
   gap: 8px;
-  /* Scroll the items list, never the footer */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  /* Cap so footer always fits on screen — accounts for bar + footer ~120px */
   max-height: calc(72dvh - 130px);
   padding-bottom: 10px;
 }
@@ -1059,7 +996,6 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-qty-val { font-size: 0.8rem; font-weight: 600; min-width: 18px; text-align: center; }
 .scb-line-price { font-size: 0.86rem; font-weight: 600; color: var(--accent); text-align: right; }
 
-/* Footer always pinned — never scrolls away */
 .scb-expanded-footer {
   flex-shrink: 0;
   border-top: 1px solid rgba(255,255,255,0.08);
