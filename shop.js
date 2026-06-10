@@ -425,6 +425,7 @@ function renderProducts(products) {
     const price      = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
     const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
+    const descHTML   = p.description ? `<p class="product-desc">${p.description}</p>` : '';
 
   return `
 <article class="product-card${unavailableClass}" data-pid="${pid}">
@@ -438,12 +439,13 @@ function renderProducts(products) {
       <div class="product-price" id="price-${pid}">${priceLabel}</div>
     </div>
     ${p.category ? `<div class="product-tag">${p.category}</div>` : ''}
+    ${descHTML}
     ${variantHTML}
     ${sizeHTML}
-    <button class="btn btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
-      ${available ? 'Add to Cart' : 'Unavailable'}
-    </button>
   </div>
+  <button class="btn btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
+    ${available ? 'Add to Cart' : 'Unavailable'}
+  </button>
 </article>`;
 }).join('');
 
