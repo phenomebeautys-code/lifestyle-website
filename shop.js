@@ -23,8 +23,9 @@ function stripPrefix(str) {
 
 function renderDescription(p) {
   const text         = p.description || '';
-  const includesList  = Array.isArray(p.includes)    ? p.includes.filter(Boolean)    : [];
-  const availableList = Array.isArray(p.available_in) ? p.available_in.filter(Boolean) : [];
+  // Use bracket notation to avoid shadowing Array.prototype.includes
+  const includesList  = Array.isArray(p['includes'])    ? p['includes'].filter(Boolean)    : [];
+  const availableList = Array.isArray(p['available_in']) ? p['available_in'].filter(Boolean) : [];
 
   const includesHTML = includesList.length
     ? `<p class="desc-avail-label">Includes</p><ul>${includesList.map(i => `<li>${i}</li>`).join('')}</ul>`
