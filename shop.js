@@ -376,9 +376,8 @@ function openProductDetail(pid) {
   let thumbsHTML = '';
   if (images.length > 1) {
     const cols = images.map((img, i) => {
-      /* match variant by index if variants exist */
-      const variantObj  = p.variants && p.variants[i] ? p.variants[i] : null;
-      const variantRaw  = variantObj ? (variantObj.name || variantObj.label || variantObj.value || '') : '';
+      const variantObj   = p.variants && p.variants[i] ? p.variants[i] : null;
+      const variantRaw   = variantObj ? (variantObj.name || variantObj.label || variantObj.value || '') : '';
       const variantLabel = variantRaw ? stripPrefix(variantRaw) : '';
       const activeClass  = i === 0 ? ' active' : '';
       const outClass     = (variantObj && variantObj.stock != null && variantObj.stock <= 0) ? ' out-of-stock' : '';
@@ -395,7 +394,7 @@ function openProductDetail(pid) {
     thumbsHTML = `<div class="pdp-thumbs" role="list">${cols}</div>`;
   }
 
-  /* sizes only — variants are now in the thumb strip */
+  /* sizes only */
   let sizeHTML = '';
   if (p.sizes && p.sizes.length) {
     const pills = p.sizes.map((s, si) => {
@@ -407,7 +406,7 @@ function openProductDetail(pid) {
     sizeHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Size</div><div class="pill-group">${pills}</div></div>`;
   }
 
-  /* fallback: if product has variants but only ONE image, render variant pills normally */
+  /* fallback variant pills for single-image products */
   let variantHTML = '';
   if (p.variants && p.variants.length && images.length <= 1) {
     const pills = p.variants.map((v, vi) => {
@@ -455,7 +454,6 @@ function openProductDetail(pid) {
   document.body.classList.add('pdp-open');
   document.body.style.overflow = 'hidden';
 
-  /* trap focus */
   setTimeout(() => panel.querySelector('.pdp-close-btn')?.focus(), 120);
 }
 
@@ -470,7 +468,6 @@ function closeProductDetail() {
   _pdpCurrentPid = null;
 }
 
-/* ── New: select by clicking the column (image + label together) ── */
 function pdpSelectThumbCol(col, pid) {
   const thumbs = col.closest('.pdp-thumbs');
   if (!thumbs) return;
@@ -480,11 +477,9 @@ function pdpSelectThumbCol(col, pid) {
   });
   col.classList.add('active');
   col.setAttribute('aria-pressed', 'true');
-
   const src = col.dataset.img;
   const heroImg = document.getElementById('pdpHeroImg');
   if (heroImg && src) heroImg.src = src;
-
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (p) pdpUpdatePrice(pid);
 }
@@ -518,7 +513,6 @@ function pdpUpdatePrice(pid) {
   const panel = document.getElementById('pdpPanel');
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (!p || !panel) return;
-  /* variant is now stored on the active thumb col */
   const thumbColEl = panel.querySelector('.pdp-thumb-col.active');
   const vPillEl    = panel.querySelector('.v-pill.active');
   const sizeEl     = panel.querySelector('.s-pill.active');
@@ -547,6 +541,24 @@ function getSegment() {
   return localStorage.getItem(SEGMENT_KEY) || null;
 }
 
+/* Update the pill toggle visual state.
+   slide: 0 = left (Self-Care), 1 = right (Professional) */
+function _setToggleState(segment) {
+  const track = document.getElementById('segmentToggle');
+  const btnSelfCare    = document.getElementById('toggleSelfCare');
+  const btnProfessional = document.getElementById('toggleProfessional');
+  if (!track || !btnSelfCare || !btnProfessional) return;
+
+  const isSelfCare     = segment === 'self_care';
+  const isProfessional = segment === 'professional';
+
+  btnSelfCare.setAttribute('aria-pressed',    String(isSelfCare));
+  btnProfessional.setAttribute('aria-pressed', String(isProfessional));
+
+  /* Move the sliding indicator: 0 = left, 1 = right */
+  track.style.setProperty('--_slide', isProfessional ? '1' : '0');
+}
+
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
   const mount = document.getElementById('segmentSelectorMount');
@@ -564,6 +576,7 @@ function browseAll() {
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
+  _setToggleState(null);
   updateShopHero(null);
   fetchProducts();
 }
@@ -578,19 +591,18 @@ function resetSegment() {
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.remove('hidden');
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
+  _setToggleState(null);
   updateShopHero(null);
 }
 
 function applySegment(segment) {
-  const bar   = document.getElementById('segmentActiveBar');
-  const label = document.getElementById('segmentActiveLabel');
-  const labelMap = { self_care: 'Self-Care', professional: 'Professional' };
+  const bar = document.getElementById('segmentActiveBar');
   if (segment) {
     bar?.classList.add('visible');
-    if (label) label.textContent = labelMap[segment] || segment;
   } else {
     bar?.classList.remove('visible');
   }
+  _setToggleState(segment);
   updateShopHero(segment);
 }
 
@@ -610,7 +622,7 @@ function updateShopHero(segment) {
   }
 }
 
-/* ── Product rendering (compact tiles) ───────────────────── */
+/* ── Product rendering ────────────────────────────────────── */
 
 function renderSkeletons(n) {
   const grid = document.getElementById('productGrid');
@@ -671,7 +683,7 @@ function renderProducts(products) {
   updateBadges();
 }
 
-/* Kept for compatibility with any external callers */
+/* Compatibility shims */
 function selectVariant(btn, pid) {
   btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
