@@ -170,7 +170,19 @@ button.step-pill.done:hover {
 .summary-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
 .summary-title h2 { margin: 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--accent-strong); }
 .summary-title p  { margin: 5px 0 0; color: var(--text-soft); font-size: .84rem; }
-.summary-rows { display: grid; gap: 12px; }
+.summary-rows {
+  display: grid;
+  gap: 12px;
+  max-height: 340px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+}
+.summary-rows::-webkit-scrollbar { width: 4px; }
+.summary-rows::-webkit-scrollbar-track { background: transparent; }
+.summary-rows::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
 .cart-item { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); }
 .cart-item img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; }
 .cart-item h4  { margin: 0 0 4px; font-size: .9rem; color: var(--accent-strong); font-family: var(--font-body); }
