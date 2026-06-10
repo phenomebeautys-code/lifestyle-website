@@ -120,7 +120,6 @@
           <span class="section-kicker">Make Yourself A Priority.</span>
           <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.</p>
-          
         </div>
       </div>
     </section>
@@ -146,6 +145,12 @@
 
   </main>
 
+  <!-- Product detail panel -->
+  <div class="pdp-overlay" id="pdpOverlay" aria-hidden="true" onclick="closeProductDetail()"></div>
+  <div class="pdp-panel" id="pdpPanel" role="dialog" aria-modal="true" aria-label="Product details">
+    <div class="pdp-inner" id="pdpInner"></div>
+  </div>
+
   <!-- Overlay -->
   <div class="overlay" id="overlay" onclick="closeCart()" aria-hidden="true"></div>
 
@@ -162,44 +167,35 @@
       <button class="close-btn" onclick="closeCart()" aria-label="Close cart">&times;</button>
     </div>
     <div class="cart-items" id="cartItems"></div>
-   <div class="cart-footer" id="cartFooter" style="display:none">
-  <div class="total-row">
-    <span>Subtotal</span>
-    <span id="subtotalDisplay"></span>
-  </div>
-  <p class="delivery-note">Delivery calculated at checkout</p>
-
- <div class="cart-footer-ctas">
-  <button class="continue-shopping" onclick="closeCart()">Continue shopping</button>
-  <a href="checkout.html" class="btn btn-primary cart-primary-cta">Checkout</a>
-</div>
-
-  <p class="secure-note">
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-      <path d="M7 11V7a5 5 0 0110 0v4" />
-    </svg>
-    Secured by Yoco
-  </p>
-</div>
+    <div class="cart-footer" id="cartFooter" style="display:none">
+      <div class="total-row">
+        <span>Subtotal</span>
+        <span id="subtotalDisplay"></span>
+      </div>
+      <p class="delivery-note">Delivery calculated at checkout</p>
+      <div class="cart-footer-ctas">
+        <button class="continue-shopping" onclick="closeCart()">Continue shopping</button>
+        <a href="checkout.html" class="btn btn-primary cart-primary-cta">Checkout</a>
+      </div>
+      <p class="secure-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0110 0v4" />
+        </svg>
+        Secured by Yoco
+      </p>
+    </div>
   </aside>
 
-  <!-- Sticky cart bar (mobile mini cart) -->
+  <!-- Sticky cart bar -->
   <div class="sticky-cart-bar" id="stickyCartBar">
-    <button type="button" class="scb-thumbs" id="scbThumbs" onclick="openCart()" aria-label="Open cart">
-      <!-- Thumbnails are injected by shop.js -->
-    </button>
-
+    <button type="button" class="scb-thumbs" id="scbThumbs" onclick="openCart()" aria-label="Open cart"></button>
     <div class="scb-info" onclick="openCart()">
       <div class="scb-count" id="scbCount">0 items</div>
       <div class="scb-total" id="scbTotal">R0.00</div>
     </div>
-
-    <button type="button" class="scb-cta" onclick="toggleStickyCart()">
-      View cart
-    </button>
-    <!-- New: placeholder for future inline expanded summary -->
-  <div id="scbExpanded" class="scb-expanded" aria-hidden="true"></div>
+    <button type="button" class="scb-cta" onclick="toggleStickyCart()">View cart</button>
+    <div id="scbExpanded" class="scb-expanded" aria-hidden="true"></div>
   </div>
 
   <script src="script.js" defer></script>

@@ -1,6 +1,5 @@
 /* ============================================================
    PhenomeBeauty — shop.js
-   All shop page logic extracted from shop.html
    ============================================================ */
 
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
@@ -13,7 +12,7 @@ function transformImage(url, width) {
   return url + '?width=' + (width || 400) + '&quality=75&format=webp';
 }
 
-/* ── Strip label prefix (e.g. "Scent: Bloom" → "Bloom") ───── */
+/* ── Strip label prefix (e.g. "Scent: Bloom" -> "Bloom") ─── */
 
 function stripPrefix(str) {
   if (!str) return str;
@@ -32,7 +31,7 @@ function renderDescription(text) {
   const rawList = match[2].trim();
   const items   = rawList
     .split('\n')
-    .map(l => l.replace(/^[•\-\*]\s*/, '').trim())
+    .map(l => l.replace(/^[\u2022\-\*]\s*/, '').trim())
     .filter(Boolean);
   const listHTML = items.map(item => `<li>${item}</li>`).join('');
   return `<div class="product-desc">
@@ -285,6 +284,45 @@ function getVariantImage(p, variant) {
   return vObj?.image || p.image_urls?.[0] || p.image_url || '';
 }
 
+function addToCartFromDetail(pid) {
+  const panel = document.getElementById('pdpPanel');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (!p || !panel) return;
+
+  const variantEl = panel.querySelector('.v-pill.active');
+  const sizeEl    = panel.querySelector('.s-pill.active');
+  const variant   = variantEl?.dataset.variant || '';
+  const sizeName  = sizeEl?.dataset.size       || '';
+
+  let unitPrice = Number(p.price) || 0;
+  if (variant && p.variants) {
+    const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant);
+    if (vObj && vObj.price != null) unitPrice = Number(vObj.price);
+  }
+  if (sizeName && p.sizes) {
+    const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);
+    if (sObj && sObj.price != null) unitPrice = Number(sObj.price);
+  }
+
+  const imageUrl = getVariantImage(p, variant);
+  const key      = `${pid}__${variant}__${sizeName}`;
+  const ex       = cart.find(i => i.key === key);
+  if (ex) { ex.qty++; if (!ex.image && imageUrl) ex.image = imageUrl; }
+  else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, image: imageUrl || '' });
+
+  saveCart(cart);
+  updateBadges();
+  showStickyBar();
+
+  const btn = panel.querySelector('.pdp-atc-btn');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Added to Cart';
+    btn.disabled = true;
+    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1500);
+  }
+}
+
 function addToCart(pid, cardEl) {
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (!p) return;
@@ -307,14 +345,163 @@ function addToCart(pid, cardEl) {
   if (ex) { ex.qty++; if (!ex.image && imageUrl) ex.image = imageUrl; }
   else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, image: imageUrl || '' });
   saveCart(cart); updateBadges(); showStickyBar();
-  const btn = cardEl.querySelector('.btn-add-to-cart');
-  if (btn) {
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Added';
-    btn.disabled = true;
-    setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1400);
-  }
 }
+
+/* ── Product Detail Panel ─────────────────────────────────── */
+
+let _pdpCurrentPid = null;
+
+function openProductDetail(pid) {
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (!p) return;
+  _pdpCurrentPid = pid;
+
+  const panel   = document.getElementById('pdpPanel');
+  const overlay = document.getElementById('pdpOverlay');
+  const inner   = document.getElementById('pdpInner');
+  if (!panel || !inner) return;
+
+  const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
+  const available = p.available !== false;
+  const price     = Number(p.price) || 0;
+  const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
+
+  /* hero image */
+  const heroSrc = images.length ? transformImage(images[0], 800) : '';
+  const heroHTML = heroSrc
+    ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${heroSrc}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
+    : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+  /* thumbnail strip (if multiple images) */
+  const thumbsHTML = images.length > 1
+    ? `<div class="pdp-thumbs" role="list">${images.map((img, i) =>
+        `<button class="pdp-thumb${i === 0 ? ' active' : ''}" role="listitem" onclick="pdpSelectImage(this,'${transformImage(img, 800)}')" aria-label="View image ${i+1}">
+          <img src="${transformImage(img, 120)}" alt="" loading="lazy" width="120" height="80" />
+        </button>`).join('')}</div>`
+    : '';
+
+  /* variants */
+  let variantHTML = '';
+  if (p.variants && p.variants.length) {
+    const pills = p.variants.map((v, vi) => {
+      const raw      = v.name || v.label || v.value || ('Option ' + (vi+1));
+      const label    = stripPrefix(raw);
+      const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
+      const actClass = vi === 0 && !outClass ? ' active' : '';
+      return `<button class="v-pill${actClass}${outClass}" data-variant="${raw}" onclick="pdpSelectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
+    }).join('');
+    variantHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Variant</div><div class="pill-group">${pills}</div></div>`;
+  }
+
+  /* sizes */
+  let sizeHTML = '';
+  if (p.sizes && p.sizes.length) {
+    const pills = p.sizes.map((s, si) => {
+      const raw      = s.name || s.label || s.value || ('Size ' + (si+1));
+      const label    = stripPrefix(raw);
+      const actClass = si === 0 ? ' active' : '';
+      return `<button class="s-pill${actClass}" data-size="${raw}" onclick="pdpSelectSize(this,'${pid}')">${label}</button>`;
+    }).join('');
+    sizeHTML = `<div class="pdp-option-group"><div class="pdp-option-label">Size</div><div class="pill-group">${pills}</div></div>`;
+  }
+
+  const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
+  const descHTML = renderDescription(p.description);
+
+  inner.innerHTML = `
+    <div class="pdp-scroll-area">
+      <div class="pdp-image-block">
+        ${heroHTML}
+        ${thumbsHTML}
+      </div>
+      <div class="pdp-content">
+        ${catHTML}
+        <h2 class="pdp-name">${p.name || 'Product'}</h2>
+        <div class="pdp-price" id="pdpPrice">${priceLabel}</div>
+        ${descHTML}
+        ${variantHTML}
+        ${sizeHTML}
+        <div class="pdp-spacer"></div>
+      </div>
+    </div>
+    <div class="pdp-footer">
+      <div class="pdp-footer-price" id="pdpFooterPrice">${priceLabel}</div>
+      <button class="pdp-atc-btn" onclick="addToCartFromDetail('${pid}')" ${available ? '' : 'disabled aria-disabled="true"'}>
+        ${available ? 'Add to Cart' : 'Unavailable'}
+      </button>
+    </div>
+    <button class="pdp-close-btn" onclick="closeProductDetail()" aria-label="Close product detail">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+
+  overlay?.classList.add('open');
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('pdp-open');
+  document.body.style.overflow = 'hidden';
+
+  /* trap focus */
+  setTimeout(() => panel.querySelector('.pdp-close-btn')?.focus(), 120);
+}
+
+function closeProductDetail() {
+  const panel   = document.getElementById('pdpPanel');
+  const overlay = document.getElementById('pdpOverlay');
+  panel?.classList.remove('open');
+  overlay?.classList.remove('open');
+  panel?.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('pdp-open');
+  document.body.style.overflow = '';
+  _pdpCurrentPid = null;
+}
+
+function pdpSelectImage(btn, src) {
+  const heroImg = document.getElementById('pdpHeroImg');
+  if (heroImg) { heroImg.src = src; }
+  btn.closest('.pdp-thumbs')?.querySelectorAll('.pdp-thumb').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function pdpSelectVariant(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (p) {
+    const variant = btn.dataset.variant || '';
+    const heroImg = document.getElementById('pdpHeroImg');
+    if (heroImg) heroImg.src = transformImage(getVariantImage(p, variant), 800);
+  }
+  pdpUpdatePrice(pid);
+}
+
+function pdpSelectSize(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  pdpUpdatePrice(pid);
+}
+
+function pdpUpdatePrice(pid) {
+  const panel = document.getElementById('pdpPanel');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (!p || !panel) return;
+  const variantEl = panel.querySelector('.v-pill.active');
+  const sizeEl    = panel.querySelector('.s-pill.active');
+  const variant   = variantEl?.dataset.variant || '';
+  const sizeName  = sizeEl?.dataset.size       || '';
+  let price = Number(p.price) || 0;
+  if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
+  if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
+  const label = price > 0 ? 'R' + price.toFixed(2) : 'Contact for price';
+  const priceEl       = document.getElementById('pdpPrice');
+  const footerPriceEl = document.getElementById('pdpFooterPrice');
+  if (priceEl) priceEl.textContent = label;
+  if (footerPriceEl) footerPriceEl.textContent = label;
+}
+
+/* keyboard close */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && _pdpCurrentPid) closeProductDetail();
+});
 
 /* ── Segment logic ────────────────────────────────────────── */
 
@@ -387,24 +574,18 @@ function updateShopHero(segment) {
   }
 }
 
-/* ── Product rendering ────────────────────────────────────── */
+/* ── Product rendering (compact tiles) ───────────────────── */
 
 function renderSkeletons(n) {
   const grid = document.getElementById('productGrid');
   if (!grid) return;
   grid.innerHTML = Array(n).fill(0).map(() => `
     <div class="skeleton-card" aria-hidden="true">
-      <div class="skeleton-card-inner">
-        <div class="skeleton-img-sq"></div>
-        <div class="skeleton-body">
-          <div class="skeleton-line" style="height:10px;width:35%"></div>
-          <div class="skeleton-line" style="height:22px;width:65%"></div>
-          <div class="skeleton-line" style="height:14px;width:80%;margin-top:4px"></div>
-          <div class="skeleton-line" style="height:14px;width:60%"></div>
-          <div class="skeleton-line" style="height:30px;width:50%;margin-top:8px;border-radius:20px"></div>
-        </div>
+      <div class="skeleton-tile-img"></div>
+      <div class="skeleton-body" style="padding:10px 0 0">
+        <div class="skeleton-line" style="height:11px;width:40%;margin-bottom:6px"></div>
+        <div class="skeleton-line" style="height:16px;width:70%"></div>
       </div>
-      <div class="skeleton-line" style="height:44px;width:100%;border-radius:12px;margin-top:12px"></div>
     </div>`).join('');
 }
 
@@ -427,108 +608,48 @@ function renderProducts(products) {
     const pid       = p.id;
     const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
     const available = p.available !== false;
+    const price     = Number(p.price) || 0;
+    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
     const unavailableClass = available ? '' : ' is-unavailable';
 
-    let imgHTML = '';
-    if (images.length >= 1) {
-      imgHTML = `<img id="card-img-${pid}" src="${transformImage(images[0], 400)}" alt="${p.name || ''}" loading="${idx < 2 ? 'eager' : 'lazy'}" width="400" height="400" />`;
-    } else {
-      imgHTML = `<div class="no-img-placeholder"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
-    }
+    const imgSrc = images.length ? transformImage(images[0], 600) : '';
+    const imgHTML = imgSrc
+      ? `<img src="${imgSrc}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
+      : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-    let variantHTML = '';
-    if (p.variants && p.variants.length) {
-      const pills = p.variants.map((v, vi) => {
-        const raw      = v.name || v.label || v.value || ('Option ' + (vi+1));
-        const label    = stripPrefix(raw);
-        const outClass = (v.stock != null && v.stock <= 0) ? ' out-of-stock' : '';
-        const actClass = vi === 0 && !outClass ? ' active' : '';
-        return `<button class="v-pill${actClass}${outClass}" data-variant="${raw}" onclick="selectVariant(this,'${pid}')" ${outClass ? 'aria-disabled="true" tabindex="-1"' : ''}>${label}</button>`;
-      }).join('');
-      variantHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
-    }
-
-    let sizeHTML = '';
-    if (p.sizes && p.sizes.length) {
-      const pills = p.sizes.map((s, si) => {
-        const raw      = s.name || s.label || s.value || ('Size ' + (si+1));
-        const label    = stripPrefix(raw);
-        const actClass = si === 0 ? ' active' : '';
-        return `<button class="s-pill${actClass}" data-size="${raw}" onclick="selectSize(this,'${pid}')">${label}</button>`;
-      }).join('');
-      sizeHTML = `<div class="card-pill-row"><div class="pill-group">${pills}</div></div>`;
-    }
-
-    const price      = Number(p.price) || 0;
-    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
-    const badge      = available ? '' : `<div class="product-availability-badge" aria-label="Currently unavailable">Unavailable</div>`;
-    const descHTML   = renderDescription(p.description);
-    const catHTML    = p.category ? `<div class="product-tag">${p.category}</div>` : '';
+    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Unavailable</div>`;
 
     return `
-<article class="product-card${unavailableClass}" data-pid="${pid}">
-  <div class="card-top">
-    <div class="card-img-wrap">
-      ${badge}
-      ${imgHTML}
-    </div>
-    <div class="card-meta">
-      ${catHTML}
-      <h2 class="product-name">${p.name || 'Product'}</h2>
-      ${variantHTML}
-      ${sizeHTML}
-    </div>
+<button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
+  <div class="tile-img-wrap">
+    ${badge}
+    ${imgHTML}
   </div>
-  ${descHTML}
-  <div class="card-footer-row">
-    <div class="product-price" id="price-${pid}">${priceLabel}</div>
-    <button class="btn-add-to-cart" onclick="addToCart('${pid}',this.closest('.product-card'))" ${available ? '' : 'disabled aria-disabled="true"'}>
-      ${available ? 'Add to Cart' : 'Unavailable'}
-    </button>
+  <div class="tile-info">
+    <div class="tile-name">${p.name || 'Product'}</div>
+    <div class="tile-price">${priceLabel}</div>
   </div>
-</article>`;
+</button>`;
   }).join('');
 
   updateBadges();
 }
 
+/* Kept for compatibility with any external callers */
 function selectVariant(btn, pid) {
-  btn.closest('.pill-group').querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  const p = window._products?.find(x => String(x.id) === String(pid));
-  if (p) {
-    const variant = btn.dataset.variant || '';
-    const imgEl   = document.getElementById('card-img-' + pid);
-    if (imgEl) imgEl.src = transformImage(getVariantImage(p, variant), 400);
-  }
-  updateCardPrice(pid, btn.closest('.product-card'));
 }
-
 function selectSize(btn, pid) {
-  btn.closest('.pill-group').querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
+  btn.closest('.pill-group')?.querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  updateCardPrice(pid, btn.closest('.product-card'));
 }
-
-function updateCardPrice(pid, cardEl) {
-  const p = window._products?.find(x => String(x.id) === String(pid));
-  if (!p || !cardEl) return;
-  const priceEl   = cardEl.querySelector(`#price-${pid}`);
-  if (!priceEl) return;
-  const variantEl = cardEl.querySelector('.v-pill.active');
-  const sizeEl    = cardEl.querySelector('.s-pill.active');
-  const variant   = variantEl?.dataset.variant || '';
-  const sizeName  = sizeEl?.dataset.size       || '';
-  let price = Number(p.price) || 0;
-  if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
-  if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
-  priceEl.textContent = price > 0 ? 'R' + price.toFixed(2) : 'Contact for price';
-}
+function updateCardPrice(pid, cardEl) {}
 
 /* ── Product fetch ────────────────────────────────────────── */
 
 async function fetchProducts() {
-  renderSkeletons(4);
+  renderSkeletons(6);
   try {
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/get-products`,
