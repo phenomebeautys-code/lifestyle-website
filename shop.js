@@ -553,17 +553,16 @@ function _setToggleState(segment) {
 
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
-  /* Reveal products now that a segment has been actively chosen */
   document.body.classList.add('segment-chosen');
   const mount = document.getElementById('segmentSelectorMount');
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  /* Hide the "Who are you shopping for?" label once a segment is chosen */
   const whoLabel = document.getElementById('shopHeroWho');
   if (whoLabel) whoLabel.style.display = 'none';
   applySegment(segment);
-  fetchProducts();
+  /* Filter from cache — no network request */
+  filterAndRender(segment);
 }
 
 function browseAll() {
@@ -578,7 +577,8 @@ function browseAll() {
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
-  fetchProducts();
+  /* Filter from cache — no network request */
+  filterAndRender(null);
 }
 
 function resetSegment() {
@@ -641,14 +641,10 @@ function renderSkeletons(n) {
 }
 
 function renderProducts(products) {
+  /* Keep _products in sync so PDP lookups always work */
   window._products = products;
   const grid = document.getElementById('productGrid');
   if (!grid) return;
-
-  const segment = getSegment();
-  if (segment) {
-    products = products.filter(p => !p.market || p.market === segment);
-  }
 
   if (!products.length) {
     grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
@@ -688,6 +684,25 @@ function renderProducts(products) {
   updateBadges();
 }
 
+/* —— Filter from cache and render ——————————————————————————— */
+
+function filterAndRender(segment) {
+  const grid = document.getElementById('productGrid');
+  if (!grid) return;
+
+  /* No cache yet — fall back to a fresh fetch */
+  if (!window._allProducts) {
+    fetchProducts();
+    return;
+  }
+
+  const filtered = segment
+    ? window._allProducts.filter(p => !p.market || p.market === segment)
+    : window._allProducts;
+
+  renderProducts(filtered);
+}
+
 /* Compatibility shims */
 function selectVariant(btn, pid) {
   btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
@@ -699,7 +714,7 @@ function selectSize(btn, pid) {
 }
 function updateCardPrice(pid, cardEl) {}
 
-/* —— Product fetch ——————————————————————————————————————————— */
+/* —— Product fetch (runs once on page load) ————————————————— */
 
 async function fetchProducts() {
   renderSkeletons(6);
@@ -710,7 +725,10 @@ async function fetchProducts() {
     );
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    renderProducts(Array.isArray(data) ? data : []);
+    /* Cache the full unfiltered list */
+    window._allProducts = Array.isArray(data) ? data : [];
+    /* Render with whatever segment is currently active */
+    filterAndRender(getSegment());
   } catch(err) {
     console.error('fetchProducts error:', err);
     const grid = document.getElementById('productGrid');
@@ -758,7 +776,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   /* Initialise toggle — pill at Self-Care position, neither button active */
   _setToggleState(null);
 
-  /* Clear product grid — products only load once user picks a segment */
+  /* Clear product grid — products only show once user picks a segment */
   const grid = document.getElementById('productGrid');
   if (grid) grid.innerHTML = '';
 
@@ -768,4 +786,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('cancelBanner')?.classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
   }
+
+  /* Prefetch all products in the background so the cache is warm
+     before the user picks a segment — toggle will be instant */
+  fetchProducts();
 });
