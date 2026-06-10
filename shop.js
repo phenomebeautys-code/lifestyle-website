@@ -767,8 +767,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     applySegment(savedSegment);
     fetchProducts();
   } else {
-    /* First-time visitor: JS owns the hero state from the start */
+    /* First-time visitor: set hero copy, initialise toggle, and load all products */
     updateShopHero(null);
+    _setToggleState(null);
+    fetchProducts();
   }
   updateBadges();
   if (cart.length) showStickyBar();
