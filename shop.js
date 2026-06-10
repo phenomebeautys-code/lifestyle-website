@@ -791,4 +791,3 @@ document.addEventListener('DOMContentLoaded', async function() {
      before the user picks a segment — toggle will be instant */
   fetchProducts();
 });
-
