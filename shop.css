@@ -152,11 +152,9 @@
   border: 1px solid rgba(255,255,255,0.10);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  /* sliding indicator */
-  --_slide: 0;        /* 0 = left, 1 = right — set by JS */
+  --_slide: 0;
 }
 
-/* The sliding filled pill — rendered via ::before on the track */
 .segment-toggle::before {
   content: '';
   position: absolute;
@@ -195,16 +193,8 @@
   user-select: none;
 }
 .segment-toggle-option:focus-visible { outline: none; box-shadow: none; }
-
-/* Active option: bright white text */
-.segment-toggle-option[aria-pressed="true"] {
-  color: rgba(255,255,255,0.95);
-}
-
-/* Inactive hover: nudge up slightly */
-.segment-toggle-option[aria-pressed="false"]:hover {
-  color: rgba(255,255,255,0.60);
-}
+.segment-toggle-option[aria-pressed="true"] { color: rgba(255,255,255,0.95); }
+.segment-toggle-option[aria-pressed="false"]:hover { color: rgba(255,255,255,0.60); }
 
 /* ── Mobile hero/segment ── */
 @media (max-width: 600px) {
@@ -314,6 +304,17 @@
 }
 .product-tile:hover .tile-img-wrap img { transform: scale(1.05); }
 
+/*
+  Images are hidden until a segment is selected.
+  JS adds .segment-chosen to <body> once selectSegment() fires.
+  Until then, tile images are invisible but the 1:1 box is still shown as a
+  subtle placeholder so the grid layout is stable.
+*/
+body:not(.segment-chosen) .tile-img-wrap img {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .tile-no-img {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
@@ -368,13 +369,17 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-overlay.open { opacity: 1; pointer-events: all; }
 
-/* Floating card — sits with breathing room above and below on mobile */
+/*
+  Floating card — reduced height and higher bottom offset so
+  the card sits with clear dark breathing room above and below
+  on mobile screens.
+*/
 .pdp-panel {
   position: fixed;
-  bottom: 32px;
+  bottom: 48px;
   left: 16px;
   right: 16px;
-  max-height: calc(80dvh - 16px);
+  max-height: calc(74dvh - 16px);
   z-index: 501;
   display: flex;
   flex-direction: column;
@@ -386,7 +391,7 @@ body.pdp-open { overflow: hidden; }
     0 2px 0 rgba(255,255,255,0.06) inset,
     0 32px 80px rgba(0,0,0,0.85),
     0 8px 24px rgba(0,0,0,0.60);
-  transform: translateY(calc(100% + 40px));
+  transform: translateY(calc(100% + 56px));
   transition: transform 0.46s cubic-bezier(0.16,1,0.3,1);
   will-change: transform;
 }
@@ -420,14 +425,17 @@ body.pdp-open { overflow: hidden; }
   position: relative;
 }
 
-/* Close button — anchored to .pdp-panel top-right corner,
-   always isolated from the scrollable content and the footer CTA */
+/*
+  Close button — anchored to .pdp-panel itself (not the scroll area),
+  positioned at the top-right corner of the card, well above the footer CTA.
+  On mobile it sits at the very top-right of the floating card.
+*/
 .pdp-close-btn {
   position: absolute;
   top: 14px;
   right: 14px;
   z-index: 10;
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   border-radius: 50%;
   background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.14);
