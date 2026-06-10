@@ -116,15 +116,17 @@
 
     <section class="shop-hero section" aria-label="Shop hero">
       <div class="container">
+
+        <!-- Stage 1: hero panel — kicker, title, description only -->
         <div class="shop-hero-panel">
           <span class="section-kicker">Make Yourself A Priority.</span>
           <h1 id="shopHeroTitle">The Phenome<br/>Collection</h1>
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.</p>
+        </div>
 
-          <!-- Who are you shopping for — hidden once a segment is selected -->
-          <h2 class="hero-who-label" id="shopHeroWho">Who are you shopping for?</h2>
-
-          <!-- Segment toggle — always visible -->
+        <!-- Stage 2: segment selector — its own bubble, always visible -->
+        <div class="segment-bubble-wrap" id="segmentBubbleWrap">
+          <h2 class="segment-bubble-heading" id="shopHeroWho">Who are you shopping for?</h2>
           <div class="segment-toggle-wrap" id="segmentToggleWrap">
             <div class="segment-toggle" id="segmentToggle" role="group" aria-label="Shopping segment">
               <button
@@ -142,6 +144,7 @@
             </div>
           </div>
         </div>
+
       </div>
     </section>
 
