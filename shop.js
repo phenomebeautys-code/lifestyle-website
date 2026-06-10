@@ -535,7 +535,7 @@ function pdpUpdatePrice(pid) {
   let price = Number(p.price) || 0;
   if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
   if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
-  const label = price > 0 ? 'R' + price.toFixed(2) : 'Contact for price';
+  const label = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
   const priceEl       = document.getElementById('pdpPrice');
   const footerPriceEl = document.getElementById('pdpFooterPrice');
   if (priceEl) priceEl.textContent = label;
@@ -671,7 +671,7 @@ function renderProducts(products) {
     const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
     const available = p.available !== false;
     const price     = Number(p.price) || 0;
-    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Contact for price';
+    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
 
     const imgSrc = images.length ? transformImage(images[0], 600) : '';
