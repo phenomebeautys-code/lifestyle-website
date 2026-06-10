@@ -128,10 +128,25 @@
 
     <section class="shop-section" aria-label="Products">
       <div class="container">
+
+        <!-- Segment toggle bar -->
         <div class="segment-active-bar" id="segmentActiveBar" aria-live="polite">
-          <span class="segment-active-label">Shopping as: <strong id="segmentActiveLabel"></strong></span>
-          <button class="segment-switch-btn" onclick="resetSegment()">Switch</button>
+          <div class="segment-toggle" id="segmentToggle" role="group" aria-label="Shopping segment">
+            <button
+              class="segment-toggle-option"
+              id="toggleSelfCare"
+              onclick="selectSegment('self_care')"
+              aria-pressed="false"
+            >Self-Care</button>
+            <button
+              class="segment-toggle-option"
+              id="toggleProfessional"
+              onclick="selectSegment('professional')"
+              aria-pressed="false"
+            >Professional</button>
+          </div>
         </div>
+
         <div class="product-grid" id="productGrid">
           <noscript>
             <div class="noscript-notice">
