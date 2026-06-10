@@ -307,7 +307,7 @@ body.pdp-open { overflow: hidden; }
 }
 .pdp-overlay.open { opacity: 1; pointer-events: all; }
 
-/* ── Floating card — mobile: inset from bottom and sides ── */
+/* ── Floating card ── */
 .pdp-panel {
   position: fixed;
   bottom: 16px;
@@ -359,11 +359,19 @@ body.pdp-open { overflow: hidden; }
   position: relative;
 }
 
+/* ── Close row — sits above the scroll area, never overlapped by navbar ── */
+.pdp-close-row {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 14px 14px 0;
+}
+
 /* ── Close button ── */
 .pdp-close-btn {
-  position: absolute;
-  top: 16px; right: 16px;
-  z-index: 10;
+  /* no longer absolutely positioned — lives in pdp-close-row */
+  position: static;
   width: 42px; height: 42px;
   border-radius: 50%;
   background: rgba(0,0,0,0.60);
@@ -388,9 +396,9 @@ body.pdp-open { overflow: hidden; }
 .pdp-scroll-area::-webkit-scrollbar { width: 3px; }
 .pdp-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
 
-/* ── Hero image — smaller, never dominates the card ── */
+/* ── Hero image ── */
 .pdp-image-block {
-  padding: 16px 16px 0;
+  padding: 8px 16px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -399,17 +407,17 @@ body.pdp-open { overflow: hidden; }
 .pdp-hero-img {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 200px;
+  aspect-ratio: 1 / 1;
+  max-height: 240px;
   object-fit: cover;
-  object-position: center top;
+  object-position: center center;
   border-radius: 18px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.45);
 }
 
 .pdp-hero-placeholder {
-  aspect-ratio: 16 / 9;
-  max-height: 200px;
+  aspect-ratio: 1 / 1;
+  max-height: 240px;
   border-radius: 18px;
   background: rgba(255,255,255,0.04);
   display: flex; align-items: center; justify-content: center;
@@ -441,7 +449,7 @@ body.pdp-open { overflow: hidden; }
 
 /* ── Content area ── */
 .pdp-content {
-  padding: 28px 28px 0;
+  padding: 20px 28px 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
