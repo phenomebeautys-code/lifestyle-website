@@ -155,17 +155,23 @@
 .segment-active-bar.visible { display: flex; }
 
 /* ============================================================
-   Segment toggle bubble
-   Separate from the hero and always available for path switching.
-   Shorter fade-in so it feels prompt, not delayed.
+   Segment bubble — own glass card, separate from hero panel
    ============================================================ */
-.hero-who-label {
-  display: none;
+
+/* Heading inside the bubble */
+.segment-bubble-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--accent-strong);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  margin: 0;
 }
 
-.segment-toggle-wrap {
-  margin-top: 10px;
-  padding: clamp(20px, 3vw, 28px) clamp(20px, 4vw, 36px);
+/* Outer wrapper: its own glass bubble with generous gap below hero */
+.segment-bubble-wrap {
+  margin-top: clamp(20px, 4vw, 32px);
+  padding: clamp(24px, 3.5vw, 36px) clamp(20px, 4vw, 36px);
   border-radius: 28px;
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
   border: 1px solid var(--glass-border);
@@ -174,21 +180,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 20px;
   text-align: center;
+
+  /* Stage 2: fades up after hero settles */
   opacity: 0;
   transform: translateY(10px);
   animation: bubbleFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
-}
-
-.segment-toggle-wrap::before {
-  content: "Who are you shopping for?";
-  display: block;
-  font-family: var(--font-display);
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  color: var(--accent-strong);
-  line-height: 1.2;
-  letter-spacing: 0.01em;
 }
 
 @keyframes bubbleFadeIn {
@@ -196,8 +194,15 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* Toggle sits inside the bubble — no extra margin needed */
+.segment-toggle-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ============================================================
-   Segment toggle  —  sliding pill indicator (persistent selector)
+   Segment toggle  —  sliding pill indicator
    ============================================================ */
 .segment-toggle {
   position: relative;
@@ -260,27 +265,7 @@
   .shop-hero-panel { padding: 14px 16px; border-radius: 20px; }
   .shop-hero-panel p { display: none; }
   #shopHeroDesc { display: block !important; }
-  .segment-selector { padding: 6px 0 0; }
-  .segment-selector-inner {
-    display: flex; flex-direction: column; align-items: center;
-    padding: var(--section-pad);
-    border-radius: var(--radius-xl);
-    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  }
-  .segment-cards { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .segment-card { aspect-ratio: 3 / 4; }
-  .segment-card-overlay {
-    inset: 14px 12px 14px 12px;
-    display: flex; flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    gap: 6px; text-align: center;
-  }
-  .segment-card-title { font-size: 0.95rem; }
-  .segment-card-cta { padding: 7px 12px; font-size: 0.72rem; }
-  .segment-toggle-wrap { padding: 18px 16px; border-radius: 20px; margin-top: 8px; gap: 14px; }
+  .segment-bubble-wrap { margin-top: 16px; padding: 20px 16px; border-radius: 20px; gap: 16px; }
   .segment-toggle-option { padding: 13px 28px; font-size: 0.82rem; }
 }
 
@@ -363,12 +348,6 @@
 }
 .product-tile:hover .tile-img-wrap img { transform: scale(1.05); }
 
-/*
-  Images are hidden until a segment is selected.
-  JS adds .segment-chosen to <body> once selectSegment() fires.
-  Until then, tile images are invisible but the 1:1 box is still shown as a
-  subtle placeholder so the grid layout is stable.
-*/
 body:not(.segment-chosen) .tile-img-wrap img {
   opacity: 0;
   pointer-events: none;
