@@ -170,7 +170,7 @@
 
 /* Outer wrapper: its own glass bubble with generous gap below hero */
 .segment-bubble-wrap {
-  margin-top: clamp(20px, 4vw, 32px);
+  margin-top: clamp(32px, 5vw, 52px);
   padding: clamp(24px, 3.5vw, 36px) clamp(20px, 4vw, 36px);
   border-radius: 28px;
   background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
@@ -183,14 +183,14 @@
   gap: 20px;
   text-align: center;
 
-  /* Stage 2: fades up after hero settles */
+  /* Graceful float-in: starts further down, longer duration, delayed until hero has settled */
   opacity: 0;
-  transform: translateY(10px);
-  animation: bubbleFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
+  transform: translateY(18px);
+  animation: bubbleFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
 }
 
 @keyframes bubbleFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -265,7 +265,7 @@
   .shop-hero-panel { padding: 14px 16px; border-radius: 20px; }
   .shop-hero-panel p { display: none; }
   #shopHeroDesc { display: block !important; }
-  .segment-bubble-wrap { margin-top: 16px; padding: 20px 16px; border-radius: 20px; gap: 16px; }
+  .segment-bubble-wrap { margin-top: 24px; padding: 20px 16px; border-radius: 20px; gap: 16px; }
   .segment-toggle-option { padding: 13px 28px; font-size: 0.82rem; }
 }
 
