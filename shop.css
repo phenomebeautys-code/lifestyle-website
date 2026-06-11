@@ -269,7 +269,7 @@
   /* === INITIAL STATE: bubble fixed to bottom of viewport === */
   .segment-bubble-wrap {
     position: fixed;
-    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(42px + env(safe-area-inset-bottom, 0px));
     left: 16px;
     right: 16px;
     margin-top: 0;
@@ -279,7 +279,7 @@
     z-index: 10;
     will-change: transform, opacity;
     /* Override the keyframe animation — bubble fades in from below into fixed position */
-    animation: bubbleFixedIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+    animation: bubbleFixedIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
   }
 
   @keyframes bubbleFixedIn {
