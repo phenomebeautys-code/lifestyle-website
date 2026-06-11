@@ -367,7 +367,7 @@ function openProductDetail(pid) {
   const heroSrc = images.length ? transformImage(images[0], 800) : '';
   const heroHTML = heroSrc
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${heroSrc}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
-    : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+    : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
   let thumbsHTML = '';
   if (images.length > 1) {
@@ -563,6 +563,20 @@ function filterAndRender(segment) {
   renderProducts(filtered);
 }
 
+/* —— Update the bubble heading text after segment selection —— */
+
+function _updateBubbleHeading(segment) {
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (!whoLabel) return;
+  if (segment === 'self_care') {
+    whoLabel.textContent = 'Shopping for: Self-Care';
+  } else if (segment === 'professional') {
+    whoLabel.textContent = 'Shopping for: Professionals';
+  } else {
+    whoLabel.textContent = 'Browsing the full collection';
+  }
+}
+
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
   document.body.classList.add('segment-chosen');
@@ -570,8 +584,8 @@ function selectSegment(segment) {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = 'none';
+  /* Update heading text — do NOT hide it, the bubble needs height in flow */
+  _updateBubbleHeading(segment);
   applySegment(segment);
   if (window._allProducts) {
     filterAndRender(segment);
@@ -587,8 +601,8 @@ function browseAll() {
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = 'none';
+  /* Update heading text — do NOT hide it, the bubble needs height in flow */
+  _updateBubbleHeading(null);
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
@@ -611,7 +625,10 @@ function resetSegment() {
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.remove('hidden');
   const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = '';
+  if (whoLabel) {
+    whoLabel.textContent = 'Who are you shopping for?';
+    whoLabel.style.display = '';
+  }
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
@@ -715,10 +732,6 @@ function updateCardPrice(pid, cardEl) {}
 
 /* —— Product fetch ——————————————————————————————————————————— */
 
-/* Silent background prefetch — fires on page load while user reads the hero.
-   Populates window._allProducts without touching the grid or showing skeletons.
-   If the user selects a segment before this resolves, selectSegment() falls
-   back to fetchProducts() which shows skeletons for the remaining wait. */
 async function prefetchProducts() {
   try {
     const resp = await fetch(
@@ -730,11 +743,9 @@ async function prefetchProducts() {
     window._allProducts = Array.isArray(data) ? data : [];
   } catch(err) {
     console.warn('prefetchProducts error:', err);
-    /* Silently swallow — fetchProducts() will retry when the user picks a segment */
   }
 }
 
-/* Visible fetch — called only when user selects a segment before prefetch completes */
 async function fetchProducts() {
   renderSkeletons(6);
   try {
@@ -781,7 +792,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   document.body.classList.remove('segment-chosen');
 
   const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) whoLabel.style.display = '';
+  if (whoLabel) {
+    whoLabel.textContent = 'Who are you shopping for?';
+    whoLabel.style.display = '';
+  }
 
   updateShopHero(null);
   _setToggleState(null);
@@ -796,7 +810,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.history.replaceState({}, '', 'shop.html');
   }
 
-  /* Start background prefetch immediately — data will be ready
-     by the time the user finishes reading the hero and picks a segment */
   prefetchProducts();
 });
