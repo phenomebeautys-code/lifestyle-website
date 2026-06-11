@@ -168,7 +168,7 @@
   margin: 0;
 }
 
-/* Outer wrapper: its own glass bubble with generous gap below hero */
+/* Outer wrapper — desktop: normal flow with gap below hero */
 .segment-bubble-wrap {
   margin-top: clamp(32px, 5vw, 52px);
   padding: clamp(24px, 3.5vw, 36px) clamp(20px, 4vw, 36px);
@@ -183,7 +183,7 @@
   gap: 20px;
   text-align: center;
 
-  /* Graceful float-in: starts further down, longer duration, delayed until hero has settled */
+  /* Graceful float-in */
   opacity: 0;
   transform: translateY(18px);
   animation: bubbleFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
@@ -194,7 +194,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Toggle sits inside the bubble — no extra margin needed */
+/* Toggle sits inside the bubble */
 .segment-toggle-wrap {
   display: flex;
   align-items: center;
@@ -265,7 +265,46 @@
   .shop-hero-panel { padding: 14px 16px; border-radius: 20px; }
   .shop-hero-panel p { display: none; }
   #shopHeroDesc { display: block !important; }
-  .segment-bubble-wrap { margin-top: clamp(56px, 14dvh, 120px); padding: 20px 16px; border-radius: 20px; gap: 16px; }
+
+  /* === INITIAL STATE: bubble fixed to bottom of viewport === */
+  .segment-bubble-wrap {
+    position: fixed;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+    left: 16px;
+    right: 16px;
+    margin-top: 0;
+    padding: 20px 16px;
+    border-radius: 20px;
+    gap: 16px;
+    z-index: 10;
+    will-change: transform, opacity;
+    /* Override the keyframe animation — bubble fades in from below into fixed position */
+    animation: bubbleFixedIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+  }
+
+  @keyframes bubbleFixedIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === AFTER SELECTION: bubble snaps back into document flow === */
+  body.segment-chosen .segment-bubble-wrap {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    margin-top: 16px;
+    z-index: auto;
+    will-change: auto;
+    /* Brief smooth settle into place */
+    animation: bubbleSettle 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes bubbleSettle {
+    from { opacity: 0.7; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
   .segment-toggle-option { padding: 13px 28px; font-size: 0.82rem; }
 }
 
