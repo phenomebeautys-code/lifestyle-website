@@ -190,8 +190,8 @@
 }
 
 @keyframes bubbleFadeIn {
-  0%   { opacity: 0;    transform: translateY(36px); }
-  100% { opacity: 1;    transform: translateY(0);    }
+  0%   { opacity: 0; transform: translateY(36px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Toggle sits inside the bubble */
@@ -283,8 +283,8 @@
   }
 
   @keyframes bubbleFixedIn {
-    0%   { opacity: 0;    transform: translateY(60px); }
-    100% { opacity: 1;    transform: translateY(0);    }
+    0%   { opacity: 0; transform: translateY(60px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 
   /* === AFTER SELECTION: bubble snaps back into document flow === */
@@ -685,10 +685,21 @@ body.pdp-open { overflow: hidden; }
   gap: 4px;
   margin: 0;
 }
+.pdp-content .product-desc ul li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
 .pdp-content .product-desc ul li::before {
-  content: "\2014";
-  margin-right: 7px;
-  color: rgba(255,255,255,0.22);
+  content: "";
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.45);
+  background: transparent;
+  position: relative;
+  top: -1px;
 }
 
 .pdp-option-group { display: flex; flex-direction: column; gap: 10px; }
