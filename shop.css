@@ -185,12 +185,12 @@
 
   /* Graceful float-in */
   opacity: 0;
-  transform: translateY(18px);
-  animation: bubbleFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards;
+  transform: translateY(28px);
+  animation: bubbleFadeIn 1.0s cubic-bezier(0.22, 1, 0.36, 1) 1.3s forwards;
 }
 
 @keyframes bubbleFadeIn {
-  from { opacity: 0; transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(28px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -279,11 +279,11 @@
     z-index: 10;
     will-change: transform, opacity;
     /* Override the keyframe animation — bubble fades in from below into fixed position */
-    animation: bubbleFixedIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.9s both;
+    animation: bubbleFixedIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 1.2s both;
   }
 
   @keyframes bubbleFixedIn {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(22px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
