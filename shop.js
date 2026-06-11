@@ -657,7 +657,7 @@ function updateShopHero(segment) {
     heroDesc.textContent = 'Supplies for the therapist who holds the standard for every woman entrusted in their care.';
   } else {
     heroTitle.innerHTML = 'The Phenome<br/>Collection';
-    heroDesc.textContent = 'Thoughtfully selected essentials for women who make themselves a priority, and the professionals who help their clients, do the same.';
+    heroDesc.textContent = 'For the woman who makes time for herself, and the professionals who help others, do the same.';
   }
 }
 
