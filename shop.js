@@ -715,6 +715,26 @@ function updateCardPrice(pid, cardEl) {}
 
 /* —— Product fetch ——————————————————————————————————————————— */
 
+/* Silent background prefetch — fires on page load while user reads the hero.
+   Populates window._allProducts without touching the grid or showing skeletons.
+   If the user selects a segment before this resolves, selectSegment() falls
+   back to fetchProducts() which shows skeletons for the remaining wait. */
+async function prefetchProducts() {
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-products`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    window._allProducts = Array.isArray(data) ? data : [];
+  } catch(err) {
+    console.warn('prefetchProducts error:', err);
+    /* Silently swallow — fetchProducts() will retry when the user picks a segment */
+  }
+}
+
+/* Visible fetch — called only when user selects a segment before prefetch completes */
 async function fetchProducts() {
   renderSkeletons(6);
   try {
@@ -775,4 +795,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('cancelBanner')?.classList.add('show');
     window.history.replaceState({}, '', 'shop.html');
   }
+
+  /* Start background prefetch immediately — data will be ready
+     by the time the user finishes reading the hero and picks a segment */
+  prefetchProducts();
 });
