@@ -551,19 +551,33 @@ function _setToggleState(segment) {
   track.style.setProperty('--_slide', isProfessional ? '1' : '0');
 }
 
+/* —— Filter cached products and re-render — no network call —— */
+
+function filterAndRender(segment) {
+  const all = window._allProducts;
+  if (!all) return;
+  let filtered = all;
+  if (segment) {
+    filtered = all.filter(p => !p.market || p.market === segment);
+  }
+  renderProducts(filtered);
+}
+
 function selectSegment(segment) {
   localStorage.setItem(SEGMENT_KEY, segment);
-  /* Reveal products now that a segment has been actively chosen */
   document.body.classList.add('segment-chosen');
   const mount = document.getElementById('segmentSelectorMount');
   if (mount) mount.style.display = 'none';
   const prompt = document.getElementById('heroSubPrompt');
   if (prompt) prompt.classList.add('hidden');
-  /* Hide the "Who are you shopping for?" label once a segment is chosen */
   const whoLabel = document.getElementById('shopHeroWho');
   if (whoLabel) whoLabel.style.display = 'none';
   applySegment(segment);
-  fetchProducts();
+  if (window._allProducts) {
+    filterAndRender(segment);
+  } else {
+    fetchProducts();
+  }
 }
 
 function browseAll() {
@@ -578,12 +592,17 @@ function browseAll() {
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
-  fetchProducts();
+  if (window._allProducts) {
+    filterAndRender(null);
+  } else {
+    fetchProducts();
+  }
 }
 
 function resetSegment() {
   localStorage.removeItem(SEGMENT_KEY);
   document.body.classList.remove('segment-chosen');
+  window._allProducts = null;
   window._products = null;
   const grid = document.getElementById('productGrid');
   if (grid) grid.innerHTML = '';
@@ -645,11 +664,6 @@ function renderProducts(products) {
   const grid = document.getElementById('productGrid');
   if (!grid) return;
 
-  const segment = getSegment();
-  if (segment) {
-    products = products.filter(p => !p.market || p.market === segment);
-  }
-
   if (!products.length) {
     grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
     return;
@@ -710,7 +724,10 @@ async function fetchProducts() {
     );
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
-    renderProducts(Array.isArray(data) ? data : []);
+    const all = Array.isArray(data) ? data : [];
+    window._allProducts = all;
+    const segment = getSegment();
+    filterAndRender(segment);
   } catch(err) {
     console.error('fetchProducts error:', err);
     const grid = document.getElementById('productGrid');
@@ -740,25 +757,15 @@ async function loadSegmentSelector() {
 document.addEventListener('DOMContentLoaded', async function() {
   await loadSegmentSelector();
 
-  /*
-    Always reset to the opener state on every page load.
-    Saved segment is cleared so the hero, toggle, and product
-    visibility are consistent for both first-time and returning visitors.
-  */
   localStorage.removeItem(SEGMENT_KEY);
   document.body.classList.remove('segment-chosen');
 
-  /* Ensure "Who are you shopping for?" label is visible */
   const whoLabel = document.getElementById('shopHeroWho');
   if (whoLabel) whoLabel.style.display = '';
 
-  /* Set opener hero copy */
   updateShopHero(null);
-
-  /* Initialise toggle — pill at Self-Care position, neither button active */
   _setToggleState(null);
 
-  /* Clear product grid — products only load once user picks a segment */
   const grid = document.getElementById('productGrid');
   if (grid) grid.innerHTML = '';
 
