@@ -279,11 +279,11 @@
     z-index: 10;
     will-change: transform, opacity;
     /* Override the keyframe animation — bubble fades in from below into fixed position */
-    animation: bubbleFixedIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+    animation: bubbleFixedIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.9s both;
   }
 
   @keyframes bubbleFixedIn {
-    from { opacity: 0; transform: translateY(24px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
