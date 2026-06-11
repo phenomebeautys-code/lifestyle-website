@@ -269,7 +269,7 @@
   /* === INITIAL STATE: bubble fixed to bottom of viewport === */
   .segment-bubble-wrap {
     position: fixed;
-    bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(140px + env(safe-area-inset-bottom, 0px));
     left: 16px;
     right: 16px;
     margin-top: 0;
