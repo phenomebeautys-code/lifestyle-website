@@ -1,7 +1,7 @@
 :root { --cart-bar-h: 72px; }
 
 /* ── Hero ── */
-.shop-hero { padding: clamp(12px, 2vw, 20px) 0 6px; }
+.shop-hero { padding: clamp(32px, 4vw, 56px) 0 6px; }
 .shop-hero-panel {
   padding: clamp(16px, 2.5vw, 28px);
   border-radius: 32px;
@@ -261,7 +261,7 @@
 
 /* ── Mobile hero/segment ── */
 @media (max-width: 600px) {
-  .shop-hero { padding: 10px 0 4px; }
+  .shop-hero { padding: 32px 0 4px; }
   .shop-hero-panel { padding: 14px 16px; border-radius: 20px; }
   .shop-hero-panel p { display: none; }
   #shopHeroDesc { display: block !important; }
