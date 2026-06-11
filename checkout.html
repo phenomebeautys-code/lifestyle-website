@@ -14,26 +14,6 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="checkout.css" />
 </head>
-  <script>
-  (function(){
-    const toggle = document.getElementById('menuToggle');
-    const menu   = document.getElementById('navMenu');
-    if (!toggle || !menu) return;
-    toggle.addEventListener('click', function(){
-      const open = menu.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      toggle.classList.toggle('active', open);
-    });
-    // Close on outside click
-    document.addEventListener('click', function(e){
-      if (!toggle.contains(e.target) && !menu.contains(e.target)){
-        menu.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-        toggle.classList.remove('active');
-      }
-    });
-  })();
-</script>
 <body>
 
   <div id="bg-image"></div>
@@ -407,5 +387,24 @@
   </div>
 
   <script src="checkout.js"></script>
+  <script>
+    (function(){
+      const toggle = document.getElementById('menuToggle');
+      const menu   = document.getElementById('navMenu');
+      if (!toggle || !menu) return;
+      toggle.addEventListener('click', function(){
+        const open = menu.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        toggle.classList.toggle('active', open);
+      });
+      document.addEventListener('click', function(e){
+        if (!toggle.contains(e.target) && !menu.contains(e.target)){
+          menu.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.classList.remove('active');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
