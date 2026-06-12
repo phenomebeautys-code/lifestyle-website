@@ -549,12 +549,16 @@ function toggleAddons() {
 /* ── Gift toggle ── */
 function toggleGift() {
   giftOn = !giftOn;
-  const cb  = document.getElementById('f-is-gift');
-  const btn = document.querySelector('#giftToggleRow .switch');
-  const rev = document.getElementById('giftReveal');
+  const cb   = document.getElementById('f-is-gift');
+  const btn  = document.querySelector('#giftToggleRow .switch');
+  const rev  = document.getElementById('giftReveal');
+  const body = document.getElementById('addonsBody');
   if (cb)  cb.checked = giftOn;
   if (btn) btn.classList.toggle('on', giftOn);
   if (rev) rev.style.maxHeight = giftOn ? rev.scrollHeight + 'px' : '0';
+  if (body && addonsOpen) {
+    body.style.maxHeight = body.scrollHeight + rev.scrollHeight + 'px';
+  }
 }
 
 /* ── Special instructions toggle ── */
