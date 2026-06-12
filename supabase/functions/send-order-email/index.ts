@@ -21,6 +21,7 @@ const FROM        = 'PhenomeBeauty Orders <orders@phenomebeauty.co.za>';
 const ADMIN_EMAIL = 'phenomebeautys@gmail.com';
 const STORE_URL   = 'https://www.phenomebeauty.co.za';
 const LOGO_URL    = 'https://iili.io/fpiAjBj.jpg';
+const WA_LINK     = 'https://wa.me/2745115725';
 
 /* ── Shared CSS for customer-facing emails ─────────────────────────────────── */
 const BASE_STYLE = `
@@ -183,8 +184,8 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
     </div>` : ''}
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
-      Questions about your order? Simply reply to this email or contact us at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+      Questions about your order? Simply reply to this email or
+      <a href="${WA_LINK}" style="color:#b8a98a">chat with us on WhatsApp</a>.
     </p>
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:16px 0 0">
@@ -253,8 +254,7 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
     </p>
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
-      Questions? We're always happy to help at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+      Questions? <a href="${WA_LINK}" style="color:#b8a98a">Chat with us on WhatsApp</a>.
     </p>
 
     ${signatureHTML()}
@@ -360,14 +360,13 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
       Thank you for choosing PhenomeBeauty.
     </p>
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
-      Questions about your delivery? Contact us at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+      Questions about your delivery? <a href="${WA_LINK}" style="color:#b8a98a">Chat with us on WhatsApp</a>.
     </p>`;
 
   const outroDelivered = `
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 16px">
-      If there's anything we can help with, simply reply to this email or contact us at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+      If there's anything we can help with,
+      <a href="${WA_LINK}" style="color:#b8a98a">chat with us on WhatsApp</a>.
     </p>
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 20px">
       Thank you for making yourself a priority.
@@ -498,7 +497,7 @@ Deno.serve(async (req: Request) => {
       await sendEmail({ to: order.customer_email, subject, html });
 
     } else if (type === 'payment_received') {
-      /* Customer email — branded, no admin BCC */
+      /* Customer email — branded */
       const { subject, html } = buildPaymentReceived(order);
       await sendEmail({ to: order.customer_email, subject, html });
 
