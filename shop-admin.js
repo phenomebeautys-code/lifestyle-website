@@ -113,7 +113,7 @@ async function login() {
   const btn = document.getElementById('loginBtn');
   if (!pw) { showLoginError('Please enter your password.'); return; }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+  btn.innerHTML = '<span class="spinner"></span>Signing in\u2026';
   hideLoginError();
   try {
     const res = await callEdge({ action: 'get_orders', password: pw });
@@ -319,14 +319,13 @@ function renderTable() {
   const orders = getFiltered();
   const tbody  = document.getElementById('ordersBody');
   if (!orders.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No orders found.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No orders found.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
   orders.forEach(o => {
     const tr   = document.createElement('tr');
     tr.style.cursor = 'pointer';
-    /* date + time so the admin can see exactly when each order arrived */
     const date = new Date(o.created_at).toLocaleDateString('en-ZA', {
       day: 'numeric', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
@@ -341,9 +340,10 @@ function renderTable() {
       mkDeliveryTd(o),
       mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending'),
       mkSelectTd(o),
+      mkMarkPaidTd(o),
     ].forEach(c => tr.appendChild(c));
     tr.addEventListener('click', e => {
-      if (e.target.closest('select')) return;
+      if (e.target.closest('select, button')) return;
       openOrderDetail(o.id);
     });
     tbody.appendChild(tr);
@@ -381,7 +381,6 @@ function renderCards() {
     const delivBadge = document.createElement('span');
     delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
     delivBadge.style.cssText = 'font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
-    /* SVG icon injected as innerHTML — the text part is safely escaped separately */
     delivBadge.innerHTML = delivInfo.icon;
     delivBadge.appendChild(document.createTextNode(' ' + delivInfo.label));
     badges.appendChild(delivBadge);
@@ -416,7 +415,17 @@ function renderCards() {
     const actions = document.createElement('div'); actions.className = 'oc-actions';
     const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
     printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
-    actions.appendChild(sel); actions.appendChild(printBtn);
+    actions.appendChild(sel);
+    /* Mark as Paid button — cards view, unpaid only */
+    if (o.payment_status !== 'paid') {
+      const mpBtn = document.createElement('button');
+      mpBtn.className = 'btn btn-primary';
+      mpBtn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+      mpBtn.textContent = 'Mark as Paid';
+      mpBtn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
+      actions.appendChild(mpBtn);
+    }
+    actions.appendChild(printBtn);
     footer.appendChild(dateEl); footer.appendChild(actions);
 
     card.appendChild(badges);
@@ -496,6 +505,19 @@ function mkDeliveryTd(o) {
 function mkSelectTd(o) {
   const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
 }
+/* Mark as Paid — table column, unpaid only */
+function mkMarkPaidTd(o) {
+  const td = document.createElement('td');
+  if (o.payment_status !== 'paid') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+    btn.textContent = 'Mark as Paid';
+    btn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
+    td.appendChild(btn);
+  }
+  return td;
+}
 async function updateOrderStatus(id, status, badgeEl) {
   try {
     const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
@@ -509,6 +531,28 @@ async function updateOrderStatus(id, status, badgeEl) {
     updateStats(); renderRecent(); updateReports();
     showToast('Status updated to ' + (STATUS_LABELS[status] || status));
   } catch { showToast('Network error.', true); }
+}
+
+/* ─── MARK AS PAID ───────────────────────────── */
+async function markAsPaid(orderId) {
+  const btn = document.querySelector(`[data-mark-paid="${orderId}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+  try {
+    const res = await callEdge({ action: 'mark_paid', password: adminToken, order_id: orderId });
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to mark as paid.', true); return; }
+    const o = allOrders.find(x => x.id === orderId);
+    if (o) {
+      o.payment_status = 'paid';
+      o.paid_at = o.paid_at || new Date().toISOString();
+    }
+    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+    /* If the detail modal is open for this order, re-render it */
+    const modal = document.getElementById('orderDetailModal');
+    if (!modal.hasAttribute('hidden')) openOrderDetail(orderId);
+    showToast('Payment marked as paid');
+  } catch { showToast('Network error.', true); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Mark as Paid'; } }
 }
 
 /* ─── ORDER DETAIL MODAL ─────────────────────── */
@@ -536,12 +580,17 @@ function openOrderDetail(orderId) {
       </div>
     </div>`).join('');
 
-  /* SVG strings are safe to inject as innerHTML — customer data is always escaped via esc() */
   const giftSVG    = SVG.gift;
   const checkSVG   = SVG.check;
   const doorSVG    = SVG.door;
   const lockerSVG  = SVG.locker;
   const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
+
+  /* Mark as Paid row — only rendered when unpaid */
+  const markPaidRow = !isPaid ? `
+    <div style="margin-top:10px">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
+    </div>` : '';
 
   document.getElementById('odTitle').textContent = `Order #${orderNo}`;
   document.getElementById('orderDetailBody').innerHTML = `
@@ -607,7 +656,9 @@ function openOrderDetail(orderId) {
       </select>
       <button class="btn btn-primary" style="flex:1;min-width:120px;justify-content:center" onclick="updateFromDetail('${o.id}')">Update Status</button>
       <button class="btn btn-secondary" style="flex:1;min-width:120px;justify-content:center" onclick="printLabel(allOrders.find(x=>x.id==='${o.id}'))">Print Label</button>
-    </div>`;
+    </div>
+
+    ${markPaidRow}`;
 
   const modal = document.getElementById('orderDetailModal');
   modal.removeAttribute('hidden');
@@ -617,7 +668,6 @@ function openOrderDetail(orderId) {
 async function updateFromDetail(orderId) {
   const status = document.getElementById('odStatusSelect').value;
   await updateOrderStatus(orderId, status, null);
-  /* Re-render the full detail body so all badges reflect the new status instantly */
   openOrderDetail(orderId);
   renderTable(); renderCards();
 }
@@ -736,7 +786,7 @@ function getProductImages(p) {
 }
 async function loadProducts() {
   document.getElementById('productsGrid').innerHTML =
-    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>';
+    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading\u2026</div>';
   try {
     const res = await callEdge({ action: 'get_products', password: adminToken });
     if (res.ok) {
@@ -817,7 +867,6 @@ function renderProducts() {
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
     } else { imgWrap.innerHTML = noImgSVG(); }
 
-    /* ── availability badge overlay on image ── */
     const avail = p.availability || 'available';
     if (avail !== 'available') {
       const badge = document.createElement('span');
@@ -946,7 +995,6 @@ function openProductModal(product = null) {
   document.getElementById('mpBrand').value           = product?.brand || '';
   document.getElementById('mpDesc').value            = product?.description || '';
   document.getElementById('mpCategory').value        = product?.category || '';
-  /* ── availability ── */
   document.getElementById('mpAvailability').value    = product?.availability || 'available';
   const imgs = product ? getProductImages(product) : [];
   document.getElementById('mpImage1').value = imgs[0] || '';
@@ -1048,7 +1096,7 @@ async function saveProduct() {
       sizes:        cleanSizes,
     },
   };
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving…';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
   try {
     const res = await callEdge(payload);
     if (res.status === 429) { showToast('Rate limited.', true); return; }
