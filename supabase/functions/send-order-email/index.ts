@@ -31,7 +31,6 @@ const BASE_STYLE = `
   .body { padding:32px 40px; }
   .section { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:24px; margin-bottom:20px; }
   .section-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7a7060; margin-bottom:12px; }
-  .customer-name { font-size:18px; font-weight:600; color:#f5f0e8; }
   .detail { font-size:14px; color:#b0a898; margin-top:4px; line-height:1.5; }
   .item-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; }
   .item-row:last-child { border-bottom:none; }
@@ -42,13 +41,16 @@ const BASE_STYLE = `
   .total-row.grand { font-size:17px; font-weight:700; color:#f5f0e8; border-top:1px solid rgba(255,255,255,0.12); padding-top:12px; margin-top:4px; }
   .total-row.grand .total-val { color:#b8a98a; }
   .badge { display:inline-block; padding:4px 12px; border-radius:40px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
-  .badge-paid { background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3); color:#4ade80; }
-  .badge-dispatched { background:rgba(245,243,239,0.08); border:1px solid rgba(245,243,239,0.18); color:#f5f0e8; }
-  .badge-delivered { background:rgba(74,222,128,0.12); border:1px solid rgba(74,222,128,0.3); color:#4ade80; }
+  .badge-received  { background:rgba(184,169,138,0.12); border:1px solid rgba(184,169,138,0.3); color:#b8a98a; }
+  .badge-paid      { background:rgba(74,222,128,0.1);   border:1px solid rgba(74,222,128,0.3);  color:#4ade80; }
+  .badge-onitsway  { background:rgba(245,243,239,0.08); border:1px solid rgba(245,243,239,0.18); color:#f5f0e8; }
+  .badge-delivered { background:rgba(74,222,128,0.12);  border:1px solid rgba(74,222,128,0.3);  color:#4ade80; }
   .gift-box { background:rgba(255,200,80,0.06); border:1px solid rgba(255,200,80,0.2); border-radius:12px; padding:18px 24px; margin-bottom:20px; }
   .gift-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#fbbf24; margin-bottom:8px; }
   .gift-msg { font-size:14px; font-style:italic; color:#e8d898; line-height:1.6; }
   .cta-btn { display:inline-block; background:#b8a98a; color:#0a0a0c; text-decoration:none; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; padding:14px 32px; border-radius:8px; margin-top:8px; }
+  .sign { font-size:14px; color:#b0a898; margin-top:28px; line-height:1.7; }
+  .sign strong { color:#f5f0e8; }
   .footer { padding:28px 40px; border-top:1px solid rgba(255,255,255,0.06); text-align:center; }
   .footer p { font-size:12px; color:#4a4640; line-height:1.7; margin:0; }
   .footer a { color:#7a7060; text-decoration:none; }
@@ -115,6 +117,11 @@ function totalsHTML(order: Record<string, any>): string {
   return html;
 }
 
+/* ── Signature HTML ────────────────────────────────────────────────────────── */
+function signatureHTML(): string {
+  return `<p class="sign">Warm regards,<br><strong>Shu-Meez</strong><br>PhenomeBeauty</p>`;
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════
    EMAIL BUILDERS
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -131,17 +138,22 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
 <body><div class="wrap">
   <div class="header">
     <div class="brand">PhenomeBeauty</div>
-    <div class="headline">Order confirmed.</div>
+    <div class="headline">Order received.</div>
   </div>
   <div class="body">
 
+    <div style="margin-bottom:20px">
+      <span class="badge badge-received">Order Received</span>
+    </div>
+
     <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">
-      Thank you, <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>. We have received your order and it is now awaiting payment.
-      Once your payment is confirmed, we will begin preparing your order right away.
+      Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
+      Thank you for choosing PhenomeBeauty.<br><br>
+      We've received your order and it is currently awaiting payment confirmation. Once payment has been received, we'll begin preparing your order with care.
     </p>
 
     <div class="section">
-      <div class="section-label">Order #${orderNo}</div>
+      <div class="section-label">Your order details</div>
       ${itemsHTML(items)}
       <div style="margin-top:16px">${totalsHTML(order)}</div>
     </div>
@@ -158,10 +170,16 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
       <div class="gift-msg">&ldquo;${esc(order.gift_message)}&rdquo;</div>
     </div>` : ''}
 
-    <p style="font-size:13px;color:#7a7060;line-height:1.7;margin:24px 0 0">
-      Questions? Reply to this email or contact us at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
+      Questions about your order? Simply reply to this email or contact us at
+      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
     </p>
+
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:16px 0 0">
+      Thank you for making yourself a priority.
+    </p>
+
+    ${signatureHTML()}
 
   </div>
   <div class="footer">
@@ -186,22 +204,22 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
 <body><div class="wrap">
   <div class="header">
     <div class="brand">PhenomeBeauty</div>
-    <div class="headline">Payment received.</div>
+    <div class="headline">Payment confirmed.</div>
   </div>
   <div class="body">
 
-    <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">
-      Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>, your payment of
-      <strong style="color:#b8a98a">${fmt(order.total_amount)}</strong> has been received on ${paidAt}.
-      Your order is now being prepared and will be dispatched soon.
-    </p>
-
     <div style="margin-bottom:20px">
-      <span class="badge badge-paid">Payment confirmed</span>
+      <span class="badge badge-paid">Payment Confirmed</span>
     </div>
 
+    <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">
+      Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
+      Your payment of <strong style="color:#b8a98a">${fmt(order.total_amount)}</strong> has been successfully received on ${paidAt}.<br><br>
+      We're now preparing your order and will have it on its way to you soon.
+    </p>
+
     <div class="section">
-      <div class="section-label">Order #${orderNo}</div>
+      <div class="section-label">Your order details</div>
       ${itemsHTML(items)}
       <div style="margin-top:16px">${totalsHTML(order)}</div>
     </div>
@@ -218,10 +236,16 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
       <div class="gift-msg">&ldquo;${esc(order.gift_message)}&rdquo;</div>
     </div>` : ''}
 
-    <p style="font-size:13px;color:#7a7060;line-height:1.7;margin:24px 0 0">
-      We will send you another email as soon as your order is on its way.
-      Questions? <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
+      We'll send another update as soon as your order has been dispatched.
     </p>
+
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
+      Questions? We're always happy to help at
+      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+    </p>
+
+    ${signatureHTML()}
 
   </div>
   <div class="footer">
@@ -240,15 +264,42 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   const items    = Array.isArray(order.items) ? order.items : [];
 
   const isDispatched = status === 'dispatched';
-  const headline     = isDispatched ? 'Your order is on its way.' : 'Your order has been delivered.';
-  const intro        = isDispatched
-    ? `Great news, <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>! Your order #${orderNo} has been dispatched and is on its way to you.`
-    : `Your order #${orderNo} has been marked as delivered. We hope you love your PhenomeBeauty products.`;
-  const badgeClass   = isDispatched ? 'badge-dispatched' : 'badge-delivered';
-  const badgeLabel   = isDispatched ? 'Dispatched' : 'Delivered';
-  const subject      = isDispatched
+
+  const headline   = isDispatched ? 'Your order is on its way.' : 'Your order has been delivered.';
+  const badgeClass = isDispatched ? 'badge-onitsway'  : 'badge-delivered';
+  const badgeLabel = isDispatched ? 'On Its Way'      : 'Delivered';
+  const subject    = isDispatched
     ? `Your PhenomeBeauty order #${orderNo} is on its way`
     : `Your PhenomeBeauty order #${orderNo} has been delivered`;
+
+  const introCopy = isDispatched
+    ? `Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
+       Your order is on its way.<br><br>
+       We've carefully packed your PhenomeBeauty order and it has now been dispatched for delivery.`
+    : `Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
+       Your order has been delivered.<br><br>
+       We hope you enjoy your PhenomeBeauty essentials and that they serve you well in the routines and rituals that help you feel your best.`;
+
+  const outroDispatched = `
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
+      Thank you for choosing PhenomeBeauty. We hope these essentials become a valued part of your routine.
+    </p>
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
+      Questions about your delivery? Contact us at
+      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+    </p>`;
+
+  const outroDelivered = `
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 16px">
+      If there's anything we can help with, simply reply to this email or contact us at
+      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>.
+    </p>
+    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 20px">
+      Thank you for making yourself a priority.
+    </p>
+    <div style="text-align:center;margin-top:8px">
+      <a href="${STORE_URL}/shop.html" class="cta-btn">Shop Again</a>
+    </div>`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${BASE_STYLE}</style></head>
 <body><div class="wrap">
@@ -258,14 +309,14 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   </div>
   <div class="body">
 
-    <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">${intro}</p>
-
     <div style="margin-bottom:20px">
       <span class="badge ${badgeClass}">${badgeLabel}</span>
     </div>
 
+    <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">${introCopy}</p>
+
     <div class="section">
-      <div class="section-label">Order #${orderNo}</div>
+      <div class="section-label">Your order details</div>
       ${itemsHTML(items)}
       <div style="margin-top:16px">${totalsHTML(order)}</div>
     </div>
@@ -276,17 +327,9 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
       ${delivery.address ? `<div class="detail">${esc(delivery.address)}</div>` : ''}
     </div>
 
-    ${!isDispatched ? `
-    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 24px">
-      If you have any questions about your order, please reach out to us at
-      <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a> — we are always happy to help.
-    </p>
-    <div style="text-align:center;margin-top:8px">
-      <a href="${STORE_URL}/shop.html" class="cta-btn">Shop Again</a>
-    </div>` : `
-    <p style="font-size:13px;color:#7a7060;line-height:1.7;margin:24px 0 0">
-      Questions about your delivery? <a href="mailto:orders@phenomebeauty.co.za" style="color:#b8a98a">orders@phenomebeauty.co.za</a>
-    </p>`}
+    ${isDispatched ? outroDispatched : outroDelivered}
+
+    ${signatureHTML()}
 
   </div>
   <div class="footer">
@@ -311,10 +354,10 @@ async function sendEmail(opts: {
   if (!apiKey) { console.error('[send-order-email] RESEND_API_KEY not set'); return; }
 
   const payload: Record<string, unknown> = {
-    from:    FROM,
-    to:      [opts.to],
-    subject: opts.subject,
-    html:    opts.html,
+    from:     FROM,
+    to:       [opts.to],
+    subject:  opts.subject,
+    html:     opts.html,
     reply_to: 'orders@phenomebeauty.co.za',
   };
   if (opts.bcc) payload.bcc = [opts.bcc];
@@ -353,7 +396,6 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Missing type or order_id' }), { status: 400 });
   }
 
-  // Fetch full order
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -387,7 +429,6 @@ Deno.serve(async (req: Request) => {
     } else if (type === 'status_update') {
       const resolvedStatus = status || order.status;
       if (!['dispatched', 'delivered'].includes(resolvedStatus)) {
-        // Only email on dispatched / delivered — silently ignore others
         return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200 });
       }
       const { subject, html } = buildStatusUpdate(order, resolvedStatus);
