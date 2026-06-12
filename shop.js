@@ -403,7 +403,6 @@ function openProductDetail(pid) {
       const activeClass  = isActive ? ' active' : '';
       const heroClass    = isHero   ? ' hero-variant' : '';
       const outClass     = (variantObj && variantObj.stock != null && variantObj.stock <= 0) ? ' out-of-stock' : '';
-      /* For hero variant thumb, use the variant's own image so the thumbnail matches */
       const thumbImgSrc  = isHero && variantObj?.image ? variantObj.image : img;
       const labelHTML    = variantLabel
         ? `<span class="pdp-thumb-label">${variantLabel}</span>`
@@ -445,8 +444,8 @@ function openProductDetail(pid) {
   const descHTML = renderDescription(p);
 
   /* —— Hero variant on-brand note — only for hero products —— */
-  const noteText  = p.hero_segment ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
-  const noteHTML  = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
+  const noteText = p.hero_segment ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
+  const noteHTML = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
 
   inner.innerHTML = `
     <div class="pdp-scroll-area">
@@ -476,4 +475,390 @@ function openProductDetail(pid) {
   closeBtn.className = 'pdp-close-btn';
   closeBtn.setAttribute('aria-label', 'Close product detail');
   closeBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-  closeBtn.addEventListene
+  closeBtn.addEventListener('click', closeProductDetail);
+  panel.appendChild(closeBtn);
+
+  overlay?.classList.add('open');
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('pdp-open');
+  document.body.style.overflow = 'hidden';
+
+  setTimeout(() => closeBtn.focus(), 120);
+}
+
+function closeProductDetail() {
+  const panel   = document.getElementById('pdpPanel');
+  const overlay = document.getElementById('pdpOverlay');
+  panel?.classList.remove('open');
+  overlay?.classList.remove('open');
+  panel?.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('pdp-open');
+  document.body.style.overflow = '';
+  _pdpCurrentPid = null;
+}
+
+function pdpSelectThumbCol(col, pid) {
+  const thumbs = col.closest('.pdp-thumbs');
+  if (!thumbs) return;
+  thumbs.querySelectorAll('.pdp-thumb-col').forEach(c => {
+    c.classList.remove('active');
+    c.setAttribute('aria-pressed', 'false');
+  });
+  col.classList.add('active');
+  col.setAttribute('aria-pressed', 'true');
+  const src = col.dataset.img;
+  const heroImg = document.getElementById('pdpHeroImg');
+  if (heroImg && src) heroImg.src = src;
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (p) pdpUpdatePrice(pid);
+}
+
+function pdpSelectImage(btn, src) {
+  const heroImg = document.getElementById('pdpHeroImg');
+  if (heroImg) { heroImg.src = src; }
+  btn.closest('.pdp-thumbs')?.querySelectorAll('.pdp-thumb').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function pdpSelectVariant(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (p) {
+    const variant = btn.dataset.variant || '';
+    const heroImg = document.getElementById('pdpHeroImg');
+    if (heroImg) heroImg.src = transformImage(getVariantImage(p, variant), 800);
+  }
+  pdpUpdatePrice(pid);
+}
+
+function pdpSelectSize(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  pdpUpdatePrice(pid);
+}
+
+function pdpUpdatePrice(pid) {
+  const panel = document.getElementById('pdpPanel');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (!p || !panel) return;
+  const thumbColEl = panel.querySelector('.pdp-thumb-col.active');
+  const vPillEl    = panel.querySelector('.v-pill.active');
+  const sizeEl     = panel.querySelector('.s-pill.active');
+  const variant    = thumbColEl?.dataset.variant || vPillEl?.dataset.variant || '';
+  const sizeName   = sizeEl?.dataset.size || '';
+  let price = Number(p.price) || 0;
+  if (variant && p.variants) { const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant); if (vObj && vObj.price != null) price = Number(vObj.price); }
+  if (sizeName && p.sizes)   { const sObj = p.sizes.find(s => (s.name || s.label || s.value || '') === sizeName);   if (sObj && sObj.price != null) price = Number(sObj.price); }
+  const label = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
+  const footerPriceEl = document.getElementById('pdpFooterPrice');
+  if (footerPriceEl) footerPriceEl.textContent = label;
+}
+
+/* keyboard close */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && _pdpCurrentPid) closeProductDetail();
+});
+
+/* —— Segment logic ——————————————————————————————————————————— */
+
+const SEGMENT_KEY = 'pb_segment';
+
+function getSegment() {
+  return localStorage.getItem(SEGMENT_KEY) || null;
+}
+
+function _setToggleState(segment) {
+  const track = document.getElementById('segmentToggle');
+  const btnSelfCare     = document.getElementById('toggleSelfCare');
+  const btnProfessional = document.getElementById('toggleProfessional');
+  if (!track || !btnSelfCare || !btnProfessional) return;
+
+  const isSelfCare     = segment === 'self_care';
+  const isProfessional = segment === 'professional';
+
+  btnSelfCare.setAttribute('aria-pressed',     String(isSelfCare));
+  btnProfessional.setAttribute('aria-pressed',  String(isProfessional));
+  track.style.setProperty('--_slide', isProfessional ? '1' : '0');
+}
+
+/* —— Filter cached products and re-render — no network call —— */
+
+function filterAndRender(segment) {
+  const all = window._allProducts;
+  if (!all) return;
+  let filtered = all;
+  if (segment) {
+    filtered = all.filter(p => !p.market || p.market === segment);
+  }
+  renderProducts(filtered);
+}
+
+/* —— Update the bubble heading text after segment selection —— */
+
+function _updateBubbleHeading(segment) {
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (!whoLabel) return;
+  if (segment === 'self_care') {
+    whoLabel.textContent = 'Shopping for: Self-Care';
+  } else if (segment === 'professional') {
+    whoLabel.textContent = 'Shopping for: Professionals';
+  } else {
+    whoLabel.textContent = 'Browsing the full collection';
+  }
+}
+
+function selectSegment(segment) {
+  localStorage.setItem(SEGMENT_KEY, segment);
+  document.body.classList.add('segment-chosen');
+  const mount = document.getElementById('segmentSelectorMount');
+  if (mount) mount.style.display = 'none';
+  const prompt = document.getElementById('heroSubPrompt');
+  if (prompt) prompt.classList.add('hidden');
+  _updateBubbleHeading(segment);
+  applySegment(segment);
+  if (window._allProducts) {
+    filterAndRender(segment);
+  } else {
+    fetchProducts();
+  }
+}
+
+function browseAll() {
+  localStorage.removeItem(SEGMENT_KEY);
+  document.body.classList.add('segment-chosen');
+  const mount = document.getElementById('segmentSelectorMount');
+  if (mount) mount.style.display = 'none';
+  const prompt = document.getElementById('heroSubPrompt');
+  if (prompt) prompt.classList.add('hidden');
+  _updateBubbleHeading(null);
+  document.getElementById('segmentActiveBar')?.classList.remove('visible');
+  _setToggleState(null);
+  updateShopHero(null);
+  if (window._allProducts) {
+    filterAndRender(null);
+  } else {
+    fetchProducts();
+  }
+}
+
+function resetSegment() {
+  localStorage.removeItem(SEGMENT_KEY);
+  document.body.classList.remove('segment-chosen');
+  window._allProducts = null;
+  window._products = null;
+  const grid = document.getElementById('productGrid');
+  if (grid) grid.innerHTML = '';
+  const mount = document.getElementById('segmentSelectorMount');
+  if (mount) mount.style.display = '';
+  const prompt = document.getElementById('heroSubPrompt');
+  if (prompt) prompt.classList.remove('hidden');
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) {
+    whoLabel.textContent = 'Who are you shopping for?';
+    whoLabel.style.display = '';
+  }
+  document.getElementById('segmentActiveBar')?.classList.remove('visible');
+  _setToggleState(null);
+  updateShopHero(null);
+}
+
+function applySegment(segment) {
+  const bar = document.getElementById('segmentActiveBar');
+  if (segment) {
+    bar?.classList.add('visible');
+  } else {
+    bar?.classList.remove('visible');
+  }
+  _setToggleState(segment);
+  updateShopHero(segment);
+}
+
+function updateShopHero(segment) {
+  const heroTitle = document.getElementById('shopHeroTitle');
+  const heroDesc  = document.getElementById('shopHeroDesc');
+  if (!heroTitle || !heroDesc) return;
+  if (segment === 'self_care') {
+    heroTitle.innerHTML = 'Your Routine.<br/>Your Rules.';
+    heroDesc.textContent = 'The products behind your self-care. No salon needed, no compromise on results.';
+  } else if (segment === 'professional') {
+    heroTitle.innerHTML = 'Built for<br/>Professionals.';
+    heroDesc.textContent = 'Supplies for the therapist who holds the standard for every woman entrusted in their care.';
+  } else {
+    heroTitle.innerHTML = 'The Phenome<br/>Collection';
+    heroDesc.textContent = 'For the woman who makes time for herself, and the professionals who help others, do the same.';
+  }
+}
+
+/* —— Product rendering ——————————————————————————————————————— */
+
+function renderSkeletons(n) {
+  const grid = document.getElementById('productGrid');
+  if (!grid) return;
+  grid.innerHTML = Array(n).fill(0).map(() => `
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton-tile-img"></div>
+      <div class="skeleton-body" style="padding:10px 0 0">
+        <div class="skeleton-line" style="height:11px;width:40%;margin-bottom:6px"></div>
+        <div class="skeleton-line" style="height:16px;width:70%"></div>
+      </div>
+    </div>`).join('');
+}
+
+function renderProducts(products) {
+  window._products = products;
+  const grid = document.getElementById('productGrid');
+  if (!grid) return;
+
+  if (!products.length) {
+    grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = products.map((p, idx) => {
+    const pid       = p.id;
+    const available = p.active === true &&
+      p.availability !== 'coming_soon' &&
+      p.availability !== 'out_of_stock';
+    const price      = Number(p.price) || 0;
+    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
+    const unavailableClass = available ? '' : ' is-unavailable';
+
+    /* —— Tile image: hero_segment === 'self_care' uses Calm variant; 'professional' uses Luxe —— */
+    let tileImgSrc = '';
+    if (p.hero_segment === 'self_care' && Array.isArray(p.variants)) {
+      const calmVariant = p.variants.find(v => /calm/i.test(v.name || v.label || v.value || ''));
+      tileImgSrc = calmVariant?.image || '';
+    } else if (p.hero_segment === 'professional' && Array.isArray(p.variants)) {
+      const luxeVariant = p.variants.find(v => /luxe/i.test(v.name || v.label || v.value || ''));
+      tileImgSrc = luxeVariant?.image || '';
+    }
+    if (!tileImgSrc) {
+      const images = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
+      tileImgSrc = images.length ? images[0] : '';
+    }
+
+    const imgHTML = tileImgSrc
+      ? `<img src="${transformImage(tileImgSrc, 600)}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
+      : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+    /* —— Badge —— */
+    let badge = '';
+    if (p.hero_segment === 'self_care') {
+      badge = `<div class="tile-badge" aria-label="Hero pick">The Ritual They Return To</div>`;
+    } else if (p.hero_segment === 'professional') {
+      badge = `<div class="tile-badge" aria-label="Hero pick">The Professional Standard</div>`;
+    } else if (!available) {
+      badge = `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
+    }
+
+    return `
+<button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
+  <div class="tile-img-wrap">
+    ${badge}
+    ${imgHTML}
+  </div>
+  <div class="tile-info">
+    <div class="tile-name">${p.name || 'Product'}</div>
+    <div class="tile-price">${priceLabel}</div>
+  </div>
+</button>`;
+  }).join('');
+
+  updateBadges();
+}
+
+/* Compatibility shims */
+function selectVariant(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+function selectSize(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+function updateCardPrice(pid, cardEl) {}
+
+/* —— Product fetch ——————————————————————————————————————————— */
+
+async function prefetchProducts() {
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-products`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    window._allProducts = Array.isArray(data) ? data : [];
+  } catch(err) {
+    console.warn('prefetchProducts error:', err);
+  }
+}
+
+async function fetchProducts() {
+  renderSkeletons(6);
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-products`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const all = Array.isArray(data) ? data : [];
+    window._allProducts = all;
+    const segment = getSegment();
+    filterAndRender(segment);
+  } catch(err) {
+    console.error('fetchProducts error:', err);
+    const grid = document.getElementById('productGrid');
+    if (grid) grid.innerHTML = `
+      <div class="shop-error">
+        <p>Unable to load products. Please check your connection and try again.</p>
+        <button class="btn btn-secondary" onclick="fetchProducts()">Retry</button>
+      </div>`;
+  }
+}
+
+/* —— Segment selector loader ————————————————————————————————— */
+
+async function loadSegmentSelector() {
+  try {
+    const res  = await fetch('segment-selector.html');
+    const html = await res.text();
+    const mount = document.getElementById('segmentSelectorMount');
+    if (mount) mount.innerHTML = html;
+  } catch(e) {
+    console.warn('Segment selector failed to load:', e);
+  }
+}
+
+/* —— Init ———————————————————————————————————————————————————— */
+
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadSegmentSelector();
+
+  localStorage.removeItem(SEGMENT_KEY);
+  document.body.classList.remove('segment-chosen');
+
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) {
+    whoLabel.textContent = 'Who are you shopping for?';
+    whoLabel.style.display = '';
+  }
+
+  updateShopHero(null);
+  _setToggleState(null);
+
+  const grid = document.getElementById('productGrid');
+  if (grid) grid.innerHTML = '';
+
+  updateBadges();
+  if (cart.length) showStickyBar();
+  if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+    document.getElementById('cancelBanner')?.classList.add('show');
+    window.history.replaceState({}, '', 'shop.html');
+  }
+
+  prefetchProducts();
+});
