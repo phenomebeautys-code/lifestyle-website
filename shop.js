@@ -551,73 +551,15 @@ function _setToggleState(segment) {
   track.style.setProperty('--_slide', isProfessional ? '1' : '0');
 }
 
-/* —— Featured hero strip ————————————————————————————————————— */
-
-const HERO_QUOTES = {
-  self_care:    'The Ritual They Return To',
-  professional: 'The Professional Standard',
-};
-
-function renderFeaturedStrip(p, segment) {
-  const mount = document.getElementById('featuredStrip');
-  if (!mount) return;
-
-  if (!p) {
-    mount.innerHTML = '';
-    return;
-  }
-
-  const available = p.active === true &&
-    p.availability !== 'coming_soon' &&
-    p.availability !== 'out_of_stock';
-
-  const price      = Number(p.price) || 0;
-  const priceLabel = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
-  const imgSrc     = p.image_urls?.[0] || p.image_url || '';
-  const quote      = HERO_QUOTES[segment] || '';
-  const pid        = p.id;
-
-  mount.innerHTML = `
-    <div class="container">
-      <div class="featured-strip" role="region" aria-label="Hero product">
-        <div class="featured-strip-img-wrap">
-          <img src="${imgSrc}" alt="${p.name || ''}" loading="lazy" />
-        </div>
-        <div class="featured-strip-body">
-          <span class="featured-strip-kicker">Hero Pick</span>
-          <h2 class="featured-strip-name">${p.name || ''}</h2>
-          ${quote ? `<p class="featured-strip-quote">${quote}</p>` : ''}
-          <div class="featured-strip-footer">
-            <span class="featured-strip-price">${priceLabel}</span>
-            <button
-              class="featured-strip-atc"
-              onclick="openProductDetail('${pid}')"
-              ${available ? '' : 'disabled aria-disabled="true"'}
-            >${available ? 'Shop Now' : 'Unavailable'}</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-}
-
 /* —— Filter cached products and re-render — no network call —— */
 
 function filterAndRender(segment) {
   const all = window._allProducts;
   if (!all) return;
-
   let filtered = all;
   if (segment) {
     filtered = all.filter(p => !p.market || p.market === segment);
   }
-
-  /* Pin hero product to position 0 and render the featured strip */
-  const heroProduct = filtered.find(p => p.hero_segment === segment) || null;
-  if (heroProduct) {
-    filtered = [heroProduct, ...filtered.filter(p => p.hero_segment !== segment)];
-  }
-  renderFeaturedStrip(heroProduct, segment);
-
   renderProducts(filtered);
 }
 
@@ -664,7 +606,6 @@ function browseAll() {
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
-  renderFeaturedStrip(null, null);
   if (window._allProducts) {
     filterAndRender(null);
   } else {
@@ -691,7 +632,6 @@ function resetSegment() {
   document.getElementById('segmentActiveBar')?.classList.remove('visible');
   _setToggleState(null);
   updateShopHero(null);
-  renderFeaturedStrip(null, null);
 }
 
 function applySegment(segment) {
@@ -729,84 +669,146 @@ function renderSkeletons(n) {
   grid.innerHTML = Array(n).fill(0).map(() => `
     <div class="skeleton-card" aria-hidden="true">
       <div class="skeleton-tile-img"></div>
-      <div class="skeleton-body">
-        <div class="skeleton-line" style="height:14px;width:70%"></div>
-        <div class="skeleton-line" style="height:12px;width:40%"></div>
+      <div class="skeleton-body" style="padding:10px 0 0">
+        <div class="skeleton-line" style="height:11px;width:40%;margin-bottom:6px"></div>
+        <div class="skeleton-line" style="height:16px;width:70%"></div>
       </div>
     </div>`).join('');
 }
 
 function renderProducts(products) {
+  window._products = products;
   const grid = document.getElementById('productGrid');
   if (!grid) return;
-  if (!products || !products.length) {
+
+  if (!products.length) {
     grid.innerHTML = '<div class="shop-error"><p>No products found.</p></div>';
     return;
   }
-  window._products = products;
-  grid.innerHTML = products.map(p => {
+
+  grid.innerHTML = products.map((p, idx) => {
+    const pid       = p.id;
+    const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
     const available = p.active === true &&
       p.availability !== 'coming_soon' &&
       p.availability !== 'out_of_stock';
     const price      = Number(p.price) || 0;
-    const priceLabel = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
-    const imgSrc     = p.image_urls?.[0] || p.image_url || '';
+    const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
+    const unavailableClass = available ? '' : ' is-unavailable';
 
-    let badgeHTML = '';
-    if (p.hero_segment) {
-      badgeHTML = `<span class="tile-badge hero">Hero Pick</span>`;
-    } else if (!available) {
-      badgeHTML = `<span class="tile-badge">Coming Soon</span>`;
-    }
+    const imgSrc = images.length ? transformImage(images[0], 600) : '';
+    const imgHTML = imgSrc
+      ? `<img src="${imgSrc}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
+      : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+
+    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
 
     return `
-      <button class="product-tile${available ? '' : ' is-unavailable'}" onclick="openProductDetail('${p.id}')" aria-label="${p.name || 'Product'}">
-        <div class="tile-img-wrap">
-          ${imgSrc ? `<img src="${transformImage(imgSrc, 400)}" alt="${p.name || ''}" loading="lazy" />` : '<div class="tile-no-img"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>'}
-          ${badgeHTML}
-        </div>
-        <div class="tile-info">
-          <div class="tile-name">${p.name || 'Product'}</div>
-          <div class="tile-price">${priceLabel}</div>
-        </div>
-      </button>`;
+<button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
+  <div class="tile-img-wrap">
+    ${badge}
+    ${imgHTML}
+  </div>
+  <div class="tile-info">
+    <div class="tile-name">${p.name || 'Product'}</div>
+    <div class="tile-price">${priceLabel}</div>
+  </div>
+</button>`;
   }).join('');
+
+  updateBadges();
 }
 
-/* —— Fetch products ——————————————————————————————————————————— */
+/* Compatibility shims */
+function selectVariant(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+function selectSize(btn, pid) {
+  btn.closest('.pill-group')?.querySelectorAll('.s-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+}
+function updateCardPrice(pid, cardEl) {}
+
+/* —— Product fetch ——————————————————————————————————————————— */
+
+async function prefetchProducts() {
+  try {
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-products`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    window._allProducts = Array.isArray(data) ? data : [];
+  } catch(err) {
+    console.warn('prefetchProducts error:', err);
+  }
+}
 
 async function fetchProducts() {
   renderSkeletons(6);
   try {
-    const res  = await fetch(`${SUPABASE_URL}/functions/v1/get-products`, {
-      headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}` }
-    });
-    if (!res.ok) throw new Error('Network response was not ok');
-    const data = await res.json();
-    window._allProducts = data;
+    const resp = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-products`,
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const all = Array.isArray(data) ? data : [];
+    window._allProducts = all;
     const segment = getSegment();
-    if (segment) {
-      document.body.classList.add('segment-chosen');
-      applySegment(segment);
-      _updateBubbleHeading(segment);
-    }
     filterAndRender(segment);
   } catch(err) {
-    console.error('[shop] fetchProducts error:', err);
+    console.error('fetchProducts error:', err);
     const grid = document.getElementById('productGrid');
-    if (grid) grid.innerHTML = '<div class="shop-error"><p>Could not load products. Please refresh and try again.</p></div>';
+    if (grid) grid.innerHTML = `
+      <div class="shop-error">
+        <p>Unable to load products. Please check your connection and try again.</p>
+        <button class="btn btn-secondary" onclick="fetchProducts()">Retry</button>
+      </div>`;
+  }
+}
+
+/* —— Segment selector loader ————————————————————————————————— */
+
+async function loadSegmentSelector() {
+  try {
+    const res  = await fetch('segment-selector.html');
+    const html = await res.text();
+    const mount = document.getElementById('segmentSelectorMount');
+    if (mount) mount.innerHTML = html;
+  } catch(e) {
+    console.warn('Segment selector failed to load:', e);
   }
 }
 
 /* —— Init ———————————————————————————————————————————————————— */
 
-document.addEventListener('DOMContentLoaded', () => {
-  updateBadges();
+document.addEventListener('DOMContentLoaded', async function() {
+  await loadSegmentSelector();
 
-  const cancelBanner = document.getElementById('cancelBanner');
-  if (cancelBanner && new URLSearchParams(window.location.search).get('cancelled') === '1') {
-    cancelBanner.classList.add('show');
+  localStorage.removeItem(SEGMENT_KEY);
+  document.body.classList.remove('segment-chosen');
+
+  const whoLabel = document.getElementById('shopHeroWho');
+  if (whoLabel) {
+    whoLabel.textContent = 'Who are you shopping for?';
+    whoLabel.style.display = '';
   }
 
-  fetchProducts();
+  updateShopHero(null);
+  _setToggleState(null);
+
+  const grid = document.getElementById('productGrid');
+  if (grid) grid.innerHTML = '';
+
+  updateBadges();
+  if (cart.length) showStickyBar();
+  if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
+    document.getElementById('cancelBanner')?.classList.add('show');
+    window.history.replaceState({}, '', 'shop.html');
+  }
+
+  prefetchProducts();
 });
