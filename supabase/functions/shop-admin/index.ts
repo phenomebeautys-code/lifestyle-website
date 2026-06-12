@@ -79,13 +79,14 @@ Deno.serve(async (req: Request) => {
     'unknown';
 
   let body: {
-    action?: string;
-    password?: string;
-    order_id?: string;
-    status?: string;
-    product?: Record<string, unknown>;
+    action?:     string;
+    password?:   string;
+    order_id?:   string;
+    status?:     string;
+    note?:       string;
+    product?:    Record<string, unknown>;
     product_id?: string;
-    order?: Array<{ id: string; idx: number }>;
+    order?:      Array<{ id: string; idx: number }>;
   };
   try { body = await req.json(); } catch {
     return json({ error: 'Invalid JSON' }, 400, cors);
@@ -137,12 +138,52 @@ Deno.serve(async (req: Request) => {
 
     if (error) return json({ error: error.message }, 500, cors);
 
-    // Fire customer email for dispatched and delivered only — non-fatal
     if (status === 'dispatched' || status === 'delivered') {
       fireEmail('status_update', order_id, status);
     }
 
     return json({ ok: true }, 200, cors);
+  }
+
+  /* ── mark_paid ────────────────────────────────────────────────────── */
+  /*
+   * Called by admin when a manual EFT / cash payment is confirmed.
+   * Guards against double-marking: returns 409 if already paid.
+   * Fires the payment_received customer email (non-fatal).
+   */
+  if (action === 'mark_paid') {
+    const { order_id } = body;
+    if (!order_id) return json({ error: 'Missing order_id' }, 400, cors);
+
+    // Read current payment status first — prevent double-marking
+    const { data: current, error: fetchErr } = await supabase
+      .from('shop_orders')
+      .select('payment_status')
+      .eq('id', order_id)
+      .single();
+
+    if (fetchErr || !current) return json({ error: 'Order not found' }, 404, cors);
+    if (current.payment_status === 'paid') {
+      return json({ error: 'Order is already marked as paid', already_paid: true }, 409, cors);
+    }
+
+    const paidAt = new Date().toISOString();
+
+    const { error: updateErr } = await supabase
+      .from('shop_orders')
+      .update({
+        payment_status: 'paid',
+        paid_at:        paidAt,
+        status:         'processing',
+      })
+      .eq('id', order_id);
+
+    if (updateErr) return json({ error: updateErr.message }, 500, cors);
+
+    // Fire payment_received email — non-fatal, order is already saved
+    fireEmail('payment_received', order_id);
+
+    return json({ ok: true, paid_at: paidAt }, 200, cors);
   }
 
   /* ── get_products ─────────────────────────────────────────────────── */
