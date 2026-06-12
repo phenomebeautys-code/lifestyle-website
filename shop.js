@@ -392,6 +392,7 @@ function openProductDetail(pid) {
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${transformImage(heroImgSrc, 800)}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
     : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
+  /* —— Thumb cols: build all, then move hero variant to first position —— */
   let thumbsHTML = '';
   if (images.length > 1) {
     const cols = images.map((img, i) => {
@@ -407,14 +408,25 @@ function openProductDetail(pid) {
       const labelHTML    = variantLabel
         ? `<span class="pdp-thumb-label">${variantLabel}</span>`
         : '';
-      return `<div class="pdp-thumb-col${activeClass}${heroClass}${outClass}" data-variant="${variantRaw}" data-img="${transformImage(isHero && variantObj?.image ? variantObj.image : img, 800)}" onclick="pdpSelectThumbCol(this,'${pid}')" role="button" tabindex="0" aria-label="${variantLabel || ('Image ' + (i+1))}" aria-pressed="${isActive}">
+      return {
+        isHero,
+        html: `<div class="pdp-thumb-col${activeClass}${heroClass}${outClass}" data-variant="${variantRaw}" data-img="${transformImage(isHero && variantObj?.image ? variantObj.image : img, 800)}" onclick="pdpSelectThumbCol(this,'${pid}')" role="button" tabindex="0" aria-label="${variantLabel || ('Image ' + (i+1))}" aria-pressed="${isActive}">
         <div class="pdp-thumb-img-wrap">
           <img src="${transformImage(thumbImgSrc, 120)}" alt="" loading="lazy" width="120" height="80" />
         </div>
         ${labelHTML}
-      </div>`;
-    }).join('');
-    thumbsHTML = `<div class="pdp-thumbs" role="list">${cols}</div>`;
+      </div>`
+      };
+    });
+
+    /* Move hero variant to first position */
+    const heroColIdx = cols.findIndex(c => c.isHero);
+    if (heroColIdx > 0) {
+      const [heroCol] = cols.splice(heroColIdx, 1);
+      cols.unshift(heroCol);
+    }
+
+    thumbsHTML = `<div class="pdp-thumbs" role="list">${cols.map(c => c.html).join('')}</div>`;
   }
 
   let sizeHTML = '';
@@ -447,17 +459,20 @@ function openProductDetail(pid) {
   const noteText = p.hero_segment ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
   const noteHTML = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
 
+  /* —— Image block gets hero-product class for gold border on hero products only —— */
+  const imageBlockClass = p.hero_segment ? 'pdp-image-block hero-product' : 'pdp-image-block';
+
   inner.innerHTML = `
     <div class="pdp-scroll-area">
-      <div class="pdp-image-block">
+      <div class="${imageBlockClass}">
         ${heroHTML}
         ${thumbsHTML}
       </div>
       <div class="pdp-content">
         ${catHTML}
         <h2 class="pdp-name">${p.name || 'Product'}</h2>
-        ${descHTML}
         ${noteHTML}
+        ${descHTML}
         ${variantHTML}
         ${sizeHTML}
         <div class="pdp-spacer"></div>
