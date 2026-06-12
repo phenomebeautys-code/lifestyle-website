@@ -184,8 +184,8 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
     </div>` : ''}
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
-      Questions about your order? Simply reply to this email or
-      <a href="${WA_LINK}" style="color:#b8a98a">chat with us on WhatsApp</a>.
+      Questions about your order? 
+      <a href="${WA_LINK}" style="color:#b8a98a">Contact us on WhatsApp</a>.
     </p>
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:16px 0 0">
@@ -360,13 +360,13 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
       Thank you for choosing PhenomeBeauty.
     </p>
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
-      Questions about your delivery? <a href="${WA_LINK}" style="color:#b8a98a">Chat with us on WhatsApp</a>.
+      Questions about your delivery? <a href="${WA_LINK}" style="color:#b8a98a">Contact us on WhatsApp</a>.
     </p>`;
 
   const outroDelivered = `
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 16px">
       If there's anything we can help with,
-      <a href="${WA_LINK}" style="color:#b8a98a">chat with us on WhatsApp</a>.
+      <a href="${WA_LINK}" style="color:#b8a98a">Chat with us on WhatsApp</a>.
     </p>
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 20px">
       Thank you for making yourself a priority.
