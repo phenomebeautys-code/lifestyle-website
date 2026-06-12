@@ -455,12 +455,11 @@ function openProductDetail(pid) {
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
   const descHTML = renderDescription(p);
 
-  /* —— Hero variant on-brand note — only for hero products —— */
-  const noteText = p.hero_segment ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
-  const noteHTML = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
-
-  /* —— Image block gets hero-product class for gold border on hero products only —— */
-  const imageBlockClass = p.hero_segment ? 'pdp-image-block hero-product' : 'pdp-image-block';
+  /* —— Hero variant note and gold border: only when hero variant is the initial active selection —— */
+  const heroIsActive  = heroVariantIdx >= 0;
+  const noteText      = heroIsActive ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
+  const noteHTML      = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
+  const imageBlockClass = heroIsActive ? 'pdp-image-block hero-product' : 'pdp-image-block';
 
   inner.innerHTML = `
     <div class="pdp-scroll-area">
@@ -525,6 +524,20 @@ function pdpSelectThumbCol(col, pid) {
   const src = col.dataset.img;
   const heroImg = document.getElementById('pdpHeroImg');
   if (heroImg && src) heroImg.src = src;
+
+  /* —— Toggle gold border and hero note based on whether selected thumb is the hero variant —— */
+  const imageBlock = thumbs.closest('.pdp-image-block') ||
+                     document.querySelector('#pdpInner .pdp-image-block');
+  const noteEl     = document.querySelector('#pdpInner .pdp-hero-variant-note');
+  const isHeroCol  = col.classList.contains('hero-variant');
+
+  if (imageBlock) {
+    imageBlock.classList.toggle('hero-product', isHeroCol);
+  }
+  if (noteEl) {
+    noteEl.style.display = isHeroCol ? '' : 'none';
+  }
+
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (p) pdpUpdatePrice(pid);
 }
