@@ -1,6 +1,6 @@
 :root { --cart-bar-h: 72px; }
 
-/* ── Hero ── */
+/* —— Hero —— */
 .shop-hero { padding: clamp(32px, 4vw, 56px) 0 6px; }
 .shop-hero-panel {
   padding: clamp(16px, 2.5vw, 28px);
@@ -43,7 +43,7 @@
 .hero-sub-prompt.hidden { display: none !important; }
 @media (min-width: 601px) { .hero-sub-prompt { display: none !important; } }
 
-/* ── Cart float ── */
+/* —— Cart float —— */
 .cart-float {
   display: inline-flex; align-items: center; gap:8px;
   padding: 10px 20px; border-radius: var(--radius-pill);
@@ -60,7 +60,7 @@
   display:flex; align-items:center; justify-content:center;
 }
 
-/* ── Segment Selector ── */
+/* —— Segment Selector —— */
 .segment-selector { padding: 10px 0 0; }
 .segment-selector-inner {
   display: flex; flex-direction: column; align-items: center; gap: 20px;
@@ -145,7 +145,7 @@
 }
 .segment-browse-link:hover { color: var(--text-soft); }
 
-/* ── Active segment bar ── */
+/* —— Active segment bar —— */
 .segment-active-bar {
   display: none;
   align-items: center;
@@ -254,7 +254,7 @@
 .segment-toggle-option[aria-pressed="true"] { color: rgba(255,255,255,0.95); }
 .segment-toggle-option[aria-pressed="false"]:hover { color: rgba(255,255,255,0.60); }
 
-/* ── Mobile hero/segment ── */
+/* —— Mobile hero/segment —— */
 @media (max-width: 600px) {
   .shop-hero { padding: 32px 0 4px; }
   .shop-hero-panel { padding: 14px 16px; border-radius: 20px; }
@@ -299,10 +299,10 @@
   .segment-toggle-option { padding: 13px 28px; font-size: 0.82rem; }
 }
 
-/* ── Shop section ── */
+/* —— Shop section —— */
 .shop-section { padding: 10px 0 40px; }
 
-/* ── Skeleton loader ── */
+/* —— Skeleton loader —— */
 .skeleton-card {
   background: transparent;
   border-radius: var(--radius-lg);
@@ -342,7 +342,7 @@
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
 }
 
-/* ── Product Tile ── */
+/* —— Product Tile —— */
 .product-tile {
   display: flex;
   flex-direction: column;
@@ -360,7 +360,7 @@
 .product-tile:active { transform: scale(0.98); }
 .product-tile.is-unavailable { opacity: 0.55; }
 
-/* ── Square 1:1 tile image ── */
+/* —— Square 1:1 tile image —— */
 .tile-img-wrap {
   position: relative;
   width: 100%;
@@ -523,6 +523,15 @@ body.pdp-open { overflow: hidden; }
   gap: 10px;
 }
 
+/* —— Gold border on image block for hero products only —— */
+.pdp-image-block.hero-product {
+  padding: 12px 12px 0;
+  border-radius: 22px;
+  border: 1.5px solid rgba(222, 184, 108, 0.35);
+  box-shadow: 0 0 24px rgba(222, 184, 108, 0.10);
+  margin: 8px 8px 0;
+}
+
 .pdp-hero-img {
   display: block;
   width: 100%;
@@ -586,7 +595,7 @@ body.pdp-open { overflow: hidden; }
 .pdp-thumb-col:hover .pdp-thumb-img-wrap { opacity: 1; }
 .pdp-thumb-col.out-of-stock .pdp-thumb-img-wrap { opacity: 0.28; }
 
-/* ── Hero variant gold glow ── */
+/* —— Hero variant gold glow —— */
 .pdp-thumb-col.hero-variant .pdp-thumb-img-wrap {
   border-color: rgba(210, 168, 90, 0.60);
   box-shadow: 0 0 8px rgba(210, 168, 90, 0.28);
@@ -711,7 +720,7 @@ body.pdp-open { overflow: hidden; }
   top: -1px;
 }
 
-/* ── Hero variant on-brand note ── */
+/* —— Hero variant on-brand note —— */
 .pdp-hero-variant-note {
   font-size: 0.80rem;
   line-height: 1.60;
