@@ -776,7 +776,7 @@ function renderProducts(products) {
     if (p.hero_segment === 'self_care') {
       badge = `<div class="tile-badge" aria-label="Hero pick">The Ritual They Return To</div>`;
     } else if (p.hero_segment === 'professional') {
-      badge = `<div class="tile-badge" aria-label="Hero pick">The Professional Standard</div>`;
+      badge = `<div class="tile-badge" aria-label="Hero pick">Trusted</div>`;
     } else if (!available) {
       badge = `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
     }
