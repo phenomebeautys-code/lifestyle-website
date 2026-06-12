@@ -41,7 +41,7 @@ const BASE_STYLE = `
   .total-row.grand { font-size:17px; font-weight:700; color:#f5f0e8; border-top:1px solid rgba(255,255,255,0.12); padding-top:12px; margin-top:4px; }
   .total-row.grand .total-val { color:#b8a98a; }
   .badge { display:inline-block; padding:4px 12px; border-radius:40px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
-  .badge-received  { background:rgba(184,169,138,0.12); border:1px solid rgba(184,169,138,0.3); color:#b8a98a; }
+  .badge-pending   { background:rgba(251,191,36,0.1);   border:1px solid rgba(251,191,36,0.3);  color:#fbbf24; }
   .badge-paid      { background:rgba(74,222,128,0.1);   border:1px solid rgba(74,222,128,0.3);  color:#4ade80; }
   .badge-onitsway  { background:rgba(245,243,239,0.08); border:1px solid rgba(245,243,239,0.18); color:#f5f0e8; }
   .badge-delivered { background:rgba(74,222,128,0.12);  border:1px solid rgba(74,222,128,0.3);  color:#4ade80; }
@@ -143,7 +143,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
   <div class="body">
 
     <div style="margin-bottom:20px">
-      <span class="badge badge-received">Order Received</span>
+      <span class="badge badge-pending">Payment Pending</span>
     </div>
 
     <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">
