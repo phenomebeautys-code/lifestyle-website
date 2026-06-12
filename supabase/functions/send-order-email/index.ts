@@ -20,14 +20,16 @@ const RESEND_API  = 'https://api.resend.com/emails';
 const FROM        = 'PhenomeBeauty Orders <orders@phenomebeauty.co.za>';
 const ADMIN_EMAIL = 'phenomebeautys@gmail.com';
 const STORE_URL   = 'https://www.phenomebeauty.co.za';
+const LOGO_URL    = 'https://iili.io/fpiAjBj.jpg';
 
-/* ── Shared CSS for all emails ─────────────────────────────────────────────── */
+/* ── Shared CSS for customer-facing emails ─────────────────────────────────── */
 const BASE_STYLE = `
-  body { margin:0; padding:0; background:#0a0a0c; font-family:'Helvetica Neue',Arial,sans-serif; color:#e8e4dc; }
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@400;500;600;700&display=swap');
+  body { margin:0; padding:0; background:#0a0a0c; font-family:'Inter',sans-serif; color:#e8e4dc; }
   .wrap { max-width:600px; margin:0 auto; background:#0a0a0c; }
-  .header { background:#0a0a0c; padding:36px 40px 24px; border-bottom:1px solid rgba(255,255,255,0.08); }
-  .brand { font-size:11px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:#b8a98a; margin-bottom:6px; }
-  .headline { font-size:26px; font-weight:300; color:#f5f0e8; line-height:1.25; }
+  .header { background:#0a0a0c; padding:36px 40px 24px; border-bottom:1px solid rgba(255,255,255,0.08); text-align:center; }
+  .logo { display:block; margin:0 auto 18px; width:140px; height:auto; }
+  .headline { font-family:'Cormorant Garamond','Georgia',serif; font-size:28px; font-weight:300; color:#f5f0e8; line-height:1.25; letter-spacing:0.02em; }
   .body { padding:32px 40px; }
   .section { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:24px; margin-bottom:20px; }
   .section-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7a7060; margin-bottom:12px; }
@@ -48,6 +50,10 @@ const BASE_STYLE = `
   .gift-box { background:rgba(255,200,80,0.06); border:1px solid rgba(255,200,80,0.2); border-radius:12px; padding:18px 24px; margin-bottom:20px; }
   .gift-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#fbbf24; margin-bottom:8px; }
   .gift-msg { font-size:14px; font-style:italic; color:#e8d898; line-height:1.6; }
+  .delivery-note { background:rgba(184,169,138,0.06); border:1px solid rgba(184,169,138,0.18); border-radius:12px; padding:20px 24px; margin-bottom:20px; }
+  .delivery-note-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#b8a98a; margin-bottom:10px; }
+  .delivery-note-copy { font-size:14px; color:#b0a898; line-height:1.75; }
+  .delivery-note-copy strong { color:#f5f0e8; }
   .cta-btn { display:inline-block; background:#b8a98a; color:#0a0a0c; text-decoration:none; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; padding:14px 32px; border-radius:8px; margin-top:8px; }
   .sign { font-size:14px; color:#b0a898; margin-top:28px; line-height:1.7; }
   .sign strong { color:#f5f0e8; }
@@ -57,6 +63,7 @@ const BASE_STYLE = `
   @media (max-width:600px) {
     .header, .body, .footer { padding-left:20px; padding-right:20px; }
     .headline { font-size:22px; }
+    .logo { width:110px; }
   }
 `;
 
@@ -117,13 +124,18 @@ function totalsHTML(order: Record<string, any>): string {
   return html;
 }
 
+/* ── Logo HTML ─────────────────────────────────────────────────────────────── */
+function logoHTML(): string {
+  return `<img src="${LOGO_URL}" alt="PhenomeBeauty" class="logo" />`;
+}
+
 /* ── Signature HTML ────────────────────────────────────────────────────────── */
 function signatureHTML(): string {
   return `<p class="sign">Warm regards,<br><strong>Shu-Meez</strong><br>PhenomeBeauty</p>`;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   EMAIL BUILDERS
+   EMAIL BUILDERS — CUSTOMER FACING
 ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── 1. order_placed ── sent immediately when order is created ─────────────── */
@@ -137,7 +149,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${BASE_STYLE}</style></head>
 <body><div class="wrap">
   <div class="header">
-    <div class="brand">PhenomeBeauty</div>
+    ${logoHTML()}
     <div class="headline">Order received.</div>
   </div>
   <div class="body">
@@ -191,7 +203,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
   return { subject, html };
 }
 
-/* ── 2. payment_received ── sent when Yoco webhook confirms payment ─────────── */
+/* ── 2. payment_received (customer) ── branded, no admin BCC ───────────────── */
 function buildPaymentReceived(order: Record<string, any>): { subject: string; html: string } {
   const orderNo  = shortId(order.id);
   const delivery = deliveryLabel(order);
@@ -203,7 +215,7 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${BASE_STYLE}</style></head>
 <body><div class="wrap">
   <div class="header">
-    <div class="brand">PhenomeBeauty</div>
+    ${logoHTML()}
     <div class="headline">Payment confirmed.</div>
   </div>
   <div class="body">
@@ -257,6 +269,50 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
   return { subject, html };
 }
 
+/* ── 2b. payment_received (admin system notification) ──────────────────────── */
+function buildAdminPaymentNotification(order: Record<string, any>): { subject: string; html: string } {
+  const orderNo  = shortId(order.id);
+  const delivery = deliveryLabel(order);
+  const items    = Array.isArray(order.items) ? order.items : [];
+  const paidAt   = order.paid_at ? formatDate(order.paid_at) : formatDate(order.created_at);
+
+  const subject = `[NEW ORDER] #${orderNo} — ${esc(order.customer_name)} — ${fmt(order.total_amount)}`;
+
+  const itemLines = items.map((i: any) =>
+    `${i.qty}x ${i.name}${i.variant ? ' (' + i.variant + ')' : ''}${i.size ? ' [' + i.size + ']' : ''} — ${fmt(i.price * i.qty)}`
+  ).join('<br>');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { margin:0; padding:0; background:#ffffff; font-family:Arial,sans-serif; color:#1a1a1a; }
+    .wrap { max-width:600px; margin:0 auto; padding:32px 24px; }
+    h2 { font-size:18px; font-weight:700; margin:0 0 20px; color:#1a1a1a; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    td { padding:8px 0; border-bottom:1px solid #eeeeee; vertical-align:top; }
+    td:first-child { font-weight:700; width:160px; color:#555555; }
+    .total { font-size:16px; font-weight:700; color:#1a1a1a; }
+  </style>
+  </head>
+<body><div class="wrap">
+  <h2>New paid order — #${orderNo}</h2>
+  <table>
+    <tr><td>Customer</td><td>${esc(order.customer_name)}</td></tr>
+    <tr><td>Email</td><td>${esc(order.customer_email)}</td></tr>
+    <tr><td>Phone</td><td>${esc(order.customer_phone || '—')}</td></tr>
+    <tr><td>Paid on</td><td>${paidAt}</td></tr>
+    <tr><td>Delivery</td><td>${esc(delivery.method)}${delivery.address ? '<br>' + esc(delivery.address) : ''}</td></tr>
+    <tr><td>Items</td><td>${itemLines || '—'}</td></tr>
+    ${order.subtotal   != null ? `<tr><td>Subtotal</td><td>${fmt(order.subtotal)}</td></tr>` : ''}
+    ${order.delivery_fee != null ? `<tr><td>Delivery fee</td><td>${fmt(order.delivery_fee)}</td></tr>` : ''}
+    <tr><td>Total</td><td class="total">${fmt(order.total_amount)}</td></tr>
+    ${order.is_gift ? `<tr><td>Gift order</td><td>${order.gift_message ? '&ldquo;' + esc(order.gift_message) + '&rdquo;' : 'Yes (no message)'}</td></tr>` : ''}
+    ${order.notes ? `<tr><td>Notes</td><td>${esc(order.notes)}</td></tr>` : ''}
+  </table>
+</div></body></html>`;
+
+  return { subject, html };
+}
+
 /* ── 3. status_update ── sent when admin marks dispatched or delivered ──────── */
 function buildStatusUpdate(order: Record<string, any>, status: string): { subject: string; html: string } {
   const orderNo  = shortId(order.id);
@@ -264,6 +320,7 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   const items    = Array.isArray(order.items) ? order.items : [];
 
   const isDispatched = status === 'dispatched';
+  const isLocker     = order.delivery_method === 'locker';
 
   const headline   = isDispatched ? 'Your order is on its way.' : 'Your order has been delivered.';
   const badgeClass = isDispatched ? 'badge-onitsway'  : 'badge-delivered';
@@ -275,14 +332,32 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   const introCopy = isDispatched
     ? `Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
        Your order is on its way.<br><br>
-       We've carefully packed your PhenomeBeauty order and it has now been dispatched for delivery.`
+       We've carefully packed your PhenomeBeauty order and it has been handed to <strong style="color:#f5f0e8">The Courier Guy (Pudo)</strong> for delivery.`
     : `Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
        Your order has been delivered.<br><br>
        We hope you enjoy your PhenomeBeauty essentials and that they serve you well in the routines and rituals that help you feel your best.`;
 
+  const dispatchDeliveryNote = isDispatched ? (isLocker
+    ? `<div class="delivery-note">
+        <div class="delivery-note-label">Collecting your order</div>
+        <div class="delivery-note-copy">
+          Your parcel is heading to your chosen <strong>Pudo locker</strong>.<br><br>
+          The Courier Guy will send you a <strong>PIN code</strong> directly via SMS and email once your parcel arrives at the locker. You will need that PIN to open the locker and collect your order.<br><br>
+          Please collect your parcel within 36 hours of receiving the PIN.
+        </div>
+      </div>`
+    : `<div class="delivery-note">
+        <div class="delivery-note-label">Your delivery</div>
+        <div class="delivery-note-copy">
+          Your parcel is on its way to your door via <strong>The Courier Guy</strong>.<br><br>
+          Keep an eye on your phone — you will receive an SMS notification when your courier is on the way.
+        </div>
+      </div>`
+  ) : '';
+
   const outroDispatched = `
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
-      Thank you for choosing PhenomeBeauty. We hope these essentials become a valued part of your routine.
+      Thank you for choosing PhenomeBeauty.
     </p>
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
       Questions about your delivery? Contact us at
@@ -304,7 +379,7 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${BASE_STYLE}</style></head>
 <body><div class="wrap">
   <div class="header">
-    <div class="brand">PhenomeBeauty</div>
+    ${logoHTML()}
     <div class="headline">${headline}</div>
   </div>
   <div class="body">
@@ -314,6 +389,8 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
     </div>
 
     <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">${introCopy}</p>
+
+    ${dispatchDeliveryNote}
 
     <div class="section">
       <div class="section-label">Your order details</div>
@@ -348,7 +425,6 @@ async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
-  bcc?: string;
 }): Promise<void> {
   const apiKey = Deno.env.get('RESEND_API_KEY');
   if (!apiKey) { console.error('[send-order-email] RESEND_API_KEY not set'); return; }
@@ -360,7 +436,6 @@ async function sendEmail(opts: {
     html:     opts.html,
     reply_to: 'orders@phenomebeauty.co.za',
   };
-  if (opts.bcc) payload.bcc = [opts.bcc];
 
   const res = await fetch(RESEND_API, {
     method:  'POST',
@@ -423,8 +498,13 @@ Deno.serve(async (req: Request) => {
       await sendEmail({ to: order.customer_email, subject, html });
 
     } else if (type === 'payment_received') {
+      /* Customer email — branded, no admin BCC */
       const { subject, html } = buildPaymentReceived(order);
-      await sendEmail({ to: order.customer_email, subject, html, bcc: ADMIN_EMAIL });
+      await sendEmail({ to: order.customer_email, subject, html });
+
+      /* Admin system notification — separate plain email */
+      const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
+      await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
 
     } else if (type === 'status_update') {
       const resolvedStatus = status || order.status;
