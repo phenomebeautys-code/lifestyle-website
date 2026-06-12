@@ -688,7 +688,6 @@ function renderProducts(products) {
 
   grid.innerHTML = products.map((p, idx) => {
     const pid       = p.id;
-    const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
     const available = p.active === true &&
       p.availability !== 'coming_soon' &&
       p.availability !== 'out_of_stock';
@@ -696,12 +695,30 @@ function renderProducts(products) {
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
 
-    const imgSrc = images.length ? transformImage(images[0], 600) : '';
-    const imgHTML = imgSrc
-      ? `<img src="${imgSrc}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
+    /* —— Tile image: for Ritual Kit use Calm variant image first —— */
+    let tileImgSrc = '';
+    if (p.hero_segment === 'self_care' && Array.isArray(p.variants)) {
+      const calmVariant = p.variants.find(v => /calm/i.test(v.name || v.label || v.value || ''));
+      tileImgSrc = calmVariant?.image || '';
+    }
+    if (!tileImgSrc) {
+      const images = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
+      tileImgSrc = images.length ? images[0] : '';
+    }
+
+    const imgHTML = tileImgSrc
+      ? `<img src="${transformImage(tileImgSrc, 600)}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
       : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-    const badge = available ? '' : `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
+    /* —— Badge —— */
+    let badge = '';
+    if (p.hero_segment === 'self_care') {
+      badge = `<div class="tile-badge" aria-label="Hero pick">The Ritual They Return To</div>`;
+    } else if (p.hero_segment === 'professional') {
+      badge = `<div class="tile-badge" aria-label="Hero pick">The Professional Standard</div>`;
+    } else if (!available) {
+      badge = `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
+    }
 
     return `
 <button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
