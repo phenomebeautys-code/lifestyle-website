@@ -23,7 +23,23 @@ const BADGE_MAP = {
   dispatched: 'badge-dispatched',
   delivered:  'badge-delivered',
 };
+/* Human-readable labels for status badges */
+const STATUS_LABELS = {
+  pending:    'Payment Pending',
+  processing: 'Processing',
+  dispatched: 'Dispatched',
+  delivered:  'Delivered',
+};
 const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
+
+/* ─── SVG ICONS ────────────────────────────────── */
+const SVG = {
+  locker: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><circle cx="12" cy="12" r="1"/></svg>`,
+  door:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  gift:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>`,
+  check:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>`,
+  star:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+};
 
 /* ─── INIT ─────────────────────────────────────── */
 document.getElementById('adminDate').textContent =
@@ -156,7 +172,7 @@ function startPolling() {
       allOrders = newOrders;
       updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
       if (newlyPaid.length) {
-        showToast(`🎉 ${newlyPaid.length} new payment${newlyPaid.length > 1 ? 's' : ''} received!`);
+        showToast(`${newlyPaid.length} new payment${newlyPaid.length > 1 ? 's' : ''} received`);
       }
     } catch { /* silent fail */ }
   }, 30000);
@@ -186,7 +202,7 @@ async function refreshData() {
     const data = await res.json();
     allOrders = data.orders || [];
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    showToast('Refreshed ✓');
+    showToast('Refreshed');
   } catch { showToast('Network error.', true); }
   finally { btn.disabled = false; }
 }
@@ -271,9 +287,9 @@ function getDeliveryLabel(o) {
   const method = o.delivery_method || 'door';
   const meta   = o.delivery_meta || {};
   if (method === 'locker') {
-    return { icon: '📦', label: meta.locker_name || 'Pudo Locker', sub: meta.locker_address || '' };
+    return { icon: SVG.locker, label: meta.locker_name || 'Pudo Locker', sub: meta.locker_address || '' };
   }
-  return { icon: '🏠', label: 'Door Delivery', sub: o.delivery_address || '' };
+  return { icon: SVG.door, label: 'Door Delivery', sub: o.delivery_address || '' };
 }
 
 /* ─── ORDERS TABLE ────────────────────────────── */
@@ -293,7 +309,8 @@ function getFiltered() {
   if (q) {
     orders = orders.filter(o =>
       o.customer_name?.toLowerCase().includes(q) ||
-      o.customer_email?.toLowerCase().includes(q)
+      o.customer_email?.toLowerCase().includes(q) ||
+      String(o.id).slice(0, 8).toLowerCase().includes(q)
     );
   }
   return orders;
@@ -309,7 +326,11 @@ function renderTable() {
   orders.forEach(o => {
     const tr   = document.createElement('tr');
     tr.style.cursor = 'pointer';
-    const date = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    /* date + time so the admin can see exactly when each order arrived */
+    const date = new Date(o.created_at).toLocaleDateString('en-ZA', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
     const items = Array.isArray(o.items) ? o.items : [];
     [
       mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
@@ -318,7 +339,7 @@ function renderTable() {
       mkTd('R' + Number(o.total_amount).toLocaleString('en-ZA'), 'font-weight:700;color:var(--accent);white-space:nowrap'),
       mkBadgeTd(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid'),
       mkDeliveryTd(o),
-      mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending'),
+      mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending'),
       mkSelectTd(o),
     ].forEach(c => tr.appendChild(c));
     tr.addEventListener('click', e => {
@@ -341,7 +362,7 @@ function renderCards() {
     const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
     const card  = document.createElement('div'); card.className = 'order-card';
     const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
-    const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', o.status || 'pending');
+    const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending');
     const sel = makeStatusSelect(o, statusBadge);
     const delivInfo = getDeliveryLabel(o);
 
@@ -359,13 +380,17 @@ function renderCards() {
     badges.appendChild(statusBadge);
     const delivBadge = document.createElement('span');
     delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
-    delivBadge.style.cssText = 'font-size:0.68rem';
-    delivBadge.textContent = delivInfo.icon + ' ' + delivInfo.label;
+    delivBadge.style.cssText = 'font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+    /* SVG icon injected as innerHTML — the text part is safely escaped separately */
+    delivBadge.innerHTML = delivInfo.icon;
+    delivBadge.appendChild(document.createTextNode(' ' + delivInfo.label));
     badges.appendChild(delivBadge);
     if (o.is_gift) {
       const g = document.createElement('span'); g.className = 'badge';
-      g.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem';
-      g.textContent = '🎁 Gift'; badges.appendChild(g);
+      g.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+      g.innerHTML = SVG.gift;
+      g.appendChild(document.createTextNode(' Gift'));
+      badges.appendChild(g);
     }
 
     const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
@@ -416,7 +441,7 @@ function makeStatusSelect(o, statusBadge) {
   const sel = document.createElement('select'); sel.className = 'status-select';
   ['pending', 'processing', 'dispatched', 'delivered'].forEach(v => {
     const opt = document.createElement('option'); opt.value = v;
-    opt.textContent = v.charAt(0).toUpperCase() + v.slice(1);
+    opt.textContent = STATUS_LABELS[v] || (v.charAt(0).toUpperCase() + v.slice(1));
     if (o.status === v) opt.selected = true;
     sel.appendChild(opt);
   });
@@ -452,15 +477,19 @@ function mkDeliveryTd(o) {
   const td = document.createElement('td');
   const { icon, label, sub } = getDeliveryLabel(o);
   const nameDiv = document.createElement('div');
-  nameDiv.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text)';
-  nameDiv.textContent = icon + ' ' + label;
+  nameDiv.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px';
+  nameDiv.innerHTML = icon;
+  nameDiv.appendChild(document.createTextNode(' ' + label));
   const subDiv = document.createElement('div');
   subDiv.style.cssText = 'font-size:0.7rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
   subDiv.textContent = sub;
   td.appendChild(nameDiv); td.appendChild(subDiv);
   if (o.is_gift) {
-    const g = document.createElement('div'); g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px';
-    g.textContent = '🎁 Gift order'; td.appendChild(g);
+    const g = document.createElement('div');
+    g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px;display:flex;align-items:center;gap:4px';
+    g.innerHTML = SVG.gift;
+    g.appendChild(document.createTextNode(' Gift order'));
+    td.appendChild(g);
   }
   return td;
 }
@@ -473,9 +502,12 @@ async function updateOrderStatus(id, status, badgeEl) {
     if (res.status === 429) { showToast('Rate limited.', true); return; }
     if (!res.ok)            { showToast('Failed to update.', true); return; }
     const o = allOrders.find(x => x.id === id); if (o) o.status = status;
-    if (badgeEl) { badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid'); badgeEl.textContent = status; }
+    if (badgeEl) {
+      badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid');
+      badgeEl.textContent = STATUS_LABELS[status] || status;
+    }
     updateStats(); renderRecent(); updateReports();
-    showToast('Status \u2192 ' + status + ' \u2713');
+    showToast('Status updated to ' + (STATUS_LABELS[status] || status));
   } catch { showToast('Network error.', true); }
 }
 
@@ -500,9 +532,16 @@ function openOrderDetail(orderId) {
       </div>
       <div style="white-space:nowrap;text-align:right">
         <div style="font-weight:700;color:var(--accent)">R${Number(item.price * item.qty).toLocaleString('en-ZA')}</div>
-        <div style="font-size:0.74rem;color:var(--text-muted)">×${item.qty} @ R${item.price}</div>
+        <div style="font-size:0.74rem;color:var(--text-muted)">&times;${item.qty} @ R${item.price}</div>
       </div>
     </div>`).join('');
+
+  /* SVG strings are safe to inject as innerHTML — customer data is always escaped via esc() */
+  const giftSVG    = SVG.gift;
+  const checkSVG   = SVG.check;
+  const doorSVG    = SVG.door;
+  const lockerSVG  = SVG.locker;
+  const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
 
   document.getElementById('odTitle').textContent = `Order #${orderNo}`;
   document.getElementById('orderDetailBody').innerHTML = `
@@ -517,19 +556,19 @@ function openOrderDetail(orderId) {
     </div>
 
     <!-- Payment & Status badges -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
       <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
-      <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${o.status || 'pending'}</span>
-      <span class="badge ${o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched'}" style="font-size:0.74rem">${delivInfo.icon} ${esc(delivInfo.label)}</span>
-      ${o.is_gift ? '<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3)">🎁 Gift</span>' : ''}
+      <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${STATUS_LABELS[o.status] || o.status || 'Payment Pending'}</span>
+      <span class="badge ${o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched'}" style="font-size:0.74rem;display:inline-flex;align-items:center;gap:4px">${delivIcon} ${esc(delivInfo.label)}</span>
+      ${o.is_gift ? `<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);display:inline-flex;align-items:center;gap:4px">${giftSVG} Gift</span>` : ''}
     </div>
 
-    ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px">✓ Payment confirmed ${paidAt}</div>` : ''}
+    ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px;display:flex;align-items:center;gap:5px">${checkSVG} Payment confirmed ${paidAt}</div>` : ''}
 
     <!-- Delivery -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Delivery</div>
-      <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px">${delivInfo.icon} ${esc(delivInfo.label)}</div>
+      <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">${delivIcon} ${esc(delivInfo.label)}</div>
       ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
     </div>
 
@@ -548,9 +587,9 @@ function openOrderDetail(orderId) {
     <!-- Gift message -->
     ${o.is_gift && o.gift_message ? `
     <div style="background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;padding:16px;margin-bottom:14px">
-      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px">🎁 Gift Message</div>
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;display:flex;align-items:center;gap:5px">${giftSVG} Gift Message</div>
       <div style="font-size:0.88rem;font-style:italic;color:var(--text-soft);line-height:1.6">&ldquo;${esc(o.gift_message)}&rdquo;</div>
-    </div>` : (o.is_gift ? '<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px">🎁 Gift order — no message added</div>' : '')}
+    </div>` : (o.is_gift ? `<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px;display:flex;align-items:center;gap:5px">${giftSVG} Gift order &mdash; no message added</div>` : '')}
 
     <!-- Notes -->
     ${o.notes ? `
@@ -563,7 +602,7 @@ function openOrderDetail(orderId) {
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
       <select id="odStatusSelect" class="status-select" style="flex:1;min-width:140px">
         ${['pending','processing','dispatched','delivered'].map(v =>
-          `<option value="${v}"${o.status === v ? ' selected' : ''}>${v.charAt(0).toUpperCase()+v.slice(1)}</option>`
+          `<option value="${v}"${o.status === v ? ' selected' : ''}>${STATUS_LABELS[v] || (v.charAt(0).toUpperCase()+v.slice(1))}</option>`
         ).join('')}
       </select>
       <button class="btn btn-primary" style="flex:1;min-width:120px;justify-content:center" onclick="updateFromDetail('${o.id}')">Update Status</button>
@@ -578,11 +617,8 @@ function openOrderDetail(orderId) {
 async function updateFromDetail(orderId) {
   const status = document.getElementById('odStatusSelect').value;
   await updateOrderStatus(orderId, status, null);
-  const o = allOrders.find(x => x.id === orderId);
-  if (o) {
-    const badgesEl = document.querySelector('#orderDetailBody .od-status-badge');
-    if (badgesEl) badgesEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid');
-  }
+  /* Re-render the full detail body so all badges reflect the new status instantly */
+  openOrderDetail(orderId);
   renderTable(); renderCards();
 }
 
@@ -622,7 +658,7 @@ function exportOrdersCSV() {
   const a    = document.createElement('a'); a.href = url;
   a.download = `phenome-orders-${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
-  showToast('CSV exported ✓');
+  showToast('CSV exported');
 }
 
 /* ─── PRINT LABEL ─────────────────────────────── */
@@ -640,10 +676,10 @@ function printLabel(order) {
   `).join('');
   const giftHTML = (order.is_gift && order.gift_message)
     ? `<div class="label-section" style="border-top:1px dashed #ccc;margin-top:10px;padding-top:10px">
-         <div class="label-section-title">🎁 Gift Message</div>
+         <div class="label-section-title">Gift Message</div>
          <div style="font-size:0.8rem;font-style:italic;color:#555;line-height:1.5">${esc(order.gift_message)}</div>
        </div>`
-    : (order.is_gift ? '<div style="font-size:0.75rem;color:#888;margin-top:6px">🎁 Gift order (no message)</div>' : '');
+    : (order.is_gift ? '<div style="font-size:0.75rem;color:#888;margin-top:6px">Gift order (no message)</div>' : '');
   const area = document.getElementById('printLabelArea');
   area.innerHTML = `
     <div class="label-sheet">
@@ -653,7 +689,7 @@ function printLabel(order) {
         <div class="label-name">${esc(order.customer_name)}</div>
         ${order.customer_phone ? `<div class="label-sub">${esc(order.customer_phone)}</div>` : ''}
         ${order.customer_email ? `<div class="label-sub">${esc(order.customer_email)}</div>` : ''}
-        <div class="label-sub" style="margin-top:4px;font-weight:600">${delivInfo.icon} ${esc(delivInfo.label)}</div>
+        <div class="label-sub" style="margin-top:4px;font-weight:600">${esc(delivInfo.label)}</div>
         ${delivInfo.sub ? `<div class="label-sub">${esc(delivInfo.sub)}</div>` : ''}
       </div>
       <hr class="label-divider" />
@@ -889,7 +925,7 @@ async function saveProductOrder() {
     const res = await callEdge({ action: 'reorder_products', password: adminToken, order });
     if (!res.ok) { showToast('Failed to save order.', true); return; }
     allProducts.forEach((p, i) => { p.idx = i; });
-    showToast('Order saved ✓');
+    showToast('Order saved');
   } catch { showToast('Network error saving order.', true); }
 }
 
@@ -1022,7 +1058,7 @@ async function saveProduct() {
       const idx = allProducts.findIndex(p => p.id === id);
       if (idx > -1) allProducts[idx] = data.product || allProducts[idx];
     } else { allProducts.unshift(data.product || payload.product); }
-    renderProducts(); closeProductModal(); showToast(id ? 'Product updated ✓' : 'Product added ✓');
+    renderProducts(); closeProductModal(); showToast(id ? 'Product updated' : 'Product added');
   } catch { showToast('Network error.', true); }
   finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
 }
