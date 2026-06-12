@@ -19,7 +19,7 @@ function corsHeaders(req: Request) {
   };
 }
 
-/* ── Rate limiting ──────────────────────────────────────── */
+/* ── Rate limiting ───────────────────────────────────────────── */
 const loginAttempts = new Map<string, { count: number; firstAt: number }>();
 const RATE_LIMIT    = 5;
 const RATE_WINDOW   = 60_000;
@@ -35,7 +35,7 @@ function isRateLimited(ip: string): boolean {
   return record.count > RATE_LIMIT;
 }
 
-/* ── Helpers ────────────────────────────────────────────── */
+/* ── Helpers ─────────────────────────────────────────────────────── */
 function json(data: unknown, status = 200, cors: Record<string, string>) {
   return new Response(JSON.stringify(data), {
     status,
@@ -48,7 +48,25 @@ function unauthorized(cors: Record<string, string>) {
 
 const VALID_AVAILABILITY = ['available', 'unavailable', 'coming_soon'];
 
-/* ── Main handler ───────────────────────────────────────── */
+/* ── Internal fetch helper ────────────────────────────────────────── */
+async function fireEmail(type: string, order_id: string, status?: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/functions/v1/send-order-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE}`,
+        'apikey':        SUPABASE_SERVICE,
+      },
+      body: JSON.stringify({ type, order_id, status }),
+    });
+    console.log(`[shop-admin] send-order-email fired | type=${type} | order=${order_id}`);
+  } catch (err) {
+    console.error('[shop-admin] send-order-email failed (non-fatal):', err);
+  }
+}
+
+/* ── Main handler ────────────────────────────────────────────────────── */
 Deno.serve(async (req: Request) => {
   const cors = corsHeaders(req);
 
@@ -93,7 +111,7 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE);
 
-  /* ── get_orders ─────────────────────────────────────────── */
+  /* ── get_orders ──────────────────────────────────────────────────── */
   if (action === 'get_orders') {
     const { data, error } = await supabase
       .from('shop_orders')
@@ -104,7 +122,7 @@ Deno.serve(async (req: Request) => {
     return json({ orders: data }, 200, cors);
   }
 
-  /* ── update_status ──────────────────────────────────────── */
+  /* ── update_status ────────────────────────────────────────────────── */
   if (action === 'update_status') {
     const { order_id, status } = body;
     const allowed = ['pending', 'processing', 'dispatched', 'delivered'];
@@ -118,10 +136,16 @@ Deno.serve(async (req: Request) => {
       .eq('id', order_id);
 
     if (error) return json({ error: error.message }, 500, cors);
+
+    // Fire customer email for dispatched and delivered only — non-fatal
+    if (status === 'dispatched' || status === 'delivered') {
+      fireEmail('status_update', order_id, status);
+    }
+
     return json({ ok: true }, 200, cors);
   }
 
-  /* ── get_products ───────────────────────────────────────── */
+  /* ── get_products ─────────────────────────────────────────────────── */
   if (action === 'get_products') {
     const { data, error } = await supabase
       .from('products')
@@ -132,7 +156,7 @@ Deno.serve(async (req: Request) => {
     return json({ products: data }, 200, cors);
   }
 
-  /* ── add_product ────────────────────────────────────────── */
+  /* ── add_product ──────────────────────────────────────────────────── */
   if (action === 'add_product') {
     const p = body.product;
     if (!p || !p.name) return json({ error: 'Missing product name' }, 400, cors);
@@ -175,7 +199,7 @@ Deno.serve(async (req: Request) => {
     return json({ product: data }, 200, cors);
   }
 
-  /* ── update_product ─────────────────────────────────────── */
+  /* ── update_product ────────────────────────────────────────────────── */
   if (action === 'update_product') {
     const p = body.product;
     if (!p || !p.id)   return json({ error: 'Missing product id' }, 400, cors);
@@ -210,7 +234,7 @@ Deno.serve(async (req: Request) => {
     return json({ product: data }, 200, cors);
   }
 
-  /* ── delete_product ─────────────────────────────────────── */
+  /* ── delete_product ────────────────────────────────────────────────── */
   if (action === 'delete_product') {
     const { product_id } = body;
     if (!product_id) return json({ error: 'Missing product_id' }, 400, cors);
@@ -224,7 +248,7 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true }, 200, cors);
   }
 
-  /* ── reorder_products ─────────────────────────────────── */
+  /* ── reorder_products ─────────────────────────────────────────────── */
   if (action === 'reorder_products') {
     const order = body.order;
     if (!Array.isArray(order) || !order.length) return json({ error: 'Missing order array' }, 400, cors);
