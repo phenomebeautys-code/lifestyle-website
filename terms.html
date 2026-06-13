@@ -58,108 +58,99 @@
     <noscript><link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="styles.css?v=1" />
     <style>
+        /* ── Terms-page-only overrides ── */
         .tcs-hero { padding: 18px 0 10px; }
-        .tcs-hero-panel {
-            position: relative;
-            overflow: hidden;
-            padding: clamp(28px, 5vw, 52px) clamp(20px, 4vw, 48px);
-            border-radius: 32px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.05));
-            border: 1px solid rgba(255,255,255,0.13);
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-        }
+
         .tcs-icon-wrap {
-            width: 88px;
-            height: 88px;
-            border-radius: 22px;
+            width: 76px;
+            height: 76px;
+            border-radius: 18px;
             background: #ffffff;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 8px 28px rgba(0,0,0,0.35);
             flex-shrink: 0;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         .tcs-icon {
-            width: 54px;
-            height: 54px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
         }
-        .tcs-hero-panel h1 {
-            font-family: var(--font-display);
-            font-size: clamp(2.4rem, 6vw, 4.8rem);
-            line-height: 1.0;
-            color: #ffffff;
-            margin: 0;
+
+        .tcs-hero-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 14px;
         }
-        .tcs-hero-panel > p {
+
+        .tcs-hero-inner .section-title { margin-bottom: 6px; }
+
+        .tcs-hero-inner > p {
             color: var(--text-soft);
             font-size: 0.97rem;
             max-width: 52ch;
             margin: 0;
             line-height: 1.7;
         }
+
         .tcs-section { padding: 10px 0 36px; }
+
+        .tcs-grid-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+
         .tcs-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0,1fr));
             gap: 14px;
         }
+
         .tcs-card {
             padding: 24px 26px;
             border-radius: 20px;
             background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
-            border: 1px solid rgba(255,255,255,0.13);
+            border: 1px solid var(--glass-border);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             transition: transform 0.25s ease, border-color 0.25s ease;
         }
+
         .tcs-card:hover {
             transform: translateY(-4px);
             border-color: rgba(255,255,255,0.22);
         }
+
         .tcs-card-header {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        .tcs-num {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.14);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: var(--font-display);
-            font-size: 0.9rem;
-            color: #ffffff;
-            flex-shrink: 0;
-        }
+
         .tcs-card h3 {
             font-family: var(--font-display);
             font-size: 1.05rem;
-            color: #ffffff;
+            color: var(--accent-strong);
             line-height: 1.1;
             margin: 0;
         }
+
         .tcs-card p {
             color: var(--text-soft);
             font-size: 0.88rem;
             line-height: 1.65;
             margin: 0;
         }
+
         .back-wrap { padding: 22px 0 4px; }
         .back-link {
             display: inline-flex;
@@ -171,13 +162,17 @@
             transition: color 0.22s ease, transform 0.22s ease;
         }
         .back-link:hover { color: #ffffff; transform: translateX(-3px); }
+
         @media (max-width: 700px) {
             .tcs-grid { grid-template-columns: 1fr; }
-            .tcs-hero-panel { border-radius: 22px; }
         }
     </style>
 </head>
 <body>
+
+    <!-- BACKGROUND LAYERS -->
+    <div id="bg-image" aria-hidden="true"></div>
+    <div id="bg-overlay" aria-hidden="true"></div>
 
     <!-- NAVBAR -->
     <nav class="navbar" id="navbar">
@@ -217,12 +212,18 @@
     <!-- HERO -->
     <section class="tcs-hero">
         <div class="container">
-            <div class="tcs-hero-panel">
-                <div class="tcs-icon-wrap">
-                    <img src="https://iili.io/B4pJpna.png" alt="PhenomeBeauty terms and conditions" class="tcs-icon" />
+            <div class="glass-panel section-inner">
+                <div class="tcs-hero-inner">
+                    <div class="tcs-icon-wrap">
+                        <img src="https://iili.io/B4pJpna.png" alt="PhenomeBeauty terms and conditions" class="tcs-icon" />
+                    </div>
+                    <span class="section-kicker">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Booking Policy
+                    </span>
+                    <h1 class="section-title">Terms &amp; Conditions</h1>
+                    <p>Please read these terms carefully before booking. By using our services you agree to the policy outlined below.</p>
                 </div>
-                <h1>Terms &amp; Conditions</h1>
-                <p>Please read these terms carefully before booking. By using our services you agree to the policy outlined below.</p>
             </div>
         </div>
     </section>
@@ -230,55 +231,92 @@
     <!-- T&Cs GRID -->
     <section class="tcs-section">
         <div class="container">
+            <div class="tcs-grid-header">
+                <span class="section-kicker" style="align-self:flex-start">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    Policy Overview
+                </span>
+                <h2 class="section-title" style="font-size:clamp(1.6rem,4vw,2.4rem)">What to Expect</h2>
+            </div>
             <div class="tcs-grid">
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">1</span><h3>Cancellation &mdash; Before Service</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">01 of 10</span>
+                        <h3>Cancellation &mdash; Before Service</h3>
+                    </div>
                     <p>7+ days: Full refund. &nbsp;3&ndash;6 days: 50% refund. &nbsp;Within 48 hrs: 25% refund. &nbsp;Within 24 hrs: No refund.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">2</span><h3>Cancellation &mdash; After Service</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">02 of 10</span>
+                        <h3>Cancellation &mdash; After Service</h3>
+                    </div>
                     <p>Not applicable once a service has been rendered. For unsatisfactory service, see Section 3.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">3</span><h3>Service Not As Described</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">03 of 10</span>
+                        <h3>Service Not As Described</h3>
+                    </div>
                     <p>Notify us within 48 hours. Remedies: redo, partial refund (20&ndash;50%), or full refund. Processing within 5 business days.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">4</span><h3>Unsatisfactory Service</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">04 of 10</span>
+                        <h3>Unsatisfactory Service</h3>
+                    </div>
                     <p>Contact us within 7 days with documented examples. Review may result in a redo or partial refund (25&ndash;50%).</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">5</span><h3>Partial Services</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">05 of 10</span>
+                        <h3>Partial Services</h3>
+                    </div>
                     <p>Completed sessions are non-refundable. Remaining sessions refunded within 7 business days.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">6</span><h3>Payment Terms</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">06 of 10</span>
+                        <h3>Payment Terms</h3>
+                    </div>
                     <p>Deposit non-refundable once service has begun. Balance due on completion. Refunds to original payment method only.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">7</span><h3>Rescheduling</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">07 of 10</span>
+                        <h3>Rescheduling</h3>
+                    </div>
                     <p>Rescheduling is available at any time. Refunds follow the cancellation terms outlined in Section 1.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">8</span><h3>Transaction Fees</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">08 of 10</span>
+                        <h3>Transaction Fees</h3>
+                    </div>
                     <p>Refunds are issued via the original payment method at the original purchase price.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">9</span><h3>Disputes &amp; Escalation</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">09 of 10</span>
+                        <h3>Disputes &amp; Escalation</h3>
+                    </div>
                     <p>All disputes are reviewed within 5 business days of submission.</p>
                 </div>
 
-                <div class="tcs-card">
-                    <div class="tcs-card-header"><span class="tcs-num">10</span><h3>Consumer Protection Act</h3></div>
+                <div class="tcs-card reveal">
+                    <div class="tcs-card-header">
+                        <span class="section-kicker" style="margin-bottom:0;font-size:0.68rem">10 of 10</span>
+                        <h3>Consumer Protection Act</h3>
+                    </div>
                     <p>This policy does not limit your statutory rights under applicable consumer protection law.</p>
                 </div>
 
