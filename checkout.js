@@ -922,7 +922,7 @@ async function handlePay() {
     // Step 2: Create Yoco hosted checkout session
     const origin     = window.location.origin;
     const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
-    const cancelUrl  = `${origin}/shop-success.html?payment=cancelled`;
+    const cancelUrl  = `${origin}/shop.html?payment=cancelled`;
 
     const yocoRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
       method: 'POST',
@@ -942,10 +942,6 @@ async function handlePay() {
     if (!yocoRes.ok || yocoData.error) throw new Error(yocoData.error || 'Payment provider error. Please try again.');
 
     // Step 3: Clear cart and redirect to Yoco hosted page
-    localStorage.removeItem('pb_cart');
-    sessionStorage.removeItem('pb_cart');
-    sessionStorage.removeItem('pb_checkout_draft');
-    window.markPaid && window.markPaid();
     window.location.href = yocoData.redirectUrl;
 
   } catch (err) {
