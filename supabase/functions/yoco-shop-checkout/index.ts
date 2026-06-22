@@ -137,6 +137,20 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // ── Store Yoco checkout ID for webhook matching ───────────────────────
+    if (yocoData.id) {
+      const { error: checkoutIdErr } = await supabase
+        .from("shop_orders")
+        .update({ yoco_checkout_id: yocoData.id })
+        .eq("id", order_id);
+
+      if (checkoutIdErr) {
+        console.error("Failed to store yoco_checkout_id:", checkoutIdErr);
+      } else {
+        console.log(`[yoco-shop-checkout] Stored checkout ID ${yocoData.id} on order ${order_id}`);
+      }
+    }
+
     return new Response(JSON.stringify({ redirectUrl }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
