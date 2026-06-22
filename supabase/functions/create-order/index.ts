@@ -129,24 +129,6 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Fire order confirmation email — non-fatal
-    try {
-      await fetch(
-        `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-email`,
-        {
-          method:  'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            'apikey':        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-          },
-          body: JSON.stringify({ type: 'order_placed', order_id: order.id }),
-        },
-      );
-    } catch (emailErr) {
-      console.error('[create-order] send-order-email failed (non-fatal):', emailErr);
-    }
-
     return new Response(JSON.stringify({ order_id: order.id, order_ref: order.id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
