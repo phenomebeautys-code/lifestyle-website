@@ -209,12 +209,28 @@
         );
         const data = await res.json();
         const order = Array.isArray(data) ? data[0] : null;
-        if (order && order.payment_status === 'paid') { renderSuccess(order); return; }
+        if (order && order.payment_status === 'paid') {
+        localStorage.removeItem('pb_cart');
+        sessionStorage.removeItem('pb_cart');
+        sessionStorage.removeItem('pb_checkout_draft');
+        renderSuccess(order);
+        return;
+      }
         if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
-        else { renderSuccess(order || null); }
+        else {
+        localStorage.removeItem('pb_cart');
+        sessionStorage.removeItem('pb_cart');
+        sessionStorage.removeItem('pb_checkout_draft');
+        renderSuccess(order || null);
+      }
       } catch(e) {
         if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
-        else { renderSuccess(null); }
+         else {
+          localStorage.removeItem('pb_cart');
+          sessionStorage.removeItem('pb_cart');
+          sessionStorage.removeItem('pb_checkout_draft');
+          renderSuccess(null);
+        }
       }
     }
 
