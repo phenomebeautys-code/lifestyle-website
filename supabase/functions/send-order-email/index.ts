@@ -14,7 +14,9 @@
  *   SUPABASE_SERVICE_ROLE_KEY  — injected automatically
  */
 
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
 
 const RESEND_API  = 'https://api.resend.com/emails';
 const FROM        = 'PhenomeBeauty Orders <orders@phenomebeauty.co.za>';
@@ -22,6 +24,7 @@ const ADMIN_EMAIL = 'phenomebeautys@gmail.com';
 const STORE_URL   = 'https://www.phenomebeauty.co.za';
 const LOGO_URL    = 'https://iili.io/fpiAjBj.jpg';
 const WA_LINK     = 'https://wa.me/2745115725';
+
 
 /* ── Shared CSS for customer-facing emails ─────────────────────────────────── */
 const BASE_STYLE = `
@@ -35,7 +38,7 @@ const BASE_STYLE = `
   .section { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:24px; margin-bottom:20px; }
   .section-label { font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#7a7060; margin-bottom:12px; }
   .detail { font-size:14px; color:#b0a898; margin-top:4px; line-height:1.5; }
-  .item-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; }
+  .item-row { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; }
   .item-row:last-child { border-bottom:none; }
   .item-name { color:#e8e4dc; font-weight:500; }
   .item-meta { font-size:12px; color:#7a7060; margin-top:2px; }
@@ -68,6 +71,7 @@ const BASE_STYLE = `
   }
 `;
 
+
 /* ── Helpers ───────────────────────────────────────────────────────────────── */
 function esc(str: string | null | undefined): string {
   return (str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -81,6 +85,7 @@ function shortId(id: string): string {
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
 }
+
 
 /* ── Delivery label ────────────────────────────────────────────────────────── */
 function deliveryLabel(order: Record<string, any>): { method: string; address: string } {
@@ -97,6 +102,7 @@ function deliveryLabel(order: Record<string, any>): { method: string; address: s
   };
 }
 
+
 /* ── Items HTML ────────────────────────────────────────────────────────────── */
 function itemsHTML(items: any[]): string {
   if (!items?.length) return '<div style="color:#7a7060;font-size:14px;padding:8px 0">No items</div>';
@@ -112,6 +118,7 @@ function itemsHTML(items: any[]): string {
     </div>`).join('');
 }
 
+
 /* ── Totals HTML ───────────────────────────────────────────────────────────── */
 function totalsHTML(order: Record<string, any>): string {
   let html = '';
@@ -125,19 +132,23 @@ function totalsHTML(order: Record<string, any>): string {
   return html;
 }
 
+
 /* ── Logo HTML ─────────────────────────────────────────────────────────────── */
 function logoHTML(): string {
   return `<img src="${LOGO_URL}" alt="PhenomeBeauty" class="logo" />`;
 }
 
+
 /* ── Signature HTML ────────────────────────────────────────────────────────── */
 function signatureHTML(): string {
-  return `<p class="sign">Warm regards,<br><strong>Shu-Meez</strong><br>PhenomeBeauty</p>`;
+  return `<p class="sign">Warm regards,<br><strong>Shu-meez</strong><br>PhenomeBeauty</p>`;
 }
+
 
 /* ══════════════════════════════════════════════════════════════════════════════
    EMAIL BUILDERS — CUSTOMER FACING
 ══════════════════════════════════════════════════════════════════════════════ */
+
 
 /* ── 1. order_placed ── sent immediately when order is created ─────────────── */
 function buildOrderPlaced(order: Record<string, any>): { subject: string; html: string } {
@@ -184,7 +195,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
     </div>` : ''}
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
-      Questions about your order? 
+      Questions about your order?
       <a href="${WA_LINK}" style="color:#b8a98a">Contact us on WhatsApp</a>.
     </p>
 
@@ -203,6 +214,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
 
   return { subject, html };
 }
+
 
 /* ── 2. payment_received (customer) ── branded, no admin BCC ───────────────── */
 function buildPaymentReceived(order: Record<string, any>): { subject: string; html: string } {
@@ -269,6 +281,7 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
   return { subject, html };
 }
 
+
 /* ── 2b. payment_received (admin system notification) ──────────────────────── */
 function buildAdminPaymentNotification(order: Record<string, any>): { subject: string; html: string } {
   const orderNo  = shortId(order.id);
@@ -312,6 +325,7 @@ function buildAdminPaymentNotification(order: Record<string, any>): { subject: s
 
   return { subject, html };
 }
+
 
 /* ── 3. status_update ── sent when admin marks dispatched or delivered ──────── */
 function buildStatusUpdate(order: Record<string, any>, status: string): { subject: string; html: string } {
@@ -417,6 +431,7 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
   return { subject, html };
 }
 
+
 /* ══════════════════════════════════════════════════════════════════════════════
    SEND VIA RESEND
 ══════════════════════════════════════════════════════════════════════════════ */
@@ -450,6 +465,7 @@ async function sendEmail(opts: {
     console.log('[send-order-email] Sent OK:', data.id);
   }
 }
+
 
 /* ══════════════════════════════════════════════════════════════════════════════
    MAIN HANDLER
@@ -497,16 +513,13 @@ Deno.serve(async (req: Request) => {
       await sendEmail({ to: order.customer_email, subject, html });
 
     } else if (type === 'payment_received') {
-    /* Customer email — branded */
-    const { subject, html } = buildPaymentReceived(order);
-    await sendEmail({ to: order.customer_email, subject, html });
-    
-    /* 300ms delay before admin notification */
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    /* Admin system notification — separate plain email */
-    const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
-    await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+      const { subject, html } = buildPaymentReceived(order);
+      await sendEmail({ to: order.customer_email, subject, html });
+
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
+      await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
 
     } else if (type === 'status_update') {
       const resolvedStatus = status || order.status;
