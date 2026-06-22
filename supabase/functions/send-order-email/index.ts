@@ -350,7 +350,7 @@ function buildStatusUpdate(order: Record<string, any>, status: string): { subjec
         <div class="delivery-note-label">Your delivery</div>
         <div class="delivery-note-copy">
           Your parcel is on its way to your door via <strong>The Courier Guy</strong>.<br><br>
-          Keep an eye on your phone — you will receive an SMS notification when your courier is on the way.
+          Keep an eye on your phone — you will receive an SMS or email notification when your courier is on the way.
         </div>
       </div>`
   ) : '';
@@ -497,13 +497,16 @@ Deno.serve(async (req: Request) => {
       await sendEmail({ to: order.customer_email, subject, html });
 
     } else if (type === 'payment_received') {
-      /* Customer email — branded */
-      const { subject, html } = buildPaymentReceived(order);
-      await sendEmail({ to: order.customer_email, subject, html });
-
-      /* Admin system notification — separate plain email */
-      const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
-      await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+    /* Customer email — branded */
+    const { subject, html } = buildPaymentReceived(order);
+    await sendEmail({ to: order.customer_email, subject, html });
+    
+    /* 300ms delay before admin notification */
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    /* Admin system notification — separate plain email */
+    const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
+    await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
 
     } else if (type === 'status_update') {
       const resolvedStatus = status || order.status;
