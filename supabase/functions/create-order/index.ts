@@ -92,7 +92,38 @@ Deno.serve(async (req: Request) => {
     }));
 
     const subtotal    = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
-    const fee         = Number(delivery_fee) || (delivery_method === "locker" ? 59 : 99);
+    // ── Server-side delivery fee validation ───────────────────────────────
+let fee: number;
+try {
+  const quoteRes = await fetch(
+    `${Deno.env.get('SUPABASE_URL')}/functions/v1/get-shipping-quote`,
+    {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+      },
+      body: JSON.stringify({
+        items: items.map((i: { productId: string; qty: number }) => ({
+          productId: i.productId,
+          qty:       i.qty,
+        })),
+      }),
+    }
+  );
+
+  if (!quoteRes.ok) throw new Error(`get-shipping-quote returned ${quoteRes.status}`);
+
+  const quote = await quoteRes.json();
+  fee = delivery_method === 'locker'
+    ? Number(quote.locker_fee)
+    : Number(quote.door_fee);
+
+  if (!fee || fee <= 0) throw new Error('Invalid fee from quote');
+} catch (err) {
+  console.error('[create-order] Shipping quote failed, using fallback:', err);
+  fee = delivery_method === 'locker' ? 69 : 99;
+}
     const totalAmount = subtotal + fee;
 
     const supabase = createClient(
