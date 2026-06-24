@@ -1,8 +1,6 @@
-// checkout.js — v22
+// checkout.js — v23
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
-// Restores: get-shipping-quote engine, live delivery fees, box_size forwarding
-//           to pudo-locker-search, draft save/restore, importLibrary Places API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Constants ── */
@@ -236,9 +234,11 @@ function renderTotals() {
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
 }
 function updateItemCount() {
-  const total = cart.reduce((s, i) => s + i.qty, 0);
-  const lbl = document.getElementById('itemCountLabel');
-  if (lbl) lbl.textContent = total + (total === 1 ? ' item in your cart' : ' items in your cart');
+  const total = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
+  const lbl   = document.getElementById('itemCountLabel');
+  const badge = document.getElementById('cartBadge');
+  if (lbl)   lbl.textContent   = total + (total === 1 ? ' item in your cart' : ' items in your cart');
+  if (badge) badge.textContent = total;
 }
 
 /* ── Mobile summary bar ── */
@@ -277,6 +277,9 @@ function toggleMobileSummary() {
 }
 
 /* ── Cart editor ── */
+function openCart() {
+  openCartEditor();
+}
 function openCartEditor() {
   renderCartEditor();
   document.getElementById('cartEditorOverlay').classList.add('open');
@@ -292,7 +295,7 @@ function closeCartEditor() {
 function renderCartEditor() {
   const wrap = document.getElementById('cartEditorItems');
   const MAX_INLINE = 4;
-  const inline  = cart.slice(0, MAX_INLINE);
+  const inline   = cart.slice(0, MAX_INLINE);
   const overflow = cart.slice(MAX_INLINE);
   const renderItem = (item, idx) => `
     <div class="ce-item">
@@ -303,7 +306,7 @@ function renderCartEditor() {
       </div>
       <div class="ce-item-actions">
         <div class="ce-qty-controls">
-          <button class="ce-qty-btn" onclick="ceChangeQty(${idx},-1)" aria-label="Decrease quantity" ${item.qty<=1?'disabled':''}>-</button>
+          <button class="ce-qty-btn" onclick="ceChangeQty(${idx},-1)" aria-label="Decrease quantity">-</button>
           <span class="ce-qty-val">${item.qty}</span>
           <button class="ce-qty-btn" onclick="ceChangeQty(${idx},1)" aria-label="Increase quantity">+</button>
         </div>
@@ -312,7 +315,7 @@ function renderCartEditor() {
   let html = inline.map((item, i) => renderItem(item, i)).join('');
   if (overflow.length) {
     html += `<div class="ce-overflow" id="ceOverflow">${overflow.map((item, i) => renderItem(item, MAX_INLINE + i)).join('')}</div>`;
-    html += `<button class="ce-overflow-toggle" id="ceOverflowToggle" onclick="toggleCeOverflow()">Show ${overflow.length} more item${overflow.length>1?'s':''}</button>`;
+    html += `<button class="ce-overflow-toggle" id="ceOverflowToggle" onclick="toggleCeOverflow()">Show ${overflow.length} more item${overflow.length > 1 ? 's' : ''}</button>`;
   }
   wrap.innerHTML = html;
   document.getElementById('ceFooterSubtotal').textContent = 'R' + cartSubtotal().toLocaleString('en-ZA');
@@ -324,7 +327,7 @@ function toggleCeOverflow() {
   if (!el) return;
   const open = el.classList.toggle('open');
   const rem  = cart.length - MAX_INLINE;
-  btn.textContent = open ? 'Show less' : `Show ${rem} more item${rem>1?'s':''}`;
+  btn.textContent = open ? 'Show less' : `Show ${rem} more item${rem > 1 ? 's' : ''}`;
 }
 function ceChangeQty(idx, delta) {
   changeCartQty(idx, delta);
@@ -592,7 +595,6 @@ async function searchLockers() {
   if (lat && lng) { params.set('lat', lat); params.set('lng', lng); }
   else            { params.set('q', query); }
 
-  /* Forward box_size from shipping quote so the function can filter and flag compatibility */
   if (shippingQuote && shippingQuote.box) {
     params.set('box_size', shippingQuote.box);
   }
@@ -634,7 +636,6 @@ function renderLockers(data) {
   const container  = document.getElementById('lockerResults');
   const sizeNotice = document.getElementById('lockerSizeNotice');
 
-  /* Correct response keys from pudo-locker-search */
   const lockers           = data.results            || [];
   const requiredBoxSize   = data.required_box_size  || null;
   const sizeFilterApplied = data.size_filter_applied || false;
@@ -659,15 +660,12 @@ function renderLockers(data) {
     return;
   }
 
-  /* Store results on window so selectLocker can reference by index safely */
   window._lockerResults = lockers;
 
   container.innerHTML = lockers.map((l, idx) => {
     const distLabel = l.distance_km != null ? `${l.distance_km.toFixed(1)} km away` : '';
-    /* size_availability_unknown: true means the API has no data — treat as neutral
-       size_availability_unknown: false means data confirmed — locker fits            */
     const sizeWarn = l.size_availability_unknown === false
-      ? ''  /* confirmed fit — no warning */
+      ? ''
       : (requiredBoxSize && l.size_availability_unknown === true)
         ? `<div class="locker-item-size-warn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> May not fit your order size</div>`
         : '';
@@ -734,7 +732,6 @@ window.initPlaces = async function() {
   try {
     const { Autocomplete } = await google.maps.importLibrary('places');
 
-    /* Door delivery — street address */
     const streetInput = document.getElementById('f-street');
     if (streetInput) {
       const acDoor = new Autocomplete(streetInput, {
@@ -753,8 +750,6 @@ window.initPlaces = async function() {
       });
     }
 
-    /* Locker search — initialised independently so it is ready regardless of
-       which delivery method the user selects first */
     const lockerInput = document.getElementById('f-locker-search');
     if (lockerInput) {
       const lacHint = document.getElementById('lockerPlacesHint');
@@ -879,11 +874,9 @@ async function handlePay() {
   const fee   = deliveryFee();
   const total = cartSubtotal() + fee;
 
-  // Combine special instructions and gift message into one notes string
   const combinedNotes = [special, gift ? 'Gift message: ' + gift : '', notes]
     .filter(Boolean).join(' | ');
 
-  // Map cart to the shape create-order expects
   const orderCart = cart.map(i => ({
     id:    i.productId || i.id || '',
     name:  i.name,
@@ -893,7 +886,6 @@ async function handlePay() {
   }));
 
   try {
-    // Step 1: Create order in Supabase
     const orderRes = await fetch(`${SUPABASE_URL}/functions/v1/create-order`, {
       method: 'POST',
       headers: {
@@ -919,7 +911,6 @@ async function handlePay() {
 
     const orderId = orderData.order_id;
 
-    // Step 2: Create Yoco hosted checkout session
     const origin     = window.location.origin;
     const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
     const cancelUrl  = `${origin}/shop.html?payment=cancelled`;
@@ -941,7 +932,6 @@ async function handlePay() {
     const yocoData = await yocoRes.json();
     if (!yocoRes.ok || yocoData.error) throw new Error(yocoData.error || 'Payment provider error. Please try again.');
 
-    // Step 3: Clear cart and redirect to Yoco hosted page
     window.location.href = yocoData.redirectUrl;
 
   } catch (err) {
