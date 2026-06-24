@@ -325,8 +325,8 @@ function addToCartFromDetail(pid) {
     setTimeout(() => {
       btn.innerHTML = orig;
       btn.disabled = false;
-     closeProductDetail();
-   }, 1500);
+      closeProductDetail();
+    }, 1500);
   }
 }
 
@@ -375,7 +375,6 @@ function openProductDetail(pid) {
   const price      = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
-  /* —— For hero products, find the featured variant index (Calm / Luxe) —— */
   let heroVariantIdx = -1;
   if (p.hero_segment === 'self_care' && Array.isArray(p.variants)) {
     heroVariantIdx = p.variants.findIndex(v => /calm/i.test(v.name || v.label || v.value || ''));
@@ -383,10 +382,8 @@ function openProductDetail(pid) {
     heroVariantIdx = p.variants.findIndex(v => /luxe/i.test(v.name || v.label || v.value || ''));
   }
 
-  /* Active index: hero variant if found, otherwise 0 */
   const activeIdx = heroVariantIdx >= 0 ? heroVariantIdx : 0;
 
-  /* Hero image: use variant image if hero variant found, otherwise image_urls[activeIdx] */
   const heroVariantObj = heroVariantIdx >= 0 && p.variants ? p.variants[heroVariantIdx] : null;
   const heroImgSrc = heroVariantObj?.image
     ? heroVariantObj.image
@@ -396,7 +393,6 @@ function openProductDetail(pid) {
     ? `<img class="pdp-hero-img" id="pdpHeroImg" src="${transformImage(heroImgSrc, 800)}" alt="${p.name || ''}" loading="eager" width="800" height="533" />`
     : `<div class="pdp-hero-img pdp-hero-placeholder"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-  /* —— Thumb cols: build all, then move hero variant to first position —— */
   let thumbsHTML = '';
   if (images.length > 1) {
     const cols = images.map((img, i) => {
@@ -423,7 +419,6 @@ function openProductDetail(pid) {
       };
     });
 
-    /* Move hero variant to first position */
     const heroColIdx = cols.findIndex(c => c.isHero);
     if (heroColIdx > 0) {
       const [heroCol] = cols.splice(heroColIdx, 1);
@@ -459,10 +454,9 @@ function openProductDetail(pid) {
   const catHTML  = p.category ? `<div class="pdp-category">${p.category}</div>` : '';
   const descHTML = renderDescription(p);
 
-  /* —— Hero variant note and gold border: only when hero variant is the initial active selection —— */
-  const heroIsActive  = heroVariantIdx >= 0;
-  const noteText      = heroIsActive ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
-  const noteHTML      = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
+  const heroIsActive    = heroVariantIdx >= 0;
+  const noteText        = heroIsActive ? (HERO_VARIANT_NOTES[p.hero_segment] || '') : '';
+  const noteHTML        = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
   const imageBlockClass = heroIsActive ? 'pdp-image-block hero-product' : 'pdp-image-block';
 
   inner.innerHTML = `
@@ -496,6 +490,8 @@ function openProductDetail(pid) {
   closeBtn.addEventListener('click', closeProductDetail);
   panel.appendChild(closeBtn);
 
+  /* Ensure overlay is interactive while open */
+  if (overlay) overlay.style.pointerEvents = 'auto';
   overlay?.classList.add('open');
   panel.classList.add('open');
   panel.setAttribute('aria-hidden', 'false');
@@ -510,6 +506,8 @@ function closeProductDetail() {
   const overlay = document.getElementById('pdpOverlay');
   panel?.classList.remove('open');
   overlay?.classList.remove('open');
+  /* Disable pointer events so the invisible overlay cannot block product tile clicks */
+  if (overlay) overlay.style.pointerEvents = 'none';
   panel?.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('pdp-open');
   document.body.style.overflow = '';
@@ -529,7 +527,6 @@ function pdpSelectThumbCol(col, pid) {
   const heroImg = document.getElementById('pdpHeroImg');
   if (heroImg && src) heroImg.src = src;
 
-  /* —— Toggle gold border and hero note based on whether selected thumb is the hero variant —— */
   const imageBlock = thumbs.closest('.pdp-image-block') ||
                      document.querySelector('#pdpInner .pdp-image-block');
   const noteEl     = document.querySelector('#pdpInner .pdp-hero-variant-note');
@@ -757,7 +754,6 @@ function renderProducts(products) {
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
 
-    /* —— Tile image: hero_segment === 'self_care' uses Calm variant; 'professional' uses Luxe —— */
     let tileImgSrc = '';
     if (p.hero_segment === 'self_care' && Array.isArray(p.variants)) {
       const calmVariant = p.variants.find(v => /calm/i.test(v.name || v.label || v.value || ''));
@@ -775,7 +771,6 @@ function renderProducts(products) {
       ? `<img src="${transformImage(tileImgSrc, 600)}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
       : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
-    /* —— Badge —— */
     let badge = '';
     if (p.hero_segment === 'self_care') {
       badge = `<div class="tile-badge" aria-label="Hero pick">The Ritual They Return To</div>`;

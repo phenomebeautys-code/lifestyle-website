@@ -1,4 +1,4 @@
-// checkout.js — v23
+// checkout.js — v24
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
 // ─────────────────────────────────────────────────────────────────────────────
@@ -27,9 +27,10 @@ let giftOn           = false;
 let specialOn        = false;
 let addonsOpen       = false;
 let currentStep      = 1;
+let deliverySelected = false; // true once user reaches step 2
 
 /* Shipping quote state */
-let shippingQuote        = null;  // { box, locker_fee, door_fee, total_weight_kg, packed_dims }
+let shippingQuote        = null;
 let shippingQuoteLoading = false;
 let shippingQuoteError   = null;
 
@@ -222,12 +223,21 @@ function renderTotals() {
   const tot = document.getElementById('summaryTotals');
   const sub = cartSubtotal();
   const fee = deliveryFee();
-  const feeLabel = shippingQuoteLoading
-    ? 'Calculating...'
-    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
-  const totalLabel = shippingQuoteLoading
-    ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA');
+
+  let feeLabel;
+  let totalLabel;
+
+  if (currentStep === 1 && !deliverySelected) {
+    feeLabel   = 'Select at step 2';
+    totalLabel = 'R' + sub.toLocaleString('en-ZA');
+  } else if (shippingQuoteLoading) {
+    feeLabel   = 'Calculating...';
+    totalLabel = 'Calculating...';
+  } else {
+    feeLabel   = fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA');
+    totalLabel = 'R' + (sub + fee).toLocaleString('en-ZA');
+  }
+
   tot.innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
@@ -257,17 +267,30 @@ function renderMobileSummary() {
       </div>
       <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
     </div>`).join('');
-  const feeLabel = shippingQuoteLoading
-    ? 'Calculating...'
-    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
-  const totalLabel = shippingQuoteLoading
-    ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA');
+
+  let feeLabel;
+  let totalLabel;
+  let grandLabel;
+
+  if (currentStep === 1 && !deliverySelected) {
+    feeLabel   = 'Select at step 2';
+    totalLabel = 'R' + sub.toLocaleString('en-ZA');
+    grandLabel = 'R' + sub.toLocaleString('en-ZA');
+  } else if (shippingQuoteLoading) {
+    feeLabel   = 'Calculating...';
+    totalLabel = 'Calculating...';
+    grandLabel = 'Calculating...';
+  } else {
+    feeLabel   = fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA');
+    totalLabel = 'R' + (sub + fee).toLocaleString('en-ZA');
+    grandLabel = 'R' + (sub + fee).toLocaleString('en-ZA');
+  }
+
   if (totals) totals.innerHTML = `
     <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
-  if (grand) grand.textContent = shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA');
+  if (grand) grand.textContent = grandLabel;
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -357,7 +380,8 @@ function updateDeliveryPriceDisplay() {
   if (lp) lp.textContent = lockerLabel;
 }
 function selectDelivery(method) {
-  deliveryMethod = method;
+  deliveryMethod   = method;
+  deliverySelected = true;
   document.getElementById('opt-door').classList.toggle('selected', method === 'door');
   document.getElementById('opt-locker').classList.toggle('selected', method === 'locker');
   document.getElementById('door-fields').style.display   = method === 'door'   ? '' : 'none';
@@ -452,7 +476,10 @@ function restoreDraft() {
 
 /* ── Steps ── */
 function goToStep(n) {
-  if (n === 2) loadMapsIfNeeded();
+  if (n === 2) {
+    loadMapsIfNeeded();
+    deliverySelected = true;
+  }
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
   saveDraft();
@@ -464,6 +491,8 @@ function goToStep(n) {
     if (i + 1 < n)  el.classList.add('done');
   });
   if (n === 3) populateReview();
+  renderTotals();
+  renderMobileSummary();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -955,14 +984,4 @@ function showToast(msg, duration = 3200) {
 function setupBeforeUnload() {}
 function setupVisibilityNudge() {
   let paid = false;
-  const nudge = document.getElementById('exitNudge');
-  document.addEventListener('visibilitychange', () => {
-    if (paid) return;
-    if (currentStep < 2) return;
-    if (document.visibilityState === 'hidden') nudge?.classList.add('show');
-  });
-  window.markPaid = () => { paid = true; };
-}
-function dismissNudge() {
-  document.getElementById('exitNudge')?.classList.remove('show');
-}
+  const nudge = document.getElementById('exitNudge'
