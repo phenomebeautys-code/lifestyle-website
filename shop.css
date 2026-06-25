@@ -973,6 +973,33 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-cta:hover  { opacity: 0.88; }
 .scb-cta:active { opacity: 0.75; transform: scale(0.97); }
 @media (min-width: 769px) { .scb-thumbs { display: none; } .scb-info { padding-left: 0; } }
+
+/* —— Desktop cart bar: constrain width and centre —— */
+@media (min-width: 769px) {
+  .sticky-cart-bar {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 48px));
+    border-radius: var(--radius-pill);
+    bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+
+  .scb-expanded {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 48px));
+    border-radius: 16px;
+    bottom: calc(var(--cart-bar-h) + 20px);
+  }
+
+  body.cart-bar-active {
+    padding-bottom: calc(var(--cart-bar-h) + 20px);
+  }
+}
+
 @media (max-width: 400px) {
   .sticky-cart-bar { padding: 0 12px; }
   .scb-info { padding: 0 10px; }
