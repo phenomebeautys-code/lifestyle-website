@@ -86,7 +86,7 @@
     </div>
   </div>
 
-  <!-- FOOTER -->
+<!-- FOOTER -->
   <footer class="footer">
     <div class="container">
       <div class="footer-shell">
@@ -96,11 +96,12 @@
               <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="footer-logo-img" />
               <span class="footer-logo-name">PhenomeBeauty</span>
             </div>
-            <p>Mobile beauty specialist based in Cape Town.</p>
+            <p>Mobile beauty specialist based in Cape Town. Professional waxing, nails, and tinting delivered to your door.</p>
           </div>
           <div class="footer-section">
             <h4>Quick Links</h4>
             <ul>
+              <li><a href="index.html#guides">Guides</a></li>
               <li><a href="index.html#services">Services</a></li>
               <li><a href="index.html#booking">Book Now</a></li>
               <li><a href="shop.html">Shop</a></li>
@@ -116,13 +117,15 @@
           <div class="footer-section">
             <h4>Follow Us</h4>
             <div class="social-links">
-              <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
-              <a href="https://www.instagram.com/phenomebeauty" target="_blank" rel="noopener noreferrer" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
+              <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="Chat with PhenomeBeauty on WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
+              <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
+              <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
+              <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
             </div>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2025 PhenomeBeauty. All rights reserved.</p>
+          <p>&copy; <span id="footer-year">2026</span> PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&amp;Cs</a></p>
           <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
         </div>
       </div>
@@ -139,6 +142,8 @@
     const custToken  = params.get('ct');
     const name       = params.get('name') || 'there';
     const card       = document.getElementById('successCard');
+    const yr = document.getElementById('footer-year');
+      if (yr) yr.textContent = new Date().getFullYear();
 
     function esc(str) {
       const d = document.createElement('div');
@@ -163,7 +168,7 @@
       card.innerHTML = `
         <div class="success-icon">&#10005;</div>
         <h1>Payment Cancelled</h1>
-        <p class="sub">No payment was taken. Your cart is still saved — return to the shop to try again.</p>
+        <p class="sub">No payment was taken. Your cart is still saved. Return to the shop to try again.</p>
         <a href="shop.html" class="btn btn-primary">&#8592; Back to Shop</a>`;
     }
 
