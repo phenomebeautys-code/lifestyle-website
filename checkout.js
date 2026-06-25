@@ -216,7 +216,7 @@ function renderSidebar() {
         <h4>${item.name}</h4>
         <p class="cart-meta">${item.variant ? item.variant + '<br>' : ''}Qty: ${item.qty}</p>
       </div>
-      <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
+      <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
     </div>`).join('');
   renderTotals();
   updateItemCount();
@@ -229,13 +229,13 @@ function renderTotals() {
   const feeLabel = (!deliverySelected)
     ? 'Select at step 2'
     : shippingQuoteLoading ? 'Calculating...'
-    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
+    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   const totalLabel = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA')
+    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA');
+    : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   tot.innerHTML = `
-    <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
+    <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
 }
@@ -262,24 +262,24 @@ function renderMobileSummary() {
         <h4>${item.name}</h4>
         <p class="cart-meta">${item.variant ? item.variant + '<br>' : ''}Qty: ${item.qty}</p>
       </div>
-      <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
+      <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
     </div>`).join('');
   // FIX 4: hide delivery fee in mobile bar until user reaches step 2
   const feeLabel = (!deliverySelected)
     ? 'Select at step 2'
     : shippingQuoteLoading ? 'Calculating...'
-    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
+    : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   const totalLabel = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA')
+    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA');
+    : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (totals) totals.innerHTML = `
-    <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
+    <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
   if (grand) grand.textContent = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA')
-    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA');
+    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -311,7 +311,7 @@ function renderCartEditor() {
       <img class="ce-item-img" src="${item.image}" alt="${item.name}" loading="lazy" />
       <div class="ce-item-info">
         <div class="ce-item-name">${item.name}</div>
-        <div class="ce-item-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
+        <div class="ce-item-price">R${(item.price * item.qty).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
       </div>
       <div class="ce-item-actions">
         <div class="ce-qty-controls">
@@ -327,7 +327,7 @@ function renderCartEditor() {
     html += `<button class="ce-overflow-toggle" id="ceOverflowToggle" onclick="toggleCeOverflow()">Show ${overflow.length} more item${overflow.length>1?'s':''}</button>`;
   }
   wrap.innerHTML = html;
-  document.getElementById('ceFooterSubtotal').textContent = 'R' + cartSubtotal().toLocaleString('en-ZA');
+  document.getElementById('ceFooterSubtotal').textContent = 'R' + cartSubtotal().toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function toggleCeOverflow() {
   const el  = document.getElementById('ceOverflow');
@@ -813,12 +813,12 @@ function populateReview() {
   const sub     = cartSubtotal();
   const fee     = deliveryFee();
   const total   = sub + fee;
-  const feeLabel = shippingQuoteLoading ? 'Calculating...' : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
+  const feeLabel = shippingQuoteLoading ? 'Calculating...' : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   document.getElementById('done-contact-val').textContent   = `${name} | ${phone} | ${email}`;
   document.getElementById('done-contact-val-2').textContent = `${name} | ${email}`;
-  document.getElementById('rv-subtotal').textContent        = 'R' + sub.toLocaleString('en-ZA');
+  document.getElementById('rv-subtotal').textContent        = 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById('rv-delivery').textContent        = feeLabel;
-  document.getElementById('rv-total').textContent           = shippingQuoteLoading ? 'Calculating...' : 'R' + total.toLocaleString('en-ZA');
+  document.getElementById('rv-total').textContent           = shippingQuoteLoading ? 'Calculating...' : 'R' + total.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   document.getElementById('payBtnTotal').textContent        = shippingQuoteLoading ? '...' : 'R' + total.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   let deliveryVal = '';
   if (deliveryMethod === 'door') {
@@ -849,7 +849,7 @@ function populateReview() {
         <h4 style="margin:0 0 4px;font-size:.9rem;">${item.name}</h4>
         <p style="margin:0;font-size:.8rem;color:var(--text-muted);">${item.variant ? item.variant + ' &bull; ' : ''}Qty: ${item.qty}</p>
       </div>
-      <div style="text-align:right;font-weight:700;color:var(--accent);font-size:.9rem;">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
+      <div style="text-align:right;font-weight:700;color:var(--accent);font-size:.9rem;">R${(item.price * item.qty).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
     </div>`).join('');
   saveContact();
 }
