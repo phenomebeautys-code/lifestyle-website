@@ -20,7 +20,7 @@ const RESEND_API  = 'https://api.resend.com/emails';
 const FROM        = 'PhenomeBeauty Orders <orders@phenomebeauty.co.za>';
 const ADMIN_EMAIL = 'phenomebeautys@gmail.com';
 const STORE_URL   = 'https://www.phenomebeauty.co.za';
-const LOGO_URL    = 'https://iili.io/fpiAjBj.jpg';
+const LOGO_URL    = 'https://iili.io/CuD3cmP.png';
 const WA_LINK     = 'https://wa.me/2745115725';
 
 /* ── Shared CSS for customer-facing emails ─────────────────────────────────── */
@@ -40,9 +40,6 @@ const BASE_STYLE = `
   .item-name { color:#e8e4dc; font-weight:500; }
   .item-meta { font-size:12px; color:#7a7060; margin-top:2px; }
   .item-price { color:#b8a98a; font-weight:700; white-space:nowrap; }
-  .total-row { display:flex; justify-content:space-between; padding:6px 0; font-size:14px; color:#b0a898; }
-  .total-row.grand { font-size:17px; font-weight:700; color:#f5f0e8; border-top:1px solid rgba(255,255,255,0.12); padding-top:12px; margin-top:4px; }
-  .total-row.grand .total-val { color:#b8a98a; }
   .badge { display:inline-block; padding:4px 12px; border-radius:40px; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; }
   .badge-pending   { background:rgba(251,191,36,0.1);   border:1px solid rgba(251,191,36,0.3);  color:#fbbf24; }
   .badge-paid      { background:rgba(74,222,128,0.1);   border:1px solid rgba(74,222,128,0.3);  color:#4ade80; }
@@ -114,14 +111,19 @@ function itemsHTML(items: any[]): string {
 
 /* ── Totals HTML ───────────────────────────────────────────────────────────── */
 function totalsHTML(order: Record<string, any>): string {
+  const rowStyle = 'display:flex;justify-content:space-between;padding:6px 0;font-size:14px;color:#b0a898;';
+  const valStyle = 'color:#b0a898;font-weight:700;white-space:nowrap;min-width:80px;text-align:right;';
+  const grandRow = 'display:flex;justify-content:space-between;padding:12px 0 6px;font-size:17px;font-weight:700;color:#f5f0e8;border-top:1px solid rgba(255,255,255,0.12);margin-top:4px;';
+  const grandVal = 'color:#b8a98a;font-weight:700;white-space:nowrap;min-width:80px;text-align:right;';
+
   let html = '';
   if (order.subtotal != null) {
-    html += `<div class="total-row"><span>Subtotal</span><span>${fmt(order.subtotal)}</span></div>`;
+    html += `<div style="${rowStyle}"><span>Subtotal</span><span style="${valStyle}">${fmt(order.subtotal)}</span></div>`;
   }
   if (order.delivery_fee != null) {
-    html += `<div class="total-row"><span>Delivery</span><span>${fmt(order.delivery_fee)}</span></div>`;
+    html += `<div style="${rowStyle}"><span>Delivery</span><span style="${valStyle}">${fmt(order.delivery_fee)}</span></div>`;
   }
-  html += `<div class="total-row grand"><span>Total</span><span class="total-val">${fmt(order.total_amount)}</span></div>`;
+  html += `<div style="${grandRow}"><span>Total</span><span style="${grandVal}">${fmt(order.total_amount)}</span></div>`;
   return html;
 }
 
