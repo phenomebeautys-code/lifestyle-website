@@ -190,7 +190,7 @@ Deno.serve(async (req: Request) => {
   if (action === 'get_products') {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select('id, name, price, cost_price, sku, brand, description, image_url, image_urls, category, variants, sizes, active, availability, idx, created_at')
       .order('idx', { ascending: true });
 
     if (error) return json({ error: error.message }, 500, cors);
