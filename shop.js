@@ -133,6 +133,13 @@ function updateStickyBar() {
   if (totalEl) totalEl.textContent = 'R' + cartTotal().toFixed(2);
 }
 
+/* —— Checkout navigation — saves cart before leaving ————————— */
+
+function goToCheckout() {
+  saveCart(cart);
+  window.location.href = 'checkout.html';
+}
+
 /* —— Sticky cart expanded inline card ——————————————————————— */
 
 function renderStickyExpanded() {
@@ -143,6 +150,7 @@ function renderStickyExpanded() {
     container.innerHTML = '';
     container.classList.remove('open');
     container.setAttribute('aria-hidden', 'true');
+    container.style.pointerEvents = 'none';
     return;
   }
 
@@ -171,7 +179,7 @@ function renderStickyExpanded() {
         <span>R${subtotal.toFixed(2)}</span>
       </div>
       <p class="scb-expanded-note">Delivery calculated at checkout</p>
-      <a href="checkout.html" class="btn btn-primary scb-checkout-btn">Checkout</a>
+      <button type="button" class="btn btn-primary scb-checkout-btn" onclick="goToCheckout()">Checkout</button>
     </div>`;
 }
 
@@ -182,10 +190,13 @@ function toggleStickyCart() {
   if (isOpen) {
     container.classList.remove('open');
     container.setAttribute('aria-hidden', 'true');
+    /* Prevent the collapsed panel from intercepting clicks on tiles behind it */
+    container.style.pointerEvents = 'none';
   } else {
     renderStickyExpanded();
     container.classList.add('open');
     container.setAttribute('aria-hidden', 'false');
+    container.style.pointerEvents = 'auto';
   }
 }
 
@@ -879,6 +890,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   const grid = document.getElementById('productGrid');
   if (grid) grid.innerHTML = '';
+
+  /* Ensure scbExpanded starts with pointer-events disabled */
+  const scbExp = document.getElementById('scbExpanded');
+  if (scbExp) scbExp.style.pointerEvents = 'none';
 
   updateBadges();
   if (cart.length) showStickyBar();
