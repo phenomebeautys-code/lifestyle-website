@@ -974,38 +974,6 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-cta:active { opacity: 0.75; transform: scale(0.97); }
 @media (min-width: 769px) { .scb-thumbs { display: none; } .scb-info { padding-left: 0; } }
 
-/* —— Desktop cart bar: constrain width and centre —— */
-@media (min-width: 769px) {
-  .sticky-cart-bar {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(560px, calc(100vw - 48px));
-    border-radius: var(--radius-pill);
-    bottom: 20px;
-    border: 1px solid rgba(255,255,255,0.18);
-  }
-
-  .scb-expanded {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(560px, calc(100vw - 48px));
-    border-radius: 16px;
-    bottom: calc(var(--cart-bar-h) + 20px);
-  }
-
-  body.cart-bar-active {
-    padding-bottom: calc(var(--cart-bar-h) + 20px);
-  }
-}
-
-@media (max-width: 400px) {
-  .sticky-cart-bar { padding: 0 12px; }
-  .scb-info { padding: 0 10px; }
-  .scb-cta { padding: 10px 14px; font-size: 0.78rem; }
-}
-
 .scb-info {
   flex: 1; min-width: 0; padding: 0 16px;
   display: flex; flex-direction: column; gap: 2px;
@@ -1015,6 +983,11 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .cart-primary-cta { flex: 1; text-align: center; justify-content: center; }
 .continue-shopping { flex: 1; }
 
+/* ============================================================
+   Sticky cart expanded panel
+   Base rule declared BEFORE the desktop media query so the
+   media query overrides always win in the cascade.
+   ============================================================ */
 .scb-expanded {
   position: fixed;
   left: 0; right: 0;
@@ -1036,6 +1009,46 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   max-height: 72dvh;
   opacity: 1;
   overflow: visible;
+}
+
+/* —— Desktop cart bar: constrain width and centre —— */
+@media (min-width: 769px) {
+  .sticky-cart-bar {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 48px));
+    border-radius: var(--radius-pill);
+    bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+
+  .scb-expanded {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: min(560px, calc(100vw - 48px));
+    border-radius: 16px;
+    bottom: calc(var(--cart-bar-h) + 20px);
+  }
+
+  .scb-expanded.open {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  body.cart-bar-active {
+    padding-bottom: calc(var(--cart-bar-h) + 20px);
+  }
+}
+
+@media (max-width: 400px) {
+  .sticky-cart-bar { padding: 0 12px; }
+  .scb-info { padding: 0 10px; }
+  .scb-cta { padding: 10px 14px; font-size: 0.78rem; }
+  .scb-expanded { padding: 12px 12px 0; }
+  .scb-line { padding: 6px 8px; }
 }
 
 .scb-expanded-items {
@@ -1097,7 +1110,3 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-expanded-subtotal span:last-child { font-weight: 700; color: var(--accent); }
 .scb-expanded-note { font-size: 0.72rem; color: var(--text-muted); text-align: right; }
 .scb-checkout-btn { width: 100%; justify-content: center; text-align: center; }
-@media (max-width: 400px) {
-  .scb-expanded { padding: 12px 12px 0; }
-  .scb-line { padding: 6px 8px; }
-}
