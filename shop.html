@@ -205,6 +205,9 @@
     </div>
   </aside>
 
+  <!-- Sticky cart expanded panel — sibling of bar, NOT child -->
+  <div id="scbExpanded" class="scb-expanded" aria-hidden="true"></div>
+
   <!-- Sticky cart bar -->
   <div class="sticky-cart-bar" id="stickyCartBar">
     <button type="button" class="scb-thumbs" id="scbThumbs" onclick="openCart()" aria-label="Open cart"></button>
@@ -212,8 +215,7 @@
       <div class="scb-count" id="scbCount">0 items</div>
       <div class="scb-total" id="scbTotal">R0.00</div>
     </div>
-    <button type="button" class="scb-cta" onclick="toggleStickyCart()">View cart</button>
-    <div id="scbExpanded" class="scb-expanded" aria-hidden="true"></div>
+    <button type="button" class="scb-cta" id="scbToggleBtn" onclick="toggleStickyCart()">View cart</button>
   </div>
 
   <script src="script.js?v=1" defer></script>

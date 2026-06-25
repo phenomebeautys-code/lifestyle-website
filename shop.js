@@ -140,7 +140,7 @@ function goToCheckout() {
   window.location.href = 'checkout.html';
 }
 
-/* —— Sticky cart expanded inline card ——————————————————————— */
+/* —— Sticky cart expanded panel —————————————————————————— */
 
 function renderStickyExpanded() {
   const container = document.getElementById('scbExpanded');
@@ -150,7 +150,6 @@ function renderStickyExpanded() {
     container.innerHTML = '';
     container.classList.remove('open');
     container.setAttribute('aria-hidden', 'true');
-    container.style.pointerEvents = 'none';
     return;
   }
 
@@ -190,15 +189,23 @@ function toggleStickyCart() {
   if (isOpen) {
     container.classList.remove('open');
     container.setAttribute('aria-hidden', 'true');
-    /* Prevent the collapsed panel from intercepting clicks on tiles behind it */
-    container.style.pointerEvents = 'none';
   } else {
     renderStickyExpanded();
     container.classList.add('open');
     container.setAttribute('aria-hidden', 'false');
-    container.style.pointerEvents = 'auto';
   }
 }
+
+/* —— Close expanded panel on outside click —————————————————— */
+
+document.addEventListener('click', function(e) {
+  const container = document.getElementById('scbExpanded');
+  const toggleBtn = document.getElementById('scbToggleBtn');
+  if (!container || !container.classList.contains('open')) return;
+  if (container.contains(e.target) || (toggleBtn && toggleBtn.contains(e.target))) return;
+  container.classList.remove('open');
+  container.setAttribute('aria-hidden', 'true');
+});
 
 /* —— Cart drawer ———————————————————————————————————————————— */
 
@@ -890,10 +897,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   const grid = document.getElementById('productGrid');
   if (grid) grid.innerHTML = '';
-
-  /* Ensure scbExpanded starts with pointer-events disabled */
-  const scbExp = document.getElementById('scbExpanded');
-  if (scbExp) scbExp.style.pointerEvents = 'none';
 
   updateBadges();
   if (cart.length) showStickyBar();
