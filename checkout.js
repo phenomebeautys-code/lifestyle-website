@@ -1,4 +1,4 @@
-// checkout.js — v22
+// checkout.js — v23
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
 // Restores: get-shipping-quote engine, live delivery fees, box_size forwarding
@@ -29,6 +29,7 @@ let giftOn           = false;
 let specialOn        = false;
 let addonsOpen       = false;
 let currentStep      = 1;
+let deliverySelected = false; // FIX 1: guard delivery fee display until step 2
 
 /* Shipping quote state */
 let shippingQuote        = null;  // { box, locker_fee, door_fee, total_weight_kg, packed_dims }
@@ -224,11 +225,14 @@ function renderTotals() {
   const tot = document.getElementById('summaryTotals');
   const sub = cartSubtotal();
   const fee = deliveryFee();
-  const feeLabel = shippingQuoteLoading
-    ? 'Calculating...'
+  // FIX 2: hide delivery fee until user reaches step 2
+  const feeLabel = (!deliverySelected)
+    ? 'Select at step 2'
+    : shippingQuoteLoading ? 'Calculating...'
     : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
-  const totalLabel = shippingQuoteLoading
-    ? 'Calculating...'
+  const totalLabel = (!deliverySelected)
+    ? 'R' + sub.toLocaleString('en-ZA')
+    : shippingQuoteLoading ? 'Calculating...'
     : 'R' + (sub + fee).toLocaleString('en-ZA');
   tot.innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
@@ -237,8 +241,11 @@ function renderTotals() {
 }
 function updateItemCount() {
   const total = cart.reduce((s, i) => s + i.qty, 0);
-  const lbl = document.getElementById('itemCountLabel');
-  if (lbl) lbl.textContent = total + (total === 1 ? ' item in your cart' : ' items in your cart');
+  const lbl   = document.getElementById('itemCountLabel');
+  const badge = document.getElementById('cartBadge');
+  // FIX 3: update navbar cart badge
+  if (lbl)   lbl.textContent   = total + (total === 1 ? ' item in your cart' : ' items in your cart');
+  if (badge) badge.textContent = total;
 }
 
 /* ── Mobile summary bar ── */
@@ -257,17 +264,22 @@ function renderMobileSummary() {
       </div>
       <div class="cart-price">R${(item.price * item.qty).toLocaleString('en-ZA')}</div>
     </div>`).join('');
-  const feeLabel = shippingQuoteLoading
-    ? 'Calculating...'
+  // FIX 4: hide delivery fee in mobile bar until user reaches step 2
+  const feeLabel = (!deliverySelected)
+    ? 'Select at step 2'
+    : shippingQuoteLoading ? 'Calculating...'
     : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA'));
-  const totalLabel = shippingQuoteLoading
-    ? 'Calculating...'
+  const totalLabel = (!deliverySelected)
+    ? 'R' + sub.toLocaleString('en-ZA')
+    : shippingQuoteLoading ? 'Calculating...'
     : 'R' + (sub + fee).toLocaleString('en-ZA');
   if (totals) totals.innerHTML = `
     <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA')}</span></div>
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
-  if (grand) grand.textContent = shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA');
+  if (grand) grand.textContent = (!deliverySelected)
+    ? 'R' + sub.toLocaleString('en-ZA')
+    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA');
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -449,7 +461,7 @@ function restoreDraft() {
 
 /* ── Steps ── */
 function goToStep(n) {
-  if (n === 2) loadMapsIfNeeded();
+  if (n === 2) { loadMapsIfNeeded(); deliverySelected = true; } // FIX 5: set flag and fix brace
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
   saveDraft();
@@ -976,4 +988,3 @@ function setupVisibilityNudge() {
 function dismissNudge() {
   document.getElementById('exitNudge')?.classList.remove('show');
 }
-
