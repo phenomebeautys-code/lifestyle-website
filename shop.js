@@ -881,6 +881,12 @@ async function loadSegmentSelector() {
 /* —— Init ———————————————————————————————————————————————————— */
 
 document.addEventListener('DOMContentLoaded', async function() {
+  /* Re-persist cart immediately — guards against sessionStorage being wiped
+     when a returning user navigates back after an incomplete checkout.
+     localStorage still holds the cart; this restores sessionStorage so
+     goToCheckout() hands checkout.html a live copy in both stores. */
+  if (cart.length) saveCart(cart);
+
   await loadSegmentSelector();
 
   localStorage.removeItem(SEGMENT_KEY);
