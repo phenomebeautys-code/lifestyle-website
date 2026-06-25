@@ -355,10 +355,10 @@ function calcDelivery() {
 function updateDeliveryPriceDisplay() {
   const sub = cartSubtotal();
   const doorLabel   = shippingQuoteLoading ? 'Calculating...'
-    : shippingQuote ? 'R' + Number(shippingQuote.door_fee).toLocaleString('en-ZA')
+    : shippingQuote ? 'R' + Number(shippingQuote.door_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : (sub >= 1500 ? 'Free' : 'R' + FALLBACK_DOOR_FEE);
   const lockerLabel = shippingQuoteLoading ? 'Calculating...'
-    : shippingQuote ? 'R' + Number(shippingQuote.locker_fee).toLocaleString('en-ZA')
+    : shippingQuote ? 'R' + Number(shippingQuote.locker_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : 'R' + FALLBACK_LOCKER_FEE;
   const dp = document.getElementById('door-price-display');
   const lp = document.getElementById('locker-price-display');
@@ -693,7 +693,7 @@ function renderLockers(data) {
           </div>
         </div>
         <div class="locker-cta">
-          <span style="font-size:.82rem;color:var(--text-muted);">R${shippingQuote ? Number(shippingQuote.locker_fee).toLocaleString('en-ZA') : FALLBACK_LOCKER_FEE} delivery</span>
+          <span style="font-size:.82rem;color:var(--text-muted);">R${shippingQuote ? Number(shippingQuote.locker_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : FALLBACK_LOCKER_FEE} delivery</span>
           <button type="button" class="mini-btn" onclick="selectLockerByIndex(${idx})">Select this locker</button>
         </div>
       </div>`;
