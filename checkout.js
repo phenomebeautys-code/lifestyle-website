@@ -819,7 +819,7 @@ function populateReview() {
   document.getElementById('rv-subtotal').textContent        = 'R' + sub.toLocaleString('en-ZA');
   document.getElementById('rv-delivery').textContent        = feeLabel;
   document.getElementById('rv-total').textContent           = shippingQuoteLoading ? 'Calculating...' : 'R' + total.toLocaleString('en-ZA');
-  document.getElementById('payBtnTotal').textContent        = shippingQuoteLoading ? '...' : total.toLocaleString('en-ZA');
+  document.getElementById('payBtnTotal').textContent        = shippingQuoteLoading ? '...' : 'R' + total.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   let deliveryVal = '';
   if (deliveryMethod === 'door') {
     const street = document.getElementById('f-street').value.trim();
@@ -960,7 +960,7 @@ async function handlePay() {
     alertEl.textContent = err.message || 'Something went wrong. Please try again.';
     alertEl.classList.add('show');
     btn.disabled  = false;
-    btn.innerHTML = 'Pay R<span id="payBtnTotal">' + total.toLocaleString('en-ZA') + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+    btn.innerHTML = 'Pay <span id="payBtnTotal">R' + total.toLocaleString('en-ZA' , { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
   }
 }
 
