@@ -83,12 +83,15 @@ Deno.serve(async (req: Request) => {
         };
 
     // Map cart items
-    const items = cart.map((i: { id: string; name: string; price: number; qty: number; image: string }) => ({
+    const items = cart.map((i: { id: string; name: string; price: number; qty: number; image: string; variant?: string; size?: string }) => ({
       productId: i.id,
       name:      i.name,
       price:     Number(i.price),
       qty:       Number(i.qty),
       image:     i.image || "",
+      ...(i.variant ? { variant: i.variant } : {}),
+      ...(i.size    ? { size:    i.size    } : {}),
+
     }));
 
     const subtotal    = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
