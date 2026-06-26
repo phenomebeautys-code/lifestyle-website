@@ -689,6 +689,31 @@ section, footer, nav { position: relative; z-index: 1; }
 }
 
 /* =========================
+   Shop Card
+========================= */
+.shop-cart-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--accent-strong);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+}
+
+/* =========================
    Services - accordion
 ========================= */
 .services-section { padding: 10px 0; }
