@@ -144,11 +144,17 @@
     <section class="page" id="page-products" aria-label="Products">
       <div class="page-head">
         <div><h2>Products</h2><p>Add, edit and remove shop products</p></div>
-        <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-secondary" id="reorderBtn" style="padding:8px 16px;font-size:0.8rem;">&#8597; Reorder</button>
+          <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+        </div>
       </div>
       <div class="products-toolbar">
         <input class="search-input" type="search" id="productSearch" placeholder="Search products…" aria-label="Search products" />
-        <span class="products-count" id="productsCount"></span>
+        <div class="reorder-hint" id="reorderHint" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
+          Drag cards to reorder &mdash; changes save automatically
+        </div>
       </div>
       <div class="products-grid" id="productsGrid">
         <div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading…</div>
@@ -188,7 +194,7 @@
       <div class="modal-field"><label class="field-label" for="mpBrand">Brand</label><input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" /></div>
       <div class="modal-field full"><label class="field-label" for="mpCategory">Category</label><input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" /></div>
 
-      <!-- AVAILABILITY -->
+      <!-- ── AVAILABILITY ── -->
       <div class="modal-field full">
         <label class="field-label" for="mpAvailability">Availability</label>
         <select id="mpAvailability" class="field-input" style="cursor:pointer;">
