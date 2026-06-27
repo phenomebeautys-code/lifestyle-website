@@ -630,6 +630,20 @@ body.pdp-open { overflow: hidden; }
 .pdp-thumb-col.active .pdp-thumb-label { color: rgba(255,255,255,0.85); }
 .pdp-thumb-col:hover .pdp-thumb-label  { color: rgba(255,255,255,0.60); }
 
+/* —— Out of stock badge on variant thumb —— */
+.pdp-thumb-oos-badge {
+  display: block;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.50);
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
 .pdp-thumb {
   flex-shrink: 0;
   width: 56px; height: 38px;
