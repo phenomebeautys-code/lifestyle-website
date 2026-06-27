@@ -422,10 +422,13 @@ function openProductDetail(pid) {
       const isHero       = i === heroVariantIdx;
       const activeClass  = isActive ? ' active' : '';
       const heroClass    = isHero   ? ' hero-variant' : '';
-      const outClass     = (variantObj && variantObj.stock != null && variantObj.stock <= 0) ? ' out-of-stock' : '';
+      const outClass     = (variantObj && variantObj.in_stock === false) ? ' out-of-stock' : '';
       const thumbImgSrc  = isHero && variantObj?.image ? variantObj.image : img;
       const labelHTML    = variantLabel
         ? `<span class="pdp-thumb-label">${variantLabel}</span>`
+        : '';
+      const oosHTML      = (variantObj && variantObj.in_stock === false)
+        ? `<span class="pdp-thumb-oos-badge">Out of Stock</span>`
         : '';
       return {
         isHero,
@@ -433,6 +436,7 @@ function openProductDetail(pid) {
         <div class="pdp-thumb-img-wrap">
           <img src="${transformImage(thumbImgSrc, 120)}" alt="" loading="lazy" width="120" height="80" />
         </div>
+        ${oosHTML}
         ${labelHTML}
       </div>`
       };
@@ -478,6 +482,11 @@ function openProductDetail(pid) {
   const noteHTML        = noteText ? `<p class="pdp-hero-variant-note">${noteText}</p>` : '';
   const imageBlockClass = heroIsActive ? 'pdp-image-block hero-product' : 'pdp-image-block';
 
+  /* Determine initial ATC button state based on the default active variant */
+  const defaultVariantObj = p.variants && p.variants[activeIdx] ? p.variants[activeIdx] : null;
+  const defaultVariantInStock = !defaultVariantObj || defaultVariantObj.in_stock !== false;
+  const atcAvailable = available && defaultVariantInStock;
+
   inner.innerHTML = `
     <div class="pdp-scroll-area">
       <div class="${imageBlockClass}">
@@ -496,8 +505,8 @@ function openProductDetail(pid) {
     </div>
     <div class="pdp-footer">
       <div class="pdp-footer-price" id="pdpFooterPrice">${priceLabel}</div>
-      <button class="pdp-atc-btn" onclick="addToCartFromDetail('${pid}')" ${available ? '' : 'disabled aria-disabled="true"'}>
-        ${available ? 'Add to Cart' : 'Unavailable'}
+      <button class="pdp-atc-btn" onclick="addToCartFromDetail('${pid}')" ${atcAvailable ? '' : 'disabled aria-disabled="true"'}>
+        ${atcAvailable ? 'Add to Cart' : (available ? 'Out of Stock' : 'Unavailable')}
       </button>
     </div>`;
 
@@ -560,6 +569,7 @@ function pdpSelectThumbCol(col, pid) {
 
   const p = window._products?.find(x => String(x.id) === String(pid));
   if (p) pdpUpdatePrice(pid);
+  pdpUpdateAtcBtn(pid);
 }
 
 function pdpSelectImage(btn, src) {
@@ -602,6 +612,31 @@ function pdpUpdatePrice(pid) {
   const label = price > 0 ? 'R' + price.toFixed(2) : 'Coming Soon';
   const footerPriceEl = document.getElementById('pdpFooterPrice');
   if (footerPriceEl) footerPriceEl.textContent = label;
+}
+
+/* —— Update ATC button state based on selected variant in_stock —— */
+
+function pdpUpdateAtcBtn(pid) {
+  const panel = document.getElementById('pdpPanel');
+  const p = window._products?.find(x => String(x.id) === String(pid));
+  if (!p || !panel) return;
+  const btn = panel.querySelector('.pdp-atc-btn');
+  if (!btn) return;
+  const thumbColEl = panel.querySelector('.pdp-thumb-col.active');
+  const variantRaw = thumbColEl?.dataset.variant || '';
+  const vObj = variantRaw && p.variants
+    ? p.variants.find(v => (v.name || v.label || v.value || '') === variantRaw)
+    : null;
+  const variantInStock = !vObj || vObj.in_stock !== false;
+  if (variantInStock) {
+    btn.disabled = false;
+    btn.removeAttribute('aria-disabled');
+    btn.textContent = 'Add to Cart';
+  } else {
+    btn.disabled = true;
+    btn.setAttribute('aria-disabled', 'true');
+    btn.textContent = 'Out of Stock';
+  }
 }
 
 /* keyboard close */
