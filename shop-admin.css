@@ -400,17 +400,43 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .product-card.prod-unavailable:hover { opacity: 0.75; }
 
 /* ── CARD IMAGE ────────────────────── */
+/*
+  padding-bottom: 75% gives a guaranteed computed height from the
+  element's own width (75% of width = 4:3 ratio). This works on
+  every browser including iOS Safari where height:100% on children
+  of an aspect-ratio container is unreliable.
+  All direct children are position:absolute so they fill the box.
+*/
 .product-img-wrap {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  padding-bottom: 75%;
+  position: relative;
   background: #000;
   overflow: hidden;
-  position: relative;
   flex-shrink: 0;
 }
 
-/* All images — single or carousel slide — fill the container */
-.product-img-wrap img,
+/* Single img (no carousel) fills the wrapper absolutely */
+.product-img-wrap > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Carousel fills the wrapper absolutely */
+.img-carousel {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: block;
+}
+
+/* Slide images fill each slide */
 .img-carousel-slide img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
@@ -430,10 +456,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ── IMAGE CAROUSEL ────────────────── */
-.img-carousel {
-  width: 100%; height: 100%; overflow: hidden;
-  display: block;
-}
 .img-carousel-track {
   display: flex; height: 100%;
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
