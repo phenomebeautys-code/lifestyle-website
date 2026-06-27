@@ -352,14 +352,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 ══════════════════════════════════════ */
 
 /* ── PAGE HEADER ACTIONS ───────────── */
-/* Von Restorff: primary CTA stands out against the muted secondary */
 .products-actions {
   display: flex; gap: 10px; align-items: center;
 }
 .btn-reorder {
   padding: 10px 18px; font-size: 0.8rem;
 }
-/* Fitts's Law: larger hit area on the primary CTA */
 .btn-add-product {
   padding: 10px 22px; font-size: 0.86rem; font-weight: 700;
   border: 1px solid rgba(var(--accent-rgb, 251,191,36), 0.5);
@@ -372,11 +370,9 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* ── TOOLBAR ───────────────────────── */
 .products-toolbar { display: flex; align-items: center; gap: 12px; }
-/* Law of Proximity: search is wider, clearly paired with the grid below */
 .products-search { width: 280px; }
 
 /* ── GRID ──────────────────────────── */
-/* Miller's Law: wider min gives each card breathing room, ~3 per row max */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -388,7 +384,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ── PRODUCT CARD ──────────────────── */
-/* Aesthetic-Usability: slightly taller radius, clear shadow on hover */
 .product-card {
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
@@ -406,14 +401,18 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* ── CARD IMAGE ────────────────────── */
 .product-img-wrap {
-  width: 100%; aspect-ratio: 4/3; background: #000;
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  overflow: hidden;
   position: relative;
+  flex-shrink: 0;
 }
-.product-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* Single-image path: bare img must fill the aspect-ratio container absolutely */
-.product-img-wrap > img {
-  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+
+/* All images — single or carousel slide — fill the container */
+.product-img-wrap img,
+.img-carousel-slide img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
 }
 
 .prod-avail-ribbon {
@@ -431,9 +430,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ── IMAGE CAROUSEL ────────────────── */
-/* position: absolute + inset: 0 pins the carousel to the four edges of
-   .product-img-wrap so it always fills the 4/3 aspect-ratio box,
-   regardless of the image's natural dimensions. */
 .img-carousel {
   position: absolute; inset: 0; overflow: hidden;
 }
@@ -446,9 +442,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   min-width: 100%; height: 100%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
   background: #000;
-}
-.img-carousel-slide img {
-  width: 100%; height: 100%; object-fit: cover; display: block;
 }
 .img-carousel-btn {
   position: absolute; top: 50%; transform: translateY(-50%);
@@ -479,7 +472,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ── CARD BODY ─────────────────────── */
-/* Serial Position: category + name first, price last (anchors value) */
 .product-card-body {
   padding: 16px 18px;
   display: flex; flex-direction: column; gap: 5px; flex: 1;
@@ -492,14 +484,12 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .product-brand  { font-size: 0.72rem; color: var(--text-muted); }
 .product-variant{ font-size: 0.75rem; color: var(--text-muted); }
 .product-desc   { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; margin-top: 2px; }
-/* Price sits at the bottom — Serial Position anchors the key number */
 .product-price  {
   font-family: var(--font-display); font-size: 1.55rem; color: var(--accent);
   margin-top: auto; padding-top: 10px;
 }
 
 /* ── CARD FOOTER ───────────────────── */
-/* Fitts's Law: taller buttons with more padding for easier tapping */
 .product-card-footer {
   display: flex; gap: 8px;
   padding: 12px 16px;
@@ -526,8 +516,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* ══════════════════════════════════════
    PRODUCT MODAL
-   Laws of UX: Hick, Miller, Proximity,
-   Law of Common Region
 ══════════════════════════════════════ */
 
 .modal-overlay {
@@ -541,7 +529,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 32px; display: flex; flex-direction: column; gap: 20px;
 }
 
-/* Product modal: overflow-y: auto ensures the whole modal scrolls correctly */
 .modal-product { max-width: 560px; gap: 0; padding: 0; overflow-y: auto; }
 
 /* ── MODAL HEADER ──────────────────── */
@@ -552,13 +539,11 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .modal-title {
   font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong);
 }
-/* Subtitle gives context without adding form fields — reduces Hick's Law load */
 .modal-subtitle {
   font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;
 }
 
 /* ── MODAL SECTIONS ────────────────── */
-/* Law of Proximity + Common Region: each section is a clearly bounded chunk */
 .modal-section {
   padding: 20px 32px;
   border-bottom: 1px solid var(--glass-border);
@@ -566,19 +551,17 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .modal-section:last-of-type { border-bottom: none; }
 
-/* Miller's Law: section labels chunk the form into digestible groups */
 .modal-section-label {
   font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--accent); opacity: 0.75;
 }
 
-/* ── MODAL GRID (inside sections) ──── */
+/* ── MODAL GRID ────────────────────── */
 .modal-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .modal-field { display: flex; flex-direction: column; gap: 6px; }
 .modal-field.full { grid-column: 1 / -1; }
 
 /* ── IMAGES COLLAPSIBLE ────────────── */
-/* Hick's Law: image fields collapse by default to reduce visual noise */
 .modal-images {
   border: 1px solid var(--glass-border);
   border-radius: 12px; overflow: hidden;
@@ -609,7 +592,6 @@ details.modal-images[open] .modal-images-summary::after {
 }
 
 /* ── VARIANTS SUB-SECTIONS ─────────── */
-/* Law of Common Region: each group gets its own bordered container */
 .modal-sub-section {
   background: rgba(255,255,255,0.025);
   border: 1px solid var(--glass-border);
@@ -627,7 +609,6 @@ details.modal-images[open] .modal-images-summary::after {
   padding: 20px 32px;
   border-top: 1px solid var(--glass-border);
 }
-/* Fitts's Law: Save button is visually dominant and wide */
 .modal-save-btn {
   padding: 11px 32px; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.02em;
 }
