@@ -411,6 +411,10 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   position: relative;
 }
 .product-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Single-image path: bare img must fill the aspect-ratio container absolutely */
+.product-img-wrap > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+}
 
 .prod-avail-ribbon {
   position: absolute; top: 10px; left: 10px; z-index: 3;
