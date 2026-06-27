@@ -389,7 +389,8 @@ function openProductDetail(pid) {
   const images    = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : (p.image_url ? [p.image_url] : []);
   const available = p.active === true &&
     p.availability !== 'coming_soon' &&
-    p.availability !== 'out_of_stock';
+    p.availability !== 'out_of_stock' &&
+    p.availability !== 'unavailable';
   const price      = Number(p.price) || 0;
   const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
 
@@ -767,7 +768,8 @@ function renderProducts(products) {
     const pid       = p.id;
     const available = p.active === true &&
       p.availability !== 'coming_soon' &&
-      p.availability !== 'out_of_stock';
+      p.availability !== 'out_of_stock' &&
+      p.availability !== 'unavailable';
     const price      = Number(p.price) || 0;
     const priceLabel = price > 0 ? `R${price.toFixed(2)}` : 'Coming Soon';
     const unavailableClass = available ? '' : ' is-unavailable';
