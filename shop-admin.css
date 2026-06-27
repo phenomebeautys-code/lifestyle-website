@@ -431,7 +431,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* ── IMAGE CAROUSEL ────────────────── */
 .img-carousel {
-  position: absolute; inset: 0; overflow: hidden;
+  width: 100%; height: 100%; overflow: hidden;
+  display: block;
 }
 .img-carousel-track {
   display: flex; height: 100%;
