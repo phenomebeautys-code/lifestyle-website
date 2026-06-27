@@ -14,8 +14,7 @@ let adminToken      = '';
 let pollTimer       = null;
 let editingVariants = [];
 let editingSizes    = [];
-let isReorderMode   = false;
-let dragSrcIdx      = null;
+let saveOrderTimer  = null; // debounce handle for saveProductOrder
 
 const BADGE_MAP = {
   pending:    'badge-unpaid',
@@ -23,7 +22,6 @@ const BADGE_MAP = {
   dispatched: 'badge-dispatched',
   delivered:  'badge-delivered',
 };
-/* Human-readable labels for status badges */
 const STATUS_LABELS = {
   pending:    'Payment Pending',
   processing: 'Processing',
@@ -32,7 +30,7 @@ const STATUS_LABELS = {
 };
 const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
 
-/* ─── SVG ICONS ────────────────────────────────── */
+/* ─── SVG ICONS ───────────────────────────────── */
 const SVG = {
   locker: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/><circle cx="12" cy="12" r="1"/></svg>`,
   door:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
@@ -41,7 +39,7 @@ const SVG = {
   star:   `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
 };
 
-/* ─── INIT ─────────────────────────────────────── */
+/* ─── INIT ─────────────────────────────────────────── */
 document.getElementById('adminDate').textContent =
   new Date().toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'long' });
 
@@ -77,7 +75,6 @@ document.getElementById('modalCancelBtn').addEventListener('click', closeProduct
 document.getElementById('modalSaveBtn').addEventListener('click', saveProduct);
 document.getElementById('addVariantBtn').addEventListener('click', addVariantRow);
 document.getElementById('addSizeBtn').addEventListener('click', addSizeRow);
-document.getElementById('reorderBtn').addEventListener('click', toggleReorderMode);
 document.getElementById('productModal').addEventListener('click', e => {
   if (e.target === document.getElementById('productModal')) closeProductModal();
 });
@@ -103,7 +100,7 @@ function closeSidebar() {
   document.body.classList.remove('sidebar-open');
 }
 
-/* ─── AUTH ─────────────────────────────────────── */
+/* ─── AUTH ───────────────────────────────────────────── */
 async function hashToken(pw) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -156,7 +153,7 @@ function callEdge(body) {
   });
 }
 
-/* ─── AUTO-REFRESH POLLING ────────────────────── */
+/* ─── AUTO-REFRESH POLLING ─────────────────────── */
 function startPolling() {
   stopPolling();
   pollTimer = setInterval(async () => {
@@ -181,7 +178,7 @@ function stopPolling() {
   if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
-/* ─── NAVIGATION ──────────────────────────────── */
+/* ─── NAVIGATION ──────────────────────────────────── */
 function navTo(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -191,7 +188,7 @@ function navTo(page, btn) {
   if (page === 'products') loadProducts();
 }
 
-/* ─── REFRESH ──────────────────────────────────── */
+/* ─── REFRESH ────────────────────────────────────────── */
 async function refreshData() {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
@@ -207,7 +204,7 @@ async function refreshData() {
   finally { btn.disabled = false; }
 }
 
-/* ─── STATS ────────────────────────────────────── */
+/* ─── STATS ────────────────────────────────────────────── */
 function updateStats() {
   const paid       = allOrders.filter(o => o.payment_status === 'paid');
   const unpaid     = allOrders.filter(o => o.payment_status !== 'paid');
@@ -254,7 +251,7 @@ function updateReports() {
   setText('repDeliveryRate', paid.length ? rate + '%' : '\u2014');
 }
 
-/* ─── RECENT SALES ────────────────────────────── */
+/* ─── RECENT SALES ────────────────────────────────── */
 function renderRecent() {
   const el   = document.getElementById('recentList');
   const list = [...allOrders]
@@ -282,7 +279,7 @@ function renderRecent() {
   }).join('');
 }
 
-/* ─── DELIVERY HELPERS ────────────────────────── */
+/* ─── DELIVERY HELPERS ────────────────────────────── */
 function getDeliveryLabel(o) {
   const method = o.delivery_method || 'door';
   const meta   = o.delivery_meta || {};
@@ -292,7 +289,7 @@ function getDeliveryLabel(o) {
   return { icon: SVG.door, label: 'Door Delivery', sub: o.delivery_address || '' };
 }
 
-/* ─── ORDERS TABLE ────────────────────────────── */
+/* ─── ORDERS TABLE ────────────────────────────────── */
 function applyFilter(filter, btn) {
   activeFilter = filter;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -416,7 +413,6 @@ function renderCards() {
     const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
     printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
     actions.appendChild(sel);
-    /* Mark as Paid button — cards view, unpaid only */
     if (o.payment_status !== 'paid') {
       const mpBtn = document.createElement('button');
       mpBtn.className = 'btn btn-primary';
@@ -505,7 +501,6 @@ function mkDeliveryTd(o) {
 function mkSelectTd(o) {
   const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
 }
-/* Mark as Paid — table column, unpaid only */
 function mkMarkPaidTd(o) {
   const td = document.createElement('td');
   if (o.payment_status !== 'paid') {
@@ -533,7 +528,7 @@ async function updateOrderStatus(id, status, badgeEl) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── MARK AS PAID ───────────────────────────── */
+/* ─── MARK AS PAID ───────────────────────────────── */
 async function markAsPaid(orderId) {
   const btn = document.querySelector(`[data-mark-paid="${orderId}"]`);
   if (btn) { btn.disabled = true; btn.textContent = 'Saving\u2026'; }
@@ -547,7 +542,6 @@ async function markAsPaid(orderId) {
       o.paid_at = o.paid_at || new Date().toISOString();
     }
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    /* If the detail modal is open for this order, re-render it */
     const modal = document.getElementById('orderDetailModal');
     if (!modal.hasAttribute('hidden')) openOrderDetail(orderId);
     showToast('Payment marked as paid');
@@ -555,7 +549,7 @@ async function markAsPaid(orderId) {
   finally { if (btn) { btn.disabled = false; btn.textContent = 'Mark as Paid'; } }
 }
 
-/* ─── ORDER DETAIL MODAL ─────────────────────── */
+/* ─── ORDER DETAIL MODAL ─────────────────────────── */
 function openOrderDetail(orderId) {
   const o = allOrders.find(x => x.id === orderId);
   if (!o) return;
@@ -586,7 +580,6 @@ function openOrderDetail(orderId) {
   const lockerSVG  = SVG.locker;
   const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
 
-  /* Mark as Paid row — only rendered when unpaid */
   const markPaidRow = !isPaid ? `
     <div style="margin-top:10px">
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
@@ -595,7 +588,6 @@ function openOrderDetail(orderId) {
   document.getElementById('odTitle').textContent = `Order #${orderNo}`;
   document.getElementById('orderDetailBody').innerHTML = `
 
-    <!-- Customer -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Customer</div>
       <div style="font-size:1rem;font-weight:700;color:var(--accent-strong);margin-bottom:4px">${esc(o.customer_name)}</div>
@@ -604,7 +596,6 @@ function openOrderDetail(orderId) {
       <div style="font-size:0.76rem;color:var(--text-muted);margin-top:6px">Placed: ${date}</div>
     </div>
 
-    <!-- Payment & Status badges -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
       <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
       <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${STATUS_LABELS[o.status] || o.status || 'Payment Pending'}</span>
@@ -614,18 +605,15 @@ function openOrderDetail(orderId) {
 
     ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px;display:flex;align-items:center;gap:5px">${checkSVG} Payment confirmed ${paidAt}</div>` : ''}
 
-    <!-- Delivery -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Delivery</div>
       <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">${delivIcon} ${esc(delivInfo.label)}</div>
       ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
     </div>
 
-    <!-- Items -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Items</div>
       ${itemsHTML || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">No items</div>'}
-      <!-- Totals -->
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
         ${o.subtotal != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Subtotal</span><span>R${Number(o.subtotal).toLocaleString('en-ZA')}</span></div>` : ''}
         ${o.delivery_fee != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Delivery fee</span><span>R${Number(o.delivery_fee).toLocaleString('en-ZA')}</span></div>` : ''}
@@ -633,21 +621,18 @@ function openOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Gift message -->
     ${o.is_gift && o.gift_message ? `
     <div style="background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;display:flex;align-items:center;gap:5px">${giftSVG} Gift Message</div>
       <div style="font-size:0.88rem;font-style:italic;color:var(--text-soft);line-height:1.6">&ldquo;${esc(o.gift_message)}&rdquo;</div>
-    </div>` : (o.is_gift ? `<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px;display:flex;align-items:center;gap:5px">${giftSVG} Gift order &mdash; no message added</div>` : '')}
+    </div>` : (o.is_gift ? `<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px;display:flex;align-items:center;gap:5px">${giftSVG} Gift order - no message added</div>` : '')}
 
-    <!-- Notes -->
     ${o.notes ? `
     <div style="background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;padding:14px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Order Notes</div>
       <div style="font-size:0.84rem;color:var(--text-soft);line-height:1.5">${esc(o.notes)}</div>
     </div>` : ''}
 
-    <!-- Update status -->
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
       <select id="odStatusSelect" class="status-select" style="flex:1;min-width:140px">
         ${['pending','processing','dispatched','delivered'].map(v =>
@@ -677,7 +662,7 @@ function closeOrderDetail() {
   document.body.style.overflow = '';
 }
 
-/* ─── CSV EXPORT ──────────────────────────────── */
+/* ─── CSV EXPORT ──────────────────────────────────────── */
 function exportOrdersCSV() {
   const orders = getFiltered();
   if (!orders.length) { showToast('No orders to export.', true); return; }
@@ -711,7 +696,7 @@ function exportOrdersCSV() {
   showToast('CSV exported');
 }
 
-/* ─── PRINT LABEL ─────────────────────────────── */
+/* ─── PRINT LABEL ───────────────────────────────────────── */
 function printLabel(order) {
   if (!order) return;
   const items   = Array.isArray(order.items) ? order.items : [];
@@ -765,20 +750,20 @@ function closePrintLabel() {
   document.body.style.overflow = '';
 }
 
-/* ─── AVAILABILITY HELPERS ──────────────────────── */
+/* ─── AVAILABILITY HELPERS ────────────────────────────── */
 const AVAILABILITY_LABELS = {
-  available:   null,
+  available:   'Available',
   coming_soon: 'Coming Soon',
   unavailable: 'Not Available',
 };
 
-function availabilityBadgeHTML(avail) {
-  const label = AVAILABILITY_LABELS[avail];
-  if (!label) return '';
-  return `<span class="product-avail-badge">${label}</span>`;
-}
+const AVAILABILITY_CLASSES = {
+  available:   'prod-pill-available',
+  coming_soon: 'prod-pill-coming-soon',
+  unavailable: 'prod-pill-unavailable',
+};
 
-/* ─── PRODUCTS ───────────────────────────────────── */
+/* ─── PRODUCTS ────────────────────────────────────────────── */
 function getProductImages(p) {
   if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
   if (p.image_url) return [p.image_url];
@@ -804,37 +789,51 @@ async function loadProductsFromRest() {
     allProducts = await res.json(); renderProducts();
   } catch { allProducts = []; renderProducts(); }
 }
+
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
-  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q)) : allProducts;
+  const list = q
+    ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q))
+    : allProducts;
+
+  // Update live count in toolbar
+  const countEl = document.getElementById('productsCount');
+  if (countEl) {
+    const unavailCount = allProducts.filter(p => (p.availability || 'available') === 'unavailable').length;
+    countEl.textContent = allProducts.length
+      ? `${allProducts.length} product${allProducts.length !== 1 ? 's' : ''}${unavailCount ? ` · ${unavailCount} unavailable` : ''}`
+      : '';
+  }
+
   if (!list.length) {
     el.innerHTML = `<div class="products-empty" style="grid-column:1/-1">No products yet.<br><button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button></div>`;
-    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal()); return;
+    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal());
+    return;
   }
+
   el.innerHTML = '';
-  list.forEach(p => {
+  list.forEach((p, listIdx) => {
+    // Absolute position in the full allProducts array (1-based)
+    const absIdx  = allProducts.indexOf(p);
+    const absPos  = absIdx + 1;
+    const isFirst = absIdx === 0;
+    const isLast  = absIdx === allProducts.length - 1;
+
     const card = document.createElement('div');
-    card.className = 'product-card' + (isReorderMode ? ' reorder-mode' : '');
+    card.className = 'product-card';
     card.dataset.productId = p.id;
 
-    if (isReorderMode) {
-      card.draggable = true;
-      card.addEventListener('dragstart', onDragStart);
-      card.addEventListener('dragover',  onDragOver);
-      card.addEventListener('dragleave', onDragLeave);
-      card.addEventListener('drop',      onDrop);
-      card.addEventListener('dragend',   onDragEnd);
-    }
-
+    /* ---- image area ---- */
     const variantDisplay = (p.variants || []).map(v => {
-      const name = typeof v === 'string' ? v : (v.name || '');
+      const name    = typeof v === 'string' ? v : (v.name || '');
       const inStock = typeof v === 'string' ? true : v.in_stock !== false;
       return name ? (inStock ? name : `${name} \u2716`) : null;
     }).filter(Boolean).join(', ');
     const sizeDisplay = normaliseSizes(p.sizes).map(s => `${s.name} (R${s.price})`).join(', ');
     const images = getProductImages(p);
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
+
     if (images.length > 1) {
       const carousel = document.createElement('div'); carousel.className = 'img-carousel';
       const track    = document.createElement('div'); track.className = 'img-carousel-track';
@@ -865,24 +864,24 @@ function renderProducts() {
     } else if (images.length === 1) {
       const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
-    } else { imgWrap.innerHTML = noImgSVG(); }
+    } else {
+      imgWrap.innerHTML = noImgSVG();
+    }
 
+    /* ---- position label (top-left) ---- */
+    const posLabel = document.createElement('div');
+    posLabel.className = 'product-pos-label';
+    posLabel.textContent = '#' + absPos;
+    imgWrap.appendChild(posLabel);
+
+    /* ---- availability pill (top-right) ---- */
     const avail = p.availability || 'available';
-    if (avail !== 'available') {
-      const badge = document.createElement('span');
-      badge.className = 'product-avail-badge';
-      badge.textContent = AVAILABILITY_LABELS[avail] || avail;
-      imgWrap.appendChild(badge);
-    }
+    const pill  = document.createElement('span');
+    pill.className = 'product-avail-pill ' + (AVAILABILITY_CLASSES[avail] || 'prod-pill-available');
+    pill.textContent = AVAILABILITY_LABELS[avail] || avail;
+    imgWrap.appendChild(pill);
 
-    if (isReorderMode) {
-      const handle = document.createElement('div');
-      handle.className = 'drag-handle';
-      handle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>';
-      handle.title = 'Drag to reorder';
-      imgWrap.appendChild(handle);
-    }
-
+    /* ---- card body ---- */
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
       ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
@@ -892,80 +891,94 @@ function renderProducts() {
       ${sizeDisplay    ? `<div class="product-variant">Sizes: ${esc(sizeDisplay)}</div>` : ''}
       ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
       <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>`;
-    const footer = document.createElement('div'); footer.className = 'product-card-footer';
-    if (!isReorderMode) {
-      const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
-      editBtn.addEventListener('click', () => openProductModal(p));
-      const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
-      delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
-      footer.appendChild(editBtn); footer.appendChild(delBtn);
-    } else {
-      const hint = document.createElement('div');
-      hint.style.cssText = 'font-size:0.72rem;color:var(--text-muted);text-align:center;padding:4px 0;';
-      hint.textContent = 'Drag to reorder';
-      footer.appendChild(hint);
+
+    /* ---- reorder controls row (above footer) ---- */
+    const reorderRow = document.createElement('div');
+    reorderRow.className = 'product-reorder-row';
+
+    const upBtn = document.createElement('button');
+    upBtn.className = 'product-reorder-btn';
+    upBtn.setAttribute('aria-label', 'Move up');
+    upBtn.innerHTML = '&#8593;';
+    upBtn.disabled = isFirst;
+    upBtn.addEventListener('click', () => moveProduct(absIdx, -1));
+
+    const downBtn = document.createElement('button');
+    downBtn.className = 'product-reorder-btn';
+    downBtn.setAttribute('aria-label', 'Move down');
+    downBtn.innerHTML = '&#8595;';
+    downBtn.disabled = isLast;
+    downBtn.addEventListener('click', () => moveProduct(absIdx, 1));
+
+    const posWrap  = document.createElement('div');
+    posWrap.className = 'product-pos-input-wrap';
+    const posLabel2 = document.createElement('span');
+    posLabel2.className = 'product-pos-input-label';
+    posLabel2.textContent = 'Position';
+    const posInput = document.createElement('input');
+    posInput.type  = 'number';
+    posInput.className = 'product-pos-input';
+    posInput.value = absPos;
+    posInput.min   = 1;
+    posInput.max   = allProducts.length;
+    posInput.setAttribute('aria-label', 'Set position');
+
+    function applyPositionInput() {
+      let newPos = parseInt(posInput.value, 10);
+      if (isNaN(newPos)) { posInput.value = absPos; return; }
+      newPos = Math.max(1, Math.min(allProducts.length, newPos));
+      posInput.value = newPos;
+      const targetIdx = newPos - 1;
+      if (targetIdx === absIdx) return;
+      const moved = allProducts.splice(absIdx, 1)[0];
+      allProducts.splice(targetIdx, 0, moved);
+      renderProducts();
+      debounceSaveOrder();
     }
-    card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
+    posInput.addEventListener('keydown', e => { if (e.key === 'Enter') { posInput.blur(); applyPositionInput(); } });
+    posInput.addEventListener('blur', applyPositionInput);
+
+    posWrap.appendChild(posLabel2);
+    posWrap.appendChild(posInput);
+    reorderRow.appendChild(upBtn);
+    reorderRow.appendChild(downBtn);
+    reorderRow.appendChild(posWrap);
+
+    /* ---- card footer (Edit / Delete) ---- */
+    const footer  = document.createElement('div'); footer.className = 'product-card-footer';
+    const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', () => openProductModal(p));
+    const delBtn  = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
+    footer.appendChild(editBtn); footer.appendChild(delBtn);
+
+    card.appendChild(imgWrap);
+    card.appendChild(body);
+    card.appendChild(reorderRow);
+    card.appendChild(footer);
     el.appendChild(card);
   });
 }
+
 function noImgSVG() {
   return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
 }
 
-/* ─── REORDER MODE ────────────────────────────── */
-function toggleReorderMode() {
-  isReorderMode = !isReorderMode;
-  const btn    = document.getElementById('reorderBtn');
-  const hint   = document.getElementById('reorderHint');
-  const search = document.getElementById('productSearch');
-  if (isReorderMode) {
-    btn.innerHTML = '&#10003; Done Reordering';
-    btn.classList.add('btn-primary');
-    btn.classList.remove('btn-secondary');
-    hint.style.display = 'flex';
-    search.style.display = 'none';
-  } else {
-    btn.innerHTML = '&#8597; Reorder';
-    btn.classList.remove('btn-primary');
-    btn.classList.add('btn-secondary');
-    hint.style.display = 'none';
-    search.style.display = '';
-  }
+/* ─── REORDER: MOVE BY DIRECTION ─────────────────────── */
+function moveProduct(fromIdx, direction) {
+  const toIdx = fromIdx + direction;
+  if (toIdx < 0 || toIdx >= allProducts.length) return;
+  const tmp = allProducts[fromIdx];
+  allProducts[fromIdx] = allProducts[toIdx];
+  allProducts[toIdx]   = tmp;
   renderProducts();
+  debounceSaveOrder();
 }
 
-function onDragStart(e) {
-  dragSrcIdx = [...e.currentTarget.parentElement.children].indexOf(e.currentTarget);
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function onDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  e.currentTarget.classList.add('drag-over');
-}
-function onDragLeave(e) {
-  e.currentTarget.classList.remove('drag-over');
-}
-async function onDrop(e) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  const grid    = document.getElementById('productsGrid');
-  const cards   = [...grid.querySelectorAll('.product-card')];
-  const dropIdx = cards.indexOf(e.currentTarget);
-  if (dragSrcIdx === null || dragSrcIdx === dropIdx) return;
-
-  const moved = allProducts.splice(dragSrcIdx, 1)[0];
-  allProducts.splice(dropIdx, 0, moved);
-
-  dragSrcIdx = null;
-  renderProducts();
-  await saveProductOrder();
-}
-function onDragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.product-card').forEach(c => c.classList.remove('drag-over'));
+/* ─── DEBOUNCED ORDER SAVE ──────────────────────────── */
+function debounceSaveOrder() {
+  clearTimeout(saveOrderTimer);
+  saveOrderTimer = setTimeout(saveProductOrder, 400);
 }
 
 async function saveProductOrder() {
@@ -978,13 +991,13 @@ async function saveProductOrder() {
   } catch { showToast('Network error saving order.', true); }
 }
 
-/* ─── SIZES HELPERS ─────────────────────────────── */
+/* ─── SIZES HELPERS ───────────────────────────────────────── */
 function normaliseSizes(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 })).filter(s => s.name);
 }
 
-/* ─── PRODUCT MODAL ────────────────────────────── */
+/* ─── PRODUCT MODAL ────────────────────────────────────────── */
 function openProductModal(product = null) {
   document.getElementById('modalTitle').textContent  = product ? 'Edit Product' : 'Add Product';
   document.getElementById('modalProductId').value    = product?.id || '';
@@ -1120,7 +1133,7 @@ async function deleteProduct(id, name) {
   } catch { showToast('Network error.', true); }
 }
 
-/* ─── UTILITIES ─────────────────────────────────── */
+/* ─── UTILITIES ─────────────────────────────────────────────── */
 function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 function showToast(msg, isError = false) {
