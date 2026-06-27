@@ -143,14 +143,17 @@
     <!-- PRODUCTS -->
     <section class="page" id="page-products" aria-label="Products">
       <div class="page-head">
-        <div><h2>Products</h2><p>Add, edit and remove shop products</p></div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button class="btn btn-secondary" id="reorderBtn" style="padding:8px 16px;font-size:0.8rem;">&#8597; Reorder</button>
-          <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+        <div>
+          <h2>Products</h2>
+          <p>Add, edit and remove shop products</p>
+        </div>
+        <div class="products-actions">
+          <button class="btn btn-secondary btn-reorder" id="reorderBtn">&#8597; Reorder</button>
+          <button class="btn btn-primary btn-add-product" id="addProductBtn">+ Add Product</button>
         </div>
       </div>
       <div class="products-toolbar">
-        <input class="search-input" type="search" id="productSearch" placeholder="Search products…" aria-label="Search products" />
+        <input class="search-input products-search" type="search" id="productSearch" placeholder="Search products…" aria-label="Search products" />
         <div class="reorder-hint" id="reorderHint" style="display:none;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>
           Drag cards to reorder &mdash; changes save automatically
@@ -183,48 +186,72 @@
 
 <!-- PRODUCT MODAL -->
 <div class="modal-overlay" id="productModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
-  <div class="modal">
-    <div class="modal-title" id="modalTitle">Add Product</div>
+  <div class="modal modal-product">
+
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Product</div>
+      <p class="modal-subtitle">Fill in the core details, then add images and variants.</p>
+    </div>
+
     <input type="hidden" id="modalProductId" />
-    <div class="modal-grid">
-      <div class="modal-field full"><label class="field-label" for="mpName">Product Name</label><input type="text" id="mpName" class="field-input" placeholder="e.g. Lash Serum" /></div>
-      <div class="modal-field"><label class="field-label" for="mpPrice">Base Price (R)</label><input type="number" id="mpPrice" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
-      <div class="modal-field"><label class="field-label" for="mpCost">Cost Price (R)</label><input type="number" id="mpCost" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
-      <div class="modal-field"><label class="field-label" for="mpSku">SKU</label><input type="text" id="mpSku" class="field-input" placeholder="e.g. LSH-001" /></div>
-      <div class="modal-field"><label class="field-label" for="mpBrand">Brand</label><input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" /></div>
-      <div class="modal-field full"><label class="field-label" for="mpCategory">Category</label><input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" /></div>
 
-      <!-- ── AVAILABILITY ── -->
-      <div class="modal-field full">
-        <label class="field-label" for="mpAvailability">Availability</label>
-        <select id="mpAvailability" class="field-input" style="cursor:pointer;">
-          <option value="available">Available — on sale, add to cart enabled</option>
-          <option value="coming_soon">Coming Soon — visible but not purchasable</option>
-          <option value="unavailable">Not Available — visible but not purchasable</option>
-        </select>
+    <!-- SECTION: CORE DETAILS -->
+    <div class="modal-section">
+      <div class="modal-section-label">Core Details</div>
+      <div class="modal-grid">
+        <div class="modal-field full"><label class="field-label" for="mpName">Product Name</label><input type="text" id="mpName" class="field-input" placeholder="e.g. Lash Serum" /></div>
+        <div class="modal-field"><label class="field-label" for="mpPrice">Base Price (R)</label><input type="number" id="mpPrice" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
+        <div class="modal-field"><label class="field-label" for="mpCost">Cost Price (R)</label><input type="number" id="mpCost" class="field-input" placeholder="0.00" min="0" step="0.01" /></div>
+        <div class="modal-field"><label class="field-label" for="mpSku">SKU</label><input type="text" id="mpSku" class="field-input" placeholder="e.g. LSH-001" /></div>
+        <div class="modal-field"><label class="field-label" for="mpBrand">Brand</label><input type="text" id="mpBrand" class="field-input" placeholder="e.g. PhenomeBeauty" /></div>
+        <div class="modal-field full"><label class="field-label" for="mpCategory">Category</label><input type="text" id="mpCategory" class="field-input" placeholder="e.g. Skincare, Lashes" /></div>
+        <div class="modal-field full">
+          <label class="field-label" for="mpAvailability">Availability</label>
+          <select id="mpAvailability" class="field-input" style="cursor:pointer;">
+            <option value="available">Available — on sale, add to cart enabled</option>
+            <option value="coming_soon">Coming Soon — visible but not purchasable</option>
+            <option value="unavailable">Not Available — visible but not purchasable</option>
+          </select>
+        </div>
+        <div class="modal-field full"><label class="field-label" for="mpDesc">Description</label><textarea id="mpDesc" class="field-input" rows="3" placeholder="Short product description…"></textarea></div>
       </div>
+    </div>
 
-      <div class="modal-field full"><label class="field-label" for="mpDesc">Description</label><textarea id="mpDesc" class="field-input" rows="3" placeholder="Short product description…"></textarea></div>
-      <div class="modal-field full"><label class="field-label" for="mpImage1">Image 1 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(main)</span></label><input type="url" id="mpImage1" class="field-input" placeholder="https://…" /></div>
-      <div class="modal-field full"><label class="field-label" for="mpImage2">Image 2 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage2" class="field-input" placeholder="https://…" /></div>
-      <div class="modal-field full"><label class="field-label" for="mpImage3">Image 3 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage3" class="field-input" placeholder="https://…" /></div>
-      <div class="modal-field full"><label class="field-label" for="mpImage4">Image 4 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage4" class="field-input" placeholder="https://…" /></div>
-      <div class="modal-field full"><label class="field-label" for="mpImage5">Image 5 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage5" class="field-input" placeholder="https://…" /></div>
-      <div class="modal-field full">
-        <label class="field-label">Variants</label>
+    <!-- SECTION: IMAGES -->
+    <div class="modal-section">
+      <div class="modal-section-label">Images</div>
+      <details class="modal-images" open>
+        <summary class="modal-images-summary">Image URLs <span class="modal-images-hint">(1 required, up to 5)</span></summary>
+        <div class="modal-images-body">
+          <div class="modal-field full"><label class="field-label" for="mpImage1">Image 1 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(main)</span></label><input type="url" id="mpImage1" class="field-input" placeholder="https://…" /></div>
+          <div class="modal-field full"><label class="field-label" for="mpImage2">Image 2 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage2" class="field-input" placeholder="https://…" /></div>
+          <div class="modal-field full"><label class="field-label" for="mpImage3">Image 3 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage3" class="field-input" placeholder="https://…" /></div>
+          <div class="modal-field full"><label class="field-label" for="mpImage4">Image 4 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage4" class="field-input" placeholder="https://…" /></div>
+          <div class="modal-field full"><label class="field-label" for="mpImage5">Image 5 URL <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="url" id="mpImage5" class="field-input" placeholder="https://…" /></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- SECTION: VARIANTS & SIZES -->
+    <div class="modal-section">
+      <div class="modal-section-label">Variants &amp; Sizes</div>
+      <div class="modal-sub-section">
+        <div class="modal-sub-section-title">Variants</div>
         <div class="variants-list" id="variantsList"></div>
         <button class="btn-add-variant" id="addVariantBtn">+ Add variant</button>
       </div>
-      <div class="modal-field full">
-        <label class="field-label">Sizes &amp; Prices</label>
+      <div class="modal-sub-section">
+        <div class="modal-sub-section-title">Sizes &amp; Prices</div>
         <div class="variants-list" id="sizesList"></div>
         <button class="btn-add-variant" id="addSizeBtn">+ Add size</button>
       </div>
     </div>
+
     <div class="modal-actions">
       <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
-      <button class="btn btn-primary" id="modalSaveBtn">Save Product</button>
+      <button class="btn btn-primary modal-save-btn" id="modalSaveBtn">Save Product</button>
     </div>
+
   </div>
 </div>
 

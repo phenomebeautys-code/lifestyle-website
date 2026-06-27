@@ -323,7 +323,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 
 /* ── MARK AS PAID BUTTON ───────────── */
-/* Compact variant — table column and order cards */
 .btn-mark-paid {
   padding: 5px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 700;
   border: 1px solid rgba(74,222,128,0.35); background: rgba(74,222,128,0.08);
@@ -334,7 +333,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: rgba(74,222,128,0.18); border-color: rgba(74,222,128,0.55); color: #86efac;
 }
 .btn-mark-paid:disabled { opacity: 0.45; cursor: not-allowed; }
-/* Full-width variant — order detail modal */
 .btn-mark-paid-full {
   width: 100%; padding: 11px 20px; border-radius: 10px; font-size: 0.84rem; font-weight: 700;
   border: 1px solid rgba(74,222,128,0.35); background: rgba(74,222,128,0.08);
@@ -347,22 +345,66 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .btn-mark-paid-full:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── PRODUCTS ──────────────────────── */
+/* ══════════════════════════════════════
+   PRODUCTS PAGE
+   Laws of UX: Fitts, Hick, Proximity,
+   Von Restorff, Aesthetic-Usability
+══════════════════════════════════════ */
+
+/* ── PAGE HEADER ACTIONS ───────────── */
+/* Von Restorff: primary CTA stands out against the muted secondary */
+.products-actions {
+  display: flex; gap: 10px; align-items: center;
+}
+.btn-reorder {
+  padding: 10px 18px; font-size: 0.8rem;
+}
+/* Fitts's Law: larger hit area on the primary CTA */
+.btn-add-product {
+  padding: 10px 22px; font-size: 0.86rem; font-weight: 700;
+  border: 1px solid rgba(var(--accent-rgb, 251,191,36), 0.5);
+  letter-spacing: 0.02em;
+}
+.btn-add-product:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.1);
+}
+
+/* ── TOOLBAR ───────────────────────── */
 .products-toolbar { display: flex; align-items: center; gap: 12px; }
-.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
-.products-empty { grid-column: 1 / -1; text-align: center; padding: 80px 20px; color: var(--text-muted); font-size: 0.88rem; }
+/* Law of Proximity: search is wider, clearly paired with the grid below */
+.products-search { width: 280px; }
+
+/* ── GRID ──────────────────────────── */
+/* Miller's Law: wider min gives each card breathing room, ~3 per row max */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.products-empty {
+  grid-column: 1 / -1; text-align: center;
+  padding: 80px 20px; color: var(--text-muted); font-size: 0.88rem;
+}
+
+/* ── PRODUCT CARD ──────────────────── */
+/* Aesthetic-Usability: slightly taller radius, clear shadow on hover */
 .product-card {
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
-  border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
-  display: flex; flex-direction: column; transition: border-color 0.2s, transform 0.15s;
+  border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: border-color 0.2s, transform 0.18s, box-shadow 0.18s;
   backdrop-filter: blur(12px);
 }
-.product-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
-
-/* Dim unavailable products in the admin grid */
+.product-card:hover {
+  border-color: rgba(255,255,255,0.22);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
 .product-card.prod-unavailable { opacity: 0.5; }
 .product-card.prod-unavailable:hover { opacity: 0.75; }
 
+/* ── CARD IMAGE ────────────────────── */
 .product-img-wrap {
   width: 100%; aspect-ratio: 4/3; background: #000;
   display: flex; align-items: center; justify-content: center; overflow: hidden;
@@ -370,7 +412,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .product-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Availability ribbon on the image (admin card) */
 .prod-avail-ribbon {
   position: absolute; top: 10px; left: 10px; z-index: 3;
   padding: 4px 10px; border-radius: 20px;
@@ -402,7 +443,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .img-carousel-slide img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
-/* Prev / Next arrow buttons */
 .img-carousel-btn {
   position: absolute; top: 50%; transform: translateY(-50%);
   background: rgba(4,4,6,0.55); backdrop-filter: blur(6px);
@@ -418,7 +458,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 .img-carousel-prev { left: 6px; }
 .img-carousel-next { right: 6px; }
 .img-carousel-btn:hover { background: rgba(4,4,6,0.85); }
-/* Dot indicators */
 .img-carousel-dots {
   position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%);
   display: flex; gap: 5px; z-index: 2;
@@ -432,38 +471,58 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: var(--accent-strong); transform: scale(1.3);
 }
 
-.product-card-body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.product-cat    { font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
-.product-name   { font-size: 0.92rem; font-weight: 700; color: var(--accent-strong); }
+/* ── CARD BODY ─────────────────────── */
+/* Serial Position: category + name first, price last (anchors value) */
+.product-card-body {
+  padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 5px; flex: 1;
+}
+.product-cat {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.product-name   { font-size: 0.95rem; font-weight: 700; color: var(--accent-strong); line-height: 1.3; }
 .product-brand  { font-size: 0.72rem; color: var(--text-muted); }
 .product-variant{ font-size: 0.75rem; color: var(--text-muted); }
-.product-desc   { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; }
-.product-price  { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent); margin-top: auto; padding-top: 8px; }
-.product-card-footer { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--glass-border); }
+.product-desc   { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; margin-top: 2px; }
+/* Price sits at the bottom — Serial Position anchors the key number */
+.product-price  {
+  font-family: var(--font-display); font-size: 1.55rem; color: var(--accent);
+  margin-top: auto; padding-top: 10px;
+}
+
+/* ── CARD FOOTER ───────────────────── */
+/* Fitts's Law: taller buttons with more padding for easier tapping */
+.product-card-footer {
+  display: flex; gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--glass-border);
+}
 .product-card-footer button {
-  flex: 1; padding: 8px; font-size: 0.78rem; border-radius: 8px;
-  cursor: pointer; font-family: var(--font-body); border: 1px solid var(--glass-border); transition: all 0.18s;
+  flex: 1; padding: 10px 12px; font-size: 0.8rem; font-weight: 600;
+  border-radius: 10px; cursor: pointer; font-family: var(--font-body);
+  border: 1px solid var(--glass-border); transition: all 0.18s;
+  letter-spacing: 0.01em;
 }
 .btn-edit-prod   { background: rgba(255,255,255,0.05); color: var(--text); }
-.btn-edit-prod:hover   { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: var(--accent-strong); }
-.btn-delete-prod { background: rgba(248,113,113,0.07); color: #f87171; border-color: rgba(248,113,113,0.2); }
-.btn-delete-prod:hover { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.4); }
-
-/* ── REPORTS ───────────────────────── */
-.reports-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-.report-card {
-  padding: 24px;
-  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
-  border: 1px solid var(--glass-border); border-radius: 16px;
-  display: flex; flex-direction: column; gap: 8px;
-  cursor: pointer; transition: border-color 0.2s, transform 0.15s;
-  backdrop-filter: blur(12px);
+.btn-edit-prod:hover   {
+  background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);
+  color: var(--accent-strong);
 }
-.report-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
-.report-card-title { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); margin-top: 4px; }
-.report-card-desc  { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; }
+.btn-delete-prod {
+  background: rgba(248,113,113,0.07); color: #f87171;
+  border-color: rgba(248,113,113,0.2);
+}
+.btn-delete-prod:hover {
+  background: rgba(248,113,113,0.16); border-color: rgba(248,113,113,0.45);
+}
 
-/* ── MODAL ─────────────────────────── */
+/* ══════════════════════════════════════
+   PRODUCT MODAL
+   Laws of UX: Hick, Miller, Proximity,
+   Law of Common Region
+══════════════════════════════════════ */
+
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
   z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px;
@@ -474,11 +533,97 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: #121214; border: 1px solid var(--glass-border); border-radius: 20px;
   padding: 32px; display: flex; flex-direction: column; gap: 20px;
 }
-.modal-title { font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong); }
+
+/* Product modal gets slightly more width for the section layout */
+.modal-product { max-width: 560px; gap: 0; padding: 0; overflow: hidden; }
+
+/* ── MODAL HEADER ──────────────────── */
+.modal-header {
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.modal-title {
+  font-family: var(--font-display); font-size: 1.6rem; color: var(--accent-strong);
+}
+/* Subtitle gives context without adding form fields — reduces Hick's Law load */
+.modal-subtitle {
+  font-size: 0.78rem; color: var(--text-muted); margin-top: 4px;
+}
+
+/* ── MODAL SECTIONS ────────────────── */
+/* Law of Proximity + Common Region: each section is a clearly bounded chunk */
+.modal-section {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex; flex-direction: column; gap: 14px;
+}
+.modal-section:last-of-type { border-bottom: none; }
+
+/* Miller's Law: section labels chunk the form into digestible groups */
+.modal-section-label {
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--accent); opacity: 0.75;
+}
+
+/* ── MODAL GRID (inside sections) ──── */
 .modal-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .modal-field { display: flex; flex-direction: column; gap: 6px; }
 .modal-field.full { grid-column: 1 / -1; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+/* ── IMAGES COLLAPSIBLE ────────────── */
+/* Hick's Law: image fields collapse by default to reduce visual noise */
+.modal-images {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px; overflow: hidden;
+}
+.modal-images-summary {
+  list-style: none; display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; cursor: pointer;
+  font-size: 0.78rem; font-weight: 600; color: var(--accent-strong);
+  user-select: none;
+  transition: background 0.15s;
+}
+.modal-images-summary::-webkit-details-marker { display: none; }
+.modal-images-summary::after {
+  content: '+';
+  font-size: 1rem; color: var(--text-muted); transition: transform 0.2s;
+}
+details.modal-images[open] .modal-images-summary::after {
+  content: '-';
+}
+.modal-images-summary:hover { background: rgba(255,255,255,0.04); }
+.modal-images-hint {
+  font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-left: 8px;
+}
+.modal-images-body {
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ── VARIANTS SUB-SECTIONS ─────────── */
+/* Law of Common Region: each group gets its own bordered container */
+.modal-sub-section {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.modal-sub-section-title {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+
+.modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  padding: 20px 32px;
+  border-top: 1px solid var(--glass-border);
+}
+/* Fitts's Law: Save button is visually dominant and wide */
+.modal-save-btn {
+  padding: 11px 32px; font-size: 0.88rem; font-weight: 700; letter-spacing: 0.02em;
+}
 
 .variants-list { display: flex; flex-direction: column; gap: 8px; }
 .variant-row   { display: flex; gap: 8px; align-items: center; }
@@ -500,6 +645,20 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   font-family: var(--font-body); transition: all 0.2s; width: 100%;
 }
 .btn-add-variant:hover { border-color: rgba(255,255,255,0.3); color: var(--accent-strong); }
+
+/* ── REPORTS ───────────────────────── */
+.reports-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.report-card {
+  padding: 24px;
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  border: 1px solid var(--glass-border); border-radius: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  cursor: pointer; transition: border-color 0.2s, transform 0.15s;
+  backdrop-filter: blur(12px);
+}
+.report-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
+.report-card-title { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); margin-top: 4px; }
+.report-card-desc  { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; }
 
 /* ── UTILITIES ─────────────────────── */
 .spinner {
@@ -611,10 +770,19 @@ tr:hover td { background: rgba(255,255,255,0.02); }
     max-height: 92dvh; border-radius: 20px 20px 0 0;
     padding: 24px 18px;
   }
+  .modal-product {
+    border-radius: 20px 20px 0 0;
+    padding: 0;
+  }
+  .modal-header { padding: 22px 20px 16px; }
+  .modal-section { padding: 16px 20px; }
+  .modal-actions { padding: 16px 20px; }
   .modal-grid { grid-template-columns: 1fr; }
   .filters { gap: 6px; }
   .filter-btn { padding: 6px 12px; font-size: 0.73rem; }
   .products-grid { grid-template-columns: 1fr; }
+  .products-search { width: 100%; }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions .btn { width: 100%; justify-content: center; }
+  .modal-save-btn { width: 100%; justify-content: center; }
 }
