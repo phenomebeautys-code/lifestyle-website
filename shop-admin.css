@@ -534,8 +534,8 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 32px; display: flex; flex-direction: column; gap: 20px;
 }
 
-/* Product modal gets slightly more width for the section layout */
-.modal-product { max-width: 560px; gap: 0; padding: 0; overflow: hidden; }
+/* Product modal: overflow-y: auto ensures the whole modal scrolls correctly */
+.modal-product { max-width: 560px; gap: 0; padding: 0; overflow-y: auto; }
 
 /* ── MODAL HEADER ──────────────────── */
 .modal-header {
