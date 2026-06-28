@@ -342,4 +342,799 @@ function renderTable() {
     ].forEach(c => tr.appendChild(c));
     tr.addEventListener('click', e => {
       if (e.target.closest('select, button')) return;
-      openOrderDetail(o.i
+      openOrderDetail(o.id);
+    });
+    tbody.appendChild(tr);
+  });
+}
+function renderCards() {
+  const orders = getFiltered();
+  const el     = document.getElementById('orderCards');
+  if (!orders.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No orders found.</div>';
+    return;
+  }
+  el.innerHTML = '';
+  orders.forEach(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const card  = document.createElement('div'); card.className = 'order-card';
+    const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
+    const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending');
+    const sel = makeStatusSelect(o, statusBadge);
+    const delivInfo = getDeliveryLabel(o);
+
+    card.innerHTML = `
+      <div class="oc-top">
+        <div>
+          <div class="oc-name">${esc(o.customer_name)}</div>
+          <div class="oc-meta">${esc(o.customer_email || '')} &middot; ${esc(o.customer_phone || '')}</div>
+        </div>
+        <div class="oc-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
+      </div>`;
+
+    const badges = document.createElement('div'); badges.className = 'oc-badges';
+    badges.appendChild(payBadge);
+    badges.appendChild(statusBadge);
+    const delivBadge = document.createElement('span');
+    delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
+    delivBadge.style.cssText = 'font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+    delivBadge.innerHTML = delivInfo.icon;
+    delivBadge.appendChild(document.createTextNode(' ' + delivInfo.label));
+    badges.appendChild(delivBadge);
+    if (o.is_gift) {
+      const g = document.createElement('span'); g.className = 'badge';
+      g.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+      g.innerHTML = SVG.gift;
+      g.appendChild(document.createTextNode(' Gift'));
+      badges.appendChild(g);
+    }
+
+    const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
+    items.forEach((item, i) => {
+      if (i > 0) itemsEl.appendChild(document.createElement('br'));
+      itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`));
+    });
+    if (!items.length) itemsEl.textContent = 'No items';
+
+    const delivEl = document.createElement('div');
+    delivEl.style.cssText = 'font-size:0.74rem;color:var(--text-muted);margin-top:6px;line-height:1.4;';
+    delivEl.textContent = delivInfo.sub;
+
+    let giftEl = null;
+    if (o.is_gift && o.gift_message) {
+      giftEl = document.createElement('div');
+      giftEl.style.cssText = 'font-size:0.74rem;color:#fbbf24;margin-top:6px;font-style:italic;border-left:2px solid rgba(255,200,80,0.4);padding-left:8px;line-height:1.4;';
+      giftEl.textContent = '\u201c' + o.gift_message + '\u201d';
+    }
+
+    const footer  = document.createElement('div'); footer.className = 'oc-footer';
+    const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
+    const actions = document.createElement('div'); actions.className = 'oc-actions';
+    const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
+    printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
+    actions.appendChild(sel);
+    if (o.payment_status !== 'paid') {
+      const mpBtn = document.createElement('button');
+      mpBtn.className = 'btn btn-primary';
+      mpBtn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+      mpBtn.textContent = 'Mark as Paid';
+      mpBtn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
+      actions.appendChild(mpBtn);
+    }
+    actions.appendChild(printBtn);
+    footer.appendChild(dateEl); footer.appendChild(actions);
+
+    card.appendChild(badges);
+    card.appendChild(itemsEl);
+    card.appendChild(delivEl);
+    if (giftEl) card.appendChild(giftEl);
+    card.appendChild(footer);
+
+    card.addEventListener('click', e => {
+      if (e.target.closest('select, button')) return;
+      openOrderDetail(o.id);
+    });
+
+    el.appendChild(card);
+  });
+}
+function makeBadge(cls, label) {
+  const span = document.createElement('span');
+  span.className = 'badge ' + cls; span.textContent = label; return span;
+}
+function makeStatusSelect(o, statusBadge) {
+  const sel = document.createElement('select'); sel.className = 'status-select';
+  ['pending', 'processing', 'dispatched', 'delivered'].forEach(v => {
+    const opt = document.createElement('option'); opt.value = v;
+    opt.textContent = STATUS_LABELS[v] || (v.charAt(0).toUpperCase() + v.slice(1));
+    if (o.status === v) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => updateOrderStatus(o.id, sel.value, statusBadge));
+  return sel;
+}
+function mkTd(text, style = '') {
+  const td = document.createElement('td');
+  if (style) td.style.cssText = style; td.textContent = text; return td;
+}
+function mkCustomerTd(o) {
+  const td = document.createElement('td');
+  [['font-weight:600;color:var(--accent-strong)', o.customer_name],
+   ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
+   ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
+  ].forEach(([style, val]) => {
+    const d = document.createElement('div'); d.style.cssText = style; d.textContent = val || ''; td.appendChild(d);
+  }); return td;
+}
+function mkItemsTd(items) {
+  const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
+  items.forEach((item, i) => {
+    if (i > 0) wrap.appendChild(document.createElement('br'));
+    wrap.appendChild(document.createTextNode(
+      `${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`
+    ));
+  }); td.appendChild(wrap); return td;
+}
+function mkBadgeTd(cls, label) {
+  const td = document.createElement('td'); td.appendChild(makeBadge(cls, label)); return td;
+}
+function mkDeliveryTd(o) {
+  const td = document.createElement('td');
+  const { icon, label, sub } = getDeliveryLabel(o);
+  const nameDiv = document.createElement('div');
+  nameDiv.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px';
+  nameDiv.innerHTML = icon;
+  nameDiv.appendChild(document.createTextNode(' ' + label));
+  const subDiv = document.createElement('div');
+  subDiv.style.cssText = 'font-size:0.7rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  subDiv.textContent = sub;
+  td.appendChild(nameDiv); td.appendChild(subDiv);
+  if (o.is_gift) {
+    const g = document.createElement('div');
+    g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px;display:flex;align-items:center;gap:4px';
+    g.innerHTML = SVG.gift;
+    g.appendChild(document.createTextNode(' Gift order'));
+    td.appendChild(g);
+  }
+  return td;
+}
+function mkSelectTd(o) {
+  const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
+}
+function mkMarkPaidTd(o) {
+  const td = document.createElement('td');
+  if (o.payment_status !== 'paid') {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+    btn.textContent = 'Mark as Paid';
+    btn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
+    td.appendChild(btn);
+  }
+  return td;
+}
+async function updateOrderStatus(id, status, badgeEl) {
+  try {
+    const res = await callEdge({ action: 'update_status', password: adminToken, order_id: id, status });
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to update.', true); return; }
+    const o = allOrders.find(x => x.id === id); if (o) o.status = status;
+    if (badgeEl) {
+      badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid');
+      badgeEl.textContent = STATUS_LABELS[status] || status;
+    }
+    updateStats(); renderRecent(); updateReports();
+    showToast('Status updated to ' + (STATUS_LABELS[status] || status));
+  } catch { showToast('Network error.', true); }
+}
+
+/* ─── MARK AS PAID ───────────────────────────── */
+async function markAsPaid(orderId) {
+  const btn = document.querySelector(`[data-mark-paid="${orderId}"]`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+  try {
+    const res = await callEdge({ action: 'mark_paid', password: adminToken, order_id: orderId });
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to mark as paid.', true); return; }
+    const o = allOrders.find(x => x.id === orderId);
+    if (o) {
+      o.payment_status = 'paid';
+      o.paid_at = o.paid_at || new Date().toISOString();
+    }
+    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+    const modal = document.getElementById('orderDetailModal');
+    if (!modal.hasAttribute('hidden')) openOrderDetail(orderId);
+    showToast('Payment marked as paid');
+  } catch { showToast('Network error.', true); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = 'Mark as Paid'; } }
+}
+
+/* ─── ORDER DETAIL MODAL ─────────────────────── */
+function openOrderDetail(orderId) {
+  const o = allOrders.find(x => x.id === orderId);
+  if (!o) return;
+
+  const items      = Array.isArray(o.items) ? o.items : [];
+  const date       = new Date(o.created_at).toLocaleString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const orderNo    = String(o.id).slice(0, 8).toUpperCase();
+  const delivInfo  = getDeliveryLabel(o);
+  const isPaid     = o.payment_status === 'paid';
+  const paidAt     = o.paid_at ? new Date(o.paid_at).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+
+  const itemsHTML = items.map(item => `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--glass-border);gap:12px">
+      <div>
+        <div style="font-weight:600;color:var(--accent-strong)">${esc(item.name)}</div>
+        ${item.variant ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px">${esc(item.variant)}</div>` : ''}
+        ${item.size    ? `<div style="font-size:0.75rem;color:var(--text-muted)">Size: ${esc(item.size)}</div>` : ''}
+      </div>
+      <div style="white-space:nowrap;text-align:right">
+        <div style="font-weight:700;color:var(--accent)">R${Number(item.price * item.qty).toLocaleString('en-ZA')}</div>
+        <div style="font-size:0.74rem;color:var(--text-muted)">&times;${item.qty} @ R${item.price}</div>
+      </div>
+    </div>`).join('');
+
+  const giftSVG    = SVG.gift;
+  const checkSVG   = SVG.check;
+  const doorSVG    = SVG.door;
+  const lockerSVG  = SVG.locker;
+  const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
+
+  const markPaidRow = !isPaid ? `
+    <div style="margin-top:10px">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
+    </div>` : '';
+
+  document.getElementById('odTitle').textContent = `Order #${orderNo}`;
+  document.getElementById('orderDetailBody').innerHTML = `
+
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Customer</div>
+      <div style="font-size:1rem;font-weight:700;color:var(--accent-strong);margin-bottom:4px">${esc(o.customer_name)}</div>
+      ${o.customer_email ? `<div style="font-size:0.82rem;color:var(--text-muted)">${esc(o.customer_email)}</div>` : ''}
+      ${o.customer_phone ? `<div style="font-size:0.82rem;color:var(--text-muted)">${esc(o.customer_phone)}</div>` : ''}
+      <div style="font-size:0.76rem;color:var(--text-muted);margin-top:6px">Placed: ${date}</div>
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+      <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
+      <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${STATUS_LABELS[o.status] || o.status || 'Payment Pending'}</span>
+      <span class="badge ${o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched'}" style="font-size:0.74rem;display:inline-flex;align-items:center;gap:4px">${delivIcon} ${esc(delivInfo.label)}</span>
+      ${o.is_gift ? `<span class="badge" style="background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);display:inline-flex;align-items:center;gap:4px">${giftSVG} Gift</span>` : ''}
+    </div>
+
+    ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px;display:flex;align-items:center;gap:5px">${checkSVG} Payment confirmed ${paidAt}</div>` : ''}
+
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Delivery</div>
+      <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">${delivIcon} ${esc(delivInfo.label)}</div>
+      ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Items</div>
+      ${itemsHTML || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">No items</div>'}
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
+        ${o.subtotal != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Subtotal</span><span>R${Number(o.subtotal).toLocaleString('en-ZA')}</span></div>` : ''}
+        ${o.delivery_fee != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Delivery fee</span><span>R${Number(o.delivery_fee).toLocaleString('en-ZA')}</span></div>` : ''}
+        <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;border-top:1px solid var(--glass-border);padding-top:8px;margin-top:2px"><span>Total</span><span style="color:var(--accent)">R${Number(o.total_amount).toLocaleString('en-ZA')}</span></div>
+      </div>
+    </div>
+
+    ${o.is_gift && o.gift_message ? `
+    <div style="background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;padding:16px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;display:flex;align-items:center;gap:5px">${giftSVG} Gift Message</div>
+      <div style="font-size:0.88rem;font-style:italic;color:var(--text-soft);line-height:1.6">&ldquo;${esc(o.gift_message)}&rdquo;</div>
+    </div>` : (o.is_gift ? `<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px;display:flex;align-items:center;gap:5px">${giftSVG} Gift order &mdash; no message added</div>` : '')}
+
+    ${o.notes ? `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Order Notes</div>
+      <div style="font-size:0.84rem;color:var(--text-soft);line-height:1.5">${esc(o.notes)}</div>
+    </div>` : ''}
+
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
+      <select id="odStatusSelect" class="status-select" style="flex:1;min-width:140px">
+        ${['pending','processing','dispatched','delivered'].map(v =>
+          `<option value="${v}"${o.status === v ? ' selected' : ''}>${STATUS_LABELS[v] || (v.charAt(0).toUpperCase()+v.slice(1))}</option>`
+        ).join('')}
+      </select>
+      <button class="btn btn-primary" style="flex:1;min-width:120px;justify-content:center" onclick="updateFromDetail('${o.id}')">Update Status</button>
+      <button class="btn btn-secondary" style="flex:1;min-width:120px;justify-content:center" onclick="printLabel(allOrders.find(x=>x.id==='${o.id}'))">Print Label</button>
+    </div>
+
+    ${markPaidRow}`;
+
+  const modal = document.getElementById('orderDetailModal');
+  modal.removeAttribute('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+async function updateFromDetail(orderId) {
+  const status = document.getElementById('odStatusSelect').value;
+  await updateOrderStatus(orderId, status, null);
+  openOrderDetail(orderId);
+  renderTable(); renderCards();
+}
+
+function closeOrderDetail() {
+  document.getElementById('orderDetailModal').setAttribute('hidden', '');
+  document.body.style.overflow = '';
+}
+
+/* ─── CSV EXPORT ──────────────────────────────── */
+function exportOrdersCSV() {
+  const orders = getFiltered();
+  if (!orders.length) { showToast('No orders to export.', true); return; }
+  const headers = ['Date','Order ID','Customer','Email','Phone','Items','Subtotal','Delivery Fee','Total','Payment','Delivery Method','Delivery Address','Status','Gift','Gift Message'];
+  const rows = orders.map(o => {
+    const items = (o.items || []).map(i => `${i.qty}x ${i.name}${i.variant ? ' ('+i.variant+')' : ''}`).join(' | ');
+    return [
+      new Date(o.created_at).toLocaleDateString('en-ZA'),
+      String(o.id).slice(0,8).toUpperCase(),
+      o.customer_name || '',
+      o.customer_email || '',
+      o.customer_phone || '',
+      items,
+      o.subtotal || '',
+      o.delivery_fee || '',
+      o.total_amount || '',
+      o.payment_status || '',
+      o.delivery_method === 'locker' ? 'Pudo Locker' : 'Door Delivery',
+      o.delivery_address || '',
+      o.status || '',
+      o.is_gift ? 'Yes' : 'No',
+      o.gift_message || '',
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`)
+  });
+  const csv  = [headers.map(h => `"${h}"`), ...rows].map(r => r.join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a'); a.href = url;
+  a.download = `phenome-orders-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV exported');
+}
+
+/* ─── PRINT LABEL ─────────────────────────────── */
+function printLabel(order) {
+  if (!order) return;
+  const items   = Array.isArray(order.items) ? order.items : [];
+  const date    = new Date(order.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
+  const isPaid  = order.payment_status === 'paid';
+  const orderNo = String(order.id).slice(0, 8).toUpperCase();
+  const delivInfo = getDeliveryLabel(order);
+  const itemsHTML = items.map(item => `
+    <div class="label-item">${item.qty}\u00d7 &nbsp;<strong>${esc(item.name)}</strong></div>
+    ${item.variant ? `<div class="label-item-variant">${esc(item.variant)}</div>` : ''}
+    ${item.size    ? `<div class="label-item-variant">Size: ${esc(item.size)}</div>` : ''}
+  `).join('');
+  const giftHTML = (order.is_gift && order.gift_message)
+    ? `<div class="label-section" style="border-top:1px dashed #ccc;margin-top:10px;padding-top:10px">
+         <div class="label-section-title">Gift Message</div>
+         <div style="font-size:0.8rem;font-style:italic;color:#555;line-height:1.5">${esc(order.gift_message)}</div>
+       </div>`
+    : (order.is_gift ? '<div style="font-size:0.75rem;color:#888;margin-top:6px">Gift order (no message)</div>' : '');
+  const area = document.getElementById('printLabelArea');
+  area.innerHTML = `
+    <div class="label-sheet">
+      <div class="label-header"><div class="label-brand">PhenomeBeauty</div><div class="label-date">${date}</div></div>
+      <div class="label-section">
+        <div class="label-section-title">Deliver To</div>
+        <div class="label-name">${esc(order.customer_name)}</div>
+        ${order.customer_phone ? `<div class="label-sub">${esc(order.customer_phone)}</div>` : ''}
+        ${order.customer_email ? `<div class="label-sub">${esc(order.customer_email)}</div>` : ''}
+        <div class="label-sub" style="margin-top:4px;font-weight:600">${esc(delivInfo.label)}</div>
+        ${delivInfo.sub ? `<div class="label-sub">${esc(delivInfo.sub)}</div>` : ''}
+      </div>
+      <hr class="label-divider" />
+      <div class="label-section">
+        <div class="label-section-title">Order #${orderNo}</div>
+        ${itemsHTML || '<div class="label-item">No items</div>'}
+      </div>
+      ${giftHTML}
+      <div class="label-total">
+        <span>Total</span>
+        <span>R${Number(order.total_amount).toLocaleString('en-ZA')}&nbsp;
+          <span class="label-paid-badge">${isPaid ? 'PAID' : 'UNPAID'}</span>
+        </span>
+      </div>
+      <button class="label-print-btn" onclick="window.print()">Print</button>
+      <button class="label-close-btn" onclick="closePrintLabel()">Close</button>
+    </div>`;
+  area.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closePrintLabel() {
+  document.getElementById('printLabelArea').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+/* ─── AVAILABILITY HELPERS ──────────────────────── */
+const AVAILABILITY_LABELS = {
+  available:   null,
+  coming_soon: 'Coming Soon',
+  unavailable: 'Not Available',
+};
+
+/* ─── PRODUCTS ───────────────────────────────────── */
+function getProductImages(p) {
+  if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
+  if (p.image_url) return [p.image_url];
+  return [];
+}
+async function loadProducts() {
+  document.getElementById('productsGrid').innerHTML =
+    '<div class="products-empty" style="grid-column:1/-1"><span class="spinner"></span> Loading\u2026</div>';
+  try {
+    const res = await callEdge({ action: 'get_products', password: adminToken });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.products)) { allProducts = data.products; renderProducts(); return; }
+    }
+    await loadProductsFromRest();
+  } catch { await loadProductsFromRest(); }
+}
+async function loadProductsFromRest() {
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/${PRODUCTS_TABLE}?order=idx.asc`,
+      { headers: { 'apikey': SUPA_ANON, 'Authorization': `Bearer ${SUPA_ANON}`, 'Content-Type': 'application/json' } });
+    if (!res.ok) { allProducts = []; renderProducts(); showToast('Could not load products: ' + res.status, true); return; }
+    allProducts = await res.json(); renderProducts();
+  } catch { allProducts = []; renderProducts(); }
+}
+
+/* Availability ribbon labels */
+const RIBBON_LABELS = {
+  available:   'Available',
+  coming_soon: 'Coming Soon',
+  unavailable: 'Not Available',
+};
+
+function renderProducts() {
+  const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
+  const el   = document.getElementById('productsGrid');
+  const list = q ? allProducts.filter(p => p.name?.toLowerCase().includes(q) || p.brand?.toLowerCase().includes(q)) : allProducts;
+  if (!list.length) {
+    el.innerHTML = `<div class="products-empty" style="grid-column:1/-1">No products yet.<br><button class="btn btn-primary" id="emptyAddBtn" style="margin-top:16px">Add your first product</button></div>`;
+    document.getElementById('emptyAddBtn')?.addEventListener('click', () => openProductModal()); return;
+  }
+  el.innerHTML = '';
+  list.forEach((p, listIdx) => {
+    const card = document.createElement('div');
+    card.className = 'product-card' + (isReorderMode ? ' reorder-mode' : '');
+    card.dataset.productId = p.id;
+
+    const variantDisplay = (p.variants || []).map(v => {
+      const name    = typeof v === 'string' ? v : (v.name || '');
+      const inStock = typeof v === 'string' ? true : v.in_stock !== false;
+      return name ? (inStock ? name : `${name} \u2716`) : null;
+    }).filter(Boolean).join(', ');
+    const sizeDisplay = normaliseSizes(p.sizes).map(s => `${s.name} (R${s.price})`).join(', ');
+    const images  = getProductImages(p);
+    const avail   = p.availability || 'available';
+
+    /* IMAGE WRAP */
+    const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
+    if (images.length > 1) {
+      const carousel = document.createElement('div'); carousel.className = 'img-carousel';
+      const track    = document.createElement('div'); track.className = 'img-carousel-track';
+      images.forEach((url, idx) => {
+        const slide = document.createElement('div'); slide.className = 'img-carousel-slide';
+        const img   = document.createElement('img'); img.src = url; img.alt = (p.name || '') + ' ' + (idx + 1);
+        img.onerror = () => { slide.innerHTML = noImgSVG(); }; slide.appendChild(img); track.appendChild(slide);
+      });
+      carousel.appendChild(track);
+      const dots = document.createElement('div'); dots.className = 'img-carousel-dots';
+      let currentSlide = 0;
+      const dotEls = images.map((_, idx) => {
+        const d = document.createElement('button'); d.className = 'img-carousel-dot' + (idx === 0 ? ' active' : '');
+        d.setAttribute('aria-label', 'Image ' + (idx + 1));
+        d.addEventListener('click', () => goToSlide(idx)); dots.appendChild(d); return d;
+      });
+      const prev = document.createElement('button'); prev.className = 'img-carousel-btn img-carousel-prev'; prev.innerHTML = '&#8249;'; prev.setAttribute('aria-label', 'Previous image');
+      const next = document.createElement('button'); next.className = 'img-carousel-btn img-carousel-next'; next.innerHTML = '&#8250;'; next.setAttribute('aria-label', 'Next image');
+      function goToSlide(idx) {
+        currentSlide = (idx + images.length) % images.length;
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+        dotEls.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+      }
+      prev.addEventListener('click', () => goToSlide(currentSlide - 1));
+      next.addEventListener('click', () => goToSlide(currentSlide + 1));
+      carousel.appendChild(prev); carousel.appendChild(next); carousel.appendChild(dots);
+      imgWrap.appendChild(carousel);
+    } else if (images.length === 1) {
+      const img = document.createElement('img'); img.src = images[0]; img.alt = p.name || '';
+      img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
+    } else { imgWrap.innerHTML = noImgSVG(); }
+
+    const ribbon = document.createElement('span');
+    ribbon.className = `prod-avail-ribbon ribbon-${avail.replace(/_/g, '-')}`;
+    ribbon.textContent = RIBBON_LABELS[avail] || avail;
+    imgWrap.appendChild(ribbon);
+
+    /* CARD BODY */
+    const body = document.createElement('div'); body.className = 'product-card-body';
+    body.innerHTML = `
+      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>
+      ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
+      <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
+      ${p.brand        ? `<div class="product-brand">${esc(p.brand)}</div>` : ''}
+      ${variantDisplay ? `<div class="product-variant">${esc(variantDisplay)}</div>` : ''}
+      ${sizeDisplay    ? `<div class="product-variant">Sizes: ${esc(sizeDisplay)}</div>` : ''}
+      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}`;
+
+    /* CARD FOOTER */
+    const footer = document.createElement('div'); footer.className = 'product-card-footer';
+
+    if (!isReorderMode) {
+      const footerBadge = document.createElement('span');
+      footerBadge.className = `prod-footer-badge badge-${avail.replace(/_/g, '-')}`;
+      footerBadge.textContent = RIBBON_LABELS[avail] || avail;
+
+      const spacer = document.createElement('span');
+      spacer.className = 'prod-footer-spacer';
+
+      const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', () => openProductModal(p));
+
+      const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
+
+      footer.appendChild(footerBadge);
+      footer.appendChild(spacer);
+      footer.appendChild(editBtn);
+      footer.appendChild(delBtn);
+    } else {
+      /* ── REORDER CONTROLS: Up / Down + position input ── */
+      const total = list.length;
+      const currentPos = listIdx + 1;
+
+      const upBtn = document.createElement('button');
+      upBtn.className = 'btn-reorder-up';
+      upBtn.innerHTML = '&#8593;';
+      upBtn.title = 'Move up';
+      upBtn.disabled = listIdx === 0;
+      upBtn.addEventListener('click', () => moveProduct(listIdx, -1));
+
+      const downBtn = document.createElement('button');
+      downBtn.className = 'btn-reorder-down';
+      downBtn.innerHTML = '&#8595;';
+      downBtn.title = 'Move down';
+      downBtn.disabled = listIdx === total - 1;
+      downBtn.addEventListener('click', () => moveProduct(listIdx, 1));
+
+      const posInput = document.createElement('input');
+      posInput.type = 'number';
+      posInput.className = 'reorder-pos-input';
+      posInput.value = currentPos;
+      posInput.min = 1;
+      posInput.max = total;
+      posInput.title = 'Type position and press Enter';
+      posInput.addEventListener('change', () => {
+        const target = parseInt(posInput.value, 10);
+        if (!isNaN(target)) moveProductToIndex(listIdx, target);
+      });
+      posInput.addEventListener('keydown', e => { if (e.key === 'Enter') posInput.blur(); });
+
+      const posLabel = document.createElement('span');
+      posLabel.style.cssText = 'font-size:0.7rem;color:var(--text-muted);white-space:nowrap;';
+      posLabel.textContent = `of ${total}`;
+
+      footer.appendChild(upBtn);
+      footer.appendChild(downBtn);
+      footer.appendChild(posInput);
+      footer.appendChild(posLabel);
+    }
+
+    card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
+    el.appendChild(card);
+  });
+}
+function noImgSVG() {
+  return `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`;
+}
+
+/* ─── REORDER MODE ────────────────────────────── */
+function toggleReorderMode() {
+  isReorderMode = !isReorderMode;
+  const btn    = document.getElementById('reorderBtn');
+  const hint   = document.getElementById('reorderHint');
+  const search = document.getElementById('productSearch');
+  if (isReorderMode) {
+    btn.innerHTML = '&#10003; Done Reordering';
+    btn.classList.add('btn-primary');
+    btn.classList.remove('btn-secondary');
+    hint.style.display = 'flex';
+    search.style.display = 'none';
+  } else {
+    btn.innerHTML = '&#8597; Reorder';
+    btn.classList.remove('btn-primary');
+    btn.classList.add('btn-secondary');
+    hint.style.display = 'none';
+    search.style.display = '';
+  }
+  renderProducts();
+}
+
+async function moveProduct(idx, direction) {
+  const newIdx = idx + direction;
+  if (newIdx < 0 || newIdx >= allProducts.length) return;
+  const moved = allProducts.splice(idx, 1)[0];
+  allProducts.splice(newIdx, 0, moved);
+  renderProducts();
+  await saveProductOrder();
+}
+
+async function moveProductToIndex(fromIdx, toPos) {
+  const toIdx = Math.min(Math.max(toPos - 1, 0), allProducts.length - 1);
+  if (toIdx === fromIdx) return;
+  const moved = allProducts.splice(fromIdx, 1)[0];
+  allProducts.splice(toIdx, 0, moved);
+  renderProducts();
+  await saveProductOrder();
+}
+
+async function saveProductOrder() {
+  const order = allProducts.map((p, i) => ({ id: p.id, idx: i }));
+  try {
+    const res = await callEdge({ action: 'reorder_products', password: adminToken, order });
+    if (!res.ok) { showToast('Failed to save order.', true); return; }
+    allProducts.forEach((p, i) => { p.idx = i; });
+    showToast('Order saved');
+  } catch { showToast('Network error saving order.', true); }
+}
+
+/* ─── SIZES HELPERS ─────────────────────────────── */
+function normaliseSizes(raw) {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(s => ({ name: (s.name || '').trim(), price: Number(s.price) || 0 })).filter(s => s.name);
+}
+
+/* ─── PRODUCT MODAL ────────────────────────────── */
+function openProductModal(product = null) {
+  document.getElementById('modalTitle').textContent  = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('modalProductId').value    = product?.id || '';
+  document.getElementById('mpName').value            = product?.name || '';
+  document.getElementById('mpPrice').value           = product?.price || '';
+  document.getElementById('mpCost').value            = product?.cost_price || '';
+  document.getElementById('mpSku').value             = product?.sku || '';
+  document.getElementById('mpBrand').value           = product?.brand || '';
+  document.getElementById('mpDesc').value            = product?.description || '';
+  document.getElementById('mpCategory').value        = product?.category || '';
+  document.getElementById('mpAvailability').value    = product?.availability || 'available';
+  const imgs = product ? getProductImages(product) : [];
+  document.getElementById('mpImage1').value = imgs[0] || '';
+  document.getElementById('mpImage2').value = imgs[1] || '';
+  document.getElementById('mpImage3').value = imgs[2] || '';
+  document.getElementById('mpImage4').value = imgs[3] || '';
+  document.getElementById('mpImage5').value = imgs[4] || '';
+  editingVariants = (product?.variants || []).map(v => {
+    if (typeof v === 'string') return { name: v, in_stock: true };
+    return { name: v.name || '', in_stock: v.in_stock !== false };
+  }).filter(v => v.name);
+  editingSizes = normaliseSizes(product?.sizes || []);
+  renderVariantRows(); renderSizeRows();
+  document.getElementById('productModal').removeAttribute('hidden');
+  document.getElementById('mpName').focus();
+}
+function closeProductModal() { document.getElementById('productModal').setAttribute('hidden', ''); }
+
+function renderVariantRows() {
+  const el = document.getElementById('variantsList'); el.innerHTML = '';
+  editingVariants.forEach((v, i) => {
+    const row = document.createElement('div'); row.className = 'variant-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = v.name; inp.placeholder = 'e.g. Scent: Calm'; inp.style.flex = '1';
+    inp.addEventListener('input', () => { editingVariants[i].name = inp.value; });
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:0.78rem;color:var(--text-muted);cursor:pointer;white-space:nowrap;user-select:none;';
+    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = v.in_stock;
+    checkbox.style.cssText = 'accent-color:var(--accent);width:14px;height:14px;cursor:pointer;';
+    const stockText = document.createElement('span'); stockText.textContent = v.in_stock ? 'In Stock' : 'Out of Stock';
+    stockText.style.color = v.in_stock ? 'var(--accent)' : '#f87171';
+    checkbox.addEventListener('change', () => {
+      editingVariants[i].in_stock = checkbox.checked;
+      stockText.textContent = checkbox.checked ? 'In Stock' : 'Out of Stock';
+      stockText.style.color = checkbox.checked ? 'var(--accent)' : '#f87171';
+    });
+    label.appendChild(checkbox); label.appendChild(stockText);
+    const rm = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
+    rm.addEventListener('click', () => { editingVariants.splice(i, 1); renderVariantRows(); });
+    row.appendChild(inp); row.appendChild(label); row.appendChild(rm); el.appendChild(row);
+  });
+}
+function addVariantRow() {
+  editingVariants.push({ name: '', in_stock: true }); renderVariantRows();
+  const inputs = document.getElementById('variantsList').querySelectorAll('input[type="text"]');
+  inputs[inputs.length - 1]?.focus();
+}
+
+function renderSizeRows() {
+  const el = document.getElementById('sizesList'); el.innerHTML = '';
+  editingSizes.forEach((s, i) => {
+    const row = document.createElement('div'); row.className = 'variant-row';
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+    const nameInp = document.createElement('input'); nameInp.type = 'text'; nameInp.value = s.name; nameInp.placeholder = 'e.g. 50ml'; nameInp.style.flex = '1';
+    nameInp.addEventListener('input', () => { editingSizes[i].name = nameInp.value; });
+    const priceWrap = document.createElement('div'); priceWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+    const pricePrefix = document.createElement('span'); pricePrefix.textContent = 'R'; pricePrefix.style.cssText = 'font-size:0.82rem;color:var(--text-muted);font-weight:600;';
+    const priceInp = document.createElement('input'); priceInp.type = 'number'; priceInp.value = s.price || ''; priceInp.placeholder = '0.00'; priceInp.min = '0'; priceInp.step = '0.01'; priceInp.style.cssText = 'width:80px;';
+    priceInp.addEventListener('input', () => { editingSizes[i].price = parseFloat(priceInp.value) || 0; });
+    priceWrap.appendChild(pricePrefix); priceWrap.appendChild(priceInp);
+    const rm = document.createElement('button'); rm.className = 'btn-remove-variant'; rm.innerHTML = '\u00d7'; rm.type = 'button';
+    rm.addEventListener('click', () => { editingSizes.splice(i, 1); renderSizeRows(); });
+    row.appendChild(nameInp); row.appendChild(priceWrap); row.appendChild(rm); el.appendChild(row);
+  });
+}
+function addSizeRow() {
+  editingSizes.push({ name: '', price: 0 }); renderSizeRows();
+  const inputs = document.getElementById('sizesList').querySelectorAll('input[type="text"]');
+  inputs[inputs.length - 1]?.focus();
+}
+
+async function saveProduct() {
+  const btn  = document.getElementById('modalSaveBtn');
+  const id   = document.getElementById('modalProductId').value;
+  const name = document.getElementById('mpName').value.trim();
+  if (!name) { showToast('Product name is required.', true); return; }
+  const imageUrls = [
+    document.getElementById('mpImage1').value.trim(),
+    document.getElementById('mpImage2').value.trim(),
+    document.getElementById('mpImage3').value.trim(),
+    document.getElementById('mpImage4').value.trim(),
+    document.getElementById('mpImage5').value.trim(),
+  ].filter(Boolean);
+  const cleanSizes = editingSizes.filter(s => s.name.trim()).map(s => ({ name: s.name.trim(), price: s.price }));
+  const payload = {
+    action: id ? 'update_product' : 'add_product', password: adminToken,
+    product: {
+      ...(id && { id }), name,
+      price:        parseFloat(document.getElementById('mpPrice').value)    || 0,
+      cost_price:   parseFloat(document.getElementById('mpCost').value)     || 0,
+      sku:          document.getElementById('mpSku').value.trim(),
+      brand:        document.getElementById('mpBrand').value.trim(),
+      description:  document.getElementById('mpDesc').value.trim(),
+      image_url:    imageUrls[0] || '',
+      image_urls:   imageUrls,
+      category:     document.getElementById('mpCategory').value.trim(),
+      availability: document.getElementById('mpAvailability').value || 'available',
+      variants:     editingVariants.filter(v => v.name.trim()).map(v => ({ name: v.name.trim(), in_stock: v.in_stock })),
+      sizes:        cleanSizes,
+    },
+  };
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Saving\u2026';
+  try {
+    const res = await callEdge(payload);
+    if (res.status === 429) { showToast('Rate limited.', true); return; }
+    if (!res.ok)            { showToast('Failed to save product.', true); return; }
+    const data = await res.json();
+    if (id) {
+      const idx = allProducts.findIndex(p => p.id === id);
+      if (idx > -1) allProducts[idx] = data.product || allProducts[idx];
+    } else { allProducts.unshift(data.product || payload.product); }
+    renderProducts(); closeProductModal(); showToast(id ? 'Product updated' : 'Product added');
+  } catch { showToast('Network error.', true); }
+  finally  { btn.disabled = false; btn.innerHTML = 'Save Product'; }
+}
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    const res = await callEdge({ action: 'delete_product', password: adminToken, product_id: id });
+    if (!res.ok) { showToast('Failed to delete.', true); return; }
+    allProducts = allProducts.filter(p => p.id !== id);
+    renderProducts(); showToast('Product deleted.');
+  } catch { showToast('Network error.', true); }
+}
+
+/* ─── UTILITIES ─────────────────────────────────── */
+function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function esc(str) { const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+function showToast(msg, isError = false) {
+  const t = document.getElementById('adminToast');
+  t.textContent = msg;
+  t.className = 'admin-toast show' + (isError ? ' error' : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
