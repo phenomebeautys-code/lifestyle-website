@@ -23,7 +23,6 @@ const BADGE_MAP = {
   dispatched: 'badge-dispatched',
   delivered:  'badge-delivered',
 };
-/* Human-readable labels for status badges */
 const STATUS_LABELS = {
   pending:    'Payment Pending',
   processing: 'Processing',
@@ -416,7 +415,6 @@ function renderCards() {
     const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
     printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
     actions.appendChild(sel);
-    /* Mark as Paid button — cards view, unpaid only */
     if (o.payment_status !== 'paid') {
       const mpBtn = document.createElement('button');
       mpBtn.className = 'btn btn-primary';
@@ -505,7 +503,6 @@ function mkDeliveryTd(o) {
 function mkSelectTd(o) {
   const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
 }
-/* Mark as Paid — table column, unpaid only */
 function mkMarkPaidTd(o) {
   const td = document.createElement('td');
   if (o.payment_status !== 'paid') {
@@ -547,7 +544,6 @@ async function markAsPaid(orderId) {
       o.paid_at = o.paid_at || new Date().toISOString();
     }
     updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    /* If the detail modal is open for this order, re-render it */
     const modal = document.getElementById('orderDetailModal');
     if (!modal.hasAttribute('hidden')) openOrderDetail(orderId);
     showToast('Payment marked as paid');
@@ -586,7 +582,6 @@ function openOrderDetail(orderId) {
   const lockerSVG  = SVG.locker;
   const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
 
-  /* Mark as Paid row — only rendered when unpaid */
   const markPaidRow = !isPaid ? `
     <div style="margin-top:10px">
       <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
@@ -595,7 +590,6 @@ function openOrderDetail(orderId) {
   document.getElementById('odTitle').textContent = `Order #${orderNo}`;
   document.getElementById('orderDetailBody').innerHTML = `
 
-    <!-- Customer -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px">Customer</div>
       <div style="font-size:1rem;font-weight:700;color:var(--accent-strong);margin-bottom:4px">${esc(o.customer_name)}</div>
@@ -604,7 +598,6 @@ function openOrderDetail(orderId) {
       <div style="font-size:0.76rem;color:var(--text-muted);margin-top:6px">Placed: ${date}</div>
     </div>
 
-    <!-- Payment & Status badges -->
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
       <span class="badge ${isPaid ? 'badge-paid' : 'badge-unpaid'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
       <span class="badge ${BADGE_MAP[o.status] || 'badge-unpaid'}">${STATUS_LABELS[o.status] || o.status || 'Payment Pending'}</span>
@@ -614,18 +607,15 @@ function openOrderDetail(orderId) {
 
     ${paidAt ? `<div style="font-size:0.76rem;color:#34d399;margin-bottom:14px;display:flex;align-items:center;gap:5px">${checkSVG} Payment confirmed ${paidAt}</div>` : ''}
 
-    <!-- Delivery -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Delivery</div>
       <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">${delivIcon} ${esc(delivInfo.label)}</div>
       ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
     </div>
 
-    <!-- Items -->
     <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Items</div>
       ${itemsHTML || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">No items</div>'}
-      <!-- Totals -->
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
         ${o.subtotal != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Subtotal</span><span>R${Number(o.subtotal).toLocaleString('en-ZA')}</span></div>` : ''}
         ${o.delivery_fee != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Delivery fee</span><span>R${Number(o.delivery_fee).toLocaleString('en-ZA')}</span></div>` : ''}
@@ -633,21 +623,18 @@ function openOrderDetail(orderId) {
       </div>
     </div>
 
-    <!-- Gift message -->
     ${o.is_gift && o.gift_message ? `
     <div style="background:rgba(255,200,80,0.06);border:1px solid rgba(255,200,80,0.25);border-radius:10px;padding:16px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#fbbf24;margin-bottom:8px;display:flex;align-items:center;gap:5px">${giftSVG} Gift Message</div>
       <div style="font-size:0.88rem;font-style:italic;color:var(--text-soft);line-height:1.6">&ldquo;${esc(o.gift_message)}&rdquo;</div>
     </div>` : (o.is_gift ? `<div style="font-size:0.8rem;color:#fbbf24;margin-bottom:14px;display:flex;align-items:center;gap:5px">${giftSVG} Gift order &mdash; no message added</div>` : '')}
 
-    <!-- Notes -->
     ${o.notes ? `
     <div style="background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;padding:14px;margin-bottom:14px">
       <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Order Notes</div>
       <div style="font-size:0.84rem;color:var(--text-soft);line-height:1.5">${esc(o.notes)}</div>
     </div>` : ''}
 
-    <!-- Update status -->
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px">
       <select id="odStatusSelect" class="status-select" style="flex:1;min-width:140px">
         ${['pending','processing','dispatched','delivered'].map(v =>
@@ -772,12 +759,6 @@ const AVAILABILITY_LABELS = {
   unavailable: 'Not Available',
 };
 
-function availabilityBadgeHTML(avail) {
-  const label = AVAILABILITY_LABELS[avail];
-  if (!label) return '';
-  return `<span class="product-avail-badge">${label}</span>`;
-}
-
 /* ─── PRODUCTS ───────────────────────────────────── */
 function getProductImages(p) {
   if (Array.isArray(p.image_urls) && p.image_urls.length) return p.image_urls.filter(Boolean).slice(0, 5);
@@ -804,6 +785,14 @@ async function loadProductsFromRest() {
     allProducts = await res.json(); renderProducts();
   } catch { allProducts = []; renderProducts(); }
 }
+
+/* Availability ribbon labels — used in card image overlay and footer badge */
+const RIBBON_LABELS = {
+  available:   'Available',
+  coming_soon: 'Coming Soon',
+  unavailable: 'Not Available',
+};
+
 function renderProducts() {
   const q    = (document.getElementById('productSearch')?.value || '').toLowerCase();
   const el   = document.getElementById('productsGrid');
@@ -828,12 +817,15 @@ function renderProducts() {
     }
 
     const variantDisplay = (p.variants || []).map(v => {
-      const name = typeof v === 'string' ? v : (v.name || '');
+      const name    = typeof v === 'string' ? v : (v.name || '');
       const inStock = typeof v === 'string' ? true : v.in_stock !== false;
       return name ? (inStock ? name : `${name} \u2716`) : null;
     }).filter(Boolean).join(', ');
     const sizeDisplay = normaliseSizes(p.sizes).map(s => `${s.name} (R${s.price})`).join(', ');
-    const images = getProductImages(p);
+    const images  = getProductImages(p);
+    const avail   = p.availability || 'available';
+
+    /* ── IMAGE WRAP ── */
     const imgWrap = document.createElement('div'); imgWrap.className = 'product-img-wrap';
     if (images.length > 1) {
       const carousel = document.createElement('div'); carousel.className = 'img-carousel';
@@ -867,13 +859,11 @@ function renderProducts() {
       img.onerror = () => { imgWrap.innerHTML = noImgSVG(); }; imgWrap.appendChild(img);
     } else { imgWrap.innerHTML = noImgSVG(); }
 
-    const avail = p.availability || 'available';
-    if (avail !== 'available') {
-      const badge = document.createElement('span');
-      badge.className = 'product-avail-badge';
-      badge.textContent = AVAILABILITY_LABELS[avail] || avail;
-      imgWrap.appendChild(badge);
-    }
+    /* ── Von Restorff: every availability state gets an image ribbon ── */
+    const ribbon = document.createElement('span');
+    ribbon.className = `prod-avail-ribbon ribbon-${avail.replace(/_/g, '-')}`;
+    ribbon.textContent = RIBBON_LABELS[avail] || avail;
+    imgWrap.appendChild(ribbon);
 
     if (isReorderMode) {
       const handle = document.createElement('div');
@@ -883,28 +873,50 @@ function renderProducts() {
       imgWrap.appendChild(handle);
     }
 
+    /* ── CARD BODY
+       Serial Position: price is rendered first in the HTML string.
+       CSS order:-1 ensures it paints at the top visually even if
+       browser order differs, but leading with it in DOM is cleaner. ── */
     const body = document.createElement('div'); body.className = 'product-card-body';
     body.innerHTML = `
+      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>
       ${p.category     ? `<div class="product-cat">${esc(p.category)}</div>` : ''}
       <div class="product-name">${esc(p.name || 'Unnamed product')}</div>
       ${p.brand        ? `<div class="product-brand">${esc(p.brand)}</div>` : ''}
       ${variantDisplay ? `<div class="product-variant">${esc(variantDisplay)}</div>` : ''}
       ${sizeDisplay    ? `<div class="product-variant">Sizes: ${esc(sizeDisplay)}</div>` : ''}
-      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}
-      <div class="product-price">R${Number(p.price || 0).toLocaleString('en-ZA')}${sizeDisplay ? ' <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400">(base)</span>' : ''}</div>`;
+      ${p.description  ? `<div class="product-desc">${esc(p.description)}</div>` : ''}`;
+
+    /* ── CARD FOOTER
+       Peak-End Rule: availability badge left, spacer, actions right.
+       Fitts's Law: Edit (flex:2) wider than Delete (flex:1). ── */
     const footer = document.createElement('div'); footer.className = 'product-card-footer';
+
     if (!isReorderMode) {
+      const footerBadge = document.createElement('span');
+      footerBadge.className = `prod-footer-badge badge-${avail.replace(/_/g, '-')}`;
+      footerBadge.textContent = RIBBON_LABELS[avail] || avail;
+
+      const spacer = document.createElement('span');
+      spacer.className = 'prod-footer-spacer';
+
       const editBtn = document.createElement('button'); editBtn.className = 'btn-edit-prod'; editBtn.textContent = 'Edit';
       editBtn.addEventListener('click', () => openProductModal(p));
+
       const delBtn = document.createElement('button'); delBtn.className = 'btn-delete-prod'; delBtn.textContent = 'Delete';
       delBtn.addEventListener('click', () => deleteProduct(p.id, p.name));
-      footer.appendChild(editBtn); footer.appendChild(delBtn);
+
+      footer.appendChild(footerBadge);
+      footer.appendChild(spacer);
+      footer.appendChild(editBtn);
+      footer.appendChild(delBtn);
     } else {
       const hint = document.createElement('div');
       hint.style.cssText = 'font-size:0.72rem;color:var(--text-muted);text-align:center;padding:4px 0;';
       hint.textContent = 'Drag to reorder';
       footer.appendChild(hint);
     }
+
     card.appendChild(imgWrap); card.appendChild(body); card.appendChild(footer);
     el.appendChild(card);
   });
