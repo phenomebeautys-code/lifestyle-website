@@ -862,13 +862,26 @@ function selectSize(btn, pid) {
 }
 function updateCardPrice(pid, cardEl) {}
 
+/* —— Sanitise cart against live product data ————————————————— */
+
+function sanitiseCart(liveProducts) {
+  const before = cart.length;
+  cart = cart.filter(item =>
+    liveProducts.some(p => String(p.id) === String(item.productId))
+  );
+  if (cart.length !== before) {
+    saveCart(cart);
+    updateBadges();
+  }
+}
+
 /* —— Product fetch ——————————————————————————————————————————— */
 
 async function prefetchProducts() {
   try {
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/get-products`,
-      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, cache: 'no-store' }
     );
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
@@ -883,12 +896,13 @@ async function fetchProducts() {
   try {
     const resp = await fetch(
       `${SUPABASE_URL}/functions/v1/get-products`,
-      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` } }
+      { headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` }, cache: 'no-store' }
     );
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     const all = Array.isArray(data) ? data : [];
     window._allProducts = all;
+   sanitiseCart(all);
     const segment = getSegment();
     filterAndRender(segment);
   } catch(err) {
