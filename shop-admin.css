@@ -13,7 +13,6 @@ body {
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
-/* Dark scrim so text/UI remains readable */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -21,7 +20,6 @@ body::before {
   z-index: 0;
   pointer-events: none;
 }
-/* Ensure all admin content sits above the scrim */
 #loginWrap,
 #adminUI,
 .admin-toast,
@@ -52,7 +50,6 @@ body::before {
   font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;
 }
-/* font-size 16px prevents iOS auto-zoom on focus */
 .field-input {
   width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
   color: var(--text); border-radius: 10px; padding: 12px 14px;
@@ -240,7 +237,6 @@ body::before {
 .search-input {
   background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text);
   border-radius: 10px; padding: 8px 14px;
-  /* 16px prevents iOS auto-zoom */
   font-size: 16px; font-family: var(--font-body);
   outline: none; width: 230px; transition: border-color 0.2s;
 }
@@ -347,8 +343,14 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* ══════════════════════════════════════
    PRODUCTS PAGE
-   Laws of UX: Fitts, Hick, Proximity,
-   Von Restorff, Aesthetic-Usability
+   Laws applied:
+   Hick's Law        — toolbar hierarchy
+   Serial Position   — price at top of body
+   Fitts's Law       — edit wider than delete
+   Von Restorff      — available ribbon added
+   Aesthetic-Usability — hover top-accent
+   Law of Proximity  — meta/price divider
+   Peak-End Rule     — footer: badge + actions
 ══════════════════════════════════════ */
 
 /* ── PAGE HEADER ACTIONS ───────────── */
@@ -360,7 +362,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
 }
 .btn-add-product {
   padding: 10px 22px; font-size: 0.86rem; font-weight: 700;
-  border: 1px solid rgba(var(--accent-rgb, 251,191,36), 0.5);
+  border: 1px solid rgba(251,191,36,0.5);
   letter-spacing: 0.02em;
 }
 .btn-add-product:hover {
@@ -368,14 +370,34 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   box-shadow: 0 0 0 3px rgba(251,191,36,0.1);
 }
 
-/* ── TOOLBAR ───────────────────────── */
-.products-toolbar { display: flex; align-items: center; gap: 12px; }
-.products-search { width: 280px; }
+/* ── TOOLBAR
+   Hick's Law: search dominates visually — it is the only
+   primary action. Reorder hint is secondary, styled as a
+   muted chip so it does not compete.
+─────────────────────────────────────── */
+.products-toolbar {
+  display: flex; align-items: center; gap: 12px;
+}
+/* Search takes all available space — one dominant input */
+.products-search {
+  flex: 1;
+  min-width: 0;
+  max-width: 420px;
+}
+/* Reorder hint reads as a quiet chip, not a call-to-action */
+.reorder-hint {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 40px;
+  border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.03);
+  color: var(--text-muted); font-size: 0.75rem;
+  white-space: nowrap;
+}
 
 /* ── GRID ──────────────────────────── */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
 }
 .products-empty {
@@ -383,30 +405,38 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   padding: 80px 20px; color: var(--text-muted); font-size: 0.88rem;
 }
 
-/* ── PRODUCT CARD ──────────────────── */
+/* ── PRODUCT CARD
+   Aesthetic-Usability Effect: hover reveals a top-edge
+   accent line instead of a flat border-color change alone.
+─────────────────────────────────────── */
 .product-card {
   background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
   border: 1px solid var(--glass-border); border-radius: 18px; overflow: hidden;
   display: flex; flex-direction: column;
-  transition: border-color 0.2s, transform 0.18s, box-shadow 0.18s;
+  transition: border-color 0.22s, transform 0.2s, box-shadow 0.2s;
   backdrop-filter: blur(12px);
+  position: relative;
+}
+.product-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.18), rgba(255,255,255,0));
+  opacity: 0;
+  transition: opacity 0.22s;
+  z-index: 1;
+  pointer-events: none;
 }
 .product-card:hover {
   border-color: rgba(255,255,255,0.22);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 36px rgba(0,0,0,0.4);
 }
+.product-card:hover::before { opacity: 1; }
 .product-card.prod-unavailable { opacity: 0.5; }
 .product-card.prod-unavailable:hover { opacity: 0.75; }
 
 /* ── CARD IMAGE ────────────────────── */
-/*
-  padding-bottom: 75% gives a guaranteed computed height from the
-  element's own width (75% of width = 4:3 ratio). This works on
-  every browser including iOS Safari where height:100% on children
-  of an aspect-ratio container is unreliable.
-  All direct children are position:absolute so they fill the box.
-*/
 .product-img-wrap {
   width: 100%;
   padding-bottom: 75%;
@@ -415,38 +445,36 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   overflow: hidden;
   flex-shrink: 0;
 }
-
-/* Single img (no carousel) fills the wrapper absolutely */
 .product-img-wrap > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
 }
-
-/* Carousel fills the wrapper absolutely */
 .img-carousel {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  display: block;
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  overflow: hidden; display: block;
 }
-
-/* Slide images fill each slide */
 .img-carousel-slide img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
 
+/* ── AVAILABILITY RIBBON
+   Von Restorff: every availability state gets a ribbon so
+   the signal is explicit — absence of a warning is itself
+   a clear green confirmation, not just empty space.
+─────────────────────────────────────── */
 .prod-avail-ribbon {
   position: absolute; top: 10px; left: 10px; z-index: 3;
   padding: 4px 10px; border-radius: 20px;
   font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   pointer-events: none;
+}
+.prod-avail-ribbon.ribbon-available {
+  background: rgba(74,222,128,0.14);
+  border: 1px solid rgba(74,222,128,0.30);
+  color: #4ade80;
 }
 .prod-avail-ribbon.ribbon-coming-soon {
   background: rgba(99,179,237,0.18); border: 1px solid rgba(99,179,237,0.35); color: #63b3ed;
@@ -474,8 +502,7 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.1rem; line-height: 1; cursor: pointer;
   transition: background 0.18s, opacity 0.18s;
-  z-index: 2; padding: 0;
-  opacity: 0;
+  z-index: 2; padding: 0; opacity: 0;
 }
 .img-carousel:hover .img-carousel-btn { opacity: 1; }
 .img-carousel-prev { left: 6px; }
@@ -494,51 +521,91 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: var(--accent-strong); transform: scale(1.3);
 }
 
-/* ── CARD BODY ─────────────────────── */
+/* ── CARD BODY
+   Serial Position Effect: price sits at the top of the
+   body (order: -1) so it is read first during scanning.
+   Law of Proximity: a hairline divider separates the meta
+   cluster (name/brand/variant/desc) from the price, making
+   the hierarchy instantly readable without extra spacing.
+─────────────────────────────────────── */
 .product-card-body {
-  padding: 16px 18px;
-  display: flex; flex-direction: column; gap: 5px; flex: 1;
+  padding: 16px 18px 12px;
+  display: flex; flex-direction: column; gap: 4px; flex: 1;
 }
+
+/* Price rises to top of card body */
+.product-price {
+  font-family: var(--font-display); font-size: 1.45rem; color: var(--accent);
+  order: -1;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
 .product-cat {
   font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: var(--text-muted);
 }
-.product-name   { font-size: 0.95rem; font-weight: 700; color: var(--accent-strong); line-height: 1.3; }
+.product-name   { font-size: 0.95rem; font-weight: 700; color: var(--accent-strong); line-height: 1.3; margin-top: 2px; }
 .product-brand  { font-size: 0.72rem; color: var(--text-muted); }
 .product-variant{ font-size: 0.75rem; color: var(--text-muted); }
-.product-desc   { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; margin-top: 2px; }
-.product-price  {
-  font-family: var(--font-display); font-size: 1.55rem; color: var(--accent);
-  margin-top: auto; padding-top: 10px;
-}
+.product-desc   { font-size: 0.76rem; color: var(--text-muted); line-height: 1.6; margin-top: 4px; }
 
-/* ── CARD FOOTER ───────────────────── */
+/* ── CARD FOOTER
+   Peak-End Rule: the last thing the admin sees is a clean
+   row — availability badge on the left anchors context,
+   action buttons on the right are the clear exit point.
+   Fitts's Law: Edit (primary, frequent) gets flex:2 for a
+   larger tap target; Delete (destructive, rare) gets flex:1.
+─────────────────────────────────────── */
 .product-card-footer {
-  display: flex; gap: 8px;
-  padding: 12px 16px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px 12px;
   border-top: 1px solid var(--glass-border);
 }
+
+/* Availability badge anchored left */
+.prod-footer-badge {
+  flex-shrink: 0;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 20px; border: 1px solid;
+  white-space: nowrap;
+}
+.prod-footer-badge.badge-available  { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); color: #4ade80; }
+.prod-footer-badge.badge-coming-soon{ background: rgba(99,179,237,0.10); border-color: rgba(99,179,237,0.28); color: #63b3ed; }
+.prod-footer-badge.badge-unavailable{ background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: #f87171; }
+
+/* Spacer pushes action buttons right */
+.prod-footer-spacer { flex: 1; }
+
+/* Action buttons */
 .product-card-footer button {
-  flex: 1; padding: 10px 12px; font-size: 0.8rem; font-weight: 600;
+  padding: 9px 12px; font-size: 0.78rem; font-weight: 600;
   border-radius: 10px; cursor: pointer; font-family: var(--font-body);
   border: 1px solid var(--glass-border); transition: all 0.18s;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.01em; white-space: nowrap;
 }
-.btn-edit-prod   { background: rgba(255,255,255,0.05); color: var(--text); }
-.btn-edit-prod:hover   {
+/* Edit: wider tap target (Fitts) */
+.btn-edit-prod   { flex: 2; background: rgba(255,255,255,0.05); color: var(--text); }
+.btn-edit-prod:hover {
   background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3);
   color: var(--accent-strong);
 }
+/* Delete: narrower, ghost-only until hover (reduces accidental taps) */
 .btn-delete-prod {
-  background: rgba(248,113,113,0.07); color: #f87171;
-  border-color: rgba(248,113,113,0.2);
+  flex: 1;
+  background: transparent; color: rgba(248,113,113,0.55);
+  border-color: rgba(248,113,113,0.15);
 }
 .btn-delete-prod:hover {
-  background: rgba(248,113,113,0.16); border-color: rgba(248,113,113,0.45);
+  background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.45);
+  color: #f87171;
 }
 
 /* ══════════════════════════════════════
    PRODUCT MODAL
+   Chunking: step indicator styles ready
+   for Step 2 HTML wiring.
 ══════════════════════════════════════ */
 
 .modal-overlay {
@@ -551,8 +618,49 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   background: #121214; border: 1px solid var(--glass-border); border-radius: 20px;
   padding: 32px; display: flex; flex-direction: column; gap: 20px;
 }
-
 .modal-product { max-width: 560px; gap: 0; padding: 0; overflow-y: auto; }
+
+/* ── MODAL STEP INDICATOR
+   Chunking: shows the admin exactly where they are in the
+   3-section form, reducing cognitive overload on a long scroll.
+─────────────────────────────────────── */
+.modal-steps {
+  display: flex; align-items: center; gap: 0;
+  padding: 14px 32px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.modal-step {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-muted);
+  transition: color 0.2s;
+}
+.modal-step.active { color: var(--accent-strong); }
+.modal-step.done   { color: var(--accent); }
+.modal-step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  flex-shrink: 0; transition: background 0.2s, border-color 0.2s;
+}
+.modal-step.active .modal-step-num {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.3);
+  color: var(--accent-strong);
+}
+.modal-step.done .modal-step-num {
+  background: rgba(242,231,214,0.12);
+  border-color: rgba(242,231,214,0.3);
+  color: var(--accent);
+}
+.modal-step-divider {
+  flex: 1; height: 1px;
+  background: var(--glass-border);
+  margin: 0 10px;
+  max-width: 32px;
+}
 
 /* ── MODAL HEADER ──────────────────── */
 .modal-header {
@@ -573,7 +681,6 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   display: flex; flex-direction: column; gap: 14px;
 }
 .modal-section:last-of-type { border-bottom: none; }
-
 .modal-section-label {
   font-size: 0.65rem; font-weight: 700; letter-spacing: 0.16em;
   text-transform: uppercase; color: var(--accent); opacity: 0.75;
@@ -593,24 +700,15 @@ tr:hover td { background: rgba(255,255,255,0.02); }
   list-style: none; display: flex; align-items: center; justify-content: space-between;
   padding: 12px 16px; cursor: pointer;
   font-size: 0.78rem; font-weight: 600; color: var(--accent-strong);
-  user-select: none;
-  transition: background 0.15s;
+  user-select: none; transition: background 0.15s;
 }
 .modal-images-summary::-webkit-details-marker { display: none; }
-.modal-images-summary::after {
-  content: '+';
-  font-size: 1rem; color: var(--text-muted); transition: transform 0.2s;
-}
-details.modal-images[open] .modal-images-summary::after {
-  content: '-';
-}
+.modal-images-summary::after { content: '+'; font-size: 1rem; color: var(--text-muted); }
+details.modal-images[open] .modal-images-summary::after { content: '-'; }
 .modal-images-summary:hover { background: rgba(255,255,255,0.04); }
-.modal-images-hint {
-  font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-left: 8px;
-}
+.modal-images-hint { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); margin-left: 8px; }
 .modal-images-body {
-  padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
   border-top: 1px solid var(--glass-border);
 }
 
@@ -618,8 +716,7 @@ details.modal-images[open] .modal-images-summary::after {
 .modal-sub-section {
   background: rgba(255,255,255,0.025);
   border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 12px; padding: 14px 16px;
   display: flex; flex-direction: column; gap: 10px;
 }
 .modal-sub-section-title {
@@ -694,20 +791,15 @@ details.modal-images[open] .modal-images-summary::after {
    PRINT LABEL
 ══════════════════════════════════════ */
 @media print {
-  body > *                    { display: none !important; }
-  #printLabelArea             { display: block !important; }
+  body > *        { display: none !important; }
+  #printLabelArea { display: block !important; }
 }
 #printLabelArea {
-  display: none;
-  position: fixed; inset: 0; z-index: 9999;
-  background: #fff; color: #000;
-  padding: 32px; font-family: Arial, sans-serif;
-  overflow: auto;
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  background: #fff; color: #000; padding: 32px;
+  font-family: Arial, sans-serif; overflow: auto;
 }
-.label-sheet {
-  max-width: 400px; margin: 0 auto;
-  border: 2px solid #000; padding: 24px; border-radius: 6px;
-}
+.label-sheet { max-width: 400px; margin: 0 auto; border: 2px solid #000; padding: 24px; border-radius: 6px; }
 .label-header {
   display: flex; justify-content: space-between; align-items: center;
   border-bottom: 1px solid #000; padding-bottom: 12px; margin-bottom: 16px;
@@ -719,14 +811,13 @@ details.modal-images[open] .modal-images-summary::after {
   font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em;
   text-transform: uppercase; color: #888; margin-bottom: 4px;
 }
-.label-name     { font-size: 1rem; font-weight: 700; }
-.label-sub      { font-size: 0.82rem; color: #333; }
-.label-divider  { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
-.label-item     { font-size: 0.85rem; padding: 3px 0; }
+.label-name  { font-size: 1rem; font-weight: 700; }
+.label-sub   { font-size: 0.82rem; color: #333; }
+.label-divider { border: none; border-top: 1px solid #ddd; margin: 12px 0; }
+.label-item  { font-size: 0.85rem; padding: 3px 0; }
 .label-item-variant { font-size: 0.75rem; color: #555; padding-left: 12px; }
 .label-total {
-  display: flex; justify-content: space-between;
-  font-size: 1rem; font-weight: 700;
+  display: flex; justify-content: space-between; font-size: 1rem; font-weight: 700;
   border-top: 2px solid #000; padding-top: 10px; margin-top: 6px;
 }
 .label-paid-badge {
@@ -757,19 +848,16 @@ details.modal-images[open] .modal-images-summary::after {
   .topbar-signout { display: flex; }
   .topbar-date { display: none; }
   .topbar { padding: 0 16px; }
-
   .sidebar {
     position: fixed; left: -240px; top: 0; width: 240px;
     height: 100dvh; transition: left 0.28s ease;
   }
   .sidebar.open { left: 0; }
-
   #adminUI.visible { flex-direction: column; }
   .page { padding: 20px 16px; }
   .table-wrap { display: none; }
   .order-cards { display: flex; }
   .search-input { width: 100%; }
-
   body.sidebar-open { overflow: hidden; }
 }
 @media (max-width: 640px) {
@@ -777,23 +865,21 @@ details.modal-images[open] .modal-images-summary::after {
   .stat-value { font-size: 1.6rem; }
   .reports-grid { grid-template-columns: 1fr; }
   .modal-overlay { padding: 0; align-items: flex-end; }
-  .modal {
-    max-height: 92dvh; border-radius: 20px 20px 0 0;
-    padding: 24px 18px;
-  }
-  .modal-product {
-    border-radius: 20px 20px 0 0;
-    padding: 0;
-  }
+  .modal { max-height: 92dvh; border-radius: 20px 20px 0 0; padding: 24px 18px; }
+  .modal-product { border-radius: 20px 20px 0 0; padding: 0; }
   .modal-header { padding: 22px 20px 16px; }
   .modal-section { padding: 16px 20px; }
   .modal-actions { padding: 16px 20px; }
   .modal-grid { grid-template-columns: 1fr; }
+  .modal-steps { padding: 12px 20px; }
   .filters { gap: 6px; }
   .filter-btn { padding: 6px 12px; font-size: 0.73rem; }
   .products-grid { grid-template-columns: 1fr; }
-  .products-search { width: 100%; }
+  .products-search { width: 100%; max-width: 100%; }
   .modal-actions { flex-direction: column-reverse; }
   .modal-actions .btn { width: 100%; justify-content: center; }
   .modal-save-btn { width: 100%; justify-content: center; }
+  .product-card-footer { flex-wrap: wrap; }
+  .prod-footer-badge { width: 100%; text-align: center; }
+  .btn-edit-prod, .btn-delete-prod { flex: 1; }
 }
