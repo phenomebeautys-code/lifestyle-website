@@ -901,7 +901,9 @@ async function handlePay() {
     name:  i.name,
     price: Number(i.price),
     qty:   Number(i.qty) || 1,
-    image: i.image || ''
+    image: i.image || '',
+    variant: i.variant || '',
+    size:    i.size    || '',
   }));
 
   try {
