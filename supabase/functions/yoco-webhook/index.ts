@@ -2,6 +2,11 @@
  * yoco-webhook  (PhenomeBeauty shop)
  * Receives Yoco `payment.succeeded` events via Svix webhook delivery.
  * On success → marks shop_order as paid → fires pudo-create-shipment → fires send-order-email.
+ *
+ * Fix (2026-07-06): payload.id is always the payment ID (p_...). The checkout
+ * session ID (ch_...) lives in payload.checkoutId. Previous code used
+ * `payload?.id ?? payload?.checkoutId` which meant checkoutId was never reached.
+ * Now we extract both and try the DB lookup against each.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -51,10 +56,15 @@ Deno.serve(async (req: Request) => {
 
   const { type, payload } = body;
   console.log('[yoco-webhook] event type:', type);
+  console.log('[yoco-webhook] full payload:', JSON.stringify(payload));
 
+  // payload.id         → payment ID  (p_...) — always present
+  // payload.checkoutId → checkout session ID (ch_...) — present for hosted checkout
   const orderId    = payload?.metadata?.order_id ?? null;
-  const checkoutId = payload?.id ?? payload?.checkoutId ?? null;
-  console.log('[yoco-webhook] order_id:', orderId, '| checkoutId:', checkoutId);
+  const paymentId  = payload?.id ?? null;
+  const checkoutId = payload?.checkoutId ?? null;
+
+  console.log('[yoco-webhook] order_id:', orderId, '| paymentId:', paymentId, '| checkoutId:', checkoutId);
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -81,33 +91,51 @@ Deno.serve(async (req: Request) => {
     return respond({ received: true, processed: false }, 200);
   }
 
-  if (!orderId) {
-    if (checkoutId) {
-      const { data: found } = await supabase
-        .from('shop_orders')
-        .select('id, delivery_method, pudo_shipment_id, payment_status')
-        .eq('yoco_checkout_id', checkoutId)
-        .single();
-      if (found) {
-        return await processPayment(supabase, found.id, checkoutId, found);
-      }
+  // ── Primary path: order_id in metadata (most reliable) ──────────────────
+  if (orderId) {
+    const { data: order, error: fetchErr } = await supabase
+      .from('shop_orders')
+      .select('id, delivery_method, pudo_shipment_id, payment_status')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchErr || !order) {
+      console.error('[yoco-webhook] Order not found by order_id:', orderId, fetchErr);
+      return respond({ error: 'Order not found' }, 404);
     }
-    console.error('[yoco-webhook] No order_id in metadata and checkout lookup failed');
-    return respond({ error: 'No order_id in metadata' }, 422);
+
+    return await processPayment(supabase, orderId, checkoutId ?? paymentId, order);
   }
 
-  const { data: order, error: fetchErr } = await supabase
-    .from('shop_orders')
-    .select('id, delivery_method, pudo_shipment_id, payment_status')
-    .eq('id', orderId)
-    .single();
+  // ── Fallback path: match by ch_... then p_... ────────────────────────────
+  console.warn('[yoco-webhook] No order_id in metadata — falling back to ID lookup');
 
-  if (fetchErr || !order) {
-    console.error('[yoco-webhook] Order not found:', orderId, fetchErr);
-    return respond({ error: 'Order not found' }, 404);
+  if (checkoutId) {
+    const { data: found } = await supabase
+      .from('shop_orders')
+      .select('id, delivery_method, pudo_shipment_id, payment_status')
+      .eq('yoco_checkout_id', checkoutId)
+      .maybeSingle();
+    if (found) {
+      console.log('[yoco-webhook] Order found by checkoutId (ch_...):', found.id);
+      return await processPayment(supabase, found.id, checkoutId, found);
+    }
   }
 
-  return await processPayment(supabase, orderId, checkoutId, order);
+  if (paymentId && paymentId !== checkoutId) {
+    const { data: found } = await supabase
+      .from('shop_orders')
+      .select('id, delivery_method, pudo_shipment_id, payment_status')
+      .eq('yoco_checkout_id', paymentId)
+      .maybeSingle();
+    if (found) {
+      console.log('[yoco-webhook] Order found by paymentId (p_...):', found.id);
+      return await processPayment(supabase, found.id, paymentId, found);
+    }
+  }
+
+  console.error('[yoco-webhook] Could not match order — checkoutId:', checkoutId, 'paymentId:', paymentId);
+  return respond({ error: 'Order not found' }, 422);
 });
 
 async function processPayment(
@@ -127,6 +155,7 @@ async function processPayment(
       payment_status:   'paid',
       status:           'confirmed',
       yoco_checkout_id: yocoCheckoutId,
+      paid_at:          new Date().toISOString(),
     })
     .eq('id', orderId)
     .eq('payment_status', 'unpaid')
@@ -153,7 +182,6 @@ async function processPayment(
     'apikey':        serviceKey,
   };
 
-  // ── Fire Pudo shipment ──────────────────────────────────────────────────────
   const shouldCreateShipment = (
     ['locker', 'door'].includes(confirmedOrder.delivery_method) &&
     !confirmedOrder.pudo_shipment_id
@@ -177,7 +205,6 @@ async function processPayment(
     }
   }
 
-  // ── Fire payment received email — non-fatal ──────────────────────────────
   try {
     await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
       method: 'POST', headers: internalHeaders,
