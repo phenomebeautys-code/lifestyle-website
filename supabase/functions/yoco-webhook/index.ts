@@ -7,12 +7,24 @@
  * session ID (ch_...) lives in payload.checkoutId. Previous code used
  * `payload?.id ?? payload?.checkoutId` which meant checkoutId was never reached.
  * Now we extract both and try the DB lookup against each.
+ *
+ * Fix (2026-07-21): Svix HMAC signed string must be `${svix-id}.${svix-timestamp}.${body}`.
+ * Previous implementation omitted svix-id, causing all signature verifications to
+ * return 401 and orders to never be marked as paid.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+/**
+ * Verify a Yoco / Svix webhook signature.
+ *
+ * Svix signs:  `${svix-id}.${svix-timestamp}.${raw-body}`
+ * The svix-signature header contains one or more space-separated `v1,<base64>` tokens.
+ * We verify against ALL provided signatures (key rotation support).
+ */
 async function verifyYocoSignature(
   payloadBytes: Uint8Array,
+  svixId: string,
   svixSignature: string,
   svixTimestamp: string,
   secret: string,
@@ -23,14 +35,16 @@ async function verifyYocoSignature(
     const cryptoKey = await crypto.subtle.importKey(
       'raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
     );
-    const bodyText  = new TextDecoder().decode(payloadBytes);
-    const toSign    = `${svixTimestamp}.${bodyText}`;
-    const sigBytes  = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(toSign));
-    const computed  = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
+    const bodyText = new TextDecoder().decode(payloadBytes);
+    // ✅ Correct Svix signed string: svix-id + svix-timestamp + raw body
+    const toSign   = `${svixId}.${svixTimestamp}.${bodyText}`;
+    const sigBytes = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(toSign));
+    const computed = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
+    // svix-signature may contain multiple space-separated v1,<base64> tokens (key rotation)
     const signatures = svixSignature.split(' ').map((s) => s.replace(/^v1,/, ''));
     return signatures.some((sig) => sig === computed);
   } catch (err) {
-    console.error('verifyYocoSignature error:', err);
+    console.error('[yoco-webhook] verifyYocoSignature error:', err);
     return false;
   }
 }
@@ -66,19 +80,17 @@ Deno.serve(async (req: Request) => {
 
   console.log('[yoco-webhook] order_id:', orderId, '| paymentId:', paymentId, '| checkoutId:', checkoutId);
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  );
-
+  const svixId        = req.headers.get('svix-id') ?? '';
   const svixSig       = req.headers.get('svix-signature') ?? '';
   const svixTimestamp = req.headers.get('svix-timestamp') ?? '';
   const webhookSecret = Deno.env.get('YOCO_WEBHOOK_SECRET') ?? '';
 
+  console.log('[yoco-webhook] svix-id:', svixId, '| svix-timestamp:', svixTimestamp);
+
   if (webhookSecret && svixSig) {
-    const valid = await verifyYocoSignature(rawBytes, svixSig, svixTimestamp, webhookSecret);
+    const valid = await verifyYocoSignature(rawBytes, svixId, svixSig, svixTimestamp, webhookSecret);
     if (!valid) {
-      console.error('[yoco-webhook] Signature verification failed');
+      console.error('[yoco-webhook] Signature verification FAILED — svix-id:', svixId);
       return respond({ error: 'Invalid signature' }, 401);
     }
     console.log('[yoco-webhook] Signature verified ✓');
@@ -90,6 +102,11 @@ Deno.serve(async (req: Request) => {
     console.log('[yoco-webhook] Ignoring event type:', type);
     return respond({ received: true, processed: false }, 200);
   }
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
 
   // ── Primary path: order_id in metadata (most reliable) ──────────────────
   if (orderId) {
@@ -104,7 +121,7 @@ Deno.serve(async (req: Request) => {
       return respond({ error: 'Order not found' }, 404);
     }
 
-    return await processPayment(supabase, orderId, checkoutId ?? paymentId, order);
+    return await processPayment(supabase, orderId, paymentId, checkoutId, order);
   }
 
   // ── Fallback path: match by ch_... then p_... ────────────────────────────
@@ -118,7 +135,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (found) {
       console.log('[yoco-webhook] Order found by checkoutId (ch_...):', found.id);
-      return await processPayment(supabase, found.id, checkoutId, found);
+      return await processPayment(supabase, found.id, paymentId, checkoutId, found);
     }
   }
 
@@ -130,7 +147,7 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (found) {
       console.log('[yoco-webhook] Order found by paymentId (p_...):', found.id);
-      return await processPayment(supabase, found.id, paymentId, found);
+      return await processPayment(supabase, found.id, paymentId, checkoutId, found);
     }
   }
 
@@ -141,7 +158,8 @@ Deno.serve(async (req: Request) => {
 async function processPayment(
   supabase: ReturnType<typeof createClient>,
   orderId: string,
-  yocoCheckoutId: string | null,
+  paymentId: string | null,
+  checkoutId: string | null,
   order: { id: string; delivery_method: string; pudo_shipment_id: string | null; payment_status: string },
 ) {
   if (order.payment_status === 'paid') {
@@ -154,7 +172,9 @@ async function processPayment(
     .update({
       payment_status:   'paid',
       status:           'confirmed',
-      yoco_checkout_id: yocoCheckoutId,
+      // Preserve the checkout ID (ch_...) already stored; write payment ID (p_...) to payment_id
+      yoco_checkout_id: checkoutId ?? order.id,
+      payment_id:       paymentId,
       paid_at:          new Date().toISOString(),
     })
     .eq('id', orderId)
@@ -171,11 +191,11 @@ async function processPayment(
     return respond({ received: true, already_paid: true }, 200);
   }
 
-  console.log(`[yoco-webhook] Order ${orderId} marked as paid ✓`);
+  console.log(`[yoco-webhook] Order ${orderId} marked as paid ✓ | payment_id: ${paymentId}`);
 
-  const confirmedOrder = updated[0];
-  const supabaseUrl    = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey     = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const confirmedOrder  = updated[0];
+  const supabaseUrl     = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const internalHeaders = {
     'Content-Type':  'application/json',
     'Authorization': `Bearer ${serviceKey}`,
