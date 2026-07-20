@@ -932,7 +932,9 @@ async function handlePay() {
     if (!orderRes.ok || orderData.error) throw new Error(orderData.error || 'Could not create your order.');
 
     const orderId = orderData.order_id;
+    const custToken  = orderData.customer_token || '';
 
+    const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&ct=${encodeURIComponent(custToken)}&name=${encodeURIComponent(name)}`;
     // Step 2: Create Yoco hosted checkout session
     const origin     = window.location.origin;
     const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
