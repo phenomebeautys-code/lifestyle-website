@@ -1,8 +1,10 @@
-// checkout.js — v23
+// checkout.js — v24
 // ─────────────────────────────────────────────────────────────────────────────
 // PhenomeBeauty checkout logic
-// Restores: get-shipping-quote engine, live delivery fees, box_size forwarding
-//           to pudo-locker-search, draft save/restore, importLibrary Places API
+// Fix v24: handlePay — removed duplicate successUrl declaration that was
+//          shadowing the first (which carried custToken/ct param), and moved
+//          `origin` declaration above successUrl. custToken is now correctly
+//          passed to shop-success.html so the success page can look up the order.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /* ── Constants ── */
@@ -931,15 +933,19 @@ async function handlePay() {
     const orderData = await orderRes.json();
     if (!orderRes.ok || orderData.error) throw new Error(orderData.error || 'Could not create your order.');
 
-    const orderId = orderData.order_id;
+    const orderId    = orderData.order_id;
     const custToken  = orderData.customer_token || '';
 
-    const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&ct=${encodeURIComponent(custToken)}&name=${encodeURIComponent(name)}`;
-    // Step 2: Create Yoco hosted checkout session
+    // FIX v24: `origin` must be declared before successUrl. Previously successUrl
+    // was declared twice — the first declaration (with custToken ct= param) used
+    // `origin` before it was defined (TDZ ReferenceError), and was then immediately
+    // shadowed by a second const declaration without ct=, silently dropping the
+    // customer_token from the redirect URL.
     const origin     = window.location.origin;
-    const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&name=${encodeURIComponent(name)}`;
+    const successUrl = `${origin}/shop-success.html?payment=success&order_id=${encodeURIComponent(orderId)}&ct=${encodeURIComponent(custToken)}&name=${encodeURIComponent(name)}`;
     const cancelUrl  = `${origin}/shop.html?payment=cancelled`;
 
+    // Step 2: Create Yoco hosted checkout session
     const yocoRes = await fetch(`${SUPABASE_URL}/functions/v1/yoco-shop-checkout`, {
       method: 'POST',
       headers: {
