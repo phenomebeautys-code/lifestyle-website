@@ -50,6 +50,17 @@
     .item-row strong { color:var(--accent-strong); }
     .loading-text { font-size:0.9rem; color:var(--text-muted); animation:pulse 1.2s ease-in-out infinite; }
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .pending-ref {
+      font-family: monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      word-break: break-all;
+    }
   </style>
 </head>
 <body>
@@ -82,11 +93,11 @@
 
   <div class="success-wrap">
     <div class="success-card glass-panel" id="successCard">
-      <p class="loading-text" id="loadingState">Confirming your order…</p>
+      <p class="loading-text" id="loadingState">Confirming your order&hellip;</p>
     </div>
   </div>
 
-<!-- FOOTER -->
+  <!-- FOOTER -->
   <footer class="footer">
     <div class="container">
       <div class="footer-shell">
@@ -136,14 +147,14 @@
   <script>
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
-    const params     = new URLSearchParams(window.location.search);
-    const payment    = params.get('payment');
-    const orderId    = params.get('order_id');
-    const custToken  = params.get('ct');
-    const name       = params.get('name') || 'there';
-    const card       = document.getElementById('successCard');
-    const yr = document.getElementById('footer-year');
-      if (yr) yr.textContent = new Date().getFullYear();
+    const params    = new URLSearchParams(window.location.search);
+    const payment   = params.get('payment');
+    const orderId   = params.get('order_id');
+    const custToken = params.get('ct');
+    const name      = params.get('name') || 'there';
+    const card      = document.getElementById('successCard');
+    const yr        = document.getElementById('footer-year');
+    if (yr) yr.textContent = new Date().getFullYear();
 
     function esc(str) {
       const d = document.createElement('div');
@@ -174,8 +185,8 @@
 
     function renderSuccess(order) {
       const firstName = esc(name.split(' ')[0]);
-      const items = Array.isArray(order?.items) ? order.items : [];
-      const fullRef = order?.id ? order.id.toUpperCase() : null;
+      const items     = Array.isArray(order?.items) ? order.items : [];
+      const fullRef   = order?.id ? order.id.toUpperCase() : null;
 
       card.innerHTML = `
         <div class="success-icon">&#10024;</div>
@@ -199,51 +210,77 @@
       const slot = document.getElementById('itemsSlot');
       if (slot) {
         items.forEach(function(item) {
-          const row = document.createElement('div');
+          const row     = document.createElement('div');
           row.className = 'item-row';
-          const strong = document.createElement('strong');
+          const strong  = document.createElement('strong');
           strong.textContent = item.name;
-          const detail = document.createTextNode(' \u00d7' + item.qty + ' \u2014 R' + (item.price * item.qty));
-          const br = document.createElement('br');
+          const detail  = document.createTextNode(' \u00d7' + item.qty + ' \u2014 R' + (item.price * item.qty));
+          const br      = document.createElement('br');
           const variant = document.createElement('span');
           variant.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
-          variant.textContent = item.variant;
+          variant.textContent   = item.variant;
           row.append(strong, detail, br, variant);
           slot.appendChild(row);
         });
       }
     }
 
+    function renderPending(order) {
+      const firstName = esc(name.split(' ')[0]);
+      const fullRef   = order?.id ? order.id.toUpperCase() : (orderId ? orderId.toUpperCase() : null);
+      const waText    = fullRef
+        ? encodeURIComponent('Hi, I need help confirming my order ' + fullRef)
+        : encodeURIComponent('Hi, I need help confirming my recent order');
+
+      card.innerHTML = `
+        <div class="success-icon">&#8987;</div>
+        <h1>Almost there, ${firstName}!</h1>
+        <p class="sub">
+          Your payment was received by Yoco but we&rsquo;re still confirming it on our end.
+          This usually resolves within a few minutes. If you paid successfully, you&rsquo;ll
+          receive a confirmation email shortly &mdash; no need to pay again.
+        </p>
+        ${fullRef ? `<div class="pending-ref">${esc(fullRef)}</div>` : ''}
+        <a href="https://wa.me/27745115725?text=${waText}" target="_blank" rel="noopener noreferrer"
+           class="btn btn-secondary" style="width:100%">&#128172; WhatsApp us to confirm</a>
+        <a href="shop.html" class="btn btn-primary" style="width:100%">Back to Shop</a>`;
+    }
+
     async function pollOrder(id, token, attempts) {
       attempts = attempts || 0;
       try {
         const res = await fetch(
-          SUPABASE_URL + '/rest/v1/shop_orders?id=eq.' + encodeURIComponent(id) + '&select=id,delivery_address,items,delivery_fee,total_amount,payment_status',
+          SUPABASE_URL + '/rest/v1/shop_orders?id=eq.' + encodeURIComponent(id)
+            + '&select=id,delivery_address,items,delivery_fee,total_amount,payment_status',
           {
             headers: {
-              'apikey': SUPABASE_ANON,
-              'Authorization': 'Bearer ' + SUPABASE_ANON,
-              'x-customer-token': token
+              'apikey':             SUPABASE_ANON,
+              'Authorization':      'Bearer ' + SUPABASE_ANON,
+              'x-customer-token':   token
             }
           }
         );
-        const data = await res.json();
+        const data  = await res.json();
         const order = Array.isArray(data) ? data[0] : null;
+
         if (order && order.payment_status === 'paid') {
           clearCart();
           renderSuccess(order);
           return;
         }
-        if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
-        else {
-          clearCart();
-          renderSuccess(order || null);
+
+        if (attempts < 6) {
+          setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000);
+        } else {
+          /* Timed out — webhook has not confirmed payment yet.
+             Do NOT render a false success screen. Show pending state instead. */
+          renderPending(order);
         }
-      } catch(e) {
-        if (attempts < 6) { setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000); }
-        else {
-          clearCart();
-          renderSuccess(null);
+      } catch (e) {
+        if (attempts < 6) {
+          setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000);
+        } else {
+          renderPending(null);
         }
       }
     }
@@ -253,6 +290,7 @@
     } else if (payment === 'success' && orderId && custToken) {
       pollOrder(orderId, custToken, 0);
     } else if (payment === 'success' && orderId && !custToken) {
+      /* No customer token — can't poll securely, show generic confirmation */
       renderSuccess(null);
     } else {
       card.innerHTML = '<p style="color:var(--text-muted)">Invalid page. <a href="shop.html" style="color:var(--accent)">Go to shop</a></p>';
