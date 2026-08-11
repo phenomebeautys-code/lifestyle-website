@@ -139,15 +139,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet" /></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
     <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" media="print" onload="this.media='all'" />
     <noscript><link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" /></noscript>
     <link rel="stylesheet" href="styles.css?v=1" />
 </head>
 <body>
 
-    <!-- FULL-BLEED BACKGROUND LAYER -->
+    <!-- ═══════════════════════════════════════════════════════
+         FULL-BLEED BACKGROUND LAYER — iOS Safari proof
+         Using real divs instead of pseudo-elements avoids
+         the WebKit z-index painting bug entirely.
+         Both layers sit at z-index:0, body content at z-index:1.
+    ═══════════════════════════════════════════════════════ -->
     <div id="bg-image" aria-hidden="true"></div>
     <div id="bg-overlay" aria-hidden="true"></div>
 
@@ -229,27 +234,243 @@
         </div>
     </section>
 
-    <!-- LOCAL INTENT SECTION -->
-    <section class="section section--local-intro">
-      <div class="container">
-        <div class="glass-panel section-inner reveal">
-          <span class="section-kicker">Cape Town · Mobile Waxing</span>
-          <h2>Mobile Waxing in Cape Town</h2>
-          <p>
-            PhenomeBeauty specialises in professional mobile waxing across Cape Town – from Brazilian and Hollywood waxing to full body and facial waxing, all performed in the comfort of your own home.
-          </p>
-          <p>
-            We travel to suburbs including Sea Point, Gardens, CBD, Woodstock, Observatory, Claremont and surrounding areas, bringing premium hygiene standards, expert technique, and a calm, client-first experience.
-          </p>
-          <a href="mobile-waxing-cape-town.html" class="btn btn-secondary">
-            Learn more about mobile waxing in Cape Town
-          </a>
+    <!-- PROMO CARDS -->
+    <section class="promo-section section" aria-label="Featured resources">
+        <div class="container">
+            <div class="promo-grid">
+
+                <a href="shop.html" class="promo-card reveal">
+                    <img src="https://iili.io/CAnabxS.webp" alt="PhenomeBeauty Shop - skincare and beauty products" loading="lazy" />
+                    <span class="shop-cart-badge">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        Shop
+                    </span>
+                    <div class="promo-label">
+                        <span class="tag">New</span>
+                        <h3>Shop<br/>Products</h3>
+                        <span class="promo-btn">Browse Shop</span>
+                    </div>
+                </a>
+
+                <a href="https://tara-s.vercel.app/" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                <img src="https://iili.io/CKBilCN.png" alt="Tara-S - The Woman free companion period tracker" loading="lazy" />
+                <div class="promo-label">
+                    <span class="tag">Free Companion</span>
+                    <h3>Tara-S - The Woman<br/>Period Tracker</h3>
+                    <span class="promo-btn">Open Tara-S</span>
+                </div>
+                </a>
+
+                <a href="https://www.google.com/search?sca_esv=1cd8785de84224e8&rlz=1C5CHFA_enZA910ZA910&sxsrf=ANbL-n48sPmL4p7qurKaVOGru_vF1Uezog:1776983854995&si=AL3DRZEsmMGCryMMFSHJ3StBhOdZ2-6yYkXd_doETEE1OR-qOVrZUD-o6iSDUpMY2OosiVZIFUKWRkp5vXu0SdsvpwL70n2cvIwVEz3X-LjClHX8SUSbgwNNuzwrHc8_riibwgutQUkH&q=PhenomeBeauty+Reviews&sa=X&ved=2ahUKEwj3i8vbhIWUAxU0dUEAHQR5C-cQ0bkNegQIIRAF&biw=1280&bih=712&dpr=2" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rdKDF.png" alt="PhenomeBeauty Google Reviews - Cape Town mobile beauty" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Reviews</span>
+                        <h3>See What<br/>Clients Say</h3>
+                        <span class="promo-btn">View Reviews</span>
+                    </div>
+                </a>
+
+                <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rdBVa.png" alt="First wax guide - what to expect from your first waxing appointment" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Guide</span>
+                        <h3>First Wax<br/>What to Expect</h3>
+                        <span class="promo-btn">Read Guide</span>
+                    </div>
+                </a>
+
+                <a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer" class="promo-card reveal">
+                    <img src="https://iili.io/B4rd2HB.png" alt="Waxing workshop sign up - learn professional waxing Cape Town" loading="lazy" />
+                    <div class="promo-label">
+                        <span class="tag">Workshop</span>
+                        <h3>Sign Up for<br/>Waxing Workshop</h3>
+                        <span class="promo-btn">Register</span>
+                    </div>
+                </a>
+
+            </div>
         </div>
-      </div>
     </section>
 
-    <!-- PROMO CARDS, SERVICES, GUIDES, BOOKING -->
-    <!-- existing sections remain unchanged below this point -->
+    <!-- SERVICES -->
+    <section id="services" class="services-section section">
+        <div class="container">
+            <div class="glass-panel section-inner reveal">
+
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                    Full Catalog
+                </span>
+                <h2 class="section-title">Our Services</h2>
+                <p class="section-copy">Professional mobile beauty treatments delivered across Cape Town; waxing, nails, tinting, and more.</p>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Intimate Waxing</h3><p>Brazilian, Hollywood &amp; intimate care</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Brazilian</h4><p>A Brazilian wax removes hair from the front bikini area, leaving smooth, clean skin.</p><span class="price">R 320.00</span></div>
+                        <div class="service-card reveal"><h4>Hollywood</h4><p>Experience ultimate smoothness with the Hollywood, a complete hair removal treatment.</p><span class="price">R 400.00</span></div>
+                        <div class="service-card reveal"><h4>Garden Path</h4><p>Great for clients who want the tummy area to the bikini line tidied up.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Areola</h4><p>This treatment removes unwanted hair around the areola area with care and precision.</p><span class="price">R 100.00</span></div>
+                        <div class="service-card reveal"><h4>Tummy</h4><p>Removes unwanted hair from the stomach area for smooth, clean results.</p><span class="price">R 250.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Body Waxing</h3><p>Back, arms, legs, chest &amp; underarm</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Full Back</h4><p>Removes unwanted hair from the entire back area for smooth, clean skin.</p><span class="price">R 350.00</span></div>
+                        <div class="service-card reveal"><h4>Half Back</h4><p>Removes unwanted hair from either the upper or lower back.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Chest</h4><p>Removes unwanted hair from the chest area for a smooth, clean finish.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Full Leg</h4><p>Enjoy silky-smooth legs from hip to toe with our full leg wax.</p><span class="price">R 350.00</span></div>
+                        <div class="service-card reveal"><h4>Half Leg</h4><p>Get smooth, ready-to-show-off legs with our half leg wax treatment.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Full Arm</h4><p>Get sleek, hair-free arms from shoulder to wrist.</p><span class="price">R 350.00</span></div>
+                        <div class="service-card reveal"><h4>Half Arm</h4><p>A half arm wax removes hair from the elbow down to the wrist.</p><span class="price">R 280.00</span></div>
+                        <div class="service-card reveal"><h4>Underarm</h4><p>Using premium wax, we remove every hair from the underarm area cleanly.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Hands or Feet</h4><p>A quick, effective wax that removes hair from the hands or feet.</p><span class="price">R 100.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Waxing &amp; Threading</h3><p>Brows, lip, chin, face &amp; more</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Brow, Lip Or Chin</h4><p>Includes eyebrow shaping plus hair removal from lip or chin area.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Brow, Lip &amp; Chin</h4><p>Includes eyebrow shaping and hair removal from both lip and chin.</p><span class="price">R 240.00</span></div>
+                        <div class="service-card reveal"><h4>Brow &amp; Lip Combo</h4><p>Perfect your pout and arches with the Brow &amp; Lip Combo.</p><span class="price">R 160.00</span></div>
+                        <div class="service-card reveal"><h4>Sideburns</h4><p>Tame and sculpt your sideburns with precise, clean removal.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Full Face excl. Brows</h4><p>Achieve silky, fuzz-free skin with our Full Face treatment, excluding brows.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Full Face incl. Brows</h4><p>Complete facial hair removal treatment including eyebrow shaping.</p><span class="price">R 340.00</span></div>
+                        <div class="service-card reveal"><h4>Fingers or Toes</h4><p>Say goodbye to unwanted hair on fingers and toes with a quick, precise wax.</p><span class="price">R 90.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Tinting</h3><p>Lash tint, brow tint &amp; combos</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Lash &amp; Brow Combo</h4><p>Includes both a brow tint and lash tint in one session.</p><span class="price">R 200.00</span></div>
+                        <div class="service-card reveal"><h4>Lash Tint</h4><p>Darkens the natural eyelashes, giving them a more defined, fuller appearance.</p><span class="price">R 110.00</span></div>
+                        <div class="service-card reveal"><h4>Brow Tint</h4><p>Adds colour to the eyebrow hairs to make them look fuller and more defined.</p><span class="price">R 110.00</span></div>
+                    </div></div>
+                </details>
+
+                <details class="service-accordion" name="services">
+                    <summary>
+                        <div class="summary-left"><h3>Manicure &amp; Pedicure</h3><p>Gel, soft tips, nail art &amp; finishing</p></div>
+                        <div class="summary-right">
+                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="category-cta" onclick="event.stopPropagation()">Book <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></a>
+                            <span class="accordion-chevron"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+                        </div>
+                    </summary>
+                    <div class="accordion-body"><div class="services-grid">
+                        <div class="service-card reveal"><h4>Full Gel Manicure</h4><p>Includes nail shaping, cuticle care, exfoliation, and a full gel polish application.</p><span class="price">R 390.00</span></div>
+                        <div class="service-card reveal"><h4>Full Gel Pedicure</h4><p>Includes nail shaping, cuticle care, removal of dead skin, and gel polish.</p><span class="price">R 450.00</span></div>
+                        <div class="service-card reveal"><h4>Soft Gel Tips</h4><p>Premium lightweight gel tip extensions that deliver a natural, long-lasting look.</p><span class="price">R 520.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Overlay - Hands</h4><p>Quick yet luxurious gel manicure express nail treatment for hands.</p><span class="price">R 300.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Overlay - Toes</h4><p>Gel-polished toes with long-lasting shine and a clean finish.</p><span class="price">R 380.00</span></div>
+                        <div class="service-card reveal"><h4>Gel Removal</h4><p>Tailored for safe, damage-free gel extraction from hands or toes.</p><span class="price">R 90.00</span></div>
+                        <div class="service-card reveal"><h4>Acrylic or Soft Gel Removal</h4><p>Tailored for safe, damage-free extraction of acrylic or soft gel nails.</p><span class="price">R 150.00</span></div>
+                        <div class="service-card reveal"><h4>Detailed Nail Art - Per Nail</h4><p>Think delicate florals, geometric patterns, and intricate custom designs.</p><span class="price">R 50.00</span></div>
+                        <div class="service-card reveal"><h4>Basic Nail Art - Per Nail</h4><p>Basic Nail Art is ideal when you want something simple and elegant per nail.</p><span class="price">R 20.00</span></div>
+                        <div class="service-card reveal"><h4>French Finish</h4><p>This classic, clean-lined look features crisp white tips for a timeless result.</p><span class="price">R 80.00</span></div>
+                        <div class="service-card reveal"><h4>Chrome Finish</h4><p>A high-impact add-on that transforms any gel polish into a mirror-chrome finish.</p><span class="price">R 80.00</span></div>
+                    </div></div>
+                </details>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- GUIDES -->
+    <section id="guides" class="section">
+        <div class="container">
+            <div class="glass-panel section-inner reveal">
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                    Resources
+                </span>
+                <h2 class="section-title">Beauty Guides</h2>
+                <p class="section-copy">Curated resources to help you prepare, care for your skin, and get the best results from every treatment.</p>
+                <div class="guides-grid">
+                    <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="guide-card guide-card--image reveal">
+                        <img src="https://iili.io/B4rdBVa.png" alt="First Wax 101 guide - everything you need to know before your first waxing appointment" loading="lazy" />
+                        <div class="guide-label">
+                            <h3>First Wax 101</h3>
+                            <p>Everything you need to know before your very first wax: what to expect, how to prep, and what happens after.</p>
+                            <span class="btn btn-secondary">View Guide</span>
+                        </div>
+                    </a>
+                    <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="guide-card guide-card--image reveal">
+                        <img src="https://iili.io/B4rdxlR.png" alt="Pre and post wax care guide for healthy smooth skin after waxing" loading="lazy" />
+                        <div class="guide-label">
+                            <h3>Pre &amp; Post Care Guide</h3>
+                            <p>Essential before-and-after care tips to keep your skin smooth, calm, and healthy between appointments.</p>
+                            <span class="btn btn-secondary">Download Guide</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOOKING -->
+    <section id="booking" class="section">
+        <div class="container">
+            <div class="glass-panel section-inner reveal">
+                <span class="section-kicker">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Booking
+                </span>
+                <div class="booking-content">
+                    <div class="booking-info">
+                        <h3>Book Your<br/>Appointment.</h3>
+                        <p>Mobile beauty services across Cape Town. Professional treatments in the comfort of your own space. No travel, no waiting rooms.</p>
+                        <ul class="booking-features">
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Mobile services across Cape Town</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Waxing, nails, tinting &amp; more</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Hygiene &amp; safety guaranteed</li>
+                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Flexible scheduling</li>
+                        </ul>
+                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                            Open Booking App
+                        </a>
+                    </div>
+                    <div class="phone-mockup">
+                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="phone-frame">
+                            <div class="phone-notch"></div>
+                            <div class="phone-screen">
+                                <div class="phone-screen-content">
+                                    <img src="./PhenomeBeauty%20%20Book%20Online.png?v=1" class="phone-screenshot" alt="PhenomeBeauty online booking app screenshot" loading="lazy" width="390" height="844" />
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- FOOTER -->
     <footer class="footer">
@@ -271,7 +492,6 @@
                             <li><a href="shop.html">Shop</a></li>
                             <li><a href="#booking">Book Now</a></li>
                             <li><a href="terms.html">T&amp;Cs</a></li>
-                            <li><a href="mobile-waxing-cape-town.html">Mobile Waxing</a></li>
                         </ul>
                     </div>
                     <div class="footer-section">
