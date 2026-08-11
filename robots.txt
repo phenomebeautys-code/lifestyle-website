@@ -31,4 +31,5 @@ Allow: /
 User-agent: YouBot
 Allow: /
 
-Sitemap: https://bladetox.github.io/lifestyle-website/sitemap.xml
+Sitemap: https://phenomebeauty.co.za/sitemap.xml
+
