@@ -3,17 +3,24 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
 
   <url>
-    <loc>https://bladetox.github.io/lifestyle-website/</loc>
+    <loc>https://phenomebeauty.co.za/</loc>
     <lastmod>2026-04-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://bladetox.github.io/lifestyle-website/terms.html</loc>
+    <loc>https://phenomebeauty.co.za/terms.html</loc>
     <lastmod>2026-04-24</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://phenomebeauty.co.za/mobile-waxing-cape-town.html</loc>
+    <lastmod>2026-08-12</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
 
 </urlset>
