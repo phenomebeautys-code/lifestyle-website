@@ -18,31 +18,42 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 /**
  * Verify a Yoco / Svix webhook signature.
  *
- * Svix signs:  `${svix-id}.${svix-timestamp}.${raw-body}`
- * The svix-signature header contains one or more space-separated `v1,<base64>` tokens.
- * We verify against ALL provided signatures (key rotation support).
+ * Yoco's observed webhook headers are webhook-id, webhook-signature, and
+ * webhook-timestamp. The svix-* aliases are retained for compatibility.
+ * The signed message is `${webhook-id}.${webhook-timestamp}.${raw-body}`.
  */
 async function verifyYocoSignature(
   payloadBytes: Uint8Array,
-  svixId: string,
-  svixSignature: string,
-  svixTimestamp: string,
+  webhookId: string,
+  webhookSignature: string,
+  webhookTimestamp: string,
   secret: string,
 ): Promise<boolean> {
   try {
     const base64Secret = secret.startsWith('whsec_') ? secret.slice('whsec_'.length) : secret;
-    const keyBytes  = Uint8Array.from(atob(base64Secret), (c) => c.charCodeAt(0));
+    const keyBytes = Uint8Array.from(atob(base64Secret), (c) => c.charCodeAt(0));
     const cryptoKey = await crypto.subtle.importKey(
-      'raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+      'raw',
+      keyBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
     );
+
     const bodyText = new TextDecoder().decode(payloadBytes);
-    // ✅ Correct Svix signed string: svix-id + svix-timestamp + raw body
-    const toSign   = `${svixId}.${svixTimestamp}.${bodyText}`;
-    const sigBytes = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(toSign));
+    const toSign = `${webhookId}.${webhookTimestamp}.${bodyText}`;
+    const sigBytes = await crypto.subtle.sign(
+      'HMAC',
+      cryptoKey,
+      new TextEncoder().encode(toSign),
+    );
     const computed = btoa(String.fromCharCode(...new Uint8Array(sigBytes)));
-    // svix-signature may contain multiple space-separated v1,<base64> tokens (key rotation)
-    const signatures = svixSignature.split(' ').map((s) => s.replace(/^v1,/, ''));
-    return signatures.some((sig) => sig === computed);
+
+    const signatures = webhookSignature
+      .split(' ')
+      .map((signature) => signature.replace(/^v1,/, ''));
+
+    return signatures.some((signature) => signature === computed);
   } catch (err) {
     console.error('[yoco-webhook] verifyYocoSignature error:', err);
     return false;
@@ -58,7 +69,9 @@ Deno.serve(async (req: Request) => {
   const bodyText = new TextDecoder().decode(rawBytes);
 
   const allHeaders: Record<string, string> = {};
-  req.headers.forEach((v, k) => { allHeaders[k] = v; });
+  req.headers.forEach((value, key) => {
+    allHeaders[key] = value;
+  });
   console.log('[yoco-webhook] headers:', JSON.stringify(allHeaders));
 
   let body: any;
@@ -72,27 +85,59 @@ Deno.serve(async (req: Request) => {
   console.log('[yoco-webhook] event type:', type);
   console.log('[yoco-webhook] full payload:', JSON.stringify(payload));
 
-  // payload.id         → payment ID  (p_...) — always present
-  // payload.checkoutId → checkout session ID (ch_...) — present for hosted checkout
-  const orderId    = payload?.metadata?.order_id ?? null;
-  const paymentId  = payload?.id ?? null;
-  const checkoutId = payload?.checkoutId ?? null;
+  // payload.id → payment ID (p_...)
+  // payload.checkoutId or payload.metadata.checkoutId → checkout session ID (ch_...)
+  const orderId = payload?.metadata?.order_id ?? null;
+  const paymentId = payload?.id ?? null;
+  const checkoutId = payload?.checkoutId ?? payload?.metadata?.checkoutId ?? null;
 
-  console.log('[yoco-webhook] order_id:', orderId, '| paymentId:', paymentId, '| checkoutId:', checkoutId);
+  console.log(
+    '[yoco-webhook] order_id:',
+    orderId,
+    '| paymentId:',
+    paymentId,
+    '| checkoutId:',
+    checkoutId,
+  );
 
-  const svixId        = req.headers.get('svix-id') ?? '';
-  const svixSig       = req.headers.get('svix-signature') ?? '';
-  const svixTimestamp = req.headers.get('svix-timestamp') ?? '';
+  const webhookId =
+    req.headers.get('webhook-id') ??
+    req.headers.get('svix-id') ??
+    '';
+  const webhookSignature =
+    req.headers.get('webhook-signature') ??
+    req.headers.get('svix-signature') ??
+    '';
+  const webhookTimestamp =
+    req.headers.get('webhook-timestamp') ??
+    req.headers.get('svix-timestamp') ??
+    '';
   const webhookSecret = Deno.env.get('YOCO_WEBHOOK_SECRET') ?? '';
 
-  console.log('[yoco-webhook] svix-id:', svixId, '| svix-timestamp:', svixTimestamp);
+  console.log(
+    '[yoco-webhook] webhook-id:',
+    webhookId,
+    '| webhook-timestamp:',
+    webhookTimestamp,
+  );
 
-  if (webhookSecret && svixSig) {
-    const valid = await verifyYocoSignature(rawBytes, svixId, svixSig, svixTimestamp, webhookSecret);
+  if (webhookSecret && webhookSignature) {
+    const valid = await verifyYocoSignature(
+      rawBytes,
+      webhookId,
+      webhookSignature,
+      webhookTimestamp,
+      webhookSecret,
+    );
+
     if (!valid) {
-      console.error('[yoco-webhook] Signature verification FAILED — svix-id:', svixId);
+      console.error(
+        '[yoco-webhook] Signature verification FAILED — webhook-id:',
+        webhookId,
+      );
       return respond({ error: 'Invalid signature' }, 401);
     }
+
     console.log('[yoco-webhook] Signature verified ✓');
   } else {
     console.warn('[yoco-webhook] No signature header or secret — skipping verification');
@@ -103,12 +148,17 @@ Deno.serve(async (req: Request) => {
     return respond({ received: true, processed: false }, 200);
   }
 
+  if (!paymentId) {
+    console.error('[yoco-webhook] payment.succeeded event has no payment ID');
+    return respond({ error: 'Payment ID missing' }, 422);
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
   );
 
-  // ── Primary path: order_id in metadata (most reliable) ──────────────────
+  // Primary path: order_id in metadata.
   if (orderId) {
     const { data: order, error: fetchErr } = await supabase
       .from('shop_orders')
@@ -124,7 +174,7 @@ Deno.serve(async (req: Request) => {
     return await processPayment(supabase, orderId, paymentId, checkoutId, order);
   }
 
-  // ── Fallback path: match by ch_... then p_... ────────────────────────────
+  // Fallback path: match by checkout ID, then payment ID.
   console.warn('[yoco-webhook] No order_id in metadata — falling back to ID lookup');
 
   if (checkoutId) {
@@ -133,6 +183,7 @@ Deno.serve(async (req: Request) => {
       .select('id, delivery_method, pudo_shipment_id, payment_status')
       .eq('yoco_checkout_id', checkoutId)
       .maybeSingle();
+
     if (found) {
       console.log('[yoco-webhook] Order found by checkoutId (ch_...):', found.id);
       return await processPayment(supabase, found.id, paymentId, checkoutId, found);
@@ -145,22 +196,33 @@ Deno.serve(async (req: Request) => {
       .select('id, delivery_method, pudo_shipment_id, payment_status')
       .eq('yoco_checkout_id', paymentId)
       .maybeSingle();
+
     if (found) {
       console.log('[yoco-webhook] Order found by paymentId (p_...):', found.id);
       return await processPayment(supabase, found.id, paymentId, checkoutId, found);
     }
   }
 
-  console.error('[yoco-webhook] Could not match order — checkoutId:', checkoutId, 'paymentId:', paymentId);
+  console.error(
+    '[yoco-webhook] Could not match order — checkoutId:',
+    checkoutId,
+    'paymentId:',
+    paymentId,
+  );
   return respond({ error: 'Order not found' }, 422);
 });
 
 async function processPayment(
   supabase: ReturnType<typeof createClient>,
   orderId: string,
-  paymentId: string | null,
+  paymentId: string,
   checkoutId: string | null,
-  order: { id: string; delivery_method: string; pudo_shipment_id: string | null; payment_status: string },
+  order: {
+    id: string;
+    delivery_method: string;
+    pudo_shipment_id: string | null;
+    payment_status: string;
+  },
 ) {
   if (order.payment_status === 'paid') {
     console.log('[yoco-webhook] Duplicate webhook — order already paid:', orderId);
@@ -170,12 +232,12 @@ async function processPayment(
   const { data: updated, error: updateErr } = await supabase
     .from('shop_orders')
     .update({
-      payment_status:   'paid',
-      status:           'confirmed',
-      // Preserve the checkout ID (ch_...) already stored; write payment ID (p_...) to payment_id
+      payment_status: 'paid',
+      status: 'confirmed',
+      // Preserve the checkout ID already stored; write the payment ID separately.
       yoco_checkout_id: checkoutId ?? order.id,
-      payment_id:       paymentId,
-      paid_at:          new Date().toISOString(),
+      payment_id: paymentId,
+      paid_at: new Date().toISOString(),
     })
     .eq('id', orderId)
     .eq('payment_status', 'unpaid')
@@ -193,13 +255,13 @@ async function processPayment(
 
   console.log(`[yoco-webhook] Order ${orderId} marked as paid ✓ | payment_id: ${paymentId}`);
 
-  const confirmedOrder  = updated[0];
-  const supabaseUrl     = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey      = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const confirmedOrder = updated[0];
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   const internalHeaders = {
-    'Content-Type':  'application/json',
+    'Content-Type': 'application/json',
     'Authorization': `Bearer ${serviceKey}`,
-    'apikey':        serviceKey,
+    'apikey': serviceKey,
   };
 
   const shouldCreateShipment = (
@@ -210,11 +272,13 @@ async function processPayment(
   if (shouldCreateShipment) {
     try {
       console.log(`[yoco-webhook] Firing pudo-create-shipment for order ${orderId}`);
-      const pudoRes  = await fetch(`${supabaseUrl}/functions/v1/pudo-create-shipment`, {
-        method: 'POST', headers: internalHeaders,
+      const pudoRes = await fetch(`${supabaseUrl}/functions/v1/pudo-create-shipment`, {
+        method: 'POST',
+        headers: internalHeaders,
         body: JSON.stringify({ order_id: orderId }),
       });
       const pudoBody = await pudoRes.json();
+
       if (!pudoRes.ok) {
         console.error('[yoco-webhook] pudo-create-shipment failed:', pudoBody);
       } else {
@@ -227,10 +291,11 @@ async function processPayment(
 
   try {
     await fetch(`${supabaseUrl}/functions/v1/send-order-email`, {
-      method: 'POST', headers: internalHeaders,
+      method: 'POST',
+      headers: internalHeaders,
       body: JSON.stringify({ type: 'payment_received', order_id: orderId }),
     });
-    console.log(`[yoco-webhook] send-order-email (payment_received) fired ✓`);
+    console.log('[yoco-webhook] send-order-email (payment_received) fired ✓');
   } catch (emailErr) {
     console.error('[yoco-webhook] send-order-email failed (non-fatal):', emailErr);
   }
