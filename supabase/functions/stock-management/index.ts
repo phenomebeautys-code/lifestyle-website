@@ -32,9 +32,21 @@ function authorised(password: unknown) {
   return mismatch === 0;
 }
 
-function numeric(value: unknown, fallback = 0) {
+function parseNonNegative(value: unknown) {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function parsePositive(value: unknown) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function toStockStatus(stock: number, reorderLevel: number, configuredStatus: unknown) {
+  if (configuredStatus === "discontinued") return "discontinued";
+  if (stock <= 0) return "out_of_stock";
+  if (reorderLevel > 0 && stock <= reorderLevel) return "low_stock";
+  return "in_stock";
 }
 
 const productSelect = "id, name, price, cost_price, sku, active, availability, stock_on_hand, reorder_level, reorder_quantity, stock_status";
@@ -61,22 +73,16 @@ Deno.serve(async (req: Request) => {
     if (error) return json({ error: error.message }, 500, cors);
 
     const products = (data ?? []).map((product) => {
-      const stock = numeric(product.stock_on_hand);
-      const reorderLevel = numeric(product.reorder_level);
-      const reorderQuantity = numeric(product.reorder_quantity);
-      const status = product.stock_status === "discontinued"
-        ? "discontinued"
-        : stock <= 0
-          ? "out_of_stock"
-          : reorderLevel > 0 && stock <= reorderLevel
-            ? "low_stock"
-            : "in_stock";
+      const stock = Number(product.stock_on_hand);
+      const reorderLevel = Number(product.reorder_level);
+      const reorderQuantity = Number(product.reorder_quantity);
+      const status = toStockStatus(stock, reorderLevel, product.stock_status);
       const suggestedQuantity = reorderQuantity > 0 ? reorderQuantity : Math.max(reorderLevel * 2 - stock, 1);
       return {
         ...product,
         computed_status: status,
         suggested_reorder_quantity: status === "in_stock" || status === "discontinued" ? 0 : suggestedQuantity,
-        estimated_reorder_cost: status === "in_stock" || status === "discontinued" ? 0 : suggestedQuantity * numeric(product.cost_price),
+        estimated_reorder_cost: status === "in_stock" || status === "discontinued" ? 0 : suggestedQuantity * (Number(product.cost_price) || 0),
       };
     });
 
@@ -88,10 +94,17 @@ Deno.serve(async (req: Request) => {
     if (!productId) return json({ error: "Missing product_id" }, 400, cors);
 
     const update: Record<string, number> = {};
-    if (body.reorder_level !== undefined) update.reorder_level = numeric(body.reorder_level);
-    if (body.reorder_quantity !== undefined) update.reorder_quantity = numeric(body.reorder_quantity);
+    if (body.reorder_level !== undefined) {
+      const value = parseNonNegative(body.reorder_level);
+      if (value === null) return json({ error: "reorder_level must be a non-negative number" }, 400, cors);
+      update.reorder_level = value;
+    }
+    if (body.reorder_quantity !== undefined) {
+      const value = parseNonNegative(body.reorder_quantity);
+      if (value === null) return json({ error: "reorder_quantity must be a non-negative number" }, 400, cors);
+      update.reorder_quantity = value;
+    }
     if (!Object.keys(update).length) return json({ error: "No stock settings supplied" }, 400, cors);
-    if (Object.values(update).some((value) => value < 0)) return json({ error: "Stock settings cannot be negative" }, 400, cors);
 
     const { data, error } = await supabase.from("products").update(update).eq("id", productId).select(productSelect).single();
     if (error || !data) return json({ error: error?.message ?? "Product not found" }, error ? 500 : 404, cors);
@@ -100,21 +113,29 @@ Deno.serve(async (req: Request) => {
 
   if (["receive_stock", "adjust_stock"].includes(String(action))) {
     const productId = typeof body.product_id === "string" ? body.product_id : "";
-    const quantity = numeric(body.quantity, NaN);
+    const quantity = parsePositive(body.quantity);
     const note = typeof body.note === "string" ? body.note.trim() : "";
     if (!productId) return json({ error: "Missing product_id" }, 400, cors);
-    if (!Number.isFinite(quantity) || quantity <= 0) return json({ error: "Quantity must be greater than zero" }, 400, cors);
+    if (quantity === null) return json({ error: "quantity must be greater than zero" }, 400, cors);
     if (!note) return json({ error: "A note is required" }, 400, cors);
 
-    const { data: product, error: productError } = await supabase.from("products").select("id, stock_on_hand, stock_status").eq("id", productId).single();
+    let delta = quantity;
+    let movementType = "purchase";
+    if (action === "adjust_stock") {
+      if (body.direction !== "increase" && body.direction !== "decrease") {
+        return json({ error: "direction must be increase or decrease" }, 400, cors);
+      }
+      delta = body.direction === "decrease" ? -quantity : quantity;
+      movementType = "adjustment";
+    }
+
+    const { data: product, error: productError } = await supabase.from("products").select("id, stock_on_hand").eq("id", productId).single();
     if (productError || !product) return json({ error: "Product not found" }, 404, cors);
 
-    const before = numeric(product.stock_on_hand);
-    const delta = action === "receive_stock" ? quantity : numeric(body.direction) < 0 ? -quantity : quantity;
+    const before = Number(product.stock_on_hand);
     const after = before + delta;
-    if (after < 0) return json({ error: "Stock cannot become negative" }, 400, cors);
+    if (!Number.isFinite(before) || after < 0) return json({ error: "Stock cannot become negative" }, 400, cors);
 
-    const movementType = action === "receive_stock" ? "purchase" : "adjustment";
     const { error: movementError } = await supabase.from("inventory_movements").insert({
       product_id: productId,
       movement_type: movementType,
