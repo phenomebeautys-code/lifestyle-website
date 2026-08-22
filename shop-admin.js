@@ -120,6 +120,7 @@ async function login() {
     if (!res.ok)            { showLoginError('Server error. Try again.'); return; }
     const data = await res.json();
     adminToken = pw;
+      window.setStockAdminPassword?.(adminToken);
     sessionStorage.setItem('_at_hash', await hashToken(pw));
     document.getElementById('loginWrap').style.display = 'none';
     const ui = document.getElementById('adminUI');
