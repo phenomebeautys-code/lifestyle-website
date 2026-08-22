@@ -28,7 +28,13 @@ const STATUS_LABELS = {
   dispatched: 'Dispatched',
   delivered:  'Delivered',
 };
-const PAGE_TITLES = { hub: 'Hub', orders: 'Orders', products: 'Products', reports: 'Reports' };
+const PAGE_TITLES = {
+  hub: 'Hub',
+  orders: 'Orders',
+  products: 'Products',
+  'stock-management': 'Stock Management',
+  reports: 'Reports',
+};
 
 /* ─── SVG ICONS ────────────────────────────────── */
 const SVG = {
@@ -84,6 +90,7 @@ document.getElementById('orderDetailModal').addEventListener('click', e => {
 });
 document.getElementById('hamburgerBtn').addEventListener('click', toggleSidebar);
 document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+document.getElementById('refreshStockBtn')?.addEventListener('click', loadStockManagement);
 
 function toggleSidebar() {
   const sidebar   = document.getElementById('sidebar');
@@ -120,7 +127,6 @@ async function login() {
     if (!res.ok)            { showLoginError('Server error. Try again.'); return; }
     const data = await res.json();
     adminToken = pw;
-      window.setStockAdminPassword?.(adminToken);
     sessionStorage.setItem('_at_hash', await hashToken(pw));
     document.getElementById('loginWrap').style.display = 'none';
     const ui = document.getElementById('adminUI');
@@ -187,7 +193,14 @@ function navTo(page, btn) {
   document.getElementById('page-' + page).classList.add('active');
   if (btn) btn.classList.add('active');
   document.getElementById('topbarTitle').textContent = PAGE_TITLES[page] || page;
-  if (page === 'products') loadProducts();
+
+  if (page === 'products') {
+    loadProducts();
+  }
+
+  if (page === 'stock-management') {
+    loadStockManagement();
+  }
 }
 
 /* ─── REFRESH ──────────────────────────────────── */
@@ -1127,6 +1140,49 @@ async function deleteProduct(id, name) {
     allProducts = allProducts.filter(p => p.id !== id);
     renderProducts(); showToast('Product deleted.');
   } catch { showToast('Network error.', true); }
+}
+
+/* ─── STOCK MANAGEMENT ──────────────────────────── */
+async function loadStockManagement() {
+  const el = document.getElementById('stockManagementContent');
+  el.innerHTML = '<div class="products-empty"><span class="spinner"></span> Loading stock\u2026</div>';
+  if (!allProducts.length) await loadProducts();
+
+  if (!allProducts.length) {
+    el.innerHTML = '<div class="products-empty">No products to show stock for yet.</div>';
+    return;
+  }
+
+  const rows = allProducts.map(p => {
+    const variants = (p.variants || []).map(v => {
+      const name    = typeof v === 'string' ? v : (v.name || '');
+      const inStock = typeof v === 'string' ? true : v.in_stock !== false;
+      return { name, inStock };
+    }).filter(v => v.name);
+
+    const variantHTML = variants.length
+      ? variants.map(v => `
+          <span class="badge ${v.inStock ? 'badge-delivered' : 'badge-unpaid'}" style="margin:2px 4px 2px 0;font-size:0.7rem;">
+            ${esc(v.name)} &middot; ${v.inStock ? 'In Stock' : 'Out of Stock'}
+          </span>`).join('')
+      : '<span style="color:var(--text-muted);font-size:0.78rem">No variants tracked</span>';
+
+    return `
+      <div class="panel" style="margin-bottom:12px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">
+          <div>
+            <div style="font-weight:700;color:var(--accent-strong);">${esc(p.name || 'Unnamed product')}</div>
+            ${p.sku ? `<div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px;">SKU: ${esc(p.sku)}</div>` : ''}
+          </div>
+          <span class="badge badge-${(p.availability || 'available').replace(/_/g, '-')}">
+            ${esc(p.availability === 'coming_soon' ? 'Coming Soon' : p.availability === 'unavailable' ? 'Not Available' : 'Available')}
+          </span>
+        </div>
+        <div>${variantHTML}</div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = rows;
 }
 
 /* ─── UTILITIES ─────────────────────────────────── */
