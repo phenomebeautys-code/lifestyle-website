@@ -906,4 +906,3 @@ function showToast(msg, isError = false) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.remove('show'), 2800);
 }
-<script src="shop-admin-orders-table.js"></script>
