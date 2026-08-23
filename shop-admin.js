@@ -16,6 +16,59 @@ let editingVariants = [];
 let editingSizes = [];
 let isReorderMode = false;
 
+window.ShopAdmin = window.ShopAdmin || {};
+
+Object.defineProperties(window.ShopAdmin, {
+  allOrders: {
+    get: () => allOrders,
+    set: value => {
+      allOrders = Array.isArray(value) ? value : [];
+    },
+  },
+
+  allProducts: {
+    get: () => allProducts,
+    set: value => {
+      allProducts = Array.isArray(value) ? value : [];
+    },
+  },
+
+  activeFilter: {
+    get: () => activeFilter,
+    set: value => {
+      activeFilter = value || 'all';
+    },
+  },
+
+  adminToken: {
+    get: () => adminToken,
+    set: value => {
+      adminToken = String(value || '');
+    },
+  },
+
+  editingVariants: {
+    get: () => editingVariants,
+    set: value => {
+      editingVariants = Array.isArray(value) ? value : [];
+    },
+  },
+
+  editingSizes: {
+    get: () => editingSizes,
+    set: value => {
+      editingSizes = Array.isArray(value) ? value : [];
+    },
+  },
+
+  isReorderMode: {
+    get: () => isReorderMode,
+    set: value => {
+      isReorderMode = Boolean(value);
+    },
+  },
+});
+
 const BADGE_MAP = {
   pending: 'badge-unpaid',
   processing: 'badge-processing',
@@ -51,6 +104,59 @@ const SVG = {
 
   star: `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline-block;vertical-align:-2px;flex-shrink:0" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
 };
+
+/* ─── EXTRACTED FEATURE DELEGATES ─────────────── */
+
+const applyFilter = (...args) =>
+  window.ShopAdminOrdersTable.applyFilter(...args);
+
+const getFiltered = (...args) =>
+  window.ShopAdminOrdersTable.getFiltered(...args);
+
+const renderTable = (...args) =>
+  window.ShopAdminOrdersTable.renderTable(...args);
+
+const renderCards = (...args) =>
+  window.ShopAdminOrdersTable.renderCards(...args);
+
+const updateOrderStatus = (...args) =>
+  window.ShopAdminOrdersTable.updateOrderStatus(...args);
+
+const openOrderDetail = (...args) =>
+  window.ShopAdminOrderDetail.openOrderDetail(...args);
+
+const updateFromDetail = (...args) =>
+  window.ShopAdminOrderDetail.updateFromDetail(...args);
+
+const closeOrderDetail = (...args) =>
+  window.ShopAdminOrderDetail.closeOrderDetail(...args);
+
+const loadProducts = (...args) =>
+  window.ShopAdminProducts.loadProducts(...args);
+
+const renderProducts = (...args) =>
+  window.ShopAdminProducts.renderProducts(...args);
+
+const openProductModal = (...args) =>
+  window.ShopAdminProducts.openProductModal(...args);
+
+const closeProductModal = (...args) =>
+  window.ShopAdminProducts.closeProductModal(...args);
+
+const addVariantRow = (...args) =>
+  window.ShopAdminProducts.addVariantRow(...args);
+
+const addSizeRow = (...args) =>
+  window.ShopAdminProducts.addSizeRow(...args);
+
+const toggleReorderMode = (...args) =>
+  window.ShopAdminProducts.toggleReorderMode(...args);
+
+const saveProduct = (...args) =>
+  window.ShopAdminProducts.saveProduct(...args);
+
+const deleteProduct = (...args) =>
+  window.ShopAdminProducts.deleteProduct(...args);
 
 /* ─── INIT ─────────────────────────────────────── */
 
@@ -225,6 +331,7 @@ async function login() {
     const data = await response.json();
 
     adminToken = password;
+    window.ShopAdmin.adminToken = adminToken;
     sessionStorage.setItem('_at_hash', await hashToken(password));
 
     document.getElementById('loginWrap').style.display = 'none';
@@ -267,6 +374,7 @@ function logout() {
   sessionStorage.removeItem('_at_hash');
 
   adminToken = '';
+  window.ShopAdmin.adminToken = '';
 
   location.reload();
 }
@@ -614,23 +722,6 @@ function getDeliveryLabel(order) {
   };
 }
 
-/* ─── EXTRACTED ORDERS TABLE DELEGATES ─────────── */
-
-const applyFilter = (...args) =>
-  window.ShopAdminOrdersTable.applyFilter(...args);
-
-const getFiltered = () =>
-  window.ShopAdminOrdersTable.getFiltered();
-
-const renderTable = () =>
-  window.ShopAdminOrdersTable.renderTable();
-
-const renderCards = () =>
-  window.ShopAdminOrdersTable.renderCards();
-
-const updateOrderStatus = (...args) =>
-  window.ShopAdminOrdersTable.updateOrderStatus(...args);
-
 /* ─── MARK AS PAID ───────────────────────────── */
 
 async function markAsPaid(orderId) {
@@ -896,33 +987,6 @@ function closePrintLabel() {
   document.body.style.overflow = '';
 }
 
-const loadProducts = (...args) =>
-  window.ShopAdminProducts.loadProducts(...args);
-
-const renderProducts = (...args) =>
-  window.ShopAdminProducts.renderProducts(...args);
-
-const openProductModal = (...args) =>
-  window.ShopAdminProducts.openProductModal(...args);
-
-const closeProductModal = (...args) =>
-  window.ShopAdminProducts.closeProductModal(...args);
-
-const addVariantRow = (...args) =>
-  window.ShopAdminProducts.addVariantRow(...args);
-
-const addSizeRow = (...args) =>
-  window.ShopAdminProducts.addSizeRow(...args);
-
-const toggleReorderMode = (...args) =>
-  window.ShopAdminProducts.toggleReorderMode(...args);
-
-const saveProduct = (...args) =>
-  window.ShopAdminProducts.saveProduct(...args);
-
-const deleteProduct = (...args) =>
-  window.ShopAdminProducts.deleteProduct(...args);
-
 /* ─── UTILITIES ───────────────────────────────── */
 
 function setText(id, value) {
@@ -955,3 +1019,21 @@ function showToast(message, isError = false) {
     toast.classList.remove('show');
   }, 2800);
 }
+
+window.ShopAdmin.EDGE_URL = EDGE_URL;
+window.ShopAdmin.SUPA_URL = SUPA_URL;
+window.ShopAdmin.SUPA_ANON = SUPA_ANON;
+window.ShopAdmin.PRODUCTS_TABLE = PRODUCTS_TABLE;
+window.ShopAdmin.callEdge = callEdge;
+window.ShopAdmin.showToast = showToast;
+window.ShopAdmin.esc = esc;
+window.ShopAdmin.BADGE_MAP = BADGE_MAP;
+window.ShopAdmin.STATUS_LABELS = STATUS_LABELS;
+window.ShopAdmin.SVG = SVG;
+window.ShopAdmin.getDeliveryLabel = getDeliveryLabel;
+window.ShopAdmin.updateStats = updateStats;
+window.ShopAdmin.renderRecent = renderRecent;
+window.ShopAdmin.updateReports = updateReports;
+window.ShopAdmin.updateOrdersBadge = updateOrdersBadge;
+window.ShopAdmin.markAsPaid = markAsPaid;
+window.ShopAdmin.printLabel = printLabel;
