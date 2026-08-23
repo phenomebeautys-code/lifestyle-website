@@ -1,8 +1,8 @@
 // shop-admin-auth.js - Authentication module for Shop Admin
 // Handles Supabase authentication and admin access verification
 
-const SUPABASE_URL = 'https://your-project-ref.supabase.co'; // Replace with your actual URL
-const SUPABASE_ANON_KEY = 'your-anon-key'; // Replace with your actual key
+const SUPABASE_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcGR4amNmaW1leWpnem1hdHBsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMDk4NjcsImV4cCI6MjA5MjY4NTg2N30.mn_JsORuYUBtHTqIF2RjY8YUJzY9zJQV0uGFXBvrJRc';
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
