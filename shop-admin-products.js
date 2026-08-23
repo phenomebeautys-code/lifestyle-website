@@ -1,4 +1,6 @@
 /* ─── AVAILABILITY HELPERS ────────────────────── */
+(function () {
+  'use strict';
 
 const AVAILABILITY_LABELS = {
   available: null,
@@ -908,3 +910,16 @@ async function deleteProduct(productId, productName) {
     showToast('Network error.', true);
   }
 }
+
+  window.ShopAdminProducts = {
+    loadProducts,
+    renderProducts,
+    openProductModal,
+    closeProductModal,
+    addVariantRow,
+    addSizeRow,
+    toggleReorderMode,
+    saveProduct,
+    deleteProduct,
+  };
+})();
