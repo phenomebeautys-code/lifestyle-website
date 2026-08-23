@@ -1,50 +1,94 @@
-/* shop-admin-auth.js */
-import { state, callEdge } from './shop-admin-core.js';
-import { hooks } from './shop-admin-core.js';
+// shop-admin-auth.js - Consolidated authentication module
+// Fix: Ensure proper Supabase client initialization and auth state management
 
-/* ─── AUTH ─────────────────────────────────────── */
-export async function hashToken(pw) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+const SUPABASE_URL = 'https://your-project-ref.supabase.co'; // TODO: Replace with actual
+const SUPABASE_ANON_KEY = 'your-anon-key'; // TODO: Replace with actual
+
+let supabase = null;
+
+function getSupabaseClient() {
+  if (!supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return supabase;
 }
-export async function login() {
-  const pw  = document.getElementById('pwInput').value;
-  const btn = document.getElementById('loginBtn');
-  if (!pw) { showLoginError('Please enter your password.'); return; }
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>Signing in\u2026';
-  hideLoginError();
+
+async function checkAuth() {
   try {
-    const res = await callEdge({ action: 'get_orders', password: pw });
-    if (res.status === 429) { showLoginError('Too many attempts. Wait 60 seconds.'); return; }
-    if (res.status === 401) { showLoginError('Incorrect password.'); return; }
-    if (!res.ok)            { showLoginError('Server error. Try again.'); return; }
-    const data = await res.json();
-    state.adminToken = pw;
-    sessionStorage.setItem('_at_hash', await hashToken(pw));
-    document.getElementById('loginWrap').style.display = 'none';
-    const ui = document.getElementById('adminUI');
-    ui.classList.add('visible');
-    ui.removeAttribute('aria-hidden');
-    state.allOrders = data.orders || [];
-    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
-    startPolling();
-  } catch {
-    showLoginError('Network error. Check your connection.');
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Sign In';
+    const client = getSupabaseClient();
+    const { data: { session }, error } = await client.auth.getSession();
+    
+    if (error || !session) {
+      console.warn('No active session, redirecting to login');
+      window.location.href = '/shop-admin.html';
+      return null;
+    }
+    
+    // Verify user has admin role
+    const { data: userProfile, error: profileError } = await client
+      .from('user_profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    
+    if (profileError || !userProfile || userProfile.role !== 'admin') {
+      console.error('User does not have admin access');
+      await client.auth.signOut();
+      window.location.href = '/shop-admin.html';
+      return null;
+    }
+    
+    return { session, user: session.user };
+  } catch (err) {
+    console.error('Auth check failed:', err);
+    window.location.href = '/shop-admin.html';
+    return null;
   }
 }
-export function showLoginError(msg) {
-  const el = document.getElementById('loginError');
-  el.textContent = msg; el.style.display = 'block';
-}
-export function hideLoginError() { document.getElementById('loginError').style.display = 'none'; }
-export function logout() {
-  stopPolling();
-  sessionStorage.removeItem('_at_hash');
-  state.adminToken = '';
-  location.reload();
+
+async function handleLogin(email, password) {
+  try {
+    const client = getSupabaseClient();
+    const { data, error } = await client.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    if (error) throw error;
+    
+    // Verify admin role
+    const { data: userProfile } = await client
+      .from('user_profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+    
+    if (!userProfile || userProfile.role !== 'admin') {
+      await client.auth.signOut();
+      throw new Error('Access denied: Admin role required');
+    }
+    
+    return { success: true, user: data.user };
+  } catch (err) {
+    console.error('Login failed:', err);
+    return { success: false, error: err.message };
+  }
 }
 
+async function handleLogout() {
+  try {
+    const client = getSupabaseClient();
+    await client.auth.signOut();
+    window.location.href = '/shop-admin.html';
+  } catch (err) {
+    console.error('Logout failed:', err);
+  }
+}
+
+// Export for use in other modules
+window.shopAdminAuth = {
+  getSupabaseClient,
+  checkAuth,
+  handleLogin,
+  handleLogout
+};
