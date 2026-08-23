@@ -1,264 +1,476 @@
 /* shop-admin-orders.js */
-import { state, hooks, BADGE_MAP, STATUS_LABELS, SVG, callEdge, esc, showToast } from './shop-admin-core.js';
-import { getDeliveryLabel, updateStats, renderRecent, updateReports } from './shop-admin-dashboard.js';
+import {
+  state,
+  hooks,
+  BADGE_MAP,
+  STATUS_LABELS,
+  SVG,
+  callEdge,
+  esc,
+  showToast,
+} from './shop-admin-core.js';
+import {
+  getDeliveryLabel,
+  updateStats,
+  renderRecent,
+  updateReports,
+  updateOrdersBadge,
+} from './shop-admin-dashboard.js';
 
 /* ─── ORDERS TABLE ────────────────────────────── */
 export function applyFilter(filter, btn) {
   state.activeFilter = filter;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+
+  document.querySelectorAll('.filter-btn').forEach(button => {
+    button.classList.remove('active');
+  });
+
   const target = btn || document.querySelector(`.filter-btn[data-filter="${filter}"]`);
   if (target) target.classList.add('active');
-  renderTable(); renderCards();
+
+  renderTable();
+  renderCards();
 }
+
 export function getFiltered() {
-  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  const searchInput = document.getElementById('searchInput');
+  const query = (searchInput?.value || '').toLowerCase();
   let orders = state.allOrders;
+
   if (state.activeFilter !== 'all') {
-    orders = orders.filter(o => o.payment_status === state.activeFilter || o.status === state.activeFilter);
+    orders = orders.filter(order => (
+      order.payment_status === state.activeFilter
+      || order.status === state.activeFilter
+    ));
   }
-  if (q) {
-    orders = orders.filter(o =>
-      o.customer_name?.toLowerCase().includes(q) ||
-      o.customer_email?.toLowerCase().includes(q) ||
-      String(o.id).slice(0, 8).toLowerCase().includes(q)
-    );
+
+  if (query) {
+    orders = orders.filter(order => (
+      order.customer_name?.toLowerCase().includes(query)
+      || order.customer_email?.toLowerCase().includes(query)
+      || String(order.id).slice(0, 8).toLowerCase().includes(query)
+    ));
   }
+
   return orders;
 }
+
 export function renderTable() {
+  const tbody = document.getElementById('ordersBody');
+  if (!tbody) return;
+
   const orders = getFiltered();
-  const tbody  = document.getElementById('ordersBody');
+
   if (!orders.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No orders found.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No orders found.</td></tr>';
     return;
   }
+
   tbody.innerHTML = '';
-  orders.forEach(o => {
-    const tr   = document.createElement('tr');
-    tr.style.cursor = 'pointer';
-    const date = new Date(o.created_at).toLocaleDateString('en-ZA', {
-      day: 'numeric', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+
+  orders.forEach(order => {
+    const row = document.createElement('tr');
+    row.style.cursor = 'pointer';
+
+    const date = new Date(order.created_at).toLocaleDateString('en-ZA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
-    const items = Array.isArray(o.items) ? o.items : [];
+
+    const items = Array.isArray(order.items) ? order.items : [];
+
     [
       mkTd(date, 'white-space:nowrap;color:var(--text-muted)'),
-      mkCustomerTd(o),
+      mkCustomerTd(order),
       mkItemsTd(items),
-      mkTd('R' + Number(o.total_amount).toLocaleString('en-ZA'), 'font-weight:700;color:var(--accent);white-space:nowrap'),
-      mkBadgeTd(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid'),
-      mkDeliveryTd(o),
-      mkBadgeTd(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending'),
-      mkSelectTd(o),
-      mkMarkPaidTd(o),
-    ].forEach(c => tr.appendChild(c));
-    tr.addEventListener('click', e => {
-      if (e.target.closest('select, button')) return;
-      hooks.openOrderDetail?.(o.id);
+      mkTd(
+        `R${Number(order.total_amount).toLocaleString('en-ZA')}`,
+        'font-weight:700;color:var(--accent);white-space:nowrap',
+      ),
+      mkBadgeTd(
+        order.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid',
+        order.payment_status === 'paid' ? 'Paid' : 'Unpaid',
+      ),
+      mkDeliveryTd(order),
+      mkBadgeTd(
+        BADGE_MAP[order.status] || 'badge-unpaid',
+        STATUS_LABELS[order.status] || order.status || 'Payment Pending',
+      ),
+      mkSelectTd(order),
+      mkMarkPaidTd(order),
+    ].forEach(cell => row.appendChild(cell));
+
+    row.addEventListener('click', event => {
+      if (event.target.closest('select, button')) return;
+      hooks.openOrderDetail?.(order.id);
     });
-    tbody.appendChild(tr);
+
+    tbody.appendChild(row);
   });
 }
+
 export function renderCards() {
+  const container = document.getElementById('orderCards');
+  if (!container) return;
+
   const orders = getFiltered();
-  const el     = document.getElementById('orderCards');
+
   if (!orders.length) {
-    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No orders found.</div>';
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-muted)">No orders found.</div>';
     return;
   }
-  el.innerHTML = '';
-  orders.forEach(o => {
-    const items = Array.isArray(o.items) ? o.items : [];
-    const date  = new Date(o.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
-    const card  = document.createElement('div'); card.className = 'order-card';
-    const payBadge    = makeBadge(o.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid', o.payment_status === 'paid' ? 'Paid' : 'Unpaid');
-    const statusBadge = makeBadge(BADGE_MAP[o.status] || 'badge-unpaid', STATUS_LABELS[o.status] || o.status || 'Payment Pending');
-    const sel = makeStatusSelect(o, statusBadge);
-    const delivInfo = getDeliveryLabel(o);
+
+  container.innerHTML = '';
+
+  orders.forEach(order => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const date = new Date(order.created_at).toLocaleDateString('en-ZA', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+
+    const card = document.createElement('div');
+    card.className = 'order-card';
+
+    const paymentBadge = makeBadge(
+      order.payment_status === 'paid' ? 'badge-paid' : 'badge-unpaid',
+      order.payment_status === 'paid' ? 'Paid' : 'Unpaid',
+    );
+
+    const statusBadge = makeBadge(
+      BADGE_MAP[order.status] || 'badge-unpaid',
+      STATUS_LABELS[order.status] || order.status || 'Payment Pending',
+    );
+
+    const statusSelect = makeStatusSelect(order, statusBadge);
+    const deliveryInfo = getDeliveryLabel(order);
 
     card.innerHTML = `
       <div class="oc-top">
         <div>
-          <div class="oc-name">${esc(o.customer_name)}</div>
-          <div class="oc-meta">${esc(o.customer_email || '')} &middot; ${esc(o.customer_phone || '')}</div>
+          <div class="oc-name">${esc(order.customer_name)}</div>
+          <div class="oc-meta">${esc(order.customer_email || '')} &middot; ${esc(order.customer_phone || '')}</div>
         </div>
-        <div class="oc-amount">R${Number(o.total_amount).toLocaleString('en-ZA')}</div>
+        <div class="oc-amount">R${Number(order.total_amount).toLocaleString('en-ZA')}</div>
       </div>`;
 
-    const badges = document.createElement('div'); badges.className = 'oc-badges';
-    badges.appendChild(payBadge);
+    const badges = document.createElement('div');
+    badges.className = 'oc-badges';
+    badges.appendChild(paymentBadge);
     badges.appendChild(statusBadge);
-    const delivBadge = document.createElement('span');
-    delivBadge.className = 'badge ' + (o.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched');
-    delivBadge.style.cssText = 'font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
-    delivBadge.innerHTML = delivInfo.icon;
-    delivBadge.appendChild(document.createTextNode(' ' + delivInfo.label));
-    badges.appendChild(delivBadge);
-    if (o.is_gift) {
-      const g = document.createElement('span'); g.className = 'badge';
-      g.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
-      g.innerHTML = SVG.gift;
-      g.appendChild(document.createTextNode(' Gift'));
-      badges.appendChild(g);
+
+    const deliveryBadge = document.createElement('span');
+    deliveryBadge.className = `badge ${order.delivery_method === 'locker' ? 'badge-processing' : 'badge-dispatched'}`;
+    deliveryBadge.style.cssText = 'font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+    deliveryBadge.innerHTML = deliveryInfo.icon;
+    deliveryBadge.appendChild(document.createTextNode(` ${deliveryInfo.label}`));
+    badges.appendChild(deliveryBadge);
+
+    if (order.is_gift) {
+      const giftBadge = document.createElement('span');
+      giftBadge.className = 'badge';
+      giftBadge.style.cssText = 'background:rgba(255,200,80,0.15);color:#fbbf24;border:1px solid rgba(255,200,80,0.3);font-size:0.68rem;display:inline-flex;align-items:center;gap:4px';
+      giftBadge.innerHTML = SVG.gift;
+      giftBadge.appendChild(document.createTextNode(' Gift'));
+      badges.appendChild(giftBadge);
     }
 
-    const itemsEl = document.createElement('div'); itemsEl.className = 'oc-items';
-    items.forEach((item, i) => {
-      if (i > 0) itemsEl.appendChild(document.createElement('br'));
-      itemsEl.appendChild(document.createTextNode(`${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`));
+    const itemsElement = document.createElement('div');
+    itemsElement.className = 'oc-items';
+
+    items.forEach((item, index) => {
+      if (index > 0) itemsElement.appendChild(document.createElement('br'));
+
+      itemsElement.appendChild(document.createTextNode(
+        `${item.qty}× ${item.name}${item.variant ? ` (${item.variant})` : ''}${item.size ? ` [${item.size}]` : ''}`,
+      ));
     });
-    if (!items.length) itemsEl.textContent = 'No items';
 
-    const delivEl = document.createElement('div');
-    delivEl.style.cssText = 'font-size:0.74rem;color:var(--text-muted);margin-top:6px;line-height:1.4;';
-    delivEl.textContent = delivInfo.sub;
+    if (!items.length) itemsElement.textContent = 'No items';
 
-    let giftEl = null;
-    if (o.is_gift && o.gift_message) {
-      giftEl = document.createElement('div');
-      giftEl.style.cssText = 'font-size:0.74rem;color:#fbbf24;margin-top:6px;font-style:italic;border-left:2px solid rgba(255,200,80,0.4);padding-left:8px;line-height:1.4;';
-      giftEl.textContent = '\u201c' + o.gift_message + '\u201d';
+    const deliveryElement = document.createElement('div');
+    deliveryElement.style.cssText = 'font-size:0.74rem;color:var(--text-muted);margin-top:6px;line-height:1.4;';
+    deliveryElement.textContent = deliveryInfo.sub;
+
+    let giftElement = null;
+    if (order.is_gift && order.gift_message) {
+      giftElement = document.createElement('div');
+      giftElement.style.cssText = 'font-size:0.74rem;color:#fbbf24;margin-top:6px;font-style:italic;border-left:2px solid rgba(255,200,80,0.4);padding-left:8px;line-height:1.4;';
+      giftElement.textContent = `“${order.gift_message}”`;
     }
 
-    const footer  = document.createElement('div'); footer.className = 'oc-footer';
-    const dateEl  = document.createElement('div'); dateEl.className = 'oc-date'; dateEl.textContent = date;
-    const actions = document.createElement('div'); actions.className = 'oc-actions';
-    const printBtn = document.createElement('button'); printBtn.className = 'btn-print-label'; printBtn.textContent = 'Print Label';
-    printBtn.addEventListener('click', e => { e.stopPropagation(); printLabel(o); });
-    actions.appendChild(sel);
-    if (o.payment_status !== 'paid') {
-      const mpBtn = document.createElement('button');
-      mpBtn.className = 'btn btn-primary';
-      mpBtn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
-      mpBtn.textContent = 'Mark as Paid';
-      mpBtn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
-      actions.appendChild(mpBtn);
+    const footer = document.createElement('div');
+    footer.className = 'oc-footer';
+
+    const dateElement = document.createElement('div');
+    dateElement.className = 'oc-date';
+    dateElement.textContent = date;
+
+    const actions = document.createElement('div');
+    actions.className = 'oc-actions';
+
+    const printButton = document.createElement('button');
+    printButton.className = 'btn-print-label';
+    printButton.textContent = 'Print Label';
+    printButton.addEventListener('click', event => {
+      event.stopPropagation();
+      hooks.printLabel?.(order);
+    });
+
+    actions.appendChild(statusSelect);
+
+    if (order.payment_status !== 'paid') {
+      const markPaidButton = document.createElement('button');
+      markPaidButton.className = 'btn btn-primary';
+      markPaidButton.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+      markPaidButton.dataset.markPaid = order.id;
+      markPaidButton.textContent = 'Mark as Paid';
+      markPaidButton.addEventListener('click', event => {
+        event.stopPropagation();
+        markAsPaid(order.id);
+      });
+      actions.appendChild(markPaidButton);
     }
-    actions.appendChild(printBtn);
-    footer.appendChild(dateEl); footer.appendChild(actions);
+
+    actions.appendChild(printButton);
+    footer.appendChild(dateElement);
+    footer.appendChild(actions);
 
     card.appendChild(badges);
-    card.appendChild(itemsEl);
-    card.appendChild(delivEl);
-    if (giftEl) card.appendChild(giftEl);
+    card.appendChild(itemsElement);
+    card.appendChild(deliveryElement);
+    if (giftElement) card.appendChild(giftElement);
     card.appendChild(footer);
 
-    card.addEventListener('click', e => {
-      if (e.target.closest('select, button')) return;
-      hooks.openOrderDetail?.(o.id);
+    card.addEventListener('click', event => {
+      if (event.target.closest('select, button')) return;
+      hooks.openOrderDetail?.(order.id);
     });
 
-    el.appendChild(card);
+    container.appendChild(card);
   });
 }
-export function makeBadge(cls, label) {
-  const span = document.createElement('span');
-  span.className = 'badge ' + cls; span.textContent = label; return span;
+
+export function makeBadge(className, label) {
+  const badge = document.createElement('span');
+  badge.className = `badge ${className}`;
+  badge.textContent = label;
+  return badge;
 }
-export function makeStatusSelect(o, statusBadge) {
-  const sel = document.createElement('select'); sel.className = 'status-select';
-  ['pending', 'processing', 'dispatched', 'delivered'].forEach(v => {
-    const opt = document.createElement('option'); opt.value = v;
-    opt.textContent = STATUS_LABELS[v] || (v.charAt(0).toUpperCase() + v.slice(1));
-    if (o.status === v) opt.selected = true;
-    sel.appendChild(opt);
+
+export function makeStatusSelect(order, statusBadge) {
+  const select = document.createElement('select');
+  select.className = 'status-select';
+
+  ['pending', 'processing', 'dispatched', 'delivered'].forEach(status => {
+    const option = document.createElement('option');
+    option.value = status;
+    option.textContent = STATUS_LABELS[status] || `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
+    if (order.status === status) option.selected = true;
+    select.appendChild(option);
   });
-  sel.addEventListener('change', () => updateOrderStatus(o.id, sel.value, statusBadge));
-  return sel;
+
+  select.addEventListener('change', () => {
+    updateOrderStatus(order.id, select.value, statusBadge);
+  });
+
+  return select;
 }
+
 export function mkTd(text, style = '') {
   const td = document.createElement('td');
-  if (style) td.style.cssText = style; td.textContent = text; return td;
+  if (style) td.style.cssText = style;
+  td.textContent = text;
+  return td;
 }
-export function mkCustomerTd(o) {
+
+export function mkCustomerTd(order) {
   const td = document.createElement('td');
-  [['font-weight:600;color:var(--accent-strong)', o.customer_name],
-   ['color:var(--text-muted);font-size:0.74rem',  o.customer_email],
-   ['color:var(--text-muted);font-size:0.74rem',  o.customer_phone],
-  ].forEach(([style, val]) => {
-    const d = document.createElement('div'); d.style.cssText = style; d.textContent = val || ''; td.appendChild(d);
-  }); return td;
+
+  [
+    ['font-weight:600;color:var(--accent-strong)', order.customer_name],
+    ['color:var(--text-muted);font-size:0.74rem', order.customer_email],
+    ['color:var(--text-muted);font-size:0.74rem', order.customer_phone],
+  ].forEach(([style, value]) => {
+    const div = document.createElement('div');
+    div.style.cssText = style;
+    div.textContent = value || '';
+    td.appendChild(div);
+  });
+
+  return td;
 }
+
 export function mkItemsTd(items) {
-  const td = document.createElement('td'); const wrap = document.createElement('div'); wrap.className = 'items-mini';
-  items.forEach((item, i) => {
-    if (i > 0) wrap.appendChild(document.createElement('br'));
-    wrap.appendChild(document.createTextNode(
-      `${item.qty}\u00d7 ${item.name}${item.variant ? ' (' + item.variant + ')' : ''}${item.size ? ' [' + item.size + ']' : ''}`
-    ));
-  }); td.appendChild(wrap); return td;
-}
-export function mkBadgeTd(cls, label) {
-  const td = document.createElement('td'); td.appendChild(makeBadge(cls, label)); return td;
-}
-export function mkDeliveryTd(o) {
   const td = document.createElement('td');
-  const { icon, label, sub } = getDeliveryLabel(o);
+  const wrap = document.createElement('div');
+  wrap.className = 'items-mini';
+
+  items.forEach((item, index) => {
+    if (index > 0) wrap.appendChild(document.createElement('br'));
+
+    wrap.appendChild(document.createTextNode(
+      `${item.qty}× ${item.name}${item.variant ? ` (${item.variant})` : ''}${item.size ? ` [${item.size}]` : ''}`,
+    ));
+  });
+
+  td.appendChild(wrap);
+  return td;
+}
+
+export function mkBadgeTd(className, label) {
+  const td = document.createElement('td');
+  td.appendChild(makeBadge(className, label));
+  return td;
+}
+
+export function mkDeliveryTd(order) {
+  const td = document.createElement('td');
+  const { icon, label, sub } = getDeliveryLabel(order);
+
   const nameDiv = document.createElement('div');
   nameDiv.style.cssText = 'font-size:0.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px';
   nameDiv.innerHTML = icon;
-  nameDiv.appendChild(document.createTextNode(' ' + label));
+  nameDiv.appendChild(document.createTextNode(` ${label}`));
+
   const subDiv = document.createElement('div');
   subDiv.style.cssText = 'font-size:0.7rem;color:var(--text-muted);margin-top:2px;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
   subDiv.textContent = sub;
-  td.appendChild(nameDiv); td.appendChild(subDiv);
-  if (o.is_gift) {
-    const g = document.createElement('div');
-    g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px;display:flex;align-items:center;gap:4px';
-    g.innerHTML = SVG.gift;
-    g.appendChild(document.createTextNode(' Gift order'));
-    td.appendChild(g);
+
+  td.appendChild(nameDiv);
+  td.appendChild(subDiv);
+
+  if (order.is_gift) {
+    const gift = document.createElement('div');
+    gift.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px;display:flex;align-items:center;gap:4px';
+    gift.innerHTML = SVG.gift;
+    gift.appendChild(document.createTextNode(' Gift order'));
+    td.appendChild(gift);
   }
+
   return td;
 }
-export function mkSelectTd(o) {
-  const td = document.createElement('td'); td.appendChild(makeStatusSelect(o)); return td;
-}
-export function mkMarkPaidTd(o) {
+
+export function mkSelectTd(order) {
   const td = document.createElement('td');
-  if (o.payment_status !== 'paid') {
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary';
-    btn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
-    btn.textContent = 'Mark as Paid';
-    btn.addEventListener('click', e => { e.stopPropagation(); markAsPaid(o.id); });
-    td.appendChild(btn);
-  }
+  td.appendChild(makeStatusSelect(order));
   return td;
 }
-async export async function updateOrderStatus(id, status, badgeEl) {
-  try {
-    const res = await callEdge({ action: 'update_status', password: state.adminToken, order_id: id, status });
-    if (res.status === 429) { showToast('Rate limited.', true); return; }
-    if (!res.ok)            { showToast('Failed to update.', true); return; }
-    const o = state.allOrders.find(x => x.id === id); if (o) o.status = status;
-    if (badgeEl) {
-      badgeEl.className = 'badge ' + (BADGE_MAP[status] || 'badge-unpaid');
-      badgeEl.textContent = STATUS_LABELS[status] || status;
-    }
-    updateStats(); renderRecent(); updateReports();
-    showToast('Status updated to ' + (STATUS_LABELS[status] || status));
-  } catch { showToast('Network error.', true); }
+
+export function mkMarkPaidTd(order) {
+  const td = document.createElement('td');
+
+  if (order.payment_status !== 'paid') {
+    const button = document.createElement('button');
+    button.className = 'btn btn-primary';
+    button.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
+    button.dataset.markPaid = order.id;
+    button.textContent = 'Mark as Paid';
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      markAsPaid(order.id);
+    });
+    td.appendChild(button);
+  }
+
+  return td;
 }
 
-/* ─── MARK AS PAID ───────────────────────────── */
-async export async function markAsPaid(orderId) {
-  const btn = document.querySelector(`[data-mark-paid="${orderId}"]`);
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving\u2026'; }
+export async function updateOrderStatus(id, status, badgeElement) {
   try {
-    const res = await callEdge({ action: 'mark_paid', password: state.adminToken, order_id: orderId });
-    if (res.status === 429) { showToast('Rate limited.', true); return; }
-    if (!res.ok)            { showToast('Failed to mark as paid.', true); return; }
-    const o = state.allOrders.find(x => x.id === orderId);
-    if (o) {
-      o.payment_status = 'paid';
-      o.paid_at = o.paid_at || new Date().toISOString();
+    const res = await callEdge({
+      action: 'update_status',
+      password: state.adminToken,
+      order_id: id,
+      status,
+    });
+
+    if (res.status === 429) {
+      showToast('Rate limited.', true);
+      return;
     }
-    updateStats(); renderRecent(); renderTable(); renderCards(); updateReports(); updateOrdersBadge();
+
+    if (!res.ok) {
+      showToast('Failed to update.', true);
+      return;
+    }
+
+    const order = state.allOrders.find(item => item.id === id);
+    if (order) order.status = status;
+
+    if (badgeElement) {
+      badgeElement.className = `badge ${BADGE_MAP[status] || 'badge-unpaid'}`;
+      badgeElement.textContent = STATUS_LABELS[status] || status;
+    }
+
+    updateStats();
+    renderRecent();
+    updateReports();
+    renderTable();
+    renderCards();
+
+    showToast(`Status updated to ${STATUS_LABELS[status] || status}`);
+  } catch {
+    showToast('Network error.', true);
+  }
+}
+
+/* ─── MARK AS PAID ────────────────────────────── */
+export async function markAsPaid(orderId) {
+  const button = document.querySelector(`[data-mark-paid="${orderId}"]`);
+  const originalLabel = button?.textContent || 'Mark as Paid';
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Saving…';
+  }
+
+  try {
+    const res = await callEdge({
+      action: 'mark_paid',
+      password: state.adminToken,
+      order_id: orderId,
+    });
+
+    if (res.status === 429) {
+      showToast('Rate limited.', true);
+      return;
+    }
+
+    if (!res.ok) {
+      showToast('Failed to mark as paid.', true);
+      return;
+    }
+
+    const order = state.allOrders.find(item => item.id === orderId);
+    if (order) {
+      order.payment_status = 'paid';
+      order.paid_at = order.paid_at || new Date().toISOString();
+    }
+
+    updateStats();
+    renderRecent();
+    renderTable();
+    renderCards();
+    updateReports();
+    updateOrdersBadge();
+
     const modal = document.getElementById('orderDetailModal');
-    if (!modal.hasAttribute('hidden')) hooks.openOrderDetail?.(orderId);
-    showToast('Payment marked as paid');
-  } catch { showToast('Network error.', true); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = 'Mark as Paid'; } }
-}
+    if (modal && !modal.hasAttribute('hidden')) {
+      hooks.openOrderDetail?.(orderId);
+    }
 
+    showToast('Payment marked as paid');
+  } catch {
+    showToast('Network error.', true);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+}
