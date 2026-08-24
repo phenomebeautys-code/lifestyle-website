@@ -479,6 +479,10 @@ function navTo(page, btn) {
   if (page === 'inventory' && window.ShopAdminInventory) {
     window.ShopAdminInventory.init();
   }
+
+   if (page === 'materials' && window.ShopAdminMaterials) {
+  window.ShopAdminMaterials.init();
+   }
 }
 
 /* ─── REFRESH ──────────────────────────────────── */
