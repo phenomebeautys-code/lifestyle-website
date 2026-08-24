@@ -883,3 +883,117 @@ details.modal-images[open] .modal-images-summary::after { content: '-'; }
   .prod-footer-badge { width: 100%; text-align: center; }
   .btn-edit-prod, .btn-delete-prod { flex: 1; }
 }
+
+/* ══════════════════════════════════════
+   INVENTORY & STOCK / MATERIALS & RECIPES
+   Reuses existing tokens and component
+   patterns only (stat-card, panel, badge,
+   filter-btn, search-input, table, modal,
+   variant-row) — no new colors introduced.
+   Laws applied:
+   Jakob's Law         — same table/badge/modal
+                          shell as Orders & Products
+   Von Restorff Effect — colored stat-card border +
+                          status badge flags risk
+   Goal-Gradient Effect— stock gauge shows progress
+                          toward the reorder target
+   Hick's Law          — edits happen inside the
+                          existing modal pattern, not
+                          an always-open grid
+══════════════════════════════════════ */
+
+/* Stat card risk variants (reuses existing badge rgba palette) */
+.stat-card.warn   { border-color: rgba(251,191,36,0.35); }
+.stat-card.danger { border-color: rgba(248,113,113,0.35); }
+
+/* Stock status badges — same shape/pattern as .badge-paid etc. */
+.badge-in-stock      { background: rgba(74,222,128,0.08);  border-color: rgba(74,222,128,0.25);  color: #4ade80; }
+.badge-low-stock     { background: rgba(251,191,36,0.08);  border-color: rgba(251,191,36,0.25);  color: #fbbf24; }
+.badge-out-of-stock  { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: #f87171; }
+.badge-not-configured,
+.badge-not-ready,
+.badge-inactive      { background: rgba(245,243,239,0.06); border-color: rgba(245,243,239,0.18); color: var(--text-muted); }
+
+/* Stock level gauge — mini progress bar toward reorder target */
+.stock-gauge {
+  width: 96px; height: 5px; border-radius: 40px;
+  background: rgba(255,255,255,0.08); overflow: hidden; margin-top: 6px;
+}
+.stock-gauge-fill {
+  height: 100%; border-radius: 40px; background: #4ade80; transition: width 0.2s;
+}
+.stock-gauge-fill.warn   { background: #fbbf24; }
+.stock-gauge-fill.danger { background: #f87171; }
+.stock-gauge.full-width  { width: 100%; height: 7px; }
+
+/* Mobile card fallback — mirrors .order-card exactly */
+.stock-cards { display: none; flex-direction: column; gap: 12px; }
+.stock-card {
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  border: 1px solid var(--glass-border); border-radius: 14px;
+  padding: 16px; display: flex; flex-direction: column; gap: 10px;
+  backdrop-filter: blur(12px); cursor: pointer; transition: border-color 0.2s;
+}
+.stock-card:hover { border-color: rgba(255,255,255,0.2); }
+.stock-card-top  { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.stock-card-name { font-size: 0.9rem; font-weight: 700; color: var(--accent-strong); }
+.stock-card-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.stock-card-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-top: 10px; border-top: 1px solid var(--glass-border);
+}
+
+/* Quantity stepper — used inside stock/quantity modals */
+.qty-stepper { display: flex; align-items: center; gap: 8px; }
+.qty-stepper button {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05);
+  color: var(--text); font-size: 1.05rem; cursor: pointer; font-family: var(--font-body);
+  transition: all 0.18s;
+}
+.qty-stepper button:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); color: var(--accent-strong); }
+.qty-stepper input { flex: 1; text-align: center; }
+
+/* Repack conversion flow card — same shell as .product-card,
+   with a bulk→retail flow diagram instead of an image */
+.flow-card {
+  background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+  border: 1px solid var(--glass-border); border-radius: 18px;
+  padding: 20px; display: flex; flex-direction: column; gap: 14px;
+  backdrop-filter: blur(12px); transition: border-color 0.2s;
+}
+.flow-card:hover { border-color: rgba(255,255,255,0.2); }
+.flow-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.flow-box {
+  flex: 1; min-width: 160px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 12px 14px;
+}
+.flow-box-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.flow-box-name  { font-size: 0.88rem; font-weight: 600; color: var(--accent-strong); margin-top: 3px; }
+.flow-arrow     { color: var(--accent); font-size: 1.3rem; flex-shrink: 0; }
+.flow-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  border-top: 1px solid var(--glass-border); padding-top: 12px;
+}
+
+/* Recipe cost summary — reuses .payout-row.hero treatment */
+.recipe-cost-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 20px; border-top: 1px solid var(--glass-border);
+}
+.recipe-cost-label { font-size: 0.72rem; color: var(--text-muted); }
+.recipe-cost-value { font-family: var(--font-display); font-size: 1.8rem; color: var(--accent); line-height: 1; }
+
+/* Kit-only tag on materials that cannot be sold standalone */
+.badge-kit-only { background: rgba(99,179,237,0.10); border-color: rgba(99,179,237,0.28); color: #63b3ed; }
+
+@media (max-width: 900px) {
+  .table-wrap.inventory-table,
+  .table-wrap.materials-table { display: none; }
+  .stock-cards { display: flex; }
+}
+@media (max-width: 640px) {
+  .flow-row { flex-direction: column; align-items: stretch; }
+  .flow-arrow { transform: rotate(90deg); align-self: center; }
+}
