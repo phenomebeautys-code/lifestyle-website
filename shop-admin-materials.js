@@ -18,6 +18,39 @@
     kit_component: { label: 'Kit component' },
   };
 
+  // ============ VARIANT SUPPORT ============
+  const VARIANT_OPTIONS = {
+    'refine-exfoliating-scrub': [
+      { value: 'calm', label: 'Calm (Chamomile)' },
+      { value: 'balance', label: 'Balance (Lavender)' },
+      { value: 'bloom', label: 'Bloom (Rose Geranium)' },
+      { value: 'pure', label: 'Pure (Unscented)' }
+    ],
+    'restore-moisturising-cream': [
+      { value: 'calm', label: 'Calm (Chamomile)' },
+      { value: 'balance', label: 'Balance (Lavender)' },
+      { value: 'bloom', label: 'Bloom (Rose Geranium)' },
+      { value: 'pure', label: 'Pure (Unscented)' }
+    ],
+    'refine-restore-ritual-kit': [
+      { value: 'calm', label: 'Calm' },
+      { value: 'balance', label: 'Balance' },
+      { value: 'bloom', label: 'Bloom' },
+      { value: 'pure', label: 'Pure' }
+    ],
+    'film-wax-collection': [
+      { value: 'onyx', label: 'Onyx' },
+      { value: 'blush', label: 'Blush' },
+      { value: 'luxe', label: 'Luxe' },
+      { value: 'nude', label: 'Nude' }
+    ],
+    'pro-max-100-wax-heater': [
+      { value: 'black', label: 'Black' },
+      { value: 'white', label: 'White' },
+      { value: 'pink', label: 'Pink' }
+    ]
+  };
+
   let materials = [];
   let conversions = [];
   let products = [];
@@ -30,6 +63,7 @@
   let isNewMaterial = false;
 
   let selectedProductId = '';
+  let selectedProductVariant = ''; // ============ VARIANT SUPPORT ============
   let recipeLines = [];
   let recipeComputedCost = 0;
   let showConversionForm = false;
@@ -420,6 +454,17 @@
 
   function renderRecipesTab() {
     const productOptions = products.map(p => `<option value="${escapeHtml(p.id)}"${p.id === selectedProductId ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
+    
+    // ============ VARIANT SELECTOR ============
+    const variants = VARIANT_OPTIONS[selectedProductId];
+    const variantSelector = variants ? `
+      <div class="modal-field" style="max-width:420px;margin:1rem 0">
+        <label class="field-label">Variant</label>
+        <select class="field-input" id="recipeVariantSelect">
+          ${variants.map(v => `<option value="${v.value}"${v.value === selectedProductVariant ? ' selected' : ''}>${v.label}</option>`).join('')}
+        </select>
+      </div>` : '';
+    
     if (!selectedProductId) {
       return `
         <div class="page-head"><div><h2>Recipes (Bill of Materials)</h2><p>Pick a product to build or edit its ingredient list.</p></div></div>
@@ -434,7 +479,7 @@
           <select class="field-input" data-recipe-field="material_id" style="flex:2"><option value="">Select material…</option>${materialOptions}</select>
           <input type="number" min="0.0001" step="0.0001" data-recipe-field="quantity_required" value="${line.quantity_required ?? ''}" placeholder="Qty" style="max-width:100px" />
           <span class="items-mini" style="min-width:64px;text-align:right">${fmtCurrency(lineCost)}</span>
-          <button type="button" class="btn-remove-variant" data-recipe-remove="${index}">×</button>
+          <button type="button" class="btn-remove-variant" data-recipe-remove="${index}">x</button>
         </div>`;
     }).join('');
     return `
@@ -442,6 +487,7 @@
         <div><h2>Recipes (Bill of Materials)</h2><p>Editing the recipe for the selected product.</p></div>
         <div class="products-actions"><select class="search-input" id="recipeProductSelect">${productOptions}</select></div>
       </div>
+      ${variantSelector}
       <div class="panel">
         <div class="panel-header"><span class="panel-title">Ingredients</span></div>
         <div class="variants-list" style="padding:16px 20px">
@@ -467,10 +513,20 @@
     const select = document.getElementById('recipeProductSelect');
     if (select) select.addEventListener('change', async () => {
       selectedProductId = select.value;
+      selectedProductVariant = ''; // Reset variant when product changes
       recipeLines = [];
-      if (selectedProductId) await loadRecipe(selectedProductId);
+      if (selectedProductId) await loadRecipe(selectedProductId, selectedProductVariant || null);
       render();
     });
+    
+    // ============ VARIANT SELECTOR LISTENER ============
+    const variantSelect = document.getElementById('recipeVariantSelect');
+    if (variantSelect) variantSelect.addEventListener('change', async () => {
+      selectedProductVariant = variantSelect.value;
+      await loadRecipe(selectedProductId, selectedProductVariant);
+      render();
+    });
+    
     document.getElementById('addRecipeLine')?.addEventListener('click', () => { recipeLines.push({ material_id: '', quantity_required: '' }); render(); });
     container.querySelectorAll('[data-recipe-remove]').forEach(btn => btn.addEventListener('click', () => { recipeLines.splice(Number(btn.dataset.recipeRemove), 1); recalculateRecipeCost(); render(); }));
     container.querySelectorAll('[data-recipe-line]').forEach(row => {
@@ -485,7 +541,7 @@
     document.getElementById('saveRecipe')?.addEventListener('click', async () => {
       const lines = recipeLines.filter(l => l.material_id && Number(l.quantity_required) > 0).map(l => ({ material_id: l.material_id, quantity_required: Number(l.quantity_required) }));
       try {
-        const result = await request('save_recipe', { product_id: selectedProductId, lines, sync_cost_price: true });
+        const result = await request('save_recipe', { product_id: selectedProductId, product_variant: selectedProductVariant || null, lines, sync_cost_price: true });
         recipeComputedCost = result.computed_cost || 0;
         showMessage('Recipe saved — product cost price updated');
         render();
@@ -495,13 +551,16 @@
     });
   }
 
-  async function loadRecipe(productId) {
+  // ============ UPDATED LOAD RECIPE ============
+  async function loadRecipe(productId, productVariant = null) {
     try {
-      const result = await request('get_recipe', { product_id: productId });
+      const result = await request('get_recipe', { product_id: productId, product_variant: productVariant });
       recipeLines = (Array.isArray(result.recipe) ? result.recipe : []).map(l => ({ material_id: l.material_id, quantity_required: l.quantity_required }));
       recipeComputedCost = result.computed_cost || 0;
     } catch (error) {
       showMessage(error.message || 'Failed to load recipe', true);
+      recipeLines = [];
+      recipeComputedCost = 0;
     }
   }
 
@@ -523,7 +582,7 @@
           </div>
           <div style="display:flex;gap:8px">
             <button type="button" class="btn btn-primary" data-conversion-run="${c.id}">Run Batch</button>
-            <button type="button" class="btn-remove-variant" data-conversion-delete="${c.id}">×</button>
+            <button type="button" class="btn-remove-variant" data-conversion-delete="${c.id}">x</button>
           </div>
         </div>
       </div>`;
@@ -628,7 +687,7 @@
     renderLoading();
     try {
       await loadAll();
-      if (selectedProductId) await loadRecipe(selectedProductId);
+      if (selectedProductId) await loadRecipe(selectedProductId, selectedProductVariant || null);
       render();
     } catch (error) {
       console.error('Materials load failed:', error);
