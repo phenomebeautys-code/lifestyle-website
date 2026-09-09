@@ -342,6 +342,14 @@ async function login() {
 
     allOrders = data.orders || [];
 
+    Promise.all([
+      loadProducts(),
+      window.ShopAdminPackaging ? window.ShopAdminPackaging.loadPudoRates() : Promise.resolve(),
+    ]).then(() => {
+      renderTable();
+      renderCards();
+    }).catch(() => { /* badges fall back to '?' if this fails */ });
+
     updateStats();
     renderRecent();
     renderTable();
@@ -511,6 +519,12 @@ async function refreshData() {
     const data = await response.json();
 
     allOrders = data.orders || [];
+
+    try {
+      await loadProducts();
+    } catch {
+      /* badges fall back to '?' if this fails */
+    }
 
     updateStats();
     renderRecent();
