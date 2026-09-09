@@ -99,6 +99,9 @@
       delivBadge.innerHTML = delivInfo.icon;
       delivBadge.appendChild(document.createTextNode(' ' + delivInfo.label));
       badges.appendChild(delivBadge);
+      if (window.ShopAdminPackaging) {
+        badges.appendChild(window.ShopAdminPackaging.renderBoxBadge(o));
+      }
       if (o.is_gift) {
         const g = document.createElement('span');
         g.className = 'badge';
@@ -245,6 +248,12 @@
     subDiv.textContent = sub;
     td.appendChild(nameDiv);
     td.appendChild(subDiv);
+    if (window.ShopAdminPackaging) {
+      const boxDiv = document.createElement('div');
+      boxDiv.style.cssText = 'margin-top:4px';
+      boxDiv.appendChild(window.ShopAdminPackaging.renderBoxBadge(o));
+      td.appendChild(boxDiv);
+    }
     if (o.is_gift) {
       const g = document.createElement('div');
       g.style.cssText = 'font-size:0.68rem;color:#fbbf24;margin-top:3px;display:flex;align-items:center;gap:4px';
