@@ -23,17 +23,71 @@ interface PudoRate {
 
 /* ── Product dimension row shape ── */
 interface ProductDims {
-  id:        string;
   weight_kg: number;
   length_cm: number;
   width_cm:  number;
   height_cm: number;
+  pack_flat: boolean;
 }
 
-/* ── Packing constants ── */
-const PACKING_EFFICIENCY     = 0.70;  // 70% usable volume after box overhead and padding
-const BOX_HEIGHT_OVERHEAD_CM = 2.0;   // packaging adds ~2cm to each item height
-const BOX_WEIGHT_OVERHEAD_KG = 0.050; // packaging adds ~50g per item
+interface PackedUnit { l: number; w: number; h: number; }
+
+/* ── Orientation: mirrors packaging-engine.ts ──
+   pack_flat items are laid on their largest face (shortest dimension = height).
+   Everything else ships in its stored, as-measured orientation (real shipper/
+   candle box dims — no artificial padding added; lockers have been tested to
+   accept a flush, zero-clearance fit). ── */
+function getPackedDimensions(dims: ProductDims): PackedUnit {
+  if (dims.pack_flat) {
+    const sorted = [dims.length_cm, dims.width_cm, dims.height_cm].sort((a, b) => b - a);
+    return { l: sorted[0], w: sorted[1], h: sorted[2] };
+  }
+  return { l: dims.length_cm, w: dims.width_cm, h: dims.height_cm };
+}
+
+/* ── Greedy layer bin-packing: same algorithm as packaging-engine.ts ── */
+function fitsInBox(units: PackedUnit[], box: PudoRate): boolean {
+  const remaining = [...units].sort((a, b) => b.h - a.h);
+  let usedHeight = 0;
+
+  while (remaining.length > 0) {
+    const layerHeight = remaining[0].h;
+    usedHeight += layerHeight;
+    if (usedHeight > box.max_height_cm) return false;
+
+    let usedL = 0, usedW = 0, rowH = 0;
+    const packedIdx: number[] = [];
+
+    for (let i = 0; i < remaining.length; i++) {
+      const u = remaining[i];
+      if (u.h > layerHeight) continue;
+
+      if (usedL + u.l <= box.max_length_cm && u.w <= box.max_width_cm) {
+        if (usedW + u.w <= box.max_width_cm) {
+          usedL += u.l;
+          rowH = Math.max(rowH, u.w);
+          packedIdx.push(i);
+        } else if (u.l <= box.max_length_cm && u.w <= box.max_width_cm) {
+          usedW += rowH;
+          usedL = u.l;
+          rowH = u.w;
+          if (usedW + rowH <= box.max_width_cm) packedIdx.push(i);
+        }
+      } else if (u.w <= box.max_length_cm && u.l <= box.max_width_cm) {
+        if (usedL + u.w <= box.max_length_cm) {
+          usedL += u.w;
+          rowH = Math.max(rowH, u.l);
+          packedIdx.push(i);
+        }
+      }
+    }
+
+    if (packedIdx.length === 0) return false;
+    for (let i = packedIdx.length - 1; i >= 0; i--) remaining.splice(packedIdx[i], 1);
+  }
+
+  return true;
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -55,11 +109,10 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-    /* ── 1. Load Pudo rates — M, L, XL only (XS and S excluded by height) ── */
+    /* ── 1. Load ALL Pudo rate tiers (XS -> XL), smallest first ── */
     const { data: rates, error: ratesError } = await supabase
       .from('pudo_rates')
       .select('box_size, max_weight_kg, max_length_cm, max_width_cm, max_height_cm, locker_fee, door_fee')
-      .in('box_size', ['M', 'L', 'XL'])
       .order('max_weight_kg', { ascending: true });
 
     if (ratesError || !Array.isArray(rates) || rates.length === 0) {
@@ -74,19 +127,20 @@ Deno.serve(async (req: Request) => {
       .map(i => i.productId)
       .filter(id => typeof id === 'string' && id.length > 0);
 
-    const DEFAULT_DIMS: Omit<ProductDims, 'id'> = {
+    const DEFAULT_DIMS: ProductDims = {
       weight_kg: 0.500,
       length_cm: 10.0,
       width_cm:  10.0,
       height_cm: 10.0,
+      pack_flat: false,
     };
 
-    const dimsMap: Record<string, Omit<ProductDims, 'id'>> = {};
+    const dimsMap: Record<string, ProductDims> = {};
 
     if (productIds.length > 0) {
       const { data: products } = await supabase
         .from('products')
-        .select('id, weight_kg, length_cm, width_cm, height_cm')
+        .select('id, weight_kg, length_cm, width_cm, height_cm, pack_flat')
         .in('id', productIds);
 
       if (Array.isArray(products)) {
@@ -97,79 +151,53 @@ Deno.serve(async (req: Request) => {
               length_cm: Number(p.length_cm) > 0 ? Number(p.length_cm) : DEFAULT_DIMS.length_cm,
               width_cm:  Number(p.width_cm)  > 0 ? Number(p.width_cm)  : DEFAULT_DIMS.width_cm,
               height_cm: Number(p.height_cm) > 0 ? Number(p.height_cm) : DEFAULT_DIMS.height_cm,
+              pack_flat: Boolean(p.pack_flat),
             };
           }
         }
       }
     }
 
-    /* ── 3. Compute total packed volume, weight, and max item height ──
-       Volume approach: items can be arranged freely (upright, side by side,
-       stacked) so we use total packed volume against the box's usable volume
-       at 70% packing efficiency.
-
-       packed_vol per item = length x width x (height + BOX_HEIGHT_OVERHEAD_CM)
-       max_h  = tallest single packed item — must not exceed box height
-       total_kg = sum of (weight + BOX_WEIGHT_OVERHEAD_KG) x qty
-    ── */
-    let totalPackedVol = 0;
-    let totalWeightKg  = 0;
-    let maxPackedH     = 0;
+    /* ── 3. Build packed units + total weight (no artificial overhead —
+       stored dims are the real shipper/candle box dims, and lockers have
+       been confirmed to accept a flush, zero-clearance fit) ── */
+    const units: PackedUnit[] = [];
+    let totalWeightKg = 0;
 
     for (const item of items) {
       const qty  = Math.max(1, Number(item.qty) || 1);
       const dims = dimsMap[item.productId] ?? DEFAULT_DIMS;
+      const packed = getPackedDimensions(dims);
 
-      const packedH = dims.height_cm + BOX_HEIGHT_OVERHEAD_CM;
-      const itemVol = dims.length_cm * dims.width_cm * packedH;
-
-      totalPackedVol += itemVol * qty;
-      totalWeightKg  += (dims.weight_kg + BOX_WEIGHT_OVERHEAD_KG) * qty;
-      if (packedH > maxPackedH) maxPackedH = packedH;
+      for (let i = 0; i < qty; i++) units.push(packed);
+      totalWeightKg += dims.weight_kg * qty;
     }
 
-    totalPackedVol = Math.round(totalPackedVol * 1000) / 1000;
-    totalWeightKg  = Math.round(totalWeightKg  * 1000) / 1000;
-    maxPackedH     = Math.round(maxPackedH     * 1000) / 1000;
+    totalWeightKg = Math.round(totalWeightKg * 1000) / 1000;
+    const maxPackedH = units.reduce((m, u) => Math.max(m, u.h), 0);
 
-    /* ── 4. Select smallest fitting box ──
-       Rates are ordered M -> L -> XL (weight ascending).
-
-       A box fits when all three conditions are true simultaneously:
-         1. total packed volume <= box volume x PACKING_EFFICIENCY
-         2. total weight        <= box max_weight_kg
-         3. tallest packed item <= box max_height_cm
-
-       We take the first box that satisfies all three.
-       If nothing fits, the order is oversized — door delivery only.
-    ── */
+    /* ── 4. Select smallest fitting box via real bin-packing, XS -> XL ── */
     let selectedRate: PudoRate | null = null;
 
-    for (const rate of rates) {
-      const boxVol    = Number(rate.max_length_cm) * Number(rate.max_width_cm) * Number(rate.max_height_cm);
-      const usableVol = boxVol * PACKING_EFFICIENCY;
-
-      const fits =
-        totalPackedVol <= usableVol &&
-        totalWeightKg  <= Number(rate.max_weight_kg) &&
-        maxPackedH     <= Number(rate.max_height_cm);
-
-      if (fits) {
-        selectedRate = rate as PudoRate;
+    for (const rate of rates as PudoRate[]) {
+      if (totalWeightKg > Number(rate.max_weight_kg)) continue;
+      if (fitsInBox(units, rate)) {
+        selectedRate = rate;
         break;
       }
     }
 
     /* ── 5. Oversized: exceeds all boxes — door delivery only ── */
     if (!selectedRate) {
+      const largest = (rates as PudoRate[])[rates.length - 1];
       return new Response(
         JSON.stringify({
           oversized:       true,
           box:             null,
           locker_fee:      null,
-          door_fee:        Number((rates[rates.length - 1] as PudoRate).door_fee),
+          door_fee:        Number(largest.door_fee),
           total_weight_kg: totalWeightKg,
-          packed_vol_cm3:  totalPackedVol,
+          max_packed_height_cm: maxPackedH,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -182,7 +210,7 @@ Deno.serve(async (req: Request) => {
         locker_fee:      Number(selectedRate.locker_fee),
         door_fee:        Number(selectedRate.door_fee),
         total_weight_kg: totalWeightKg,
-        packed_vol_cm3:  totalPackedVol,
+        max_packed_height_cm: maxPackedH,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
