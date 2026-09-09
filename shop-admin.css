@@ -988,6 +988,36 @@ details.modal-images[open] .modal-images-summary::after { content: '-'; }
 /* Kit-only tag on materials that cannot be sold standalone */
 .badge-kit-only { background: rgba(99,179,237,0.10); border-color: rgba(99,179,237,0.28); color: #63b3ed; }
 
+/* ─── Packaging / Pudo box-size indicator ─── */
+.badge-box {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.badge-box-xs { background: rgba(74,222,128,0.10);  border-color: rgba(74,222,128,0.3);   color: #4ade80; }
+.badge-box-s  { background: rgba(99,179,237,0.10);  border-color: rgba(99,179,237,0.3);   color: #63b3ed; }
+.badge-box-m  { background: rgba(251,191,36,0.10);  border-color: rgba(251,191,36,0.3);   color: #fbbf24; }
+.badge-box-l  { background: rgba(251,146,60,0.10);  border-color: rgba(251,146,60,0.3);   color: #fb923c; }
+.badge-box-xl { background: rgba(248,113,113,0.10); border-color: rgba(248,113,113,0.3);  color: #f87171; }
+.badge-box-unknown { background: rgba(245,243,239,0.06); border-color: rgba(245,243,239,0.18); color: var(--text-muted); }
+.badge-box-mismatch {
+  background: rgba(248,113,113,0.14);
+  border-color: rgba(248,113,113,0.4);
+  color: #f87171;
+}
+.box-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
 @media (max-width: 900px) {
   .table-wrap.inventory-table,
   .table-wrap.materials-table { display: none; }
