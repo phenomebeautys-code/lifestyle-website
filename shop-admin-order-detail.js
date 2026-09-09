@@ -32,6 +32,38 @@
     const lockerSVG  = SVG.locker;
     const delivIcon  = o.delivery_method === 'locker' ? lockerSVG : doorSVG;
 
+    let packagingHTML = '';
+    if (window.ShopAdminPackaging) {
+      const ind = window.ShopAdminPackaging.getBoxIndicator(o);
+      const boxBadgeSpan = document.createElement('span');
+      boxBadgeSpan.className = 'badge ' + ind.cls;
+      boxBadgeSpan.style.cssText = 'font-size:0.8rem;padding:5px 10px';
+      const dot = document.createElement('span');
+      dot.className = 'box-dot';
+      boxBadgeSpan.appendChild(dot);
+      boxBadgeSpan.appendChild(document.createTextNode(' ' + ind.label));
+      const boxBadgeHTML = boxBadgeSpan.outerHTML;
+
+      const detailLines = [];
+      if (ind.totalWeightKg != null) detailLines.push(`Weight: ${ind.totalWeightKg}kg`);
+      if (ind.maxHeightCm != null) detailLines.push(`Tallest item: ${ind.maxHeightCm}cm`);
+      if (ind.expectedFee != null) detailLines.push(`Expected fee: R${ind.expectedFee.toFixed(2)}`);
+
+      const mismatchNote = ind.feeMismatch
+        ? `<div style="font-size:0.78rem;color:#f87171;margin-top:6px">⚠ Charged R${ind.chargedFee.toFixed(2)} — expected R${ind.expectedFee.toFixed(2)} for a ${ind.box} box. Worth double-checking.</div>`
+        : '';
+
+      packagingHTML = `
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
+        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Packaging — Recommended Locker/Box Size</div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          ${boxBadgeHTML}
+          <div style="font-size:0.78rem;color:var(--text-muted)">${detailLines.join(' &middot; ')}</div>
+        </div>
+        ${mismatchNote}
+      </div>`;
+    }
+
     const markPaidRow = !isPaid ? `
       <div style="margin-top:10px">
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
@@ -62,6 +94,8 @@
         <div style="font-size:0.88rem;font-weight:600;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px">${delivIcon} ${esc(delivInfo.label)}</div>
         ${delivInfo.sub ? `<div style="font-size:0.8rem;color:var(--text-muted);line-height:1.5">${esc(delivInfo.sub)}</div>` : ''}
       </div>
+
+      ${packagingHTML}
 
       <div style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:10px;padding:16px;margin-bottom:14px">
         <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:4px">Items</div>
