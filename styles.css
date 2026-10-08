@@ -189,19 +189,30 @@ section, footer, nav { position: relative; z-index: 1; }
 .section { padding: 10px 0; }
 .section-inner { padding: var(--section-pad); }
 
+/* ─────────────────────────────────────────────────────────────
+   Section kicker / eyebrow
+   Pill shell removed (no background, border, or radius), but the
+   original padding has been moved into the margin so the total
+   vertical rhythm and horizontal offset are byte-for-byte
+   identical to the previous pill version:
+     6px top padding      → 6px top margin
+     6px bottom padding
+       + 14px margin      → 20px bottom margin
+     13px side padding    → 13px side margin
+───────────────────────────────────────────────────────────── */
 .section-kicker {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 13px;
-    border-radius: var(--radius-pill);
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.13);
+    padding: 0;
+    margin: 6px 13px 20px;
+    border: none;
+    border-radius: 0;
+    background: none;
     color: var(--text-soft);
     font-size: 0.72rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 14px;
     font-family: var(--font-body);
 }
 
