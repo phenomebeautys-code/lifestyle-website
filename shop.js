@@ -518,8 +518,11 @@ function openProductDetail(pid) {
   closeBtn.addEventListener('click', closeProductDetail);
   panel.appendChild(closeBtn);
 
-  /* Ensure overlay is interactive while open */
-  if (overlay) overlay.style.pointerEvents = 'auto';
+  /* ─── FIX: show the overlay and enable interactions ─── */
+  if (overlay) {
+    overlay.style.display       = 'block';
+    overlay.style.pointerEvents = 'auto';
+  }
   overlay?.classList.add('open');
   panel.classList.add('open');
   panel.setAttribute('aria-hidden', 'false');
@@ -533,9 +536,14 @@ function closeProductDetail() {
   const panel   = document.getElementById('pdpPanel');
   const overlay = document.getElementById('pdpOverlay');
   panel?.classList.remove('open');
-  overlay?.classList.remove('open');
-  /* Disable pointer events so the invisible overlay cannot block product tile clicks */
-  if (overlay) overlay.style.pointerEvents = 'none';
+
+  /* ─── FIX: fully remove the overlay from layout so it can't block clicks ─── */
+  if (overlay) {
+    overlay.classList.remove('open');
+    overlay.style.display       = 'none';
+    overlay.style.pointerEvents = 'none';
+  }
+
   panel?.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('pdp-open');
   document.body.style.overflow = '';
