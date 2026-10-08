@@ -467,14 +467,16 @@ body.pdp-open { overflow: hidden; }
     right: auto;
     bottom: auto;
     width: min(600px, 92vw);
-    max-height: 88dvh;
-    transform: translate(-50%, -50%) scale(0.95);
+    /* REDUCED max-height to ensure it fits below the navbar */
+    max-height: calc(100dvh - 160px); 
+    transform: translate(-50%, -50%) scale(0.95); 
     border-radius: 28px;
     transition: transform 0.40s cubic-bezier(0.16,1,0.3,1), opacity 0.30s ease;
     opacity: 0;
   }
   .pdp-panel.open {
-    transform: translate(-46%, -50%) scale(1);
+    /* FIXED: Was -46%, now correctly -50% */
+    transform: translate(-50%, -50%) scale(1); 
     opacity: 1;
   }
 }
