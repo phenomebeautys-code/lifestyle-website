@@ -1,176 +1,78 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 
-const ALLOWED_ORIGINS = ["https://www.phenomebeauty.co.za", "https://phenomebeauty.co.za"];
-
-Deno.serve(async (req: Request) => {
-  const origin = req.headers.get("origin") ?? "";
-  const corsHeaders: Record<string, string> = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, apikey, Authorization",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+const ORIGINS = ['https://www.phenomebeauty.co.za', 'https://phenomebeauty.co.za'];
+Deno.serve(async req => {
+  const origin = req.headers.get('origin') || '';
+  const headers = {
+    'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, Authorization',
+    'Content-Type': 'application/json',
   };
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
+  const respond = (data, status = 200) => new Response(JSON.stringify(data), {status, headers});
+  if (req.method === 'OPTIONS') return new Response(null, {status: 204, headers});
+  if (req.method !== 'POST') return respond({error: 'Method not allowed'}, 405);
+  let body;
+  try { body = await req.json(); } catch { return respond({error: 'Invalid JSON'}, 400); }
   try {
-    const body = await req.json();
-    const {
-      customer,
-      delivery_method,
-      delivery_address,
-      delivery_fee,
-      locker_id,
-      locker_name,
-      locker_address,
-      special_instructions,
-      cart,
-    } = body;
-
-    if (!customer?.name || !customer?.email || !customer?.phone) {
-      return new Response(JSON.stringify({ error: "Missing customer details." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const {customer, delivery_method, delivery_address, locker_id, locker_name, locker_address, cart} = body || {};
+    if (!customer || ['name', 'email', 'phone'].some(key => typeof customer[key] !== 'string' || !customer[key].trim())) {
+      return respond({error: 'Missing customer details'}, 400);
     }
-
-    if (!cart || !cart.length) {
-      return new Response(JSON.stringify({ error: "Cart is empty." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!['door', 'locker'].includes(delivery_method)) return respond({error: 'Unsupported delivery method'}, 400);
+    if (!Array.isArray(cart) || !cart.length || cart.length > 100) return respond({error: 'Invalid cart'}, 400);
+    let address;
+    if (delivery_method === 'door') {
+      if (['street', 'suburb', 'city', 'postal', 'province'].some(key => typeof delivery_address?.[key] !== 'string' || !delivery_address[key].trim())) {
+        return respond({error: 'Missing delivery address'}, 400);
+      }
+      address = ['street', 'suburb', 'city', 'postal', 'province'].map(key => delivery_address[key].trim()).join(', ');
+    } else {
+      if ([locker_id, locker_name, locker_address].some(value => typeof value !== 'string' || !value.trim())) {
+        return respond({error: 'Select a delivery locker'}, 400);
+      }
+      address = [locker_name, locker_address].join(' -- ');
     }
-
-    if (!delivery_method) {
-      return new Response(JSON.stringify({ error: "Missing delivery method." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Build delivery_address text column
-    let deliveryAddressText = "";
-    if (delivery_method === "door" && delivery_address) {
-      deliveryAddressText = [
-        delivery_address.street,
-        delivery_address.suburb,
-        delivery_address.city,
-        delivery_address.postal,
-        delivery_address.province,
-      ].filter(Boolean).join(", ");
-    } else if (delivery_method === "locker") {
-      deliveryAddressText = [locker_name, locker_address].filter(Boolean).join(" -- ");
-    }
-
-    if (!deliveryAddressText) {
-      return new Response(JSON.stringify({ error: "Missing delivery address." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Build delivery_meta JSONB
-    const deliveryMeta = delivery_method === "door"
-      ? { ...delivery_address, special_instructions: special_instructions || "" }
-      : {
-          locker_id:        locker_id || "",
-          locker_name:      locker_name || "",
-          locker_address:   locker_address || "",
-          special_instructions: special_instructions || "",
-        };
-
-    // Map cart items
-    const items = cart.map((i: { id: string; name: string; price: number; qty: number; image: string; variant?: string; size?: string }) => ({
-      productId: i.id,
-      name:      i.name,
-      price:     Number(i.price),
-      qty:       Number(i.qty),
-      image:     i.image || "",
-      ...(i.variant ? { variant: i.variant } : {}),
-      ...(i.size    ? { size:    i.size    } : {}),
-
-    }));
-
-    const subtotal    = items.reduce((s: number, i: { price: number; qty: number }) => s + i.price * i.qty, 0);
-    // ── Server-side delivery fee validation ───────────────────────────────
-let fee: number;
-try {
-  const quoteRes = await fetch(
-    `${Deno.env.get('SUPABASE_URL')}/functions/v1/get-shipping-quote`,
-    {
-      method:  'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-      },
-      body: JSON.stringify({
-        items: items.map((i: { productId: string; qty: number }) => ({
-          productId: i.productId,
-          qty:       i.qty,
-        })),
-      }),
-    }
-  );
-
-  if (!quoteRes.ok) throw new Error(`get-shipping-quote returned ${quoteRes.status}`);
-
-  const quote = await quoteRes.json();
-  fee = delivery_method === 'locker'
-    ? Number(quote.locker_fee)
-    : Number(quote.door_fee);
-
-  if (!fee || fee <= 0) throw new Error('Invalid fee from quote');
-} catch (err) {
-  console.error('[create-order] Shipping quote failed, using fallback:', err);
-  fee = delivery_method === 'locker' ? 69 : 99;
-}
-    const totalAmount = subtotal + fee;
-
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    const { data: order, error: insertErr } = await supabase
-      .from("shop_orders")
-      .insert({
-        customer_name:    customer.name,
-        customer_email:   customer.email,
-        customer_phone:   customer.phone,
-        delivery_address: deliveryAddressText,
-        delivery_method:  delivery_method,
-        delivery_meta:    deliveryMeta,
-        delivery_fee:     fee,
-        items:            items,
-        subtotal:         subtotal,
-        total_amount:     totalAmount,
-        notes:            special_instructions || null,
-        payment_status:   "unpaid",
-        status:           "pending",
-        is_gift:          false,
-        gift_message:     null,
-      })
-      .select("id, customer_token")
-      .single();
-
-    if (insertErr || !order) {
-      console.error("[create-order] Insert failed:", insertErr);
-      return new Response(JSON.stringify({ error: "Could not create order." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify({ order_id: order.id, order_ref: order.id }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const url = Deno.env.get('SUPABASE_URL');
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabase = createClient(url, key);
+    const ids = [...new Set(cart.map(item => item?.productId || item?.id))];
+    if (ids.some(id => typeof id !== 'string' || !id)) return respond({error: 'Invalid product'}, 400);
+    const {data: products, error: productError} = await supabase.from('products')
+      .select('id, name, price, variants, sizes, image_url, active, availability').in('id', ids);
+    if (productError || !products) return respond({error: 'Could not validate products'}, 503);
+    const trusted = trustedCart(cart, products);
+    const quoteResponse = await fetch(`${url}/functions/v1/get-shipping-quote`, {
+      method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${key}`, apikey: key},
+      body: JSON.stringify({items: trusted.shippingItems}),
     });
-
-  } catch (err) {
-    console.error("[create-order] Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error." }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const quote = await quoteResponse.json().catch(() => null);
+    if (!quoteResponse.ok || !quote || quote.error) return respond({error: 'Delivery quote unavailable. Please retry.'}, 503);
+    const rawFee = delivery_method === 'locker' ? quote.locker_fee : quote.door_fee;
+    const fee = Number(rawFee);
+    if (quote.oversized || rawFee == null || !Number.isFinite(fee) || fee < 0) {
+      return respond({error: 'This cart cannot use a standard delivery rate. Please contact the shop.'}, 409);
+    }
+    const feeCents = Math.round(fee * 100);
+    if (body.delivery_fee != null && (!Number.isFinite(Number(body.delivery_fee)) || Math.round(Number(body.delivery_fee) * 100) !== feeCents)) {
+      return respond({error: 'Delivery rate changed. Refresh your delivery selection before paying.'}, 409);
+    }
+    const instructions = typeof body.special_instructions === 'string' ? body.special_instructions : '';
+    const deliveryMeta = delivery_method === 'door'
+      ? {...delivery_address, special_instructions: instructions}
+      : {locker_id, locker_name, locker_address, special_instructions: instructions};
+    const {data: order, error} = await supabase.from('shop_orders').insert({
+      customer_name: customer.name.trim(), customer_email: customer.email.trim(), customer_phone: customer.phone.trim(),
+      delivery_address: address, delivery_method, delivery_meta: deliveryMeta,
+      items: trusted.items, subtotal: trusted.subtotalCents / 100, delivery_fee: feeCents / 100,
+      total_amount: (trusted.subtotalCents + feeCents) / 100, notes: instructions || null,
+      payment_status: 'unpaid', status: 'pending', is_gift: false, gift_message: null,
+    }).select('id, customer_token').single();
+    if (error || !order) return respond({error: 'Could not create order'}, 500);
+    return respond({order_id: order.id, order_ref: order.id, customer_token: order.customer_token});
+  } catch (error) {
+    if (error instanceof CartError) return respond({error: error.message}, 409);
+    return respond({error: 'Could not prepare checkout. Please retry.'}, 503);
   }
 });

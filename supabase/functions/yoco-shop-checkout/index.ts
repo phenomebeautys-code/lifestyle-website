@@ -1,164 +1,84 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 
-const ALLOWED_ORIGINS = ["https://www.phenomebeauty.co.za", "https://phenomebeauty.co.za"];
-
-Deno.serve(async (req: Request) => {
-  // ── CORS ─────────────────────────────────────────────────────────────────
-  const origin = req.headers.get("origin") ?? "";
-  const corsHeaders: Record<string, string> = {
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, apikey, Authorization",
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+const ORIGINS = ['https://www.phenomebeauty.co.za', 'https://phenomebeauty.co.za'];
+Deno.serve(async req => {
+  const origin = req.headers.get('origin') || '';
+  const headers = {
+    'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, apikey, Authorization',
+    'Content-Type': 'application/json',
   };
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
+  const respond = (data, status = 200) => new Response(JSON.stringify(data), {status, headers});
+  if (req.method === 'OPTIONS') return new Response(null, {status: 204, headers});
+  if (req.method !== 'POST') return respond({error: 'Method not allowed'}, 405);
+  let body;
+  try { body = await req.json(); } catch { return respond({error: 'Invalid JSON'}, 400); }
   try {
-    const body = await req.json();
-    const { order_id, success_url, cancel_url } = body;
-
-    if (!order_id || !success_url || !cancel_url) {
-      return new Response(JSON.stringify({ error: "Missing required fields." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const {order_id, success_url, cancel_url} = body || {};
+    if (typeof order_id !== 'string' || !order_id) return respond({error: 'Missing order_id'}, 400);
+    let successUrl, cancelUrl;
+    try { successUrl = new URL(success_url); cancelUrl = new URL(cancel_url); }
+    catch { return respond({error: 'Invalid payment return URL'}, 400); }
+    if ([successUrl, cancelUrl].some(url => !ORIGINS.includes(url.origin) || url.username || url.password)) {
+      return respond({error: 'Payment return URLs must use the official PhenomeBeauty domain'}, 400);
     }
-
-    // ── Service role client ───────────────────────────────────────────────
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // ── Fetch the order ───────────────────────────────────────────────────
-    const { data: order, error: orderErr } = await supabase
-      .from("shop_orders")
-      .select("id, payment_status, items, delivery_fee, customer_email, yoco_checkout_id, subtotal, total_amount")
-      .eq("id", order_id)
-      .single();
-
-    if (orderErr || !order) {
-      return new Response(JSON.stringify({ error: "Order not found." }), {
-        status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Prevent double-paying ─────────────────────────────────────────────
-    if (order.payment_status === "paid") {
-      return new Response(JSON.stringify({ error: "Order already paid." }), {
-        status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── SERVER-SIDE PRICE VALIDATION ──────────────────────────────────────
-    const productIds: string[] = (order.items ?? []).map((i: { productId: string }) => i.productId);
-
-    const { data: products, error: prodErr } = await supabase
-      .from("products")
-      .select("id, price")
-      .in("id", productIds);
-
-    if (prodErr || !products) {
-      return new Response(JSON.stringify({ error: "Could not validate product prices." }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const priceMap: Record<string, number> = {};
-    products.forEach((p: { id: string; price: number }) => {
-      priceMap[p.id] = Number(p.price);
+    const url = Deno.env.get('SUPABASE_URL');
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabase = createClient(url, key);
+    const {data: order, error: orderError} = await supabase.from('shop_orders')
+      .select('id, customer_token, payment_status, status, items, delivery_method, delivery_fee, customer_email, yoco_checkout_id, subtotal, total_amount')
+      .eq('id', order_id).single();
+    if (orderError || !order) return respond({error: 'Order not found'}, 404);
+    if (order.status !== 'pending' || order.payment_status !== 'unpaid') return respond({error: 'Order is not awaiting payment'}, 409);
+    if (!order.customer_token) return respond({error: 'Customer order verification unavailable'}, 503);
+    const ids = [...new Set((order.items || []).map(item => item.productId))];
+    const {data: products, error: productError} = await supabase.from('products')
+      .select('id, name, price, variants, sizes, image_url, active, availability').in('id', ids);
+    if (productError || !products) return respond({error: 'Could not validate products'}, 503);
+    const trusted = trustedCart(order.items, products);
+    const quoteResponse = await fetch(`${url}/functions/v1/get-shipping-quote`, {
+      method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${key}`, apikey: key},
+      body: JSON.stringify({items: trusted.shippingItems}),
     });
-
-    let serverSubtotal = 0;
-    for (const item of order.items ?? []) {
-      const trustedPrice = priceMap[item.productId];
-      if (trustedPrice === undefined) {
-        return new Response(JSON.stringify({ error: `Unknown product: ${item.productId}` }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      serverSubtotal += trustedPrice * Number(item.qty);
+    const quote = await quoteResponse.json().catch(() => null);
+    if (!quoteResponse.ok || !quote || quote.error) return respond({error: 'Delivery quote unavailable'}, 503);
+    if (!['door', 'locker'].includes(order.delivery_method)) return respond({error: 'Invalid delivery method'}, 409);
+    const rawFee = order.delivery_method === 'locker' ? quote.locker_fee : quote.door_fee;
+    const fee = Number(rawFee);
+    if (quote.oversized || rawFee == null || !Number.isFinite(fee) || fee < 0) return respond({error: 'Standard delivery unavailable'}, 409);
+    const feeCents = Math.round(fee * 100);
+    const totalCents = trusted.subtotalCents + feeCents;
+    // Do not silently reprice an existing order or mutate a checkout that may already be paid.
+    if (Math.round(Number(order.subtotal) * 100) !== trusted.subtotalCents
+      || Math.round(Number(order.delivery_fee) * 100) !== feeCents
+      || Math.round(Number(order.total_amount) * 100) !== totalCents
+      || order.items.some((item, index) => Number(item.price) !== trusted.items[index].price)) {
+      return respond({error: 'Order prices or delivery rate changed. Please refresh your cart and create a new order.'}, 409);
     }
-
-    // ── Use the delivery fee already stored on the order ──────────────────
-    const deliveryFee = Number(order.delivery_fee);
-    const serverTotal = serverSubtotal + deliveryFee;
-
-    // ── Correct any tampered subtotal/total (fee stays as-is) ────────────
-    const { error: updateErr } = await supabase
-      .from("shop_orders")
-      .update({
-        subtotal:     serverSubtotal,
-        total_amount: serverTotal,
-      })
-      .eq("id", order_id);
-
-    if (updateErr) {
-      console.error("Failed to correct order total:", updateErr);
-    }
-
-    // ── Create Yoco payment session ───────────────────────────────────────
-    const yocoRes = await fetch("https://payments.yoco.com/api/checkouts", {
-      method: "POST",
-      headers: {
-        "Content-Type":  "application/json",
-        "Authorization": `Bearer ${Deno.env.get("YOCO_SECRET_KEY")}`,
-      },
-      body: JSON.stringify({
-        amount:     Math.round(serverTotal * 100),
-        currency:   "ZAR",
-        cancelUrl:  cancel_url,
-        successUrl: success_url,
-        metadata:   { order_id, customer_email: order.customer_email },
-      }),
+    const secret = Deno.env.get('YOCO_SECRET_KEY');
+    if (!secret) return respond({error: 'Payment provider unavailable'}, 503);
+    successUrl.searchParams.set('payment', 'success');
+    successUrl.searchParams.set('order_id', order.id);
+    successUrl.searchParams.set('ct', order.customer_token);
+    const providerResponse = await fetch('https://payments.yoco.com/api/checkouts', {
+      method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${secret}`},
+      body: JSON.stringify({amount: totalCents, currency: 'ZAR', cancelUrl: cancelUrl.toString(),
+        successUrl: successUrl.toString(), metadata: {order_id: order.id, customer_email: order.customer_email}}),
     });
-
-    if (!yocoRes.ok) {
-      const yocoErr = await yocoRes.text();
-      console.error("Yoco error:", yocoErr);
-      return new Response(JSON.stringify({ error: "Payment provider error. Please try again." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const checkout = await providerResponse.json().catch(() => null);
+    const redirectUrl = checkout?.redirectUrl ?? checkout?.url;
+    if (!providerResponse.ok || typeof checkout?.id !== 'string' || !checkout.id.startsWith('ch_') || !redirectUrl) {
+      return respond({error: 'Payment provider error. Please retry.'}, 502);
     }
-
-    const yocoData    = await yocoRes.json();
-    const redirectUrl = yocoData.redirectUrl ?? yocoData.url;
-
-    if (!redirectUrl) {
-      return new Response(JSON.stringify({ error: "No payment URL returned." }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ── Store Yoco checkout ID for webhook matching ───────────────────────
-    if (yocoData.id) {
-      const { error: checkoutIdErr } = await supabase
-        .from("shop_orders")
-        .update({ yoco_checkout_id: yocoData.id })
-        .eq("id", order_id);
-
-      if (checkoutIdErr) {
-        console.error("Failed to store yoco_checkout_id:", checkoutIdErr);
-      } else {
-        console.log(`[yoco-shop-checkout] Stored checkout ID ${yocoData.id} on order ${order_id}`);
-      }
-    }
-
-    return new Response(JSON.stringify({ redirectUrl }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    return new Response(JSON.stringify({ error: "Internal server error." }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    const {data: saved, error: saveError} = await supabase.from('shop_orders')
+      .update({yoco_checkout_id: checkout.id}).eq('id', order.id).eq('status', 'pending').eq('payment_status', 'unpaid')
+      .select('id').maybeSingle();
+    if (saveError || !saved) return respond({error: 'Could not save payment checkout. Do not pay; contact the shop.'}, 503);
+    return respond({redirectUrl});
+  } catch (error) {
+    if (error instanceof CartError) return respond({error: error.message}, 409);
+    return respond({error: 'Could not prepare payment. Please retry.'}, 503);
   }
 });
