@@ -153,6 +153,19 @@
     });
   }
 
+  /* Safety net: anything that has scrolled into view but is still hidden is revealed.
+     The observer normally does this; this makes sure nothing stays blank. */
+  function revealInView() {
+    toArray(d.querySelectorAll('[data-reveal]:not(.is-in)')).forEach(function (el) {
+      var r = el.getBoundingClientRect();
+      if (r.top < w.innerHeight * 0.96 && r.bottom > 0) {
+        el.classList.add('is-in');
+        if (io) io.unobserve(el);
+      }
+    });
+  }
+  setTimeout(revealInView, 1200);
+
   var ticking = false;
   function onScroll() {
     if (ticking) return;
@@ -160,6 +173,7 @@
     w.requestAnimationFrame(function () {
       ticking = false;
       updateHeader();
+      revealInView();
       if (parallaxEls.length) updateParallax();
       if (marquees.length) updateMarquees();
     });

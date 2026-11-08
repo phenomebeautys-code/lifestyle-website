@@ -21,7 +21,7 @@
 .banner.show { display: block; animation: fade-up 0.6s var(--ease) both; }
 
 /* ── Hero ───────────────────────────────────────────────────── */
-.shop-hero { padding: clamp(28px, 5vw, 72px) 0 calc(clamp(40px, 5vw, 64px) + var(--r-sheet)); }
+.shop-hero { padding-block: var(--half); }
 .shop-title { animation: fade-up 1s var(--ease) both; }
 .shop-hero-row {
   display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
@@ -42,7 +42,7 @@
   --line: rgba(0,0,0,0.14); --line-strong: rgba(0,0,0,0.34);
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   margin-top: calc(-1 * var(--r-sheet));
-  padding: clamp(36px, 5vw, 64px) 0 calc(clamp(72px, 9vw, 120px) + var(--r-sheet));
+  padding: calc(var(--half) + var(--r-sheet)) 0 var(--half);
   min-height: 70vh;
 }
 

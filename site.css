@@ -38,7 +38,8 @@
 
     --gutter:    clamp(18px, 4vw, 48px);
     --container: 1280px;
-    --band-pad:  clamp(80px, 10vw, 144px);
+    --band-pad:  clamp(64px, 8vw, 128px);   /* gap between any two sections */
+    --half:      calc(var(--band-pad) / 2);  /* each section's top and bottom padding */
     --header-h:  76px;
 
     --r-sm:    12px;
@@ -333,10 +334,11 @@ strong, b { font-weight: 700; }
 @media (max-width: 480px) { .site-header--minimal .back-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
 /* ── 6. Bands & sheets (organic section transitions) ───────── */
-.band { position: relative; padding-block: var(--band-pad); background: var(--bg); color: var(--fg); }
+.band { position: relative; padding-block: var(--half); background: var(--bg); color: var(--fg); }
 .band--sheet {
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     margin-top: calc(-1 * var(--r-sheet));
+    padding-top: calc(var(--half) + var(--r-sheet));
 }
 .band-head {
     display: grid;
@@ -350,7 +352,7 @@ strong, b { font-weight: 700; }
 @media (max-width: 860px) { .band-head { grid-template-columns: 1fr; } }
 
 /* ── 7. Home: hero ──────────────────────────────────────────── */
-.hero { position: relative; overflow: hidden; padding: clamp(24px, 4.5vw, 56px) 0 calc(var(--band-pad) + var(--r-sheet)); }
+.hero { position: relative; overflow: hidden; padding-block: var(--half); }
 .hero-title { position: relative; z-index: 2; font-size: clamp(2.7rem, 6.4vw, 7.4rem); }
 .hero-title .line > span { animation: rise 1.15s var(--ease) both; animation-delay: calc(var(--d, 0) * 130ms + 120ms); }
 
@@ -416,16 +418,7 @@ strong, b { font-weight: 700; }
     padding: 12px 12px 22px;
     border: 1px solid var(--line);
 }
-.spot-deck { position: relative; }
-.spot-deck::before {   /* a second card peeking out of the deck */
-    content: ""; position: absolute; inset: 0; z-index: 0;
-    border-radius: var(--r-card);
-    border: 1px solid var(--ink);
-    transform: rotate(4.5deg) translate(10px, 4px);
-    transition: transform 0.9s var(--ease);
-}
-.spotlight:hover .spot-deck::before { transform: rotate(7deg) translate(18px, 2px); }
-
+.spotlight:hover 
 .spot-bars { position: absolute; top: 26px; left: 28px; right: 28px; z-index: 3; display: flex; gap: 6px; }
 .spot-bars span { flex: 1; height: 3px; border-radius: 3px; overflow: hidden; background: rgba(255, 255, 255, 0.45); }
 .spot-bars i { display: block; height: 100%; background: #FFFFFF; transform: scaleX(0); transform-origin: left; }
@@ -622,7 +615,7 @@ strong, b { font-weight: 700; }
 }
 .chips a:hover { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 
-.pricelist { padding-block: clamp(56px, 7vw, 96px); border-top: 1px solid var(--fg); }
+.pricelist { padding-block: var(--half); border-top: 1px solid var(--fg); }
 .pricelist:last-of-type { border-bottom: 1px solid var(--fg); }
 .pricelist-grid { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 32px clamp(32px, 6vw, 112px); align-items: start; }
 .pl-head { position: sticky; top: calc(var(--header-h) + 24px); display: grid; gap: 14px; justify-items: start; }
@@ -701,7 +694,7 @@ strong, b { font-weight: 700; }
 .close-band p { margin-top: 28px; color: var(--fg-soft); }
 
 /* ── 14. Inner page hero ───────────────────────────────────── */
-.page-hero { position: relative; padding: clamp(32px, 6vw, 88px) 0 clamp(56px, 8vw, 112px); overflow: hidden; }
+.page-hero { position: relative; padding-block: var(--half); overflow: hidden; }
 .page-hero .t-h1 .line > span { animation: rise 1.05s var(--ease) both; animation-delay: calc(var(--d, 0) * 120ms + 100ms); }
 .page-hero-row { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px 48px; margin-top: clamp(28px, 4vw, 48px); }
 .page-hero .after-title { animation: fade-up 1s var(--ease) both; animation-delay: 0.5s; }
@@ -731,7 +724,7 @@ strong, b { font-weight: 700; }
 @media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
 
 /* ── 17. Status pages (order confirmation, 404) ────────────── */
-.status { padding: clamp(40px, 7vw, 96px) 0 calc(var(--band-pad) + var(--r-sheet)); }
+.status { padding-block: var(--half); }
 .status-card { max-width: 560px; margin: 0 auto; text-align: center; display: grid; justify-items: center; gap: 22px; }
 .status-icon { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--blush); }
 .status-icon svg { width: 44px; height: 44px; }
@@ -759,7 +752,7 @@ strong, b { font-weight: 700; }
     background: var(--ink); color: var(--paper);
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     margin-top: calc(-1 * var(--r-sheet));
-    padding-top: clamp(64px, 8vw, 120px);
+    padding-top: calc(var(--half) + var(--r-sheet));
 }
 .footer-top { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 56px clamp(40px, 6vw, 96px); }
 .footer-lead { font-weight: 300; font-size: clamp(1.7rem, 3.2vw, 2.8rem); line-height: 1.05; letter-spacing: -0.03em; text-transform: uppercase; max-width: 15em; }
@@ -786,7 +779,9 @@ strong, b { font-weight: 700; }
 .footer-mark {
     display: block;
     margin-top: clamp(24px, 4vw, 48px);
-    margin-bottom: -0.17em;
+    margin-bottom: 0;
+    padding-bottom: 0.12em;
+    line-height: 1;
     text-align: center;
     font-size: 11.6vw;
     white-space: nowrap;
@@ -906,3 +901,57 @@ strong, b { font-weight: 700; }
 .reviews-carousel .carousel-track { grid-auto-columns: min(84vw, 420px); }
 @media (min-width: 1000px) { .reviews-carousel .carousel-track { grid-auto-columns: calc((100% - 2 * 24px) / 3); } }
 .reviews-carousel .dots { display: none; }
+
+/* ── Page heroes: copy and an image side by side ─────────────── */
+.page-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(32px, 6vw, 96px);
+    align-items: center;
+}
+.page-hero-figure { margin: 0; }
+.page-hero-figure .arch {
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: 999px 999px var(--r-photo) var(--r-photo);
+    background: var(--blush);
+}
+.page-hero-figure img { width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 860px) {
+    .page-hero-grid { grid-template-columns: 1fr; }
+    .page-hero-figure { width: min(88%, 420px); margin: 0 auto; }
+}
+
+/* ── Tara-S: free companion (between products and services) ──── */
+.companion-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(32px, 6vw, 96px);
+    align-items: center;
+}
+.companion-figure { margin: 0; }
+.companion-figure .arch {
+    aspect-ratio: 4 / 5; overflow: hidden;
+    border-radius: 999px 999px var(--r-photo) var(--r-photo);
+    background: var(--blush);
+}
+.companion-figure img { width: 100%; height: 100%; object-fit: cover; }
+.companion-tag {
+    font-family: var(--font-tag); font-weight: 600; font-size: 1.05rem;
+    text-transform: uppercase; letter-spacing: 0.01em; margin-bottom: 16px;
+}
+.companion-copy .t-h2 { margin-bottom: 36px; font-size: clamp(2.2rem, 4.6vw, 4rem); }
+@media (max-width: 860px) {
+    .companion-grid { grid-template-columns: 1fr; }
+    .companion-figure { width: min(88%, 420px); margin: 0 auto; }
+}
+
+/* Very narrow phones: the header stays on one line */
+@media (max-width: 380px) {
+    .header-inner { gap: 8px; }
+    .brand img { display: none; }
+    .brand .wordmark { font-size: 1.2rem; }
+    .header-actions { gap: 6px; }
+    .cart-link { height: 40px; padding: 0 8px 0 10px; }
+    .menu-toggle { width: 40px; height: 40px; }
+}
