@@ -392,3 +392,5 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-expanded-subtotal { display: flex; justify-content: space-between; font-weight: 700; }
 .scb-expanded-note { font-size: var(--fs-sm); color: var(--fg-muted); text-align: right; }
 .scb-checkout-btn { width: 100%; }
+
+.shop-section { background-image: var(--wall); }

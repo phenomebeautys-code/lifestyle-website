@@ -52,6 +52,9 @@
     /* Inner spacing scale: use these instead of inline margins */
     --s-2: 16px; --s-3: 24px; --s-4: 32px; --s-5: 48px;
 
+    /* A faint plaster wall: warm noise at very low opacity, behind every colour */
+    --wall: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36  0 0 0 0 0.33  0 0 0 0 0.3  0 0 0 0.075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
     --ease:        cubic-bezier(0.22, 1, 0.36, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
     --spring:      cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -407,14 +410,6 @@ strong, b { font-weight: 700; }
 }
 .hero-facts li { display: inline-flex; align-items: center; gap: 10px; }
 .hero-facts li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; }
-.hero-facts li.trust::before { content: none; }
-.hero-facts li.trust { font-weight: 600; color: var(--fg); }
-.trust-badge {
-    display: inline-grid; place-items: center; flex: none;
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--ink); color: var(--paper);
-}
-.trust-badge svg { width: 16px; height: 16px; }
 
 /* Organic blush form that slowly breathes behind the spotlight */
 .hero-blob {
@@ -919,13 +914,6 @@ main:has(+ .site-footer) { padding-bottom: var(--r-sheet); }
 .pl-rows li:has(> .pl-price) .pl-desc { grid-row: 2; }
 
 /* ── Reviews ─────────────────────────────────────────────────── */
-/* Pegboard: the band keeps its Cream background, with a grid of peg holes */
-.band--board {
-    background-color: var(--paper);
-    background-image: radial-gradient(circle, rgba(0,0,0,0.17) 0 2.2px, transparent 2.7px);
-    background-size: 28px 28px;
-    background-position: 14px 14px;
-}
 /* Review cards: sticky notes pinned to the board */
 .review {
     --note: var(--blush); --tilt: -1.2deg;
@@ -976,7 +964,7 @@ main:has(+ .site-footer) { padding-bottom: var(--r-sheet); }
 .reviews-carousel .carousel-track { grid-auto-columns: min(84vw, 420px); }
 @media (min-width: 1000px) { .reviews-carousel .carousel-track { grid-auto-columns: calc((100% - 2 * 24px) / 3); } }
 .reviews-carousel .dots { display: none; }
-.reviews-carousel .carousel-track { align-items: start; padding-top: 26px; padding-bottom: 30px; }
+.reviews-carousel .carousel-track { align-items: start; padding-top: 40px; padding-bottom: 56px; overflow-y: hidden; }
 
 /* ── Page heroes: copy and an image side by side ─────────────── */
 .page-hero-grid {
@@ -999,29 +987,34 @@ main:has(+ .site-footer) { padding-bottom: var(--r-sheet); }
     .page-hero-figure { width: min(88%, 420px); margin: 0 auto; }
 }
 
-/* ── Tara-S: free companion (between products and services) ──── */
-.companion-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: clamp(32px, 6vw, 96px);
-    align-items: center;
-}
-.companion-figure { margin: 0; }
-.companion-figure .arch {
-    aspect-ratio: 4 / 5; overflow: hidden;
-    border-radius: 999px 999px var(--r-photo) var(--r-photo);
+/* ── Tara-S: free companion, copy over the image (as on the main promo card) ── */
+.companion-card {
+    position: relative; margin: 0; overflow: hidden;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--r-card);
     background: var(--blush);
+    color: var(--paper);
 }
-.companion-figure img { width: 100%; height: 100%; object-fit: cover; }
+.companion-card img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; object-position: 50% 62%;
+}
+.companion-card::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 38%, rgba(0,0,0,0.82) 100%);
+}
+.companion-copy {
+    position: absolute; z-index: 1; left: clamp(22px, 4vw, 56px); bottom: clamp(22px, 4vw, 52px);
+    right: clamp(22px, 4vw, 56px); display: grid; justify-items: start; gap: 14px;
+}
 .companion-tag {
     font-family: var(--font-tag); font-weight: 600; font-size: 1.05rem;
-    text-transform: uppercase; letter-spacing: 0.01em; margin-bottom: 16px;
+    text-transform: uppercase; letter-spacing: 0.01em; color: var(--paper);
 }
-.companion-copy .t-h2 { margin-bottom: 36px; font-size: clamp(2.2rem, 4.6vw, 4rem); }
-@media (max-width: 860px) {
-    .companion-grid { grid-template-columns: 1fr; }
-    .companion-figure { width: min(88%, 420px); margin: 0 auto; }
-}
+.companion-copy .t-h2 { color: var(--paper); font-size: clamp(2rem, 4.4vw, 3.6rem); max-width: 16ch; }
+.companion-card .btn-secondary { color: var(--paper); border-color: rgba(243,241,232,0.85); }
+.companion-card .btn-secondary:hover { background: var(--paper); color: var(--ink); border-color: var(--paper); }
+@media (min-width: 861px) { .companion-card { aspect-ratio: 16 / 9; } }
 
 /* Very narrow phones: the header stays on one line */
 @media (max-width: 380px) {
@@ -1032,3 +1025,30 @@ main:has(+ .site-footer) { padding-bottom: var(--r-sheet); }
     .cart-link { height: 40px; padding: 0 8px 0 10px; }
     .menu-toggle { width: 40px; height: 40px; }
 }
+
+/* ── Surfaces: the plaster wall behind every colour ────────── */
+body, .band, .site-footer { background-image: var(--wall); }
+
+/* ── Pegboard: the holes belong to the track, so they move with the notes ── */
+.reviews-carousel .carousel-track {
+    background-image: radial-gradient(circle, rgba(0,0,0,0.17) 0 2.2px, transparent 2.7px), var(--wall);
+    background-size: 28px 28px, auto;
+    background-position: 14px 14px, 0 0;
+    background-attachment: local, local;
+}
+
+/* ── Icons replace bullets and badges where a line names a service ── */
+.ico { display: inline-grid; place-items: center; flex: none; width: 20px; height: 20px; }
+.ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ico--subtle svg { stroke-width: 1.2; }
+li:has(> .ico)::before { content: none; }
+.hero-facts li:has(> .ico) { color: var(--fg-soft); font-weight: 400; }
+
+/* ── Two-column page heroes: keep the heading inside its column ── */
+@media (min-width: 861px) { .page-hero-grid .t-h1 { font-size: min(var(--fs-h1), 6.4vw); } }
+
+/* ── No vertical scroller: carousels clip their own overflow; the page scrollbar is hidden ── */
+.carousel-track { overflow-y: hidden; }
+html { scrollbar-width: none; }
+html::-webkit-scrollbar { display: none; }
+
