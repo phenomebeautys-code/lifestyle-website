@@ -1097,6 +1097,11 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
     .guide-page .close-band, .guide-page .page-hero-figure, .guide-page .actions { display: none !important; }
     .guide-page .page-hero-grid { display: block; }
     .guide-page .page-hero-copy .t-lead { margin-top: 14px; }
+    .print-top { margin-bottom: 28px; }
+    .print-wordmark { font-family: var(--font-mark); font-size: 40pt; line-height: 1; letter-spacing: -0.01em; color: #000 !important; }
+    .print-url { margin-top: 6px; font-size: 10pt; color: #000 !important; }
+    .print-end { margin-top: 36px; border-top: 1px solid rgba(0,0,0,0.25); padding-top: 18px; }
+    .print-end .print-wordmark { font-size: 64pt; }
     .guide-page .guide-band { padding-block: 12px; }
     .guide-step { break-inside: avoid; grid-template-columns: 56px 1fr; padding-block: 16px; }
     .guide-num { font-size: 1.8rem; }
