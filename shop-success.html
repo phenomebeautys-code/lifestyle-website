@@ -1,149 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Confirmed — PhenomeBeauty</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    .success-wrap {
-      min-height: 80vh;
-      display: flex; align-items: center; justify-content: center;
-      padding: 40px 20px;
-    }
-    .success-card {
-      width: 100%; max-width: 480px;
-      padding: var(--section-pad);
-      text-align: center;
-      display: flex; flex-direction: column; align-items: center; gap: 20px;
-      animation: fadeUp 0.5s ease both;
-    }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    .success-icon {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--glass-border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 36px;
-      animation: pop 0.6s cubic-bezier(.175,.885,.32,1.275) 0.1s both;
-    }
-    @keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
-    .success-card h1 { font-family:var(--font-display); font-size:clamp(2rem,8vw,3rem); color:var(--accent-strong); }
-    .success-card .sub { font-size:0.9rem; color:var(--text-soft); line-height:1.7; max-width:340px; }
-    .order-panel {
-      width:100%; text-align:left;
-      background: linear-gradient(160deg,rgba(255,255,255,0.09),rgba(255,255,255,0.04));
-      border:1px solid var(--glass-border);
-      border-radius:var(--radius-lg);
-      padding:20px;
-      display:flex; flex-direction:column; gap:10px;
-    }
-    .order-row { display:flex; justify-content:space-between; font-size:0.86rem; color:var(--text-muted); }
-    .order-row span:last-child { color:var(--text); font-weight:500; }
-    .order-row.total span:last-child { color:var(--accent); font-weight:700; font-size:1rem; }
-    .divider { height:1px; background:var(--glass-border); }
-    .item-row { font-size:0.8rem; color:var(--text-soft); line-height:1.8; }
-    .item-row strong { color:var(--accent-strong); }
-    .loading-text { font-size:0.9rem; color:var(--text-muted); animation:pulse 1.2s ease-in-out infinite; }
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-    .pending-ref {
-      font-family: monospace;
-      font-size: 0.78rem;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-md);
-      padding: 8px 14px;
-      word-break: break-all;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#F3F1E8" />
+    <title>Order confirmed | Phenomebeauty</title>
+    <meta name="description" content="Your Phenomebeauty order." />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="https://iili.io/fpiAjBj.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;text=Phenomebauty&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="site.css?v=2" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- NAVBAR -->
-  <nav class="navbar" id="navbar">
-    <div class="container">
-      <div class="navbar-inner">
-        <a href="index.html" class="logo-wrap">
-          <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="logo-img" />
-          <span class="logo-wordmark">PhenomeBeauty</span>
-        </a>
-        <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="index.html#training">Training</a></li>
-          <li><a href="index.html#services">Services</a></li>
-          <li><a href="shop.html" class="active">Shop</a></li>
-          <li><a href="terms.html">T&amp;Cs</a></li>
-          <li><a href="index.html#booking">Book</a></li>
+  <header class="site-header" id="navbar">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Phenomebeauty home">
+        <img src="https://iili.io/fpiAjBj.jpg" alt="" width="34" height="34" />
+        <span class="wordmark">Phenomebeauty</span>
+      </a>
+      <nav class="site-nav" id="siteNav" aria-label="Main">
+        <ul class="nav-menu">
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="training.html">Training</a></li>
         </ul>
-        <div class="nav-cta">
-          <a href="index.html#booking" class="btn btn-primary">Book Now</a>
+        <div class="nav-extra">
+          <a href="shop.html" class="btn btn-primary btn-lg">Shop the collection</a>
+          <p>Mobile beauty across Cape Town. <a class="link" href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">WhatsApp us</a></p>
         </div>
+      </nav>
+      <div class="header-actions">
+        <a href="shop.html?cart=open" class="cart-link" data-cart-link aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="cart-label">Cart</span><span class="cart-count" data-cart-count>0</span></a>
+        <a href="shop.html" class="btn btn-primary btn-sm">Shop now</a>
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
       </div>
     </div>
-  </nav>
+  </header>
 
-  <div class="success-wrap">
-    <div class="success-card glass-panel" id="successCard">
-      <p class="loading-text" id="loadingState">Confirming your order&hellip;</p>
-    </div>
-  </div>
+  <main id="main">
+    <section class="status" aria-label="Order status">
+      <div class="container">
+        <div class="status-card" id="successCard" aria-live="polite">
+          <p class="loading-text" id="loadingState">Confirming your order&hellip;</p>
+        </div>
+      </div>
+    </section>
+  </main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
+  <footer class="site-footer">
     <div class="container">
-      <div class="footer-shell">
-        <div class="footer-content">
-          <div class="footer-section">
-            <div class="footer-logo">
-              <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="footer-logo-img" />
-              <span class="footer-logo-name">PhenomeBeauty</span>
-            </div>
-            <p>Mobile beauty specialist based in Cape Town. Professional waxing, nails, and tinting delivered to your door.</p>
+      <div class="footer-top">
+        <div class="footer-intro" data-reveal>
+          <p class="footer-lead">Skincare, wax supplies and mobile beauty. Made for Cape Town.</p>
+          <a href="shop.html" class="btn btn-primary">Shop the collection</a>
+          <div class="footer-contact">
+            <a href="mailto:hello@phenomebeauty.co.za">hello@phenomebeauty.co.za</a>
+            <a href="tel:+27745115725">+27 74 511 5725</a>
           </div>
-          <div class="footer-section">
-            <h4>Quick Links</h4>
+          <div class="social">
+            <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="Phenomebeauty on WhatsApp"><img src="https://iili.io/B446wyx.png" alt="" width="22" height="22" /></a>
+            <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Phenomebeauty on Facebook"><img src="https://iili.io/B44QEgt.png" alt="" width="22" height="22" /></a>
+            <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="Phenomebeauty on Instagram"><img src="https://iili.io/B44QMdX.png" alt="" width="22" height="22" /></a>
+            <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="Phenomebeauty on TikTok"><img src="https://iili.io/B4637cJ.png" alt="" width="22" height="22" /></a>
+          </div>
+        </div>
+        <nav class="footer-cols" aria-label="Footer">
+          <div data-reveal>
+            <p class="footer-h">Shop</p>
             <ul>
-              <li><a href="index.html#training">Training</a></li>
-              <li><a href="index.html#services">Services</a></li>
-              <li><a href="shop.html" class="active">Shop</a></li>
-              <li><a href="terms.html">T&amp;Cs</a></li>
-              <li><a href="index.html#booking">Book Now</a></li>
+              <li><a href="shop.html">All products</a></li>
+              <li><a href="shop.html?segment=self_care">Self-care</a></li>
+              <li><a href="shop.html?segment=professional">Professional</a></li>
+              <li><a href="shop.html?cart=open">Your cart</a></li>
             </ul>
           </div>
-          <div class="footer-section">
-            <h4>Contact</h4>
-            <p>hello@phenomebeauty.co.za</p>
-            <p>+27 74 511 5725</p>
-            <p>Cape Town, South Africa</p>
+          <div data-reveal style="--i:1">
+            <p class="footer-h">Book</p>
+            <ul>
+              <li><a href="services.html">Treatments &amp; prices</a></li>
+              <li><a href="services.html#packages">Packages</a></li>
+              <li><a href="mobile-waxing-cape-town.html">Mobile waxing</a></li>
+              <li><a href="https://phenomebeauty.nextslot.co.za/">Book online</a></li>
+            </ul>
           </div>
-          <div class="footer-section">
-            <h4>Follow Us</h4>
-            <div class="social-links">
-              <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="Chat with PhenomeBeauty on WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
-              <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
-              <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
-              <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
-            </div>
+          <div data-reveal style="--i:2">
+            <p class="footer-h">Learn</p>
+            <ul>
+              <li><a href="training.html">Training &amp; guides</a></li>
+              <li><a href="terms.html">Terms &amp; conditions</a></li>
+              <li><a href="https://www.google.com/search?q=Phenomebeauty+reviews" target="_blank" rel="noopener noreferrer">Google reviews</a></li>
+            </ul>
           </div>
-        </div>
-        <div class="footer-bottom">
-          <p>&copy; <span id="footer-year">2026</span> PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&amp;Cs</a></p>
-          <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
-        </div>
+        </nav>
+      </div>
+      <div class="footer-base">
+        <p>&copy; <span data-year>2026</span> Phenomebeauty. All rights reserved.</p>
+        <p>Bookings powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
       </div>
     </div>
+    <p class="footer-mark wordmark" aria-hidden="true" data-reveal="split" data-split data-fit="0.97">Phenomebeauty</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="site.js?v=1" defer></script>
   <script>
     const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
     const SUPABASE_ANON = 'sb_publishable_XXgqS4qa4-CJJQ7MYxt4Lw_sPbcmGPL';
@@ -153,8 +116,10 @@
     const custToken = params.get('ct');
     const name      = params.get('name') || 'there';
     const card      = document.getElementById('successCard');
-    const yr        = document.getElementById('footer-year');
-    if (yr) yr.textContent = new Date().getFullYear();
+
+    var ICON_CHECK = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 25 20 33 36 15"/></svg>';
+    var ICON_X     = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="15" y1="15" x2="33" y2="33"/><line x1="33" y1="15" x2="15" y2="33"/></svg>';
+    var ICON_WAIT  = '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 10a14 14 0 1 1-14 14"/><polyline points="24 16 24 24 30 28"/></svg>';
 
     function esc(str) {
       const d = document.createElement('div');
@@ -166,6 +131,7 @@
       localStorage.removeItem('pb_cart');
       sessionStorage.removeItem('pb_cart');
       sessionStorage.removeItem('pb_checkout_draft');
+      document.querySelectorAll('[data-cart-count]').forEach(function (el) { el.textContent = '0'; });
     }
 
     function copyRef(ref) {
@@ -177,10 +143,10 @@
 
     function renderCancelled() {
       card.innerHTML = `
-        <div class="success-icon">&#10005;</div>
-        <h1>Payment Cancelled</h1>
+        <div class="status-icon" aria-hidden="true">${ICON_X}</div>
+        <h1 class="t-h1">Payment cancelled</h1>
         <p class="sub">No payment was taken. Your cart is still saved. Return to the shop to try again.</p>
-        <a href="shop.html" class="btn btn-primary">&#8592; Back to Shop</a>`;
+        <div class="status-actions"><a href="shop.html?cart=open" class="btn btn-primary btn-lg">Back to your cart</a></div>`;
     }
 
     function renderSuccess(order) {
@@ -189,23 +155,25 @@
       const fullRef   = order?.id ? order.id.toUpperCase() : null;
 
       card.innerHTML = `
-        <div class="success-icon">&#10024;</div>
-        <h1>Thank you, ${firstName}!</h1>
+        <div class="status-icon" aria-hidden="true">${ICON_CHECK}</div>
+        <h1 class="t-h1">Thank you, ${firstName}!</h1>
         <p class="sub">Your order is confirmed and is being prepared for dispatch. We will be in touch soon.</p>
         ${order ? `
         <div class="order-panel">
-          <div class="order-row"><span>Order reference</span><span style="font-family:monospace;letter-spacing:0.04em">${esc(fullRef)}</span></div>
-          <div class="order-row"><span>Delivery to</span><span style="max-width:200px;text-align:right">${esc(order.delivery_address)}</span></div>
-          <div class="divider"></div>
-          <div id="itemsSlot" style="display:flex;flex-direction:column;gap:6px"></div>
-          <div class="divider"></div>
+          <div class="order-row"><span>Order reference</span><span style="font-family:ui-monospace,Menlo,monospace;letter-spacing:0.04em">${esc(fullRef)}</span></div>
+          <div class="order-row"><span>Delivery to</span><span style="max-width:220px">${esc(order.delivery_address)}</span></div>
+          <div class="order-divider"></div>
+          <div id="itemsSlot" style="display:grid;gap:8px"></div>
+          <div class="order-divider"></div>
           <div class="order-row"><span>Delivery fee</span><span>R${esc(order.delivery_fee)}</span></div>
           <div class="order-row total"><span>Total paid</span><span>R${esc(order.total_amount)}</span></div>
         </div>
-        <button id="copyRefBtn" class="btn btn-secondary" onclick="copyRef('${esc(fullRef)}')" style="width:100%">Copy reference</button>
-        <a href="https://wa.me/27745115725?text=${encodeURIComponent('Hi, I need help with order ' + fullRef)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="width:100%">WhatsApp support</a>
+        <div class="status-actions">
+          <button id="copyRefBtn" type="button" class="btn btn-secondary" onclick="copyRef('${esc(fullRef)}')">Copy reference</button>
+          <a href="https://wa.me/27745115725?text=${encodeURIComponent('Hi, I need help with order ' + fullRef)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">WhatsApp support</a>
+        </div>
         ` : ''}
-        <a href="shop.html" class="btn btn-primary" style="width:100%">Shop Again</a>`;
+        <div class="status-actions"><a href="shop.html" class="btn btn-primary btn-lg">Shop again</a></div>`;
 
       const slot = document.getElementById('itemsSlot');
       if (slot) {
@@ -215,11 +183,9 @@
           const strong  = document.createElement('strong');
           strong.textContent = item.name;
           const detail  = document.createTextNode(' \u00d7' + item.qty + ' \u2014 R' + (item.price * item.qty));
-          const br      = document.createElement('br');
           const variant = document.createElement('span');
-          variant.style.cssText = 'font-size:0.72rem;color:var(--text-muted)';
           variant.textContent   = item.variant;
-          row.append(strong, detail, br, variant);
+          row.append(strong, detail, variant);
           slot.appendChild(row);
         });
       }
@@ -233,17 +199,18 @@
         : encodeURIComponent('Hi, I need help confirming my recent order');
 
       card.innerHTML = `
-        <div class="success-icon">&#8987;</div>
-        <h1>Almost there, ${firstName}!</h1>
+        <div class="status-icon" aria-hidden="true">${ICON_WAIT}</div>
+        <h1 class="t-h1">Almost there, ${firstName}!</h1>
         <p class="sub">
           Your payment was received by Yoco but we&rsquo;re still confirming it on our end.
           This usually resolves within a few minutes. If you paid successfully, you&rsquo;ll
           receive a confirmation email shortly.
         </p>
         ${fullRef ? `<div class="pending-ref">${esc(fullRef)}</div>` : ''}
-        <a href="https://wa.me/27745115725?text=${waText}" target="_blank" rel="noopener noreferrer"
-           class="btn btn-secondary" style="width:100%">&#128172; WhatsApp us to confirm</a>
-        <a href="shop.html" class="btn btn-primary" style="width:100%">Back to Shop</a>`;
+        <div class="status-actions">
+          <a href="https://wa.me/27745115725?text=${waText}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">WhatsApp us to confirm</a>
+          <a href="shop.html" class="btn btn-primary">Back to the shop</a>
+        </div>`;
     }
 
     async function pollOrder(id, token, attempts) {
@@ -293,7 +260,7 @@
       /* No customer token — can't poll securely, show generic confirmation */
       renderSuccess(null);
     } else {
-      card.innerHTML = '<p style="color:var(--text-muted)">Invalid page. <a href="shop.html" style="color:var(--accent)">Go to shop</a></p>';
+      card.innerHTML = '<p class="sub">This page needs an order link. <a class="link" href="shop.html">Go to the shop</a></p>';
     }
   </script>
 </body>

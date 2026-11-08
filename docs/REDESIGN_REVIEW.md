@@ -1,7 +1,7 @@
 # PhenomeBeauty Website Redesign: Review and Plan
 
 Branch: `claude/website-redesign-conversion`
-Status: **Phase 1 (products) implemented** on this branch. See §7.
+Status: **Redesign v2 implemented on every customer-facing page** (organic + minimal + editorial, two fonts, motion, packages). See `docs/DESIGN.md` for the system. The findings below are the original review.
 
 Scope of this document: review of the current site, the conversion problems found, the colour and section plan, and the phased order of work. No design or markup has changed yet.
 

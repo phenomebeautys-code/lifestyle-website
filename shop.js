@@ -1,5 +1,5 @@
 /* ============================================================
-   PhenomeBeauty — shop.js
+   Phenomebeauty — shop.js
    ============================================================ */
 
 const SUPABASE_URL  = 'https://papdxjcfimeyjgzmatpl.supabase.co';
@@ -72,9 +72,20 @@ function cartTotal() {
 
 /* —— Badge ——————————————————————————————————————————————————— */
 
+let _lastBadgeTotal = null;
 function updateBadges() {
   const total = cart.reduce((s, i) => s + (Number(i.qty) || 1), 0);
-  document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => { if (el) el.textContent = total; });
+  document.querySelectorAll('#cartBadge, #heroCartCount').forEach(el => {
+    if (!el) return;
+    el.textContent = total;
+    /* A small bump tells the shopper the item landed in the cart */
+    if (_lastBadgeTotal !== null && total > _lastBadgeTotal) {
+      el.classList.remove('bump');
+      void el.offsetWidth;
+      el.classList.add('bump');
+    }
+  });
+  _lastBadgeTotal = total;
   updateStickyBar();
 }
 
@@ -853,7 +864,7 @@ function renderProducts(products) {
     const name = esc(p.name || 'Product');
 
     return `
-<button class="product-tile${unavailableClass}" data-pid="${esc(pid)}" aria-label="View ${name}">
+<button class="product-tile${unavailableClass}" data-pid="${esc(pid)}" aria-label="View ${name}" style="--i:${idx}">
   <div class="tile-img-wrap">
     ${badge}
     ${imgHTML}
@@ -979,6 +990,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   updateBadges();
   if (cart.length) showStickyBar();
+  if (params.get('cart') === 'open') {
+    openCart();
+    params.delete('cart');
+    const rest = params.toString();
+    window.history.replaceState({}, '', 'shop.html' + (rest ? '?' + rest : ''));
+  }
   if (new URLSearchParams(location.search).get('payment') === 'cancelled') {
     document.getElementById('cancelBanner')?.classList.add('show');
     window.history.replaceState({}, '', 'shop.html');

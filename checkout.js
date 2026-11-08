@@ -1,6 +1,6 @@
 // checkout.js — v24
 // ─────────────────────────────────────────────────────────────────────────────
-// PhenomeBeauty checkout logic
+// Phenomebeauty checkout logic
 // Fix v24: handlePay — removed duplicate successUrl declaration that was
 //          shadowing the first (which carried custToken/ct param), and moved
 //          `origin` declaration above successUrl. custToken is now correctly

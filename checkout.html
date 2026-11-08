@@ -1,55 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0a0e" />
-  <title>Checkout &#8212; PhenomeBeauty</title>
-  <meta name="robots" content="noindex,nofollow" />
-  <link rel="icon" type="image/jpeg" href="https://iili.io/fpiAjBj.jpg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="checkout.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#F3F1E8" />
+    <title>Checkout | Phenomebeauty</title>
+    <meta name="description" content="Secure checkout for your Phenomebeauty order." />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="https://iili.io/fpiAjBj.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;text=Phenomebauty&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="site.css?v=2" />
+    <link rel="stylesheet" href="checkout.css?v=2" />
 </head>
-<body>
-
-  <div id="bg-image"></div>
-  <div id="bg-overlay"></div>
-
-  <nav class="navbar" id="navbar">
-    <div class="container">
-      <div class="navbar-inner">
-        <a href="index.html" class="logo-wrap">
-          <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="logo-img" />
-          <span class="logo-wordmark">PhenomeBeauty</span>
-        </a>
-        <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="index.html#training">Training</a></li>
-          <li><a href="index.html#services">Services</a></li>
-          <li><a href="terms.html">T&amp;Cs</a></li>
-          <li><a href="index.html#booking">Book</a></li>
-          <li><a href="shop.html" class="active">Shop</a></li>
-        </ul>
-        <div class="nav-cta" style="display:flex;align-items:center;gap:10px;">
-          <button class="cart-float" onclick="openCart()" aria-label="Open cart">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-            </svg>
-            Cart <span class="cart-badge" id="cartBadge">0</span>
-          </button>
-        </div>
-      </div>
+<body class="page-checkout">
+  <header class="site-header site-header--minimal">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Phenomebeauty home">
+        <img src="https://iili.io/fpiAjBj.jpg" alt="" width="34" height="34" />
+        <span class="wordmark">Phenomebeauty</span>
+      </a>
+      <p class="secure-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10.5" width="16" height="10.5" rx="2.5"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg> Secure checkout</p>
+      <a href="shop.html" class="link-go"><span class="go go--back" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></span><span class="back-label">Back to shop</span></a>
     </div>
-  </nav>
+  </header>
 
   <div class="exit-nudge" id="exitNudge" role="alert" aria-live="polite">
     <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet. Go back and tap <strong>Pay</strong> to complete it.</p>
@@ -59,7 +35,8 @@
     </div>
   </div>
 
-  <div class="co-wrap">
+  <main id="main" class="co-wrap">
+    <h1 class="visually-hidden">Checkout</h1>
 
     <div class="co-card empty-state" id="emptyState" style="margin-top:24px;">
       <h2>Your cart is empty</h2>
@@ -358,7 +335,7 @@
       </div>
     </div>
 
-  </div>
+  </main>
 
   <!-- Cart editor -->
   <div class="cart-editor-overlay" id="cartEditorOverlay" onclick="closeCartEditor()" aria-hidden="true"></div>
@@ -388,25 +365,13 @@
     </div>
   </div>
 
-  <script src="checkout.js"></script>
-  <script>
-    (function(){
-      const toggle = document.getElementById('menuToggle');
-      const menu   = document.getElementById('navMenu');
-      if (!toggle || !menu) return;
-      toggle.addEventListener('click', function(){
-        const open = menu.classList.toggle('open');
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.classList.toggle('active', open);
-      });
-      document.addEventListener('click', function(e){
-        if (!toggle.contains(e.target) && !menu.contains(e.target)){
-          menu.classList.remove('open');
-          toggle.setAttribute('aria-expanded', 'false');
-          toggle.classList.remove('active');
-        }
-      });
-    })();
-  </script>
+  <footer class="footer-minimal">
+    <div class="container">
+      <p>Questions about your order? <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">WhatsApp us</a> or email <a href="mailto:hello@phenomebeauty.co.za">hello@phenomebeauty.co.za</a></p>
+      <p><a href="terms.html">Terms &amp; conditions</a></p>
+    </div>
+  </footer>
+
+  <script src="checkout.js?v=2"></script>
 </body>
 </html>
