@@ -1171,3 +1171,20 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .kit-grid > .kit-media { grid-column: 1 / -1; grid-row: 1; margin-bottom: var(--s-3); aspect-ratio: 21 / 9; }
 .kit-grid > .kit-media img { object-position: 50% 45%; }
 @media (max-width: 960px) { .kit-grid > .kit, .kit-grid > .kit-media { grid-row: auto; grid-column: auto; } }
+
+/* ── Waitlist form: process steps, group titles, the agreement block ── */
+.steps { list-style: none; margin: var(--s-3) 0 0; padding: 0; counter-reset: none; border-top: 1px solid var(--line-strong); }
+.steps li { display: grid; grid-template-columns: 36px 1fr; gap: var(--s-2); align-items: start; padding-block: 14px; border-bottom: 1px solid var(--line); color: var(--fg-soft); line-height: 1.5; }
+.steps-num { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--fg); display: grid; place-items: center; font-size: 0.8rem; font-weight: 600; color: var(--fg); }
+.privacy-note { margin-top: var(--s-3); font-size: var(--fs-sm); color: var(--fg-muted); line-height: 1.6; max-width: 46ch; }
+.privacy-note a { font-weight: 600; color: var(--fg); }
+.form-group { display: grid; gap: var(--s-3); padding-top: var(--s-3); border-top: 1px solid var(--line); }
+.form-group + .form-group { margin-top: var(--s-4); }
+.form-group-title { font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0.02em; color: var(--fg); }
+.agreement { margin: var(--s-4) 0 0; padding: var(--s-3) 0 0; border: 0; border-top: 1px solid var(--line-strong); display: grid; gap: var(--s-2); min-width: 0; }
+.agreement legend { padding: 0; margin-bottom: var(--s-2); }
+.agreement .terms-list { margin: 0; }
+.agreement .check { margin-top: var(--s-2); }
+.kit-per { font-size: 0.95rem; font-weight: 400; color: var(--fg-muted); margin-left: 6px; }
+.kit-join { margin-top: var(--s-3); }
+.kit .feature-list + .kit-join { margin-top: var(--s-3); }

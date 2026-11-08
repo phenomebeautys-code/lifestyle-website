@@ -1,10 +1,11 @@
 /**
  * workshop-signup  (PhenomeBeauty website)
  *
- * Public endpoint behind the waxing workshop application form (workshop.html).
- * 1. Validates the application and drops it silently if the hidden honeypot field is filled.
- * 2. Stores it in public.workshop_signups (service role).
- * 3. Emails the team at once, and sends the applicant a copy of their responses.
+ * Public endpoint behind the waxing workshop waitlist form (workshop.html).
+ * 1. Validates the answers. Drops silently if the hidden honeypot field is filled.
+ * 2. Sets the kit price and the terms timestamp on the server. The browser can't set them.
+ * 3. Stores the entry in public.workshop_signups with status 'waitlist'.
+ * 4. Emails the team at once, and sends the applicant a copy of their answers.
  *
  * Env vars required (already set for send-order-email):
  *   RESEND_API_KEY             — Resend key for phenomebeauty.co.za
@@ -14,11 +15,18 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const RESEND_API     = 'https://api.resend.com/emails';
-const FROM           = 'PhenomeBeauty <hello@phenomebeauty.co.za>';
-const TEAM_EMAIL     = 'phenomebeautys@gmail.com';
-const EMAIL_RE       = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const RESEND_API   = 'https://api.resend.com/emails';
+const FROM         = 'PhenomeBeauty <hello@phenomebeauty.co.za>';
+const TEAM_EMAIL   = 'phenomebeautys@gmail.com';
+const TERMS_VERSION = 'waitlist-v1';
+const EMAIL_RE     = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Prices per person, including the kit. The server owns these, not the browser.
+const KITS: Record<string, { label: string; price: number }> = {
+  foundation: { label: 'Foundation Kit', price: 2800 },
+  precision:  { label: 'Precision Kit', price: 3500 },
+  pro:        { label: 'Pro Confidence Kit', price: 4500 },
+};
 const EXPERIENCE: Record<string, string> = {
   beginner: "No, I'm a complete beginner",
   self: 'Yes, on myself only',
@@ -26,11 +34,6 @@ const EXPERIENCE: Record<string, string> = {
   professional: 'Yes, I currently offer waxing as a service',
 };
 const DAYS: Record<string, string> = { saturday: 'Saturdays', sunday: 'Sundays' };
-const KITS: Record<string, string> = {
-  foundation: 'Foundation Kit (R2800)',
-  precision: 'Precision Kit (R3500)',
-  pro: 'Pro Confidence Kit (R4500)',
-};
 
 // Public form: any origin may post (the input is validated), so previews work too.
 const CORS_HEADERS = {
@@ -67,8 +70,8 @@ async function sendEmail(to: string, subject: string, html: string, replyTo?: st
   if (!res.ok) throw new Error(`Resend ${res.status}`);
 }
 
-function rows(a: Array<[string, string]>): string {
-  return a.map(([label, value]) => `<li><strong>${esc(label)}:</strong> ${esc(value)}</li>`).join('');
+function rows(pairs: Array<[string, string]>): string {
+  return pairs.map(([label, value]) => `<li><strong>${esc(label)}:</strong> ${esc(value)}</li>`).join('');
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -85,34 +88,39 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Honeypot: real visitors never fill this field. Pretend success and stop.
   if (clean(body.website, 200) !== '') return respond({ ok: true });
 
-  const email      = clean(body.email, 254).toLowerCase();
   const fullName   = clean(body.full_name, 80);
-  const mobile     = clean(body.phone, 20);
+  const email      = clean(body.email, 254).toLowerCase();
+  const mobile     = clean(body.mobile, 20);
   const experience = clean(body.experience, 20);
   const motivation = clean(body.motivation, 1000);
-  const notes      = clean(body.notes, 500);
   const kit        = clean(body.kit, 20);
+  const notes      = clean(body.notes, 500);
   const termsOk    = body.terms_accepted === true;
-  const daysInput  = Array.isArray(body.days) ? body.days : [];
-  const days       = [...new Set(daysInput.filter((d): d is string => typeof d === 'string' && d in DAYS))];
+  const termsVer   = clean(body.terms_version, 40);
+  const days       = [...new Set(
+    (Array.isArray(body.days) ? body.days : []).filter((d): d is string => typeof d === 'string' && d in DAYS),
+  )];
 
-  if (!EMAIL_RE.test(email))                  return respond({ error: 'Please check your email address.' }, 400);
-  if (fullName.length < 2)                    return respond({ error: 'Please add your full name.' }, 400);
-  if (mobile.replace(/\D/g, '').length < 7)   return respond({ error: 'Please check your mobile number.' }, 400);
-  if (!(experience in EXPERIENCE))            return respond({ error: 'Please choose your waxing experience.' }, 400);
-  if (motivation.length < 10)                 return respond({ error: 'Please tell us why you want to attend.' }, 400);
-  if (days.length === 0)                      return respond({ error: 'Please choose at least one day you are available.' }, 400);
-  if (!termsOk)                               return respond({ error: 'Please accept the terms to continue.' }, 400);
-  if (!(kit in KITS))                         return respond({ error: 'Please choose a kit to reserve.' }, 400);
+  if (fullName.length < 2)                  return respond({ error: 'Please add your full name.' }, 400);
+  if (!EMAIL_RE.test(email))                return respond({ error: 'Please check your email address.' }, 400);
+  if (mobile.replace(/\D/g, '').length < 7) return respond({ error: 'Please check your mobile number.' }, 400);
+  if (!(experience in EXPERIENCE))          return respond({ error: 'Please choose your waxing experience.' }, 400);
+  if (motivation.length < 10)               return respond({ error: 'Please tell us why you want to attend.' }, 400);
+  if (days.length === 0)                    return respond({ error: 'Please choose at least one day you are available.' }, 400);
+  if (!(kit in KITS))                       return respond({ error: 'Please choose a kit.' }, 400);
+  if (!termsOk || termsVer !== TERMS_VERSION) return respond({ error: 'Please accept the terms to join the waitlist.' }, 400);
 
+  const kitInfo = KITS[kit];
+  const deposit = kitInfo.price / 2;
   const summary: Array<[string, string]> = [
-    ['Email', email],
     ['Full name', fullName],
+    ['Email', email],
     ['Mobile (WhatsApp)', mobile],
     ['Waxing experience', EXPERIENCE[experience]],
     ['Why they want to attend', motivation],
     ['Available', days.map((d) => DAYS[d]).join(', ')],
-    ['Kit to reserve', KITS[kit]],
+    ['Kit', `${kitInfo.label}, R${kitInfo.price} per person`],
+    ['50% deposit', `R${deposit}`],
   ];
   if (notes) summary.push(['Anything to know', notes]);
 
@@ -122,40 +130,47 @@ Deno.serve(async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
     const { error } = await supabase.from('workshop_signups').insert({
-      email,
       full_name: fullName,
+      email,
       mobile,
       waxing_experience: experience,
       motivation,
       available_days: days,
-      terms_accepted: true,
-      notes: notes || null,
       kit,
+      kit_price_zar: kitInfo.price,
+      notes: notes || null,
+      terms_accepted: true,
+      terms_version: TERMS_VERSION,
     });
-    if (error) return respond({ error: 'We could not save your application. Please try again.' }, 500);
+    if (error) {
+      // 23505 is a duplicate email: already on the waitlist.
+      if (error.code === '23505') {
+        return respond({ error: 'This email is already on the waitlist. We will be in touch soon.' }, 409);
+      }
+      return respond({ error: 'We could not save your answers. Please try again.' }, 500);
+    }
 
-    // Team notification first: this is the message that matters most.
+    // Team first: this is the message that matters most.
     await sendEmail(
       TEAM_EMAIL,
-      `Workshop application: ${fullName}`,
-      `<p>A new application for the waxing workshop. Send the deposit payment link to the applicant.</p><ul>${rows(summary)}</ul>`,
+      `Waitlist: ${fullName}`,
+      `<p>New waitlist entry. Status: waitlist. Send the 50% deposit payment link.</p><ul>${rows(summary)}</ul>`,
       email,
     );
 
-    // A copy of the responses goes to the applicant, as the form promises.
-    // A failure here should not undo the application.
+    // A copy of the answers goes to the applicant. A failure here does not undo the entry.
     try {
       await sendEmail(
         email,
-        'Your waxing workshop application',
+        'Your waxing workshop waitlist',
         `<p>Hi ${esc(fullName.split(' ')[0])},</p>
-         <p>Thank you for applying. Here is a copy of your responses.</p>
+         <p>Thank you for joining the waitlist. Here is a copy of your answers.</p>
          <ul>${rows(summary)}</ul>
-         <p>Next, we will email you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop. Your spot is secured only after paying the deposit.</p>
+         <p>Next, we will email you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop.</p>
          <p>Phenomebeauty</p>`,
       );
     } catch {
-      // Logged by the platform; the team still has the application.
+      // Logged by the platform; the team still has the entry.
     }
 
     return respond({ ok: true });

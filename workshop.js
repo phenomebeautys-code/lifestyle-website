@@ -1,4 +1,4 @@
-/* Waxing workshop application: posts the form to the workshop-signup Edge Function. */
+/* Waitlist form: posts the answers to the workshop-signup Edge Function. */
 (function () {
   var form = document.getElementById('workshopForm');
   if (!form) return;
@@ -14,6 +14,14 @@
     return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'), function (el) { return el.value; });
   }
 
+  // "Join with this kit" on a kit card pre-selects that kit in the form.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pick-kit]'), function (link) {
+    link.addEventListener('click', function () {
+      var radio = form.querySelector('input[name="kit"][value="' + link.getAttribute('data-pick-kit') + '"]');
+      if (radio) radio.checked = true;
+    });
+  });
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     status.textContent = '';
@@ -28,20 +36,21 @@
     }
 
     var data = {
-      email: form.email.value,
       full_name: form.full_name.value,
-      phone: form.phone.value,
+      email: form.email.value,
+      mobile: form.mobile.value,
       experience: checked('experience')[0] || '',
       motivation: form.motivation.value,
       days: checked('days'),
-      terms_accepted: form.terms_accepted.checked,
-      notes: form.notes.value,
       kit: checked('kit')[0] || '',
+      notes: form.notes.value,
+      terms_accepted: form.terms_accepted.checked,
+      terms_version: form.terms_version.value,
       website: form.website.value
     };
 
     button.disabled = true;
-    status.textContent = 'Sending your application...';
+    status.textContent = 'Sending your answers...';
 
     fetch(ENDPOINT, {
       method: 'POST',
@@ -64,7 +73,7 @@
         button.disabled = false;
       })
       .catch(function () {
-        status.textContent = 'We could not send your application just now. Please try again, or WhatsApp us.';
+        status.textContent = 'We could not send your answers just now. Please try again, or WhatsApp us.';
         button.disabled = false;
       });
   });
