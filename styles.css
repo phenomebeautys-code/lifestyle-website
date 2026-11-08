@@ -1460,7 +1460,6 @@ section, footer, nav { position: relative; z-index: 1; }
     border-top: 1px solid rgba(0, 0, 0, 0.12);
     margin-top: 36px;
 }
-.services-band .section-kicker { color: #000000; background: rgba(0, 0, 0, 0.06); border-color: rgba(0, 0, 0, 0.2); }
 .services-band .section-title  { color: #000000; }
 .services-band .section-copy   { color: rgba(0, 0, 0, 0.72); }
 
@@ -1513,7 +1512,6 @@ section, footer, nav { position: relative; z-index: 1; }
     color: #F3F1E8;
     border-top: 1px solid rgba(243, 241, 232, 0.12);
 }
-.training-band .section-kicker { color: #F3F1E8; background: rgba(243, 241, 232, 0.08); border-color: rgba(243, 241, 232, 0.25); }
 .training-band .section-title  { color: #F3F1E8; }
 .training-band .section-copy   { color: rgba(243, 241, 232, 0.72); }
 
