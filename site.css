@@ -875,15 +875,34 @@ strong, b { font-weight: 700; }
 
 /* ── Reviews ─────────────────────────────────────────────────── */
 .review {
-    display: flex; flex-direction: column; justify-content: space-between; gap: 28px;
+    display: flex; flex-direction: column; gap: 22px;
     height: 100%;
-    padding: clamp(26px, 3vw, 36px);
+    padding: clamp(26px, 3vw, 38px);
     background: var(--paper-2);
     border: 1px solid var(--line);
     border-radius: var(--r-card);
+    transition: transform 0.6s var(--ease), border-color 0.4s ease;
 }
-.review blockquote p { font-size: 1.1rem; line-height: 1.6; font-weight: 400; color: var(--fg); }
-.review figcaption { font-weight: 600; font-size: 0.95rem; }
-.review figcaption span { display: block; margin-top: 2px; font-weight: 400; font-size: 0.82rem; color: var(--fg-muted); }
-.reviews-carousel .carousel-track { grid-auto-columns: min(82vw, 400px); }
+.review:hover { transform: translateY(-4px); border-color: var(--line-strong); }
+.review-tag {
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-tag); font-weight: 600; font-size: 0.95rem;
+    letter-spacing: 0.01em; text-transform: uppercase;
+    color: var(--fg-soft);
+}
+.review-tag::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--blush); }
+.review blockquote { flex: 1; }
+.review blockquote p {
+    font-size: clamp(1.1rem, 1.5vw, 1.25rem); line-height: 1.5;
+    font-weight: 400; letter-spacing: -0.01em; color: var(--fg);
+}
+.review figcaption { display: grid; gap: 2px; padding-top: 18px; border-top: 1px solid var(--line); }
+.review figcaption strong { font-weight: 700; font-size: 0.95rem; }
+.review figcaption span { font-size: 0.8rem; color: var(--fg-muted); }
+.review-related { font-size: 0.88rem; color: var(--fg-soft); }
+.review-related a { font-weight: 700; color: var(--fg); }
+.review-related a:hover { opacity: 0.6; }
+.reviews-carousel .carousel-track { grid-auto-columns: min(84vw, 420px); }
 @media (min-width: 1000px) { .reviews-carousel .carousel-track { grid-auto-columns: calc((100% - 2 * 24px) / 3); } }
+.reviews-carousel .dots { display: none; }
