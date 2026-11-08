@@ -1,4 +1,4 @@
-/* Waxing workshop sign-up: posts the form to the workshop-signup Edge Function. */
+/* Waxing workshop application: posts the form to the workshop-signup Edge Function. */
 (function () {
   var form = document.getElementById('workshopForm');
   if (!form) return;
@@ -10,6 +10,10 @@
   var button = form.querySelector('button[type="submit"]');
   var done = document.getElementById('workshopDone');
 
+  function checked(name) {
+    return Array.prototype.map.call(form.querySelectorAll('input[name="' + name + '"]:checked'), function (el) { return el.value; });
+  }
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     status.textContent = '';
@@ -18,20 +22,26 @@
       form.reportValidity();
       return;
     }
+    if (checked('days').length === 0) {
+      status.textContent = 'Please choose at least one day you are available.';
+      return;
+    }
 
     var data = {
-      full_name: form.full_name.value,
       email: form.email.value,
+      full_name: form.full_name.value,
       phone: form.phone.value,
-      kit: (form.querySelector('input[name="kit"]:checked') || {}).value || 'unsure',
-      experience: (form.querySelector('input[name="experience"]:checked') || {}).value || '',
+      experience: checked('experience')[0] || '',
+      motivation: form.motivation.value,
+      days: checked('days'),
+      terms_accepted: form.terms_accepted.checked,
       notes: form.notes.value,
-      consent: form.consent.checked,
+      kit: checked('kit')[0] || '',
       website: form.website.value
     };
 
     button.disabled = true;
-    status.textContent = 'Sending your sign-up...';
+    status.textContent = 'Sending your application...';
 
     fetch(ENDPOINT, {
       method: 'POST',
@@ -54,7 +64,7 @@
         button.disabled = false;
       })
       .catch(function () {
-        status.textContent = 'We could not send your sign-up just now. Please try again, or WhatsApp us.';
+        status.textContent = 'We could not send your application just now. Please try again, or WhatsApp us.';
         button.disabled = false;
       });
   });

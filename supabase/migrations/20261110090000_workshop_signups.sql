@@ -1,18 +1,20 @@
--- Waxing workshop sign-ups from the website form (workshop.html).
+-- Waxing workshop applications from the website form (workshop.html).
 -- Written only by the workshop-signup Edge Function (service role).
 -- RLS is on with no policies, so the public and authenticated roles cannot read or write.
 
 create table if not exists public.workshop_signups (
-  id           uuid primary key default gen_random_uuid(),
-  created_at   timestamptz not null default now(),
-  full_name    text not null check (char_length(full_name) between 2 and 80),
-  email        text not null check (char_length(email) between 5 and 254),
-  phone        text not null check (char_length(phone) between 7 and 20),
-  experience   text not null check (experience in ('beginner', 'some', 'professional')),
-  kit          text not null default 'unsure' check (kit in ('foundation', 'precision', 'pro', 'unsure')),
-  notes        text check (notes is null or char_length(notes) <= 500),
-  consent      boolean not null check (consent = true),
-  source_page  text not null default 'workshop.html'
+  id                uuid primary key default gen_random_uuid(),
+  created_at        timestamptz not null default now(),
+  email             text not null check (char_length(email) between 5 and 254),
+  full_name         text not null check (char_length(full_name) between 2 and 80),
+  mobile            text not null check (char_length(mobile) between 7 and 20),
+  waxing_experience text not null check (waxing_experience in ('beginner', 'self', 'family', 'professional')),
+  motivation        text not null check (char_length(motivation) between 10 and 1000),
+  available_days    text[] not null check (array_length(available_days, 1) >= 1 and available_days <@ array['saturday', 'sunday']::text[]),
+  terms_accepted    boolean not null check (terms_accepted = true),
+  notes             text check (notes is null or char_length(notes) <= 500),
+  kit               text not null check (kit in ('foundation', 'precision', 'pro')),
+  source_page       text not null default 'workshop.html'
 );
 
 alter table public.workshop_signups enable row level security;

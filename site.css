@@ -1152,3 +1152,14 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .kit .feature-list li { font-size: 0.95rem; }
 @media (max-width: 960px) { .kit-grid { grid-template-columns: 1fr; } }
 
+
+/* ── Workshop: the limit, kit notes, the terms list, required marks ── */
+.workshop-limit { font-size: var(--fs-sm); font-weight: 600; color: var(--fg-soft); }
+.kit-note { margin-top: var(--s-2); font-size: var(--fs-sm); color: var(--fg-muted); }
+.kit-includes { margin-top: var(--s-2); font-size: var(--fs-sm); font-weight: 600; color: var(--fg-soft); }
+.kit .feature-list { margin-top: var(--s-2); }
+.kit .feature-list li { font-size: 0.92rem; line-height: 1.45; padding-block: 12px; }
+.terms-list { margin-top: var(--s-3); }
+.terms-list li { font-size: 0.95rem; }
+.field-required { color: var(--fg); }
+.form-copy { margin-top: var(--s-3); font-size: var(--fs-sm); color: var(--fg-muted); }
