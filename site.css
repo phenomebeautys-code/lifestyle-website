@@ -867,3 +867,8 @@ strong, b { font-weight: 700; }
 .qa-a a { color: var(--fg); font-weight: 600; }
 .qa-a a:hover { opacity: 0.6; }
 
+
+/* Price list rows: name and price, then description, then time */
+.pl-rows .pl-desc { grid-column: 1; grid-row: 2; font-size: 0.95rem; line-height: 1.5; color: var(--fg-soft); max-width: 56ch; }
+.pl-rows .pl-time { grid-column: 1; grid-row: 3; font-size: 0.82rem; font-weight: 600; color: var(--fg-muted); }
+.pl-rows li:has(> .pl-price) .pl-desc { grid-row: 2; }
