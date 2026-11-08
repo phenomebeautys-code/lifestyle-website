@@ -789,13 +789,13 @@ function updateShopHero(segment) {
   if (!heroTitle || !heroDesc) return;
   if (segment === 'self_care') {
     heroTitle.innerHTML = 'Your Routine.<br/>Your Rules.';
-    heroDesc.textContent = 'The products behind your self-care. No salon needed, no compromise on results.';
+    heroDesc.textContent = 'Self-care for your routine. Made for busy days.';
   } else if (segment === 'professional') {
     heroTitle.innerHTML = 'Built for<br/>Professionals.';
-    heroDesc.textContent = 'Supplies for the therapist who holds the standard for every woman entrusted in their care.';
+    heroDesc.textContent = 'Supplies for the pros who care for others.';
   } else {
     heroTitle.innerHTML = 'The Phenome<br/>Collection';
-    heroDesc.textContent = 'For the woman who makes time for herself, and the professionals who help others, do the same.';
+    heroDesc.textContent = 'Self-care for your routine. Supplies for the pros who care for others.';
   }
 }
 

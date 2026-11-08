@@ -856,3 +856,15 @@ strong, b { font-weight: 700; }
     .spot-bars span.is-active i { transform: scaleX(1); }
     [data-parallax] { translate: none; }
 }
+
+/* ── About & FAQ ─────────────────────────────────────────────── */
+.qa-list { max-width: 880px; }
+.qa { padding: clamp(28px, 4vw, 40px) 0; border-top: 1px solid var(--line-strong); }
+.qa:last-child { border-bottom: 1px solid var(--line-strong); }
+.qa-q { font-weight: 500; font-size: clamp(1.25rem, 2.2vw, 1.6rem); line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 14px; }
+.qa-a { color: var(--fg-soft); font-size: 1.05rem; line-height: 1.7; max-width: 60ch; }
+.qa-a a { color: var(--fg); font-weight: 600; }
+.qa-a a:hover { opacity: 0.6; }
+
+/* Package taglines: slightly bolder, all-caps */
+.pkg-tag { font-weight: 500; }

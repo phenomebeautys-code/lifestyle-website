@@ -119,3 +119,20 @@ The pages are plain static HTML, with no build step to deploy. Headers, footers 
 - the header
 - the footer
 - the `site.js` script tag
+
+## Voice and copy
+
+Rules, from the brief:
+
+- **Empathy is king.** Validate the nerves, then empower. Don't coddle.
+- **Short is beautiful.** No sentence over 12 words. Break lines aggressively.
+- **Sell the why, not the what.** Write about the feeling (confidence, post-wax ease), not wax temperature or ingredients.
+- **The customer is the star.** We are the supporting cast.
+- **Never:** "epilation", "follicle", "hyperpigmentation" (keep those for the FAQ), "bespoke", "synergy", "leverage", "elevate", "seamless".
+- **Always:** declarative statements, and "&" to keep the eye moving.
+
+Checked on every public page: no sentence over 12 words, and no banned terms. Legal wording on the terms page is unchanged, so that page keeps its exact clauses.
+
+Page roles: the homepage hero sells the product and the booking together. The services page keeps the package cards as the model for every treatment list, in Title Case. About us has three short paragraphs. Booking & FAQ carries the empathy for nervous first-timers.
+
+**Typography note:** the brief asks for a condensed, bolder face for all-caps taglines. The owner's rule is two fonts only, so taglines use Montserrat at a heavier weight instead. Adding a third font would be a separate decision.
