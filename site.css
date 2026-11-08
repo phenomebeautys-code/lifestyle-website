@@ -1066,3 +1066,24 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .pcard-name { min-height: 2.6em; }
 .pcard-cta { margin-top: auto; }
 
+/* ── Guides: editorial, on Midnight, with the Blush close ───── */
+.guide-band { padding-block: var(--half); }
+.guide-article { max-width: 980px; }
+.guide-steps { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line-strong); }
+.guide-step {
+    display: grid; grid-template-columns: minmax(72px, 130px) minmax(0, 1fr);
+    gap: clamp(20px, 4vw, 56px); align-items: start;
+    padding-block: clamp(28px, 4vw, 44px); border-top: 1px solid var(--line-strong);
+}
+.guide-num { font-weight: 300; font-size: clamp(2.2rem, 4.4vw, 3.6rem); line-height: 1; letter-spacing: -0.03em; color: var(--fg-muted); }
+.guide-step .t-h3 { margin-bottom: var(--s-2); }
+.guide-step p { color: var(--fg-soft); font-size: 1.05rem; line-height: 1.7; max-width: 56ch; }
+.guide-quote { margin: clamp(48px, 7vw, 96px) 0 0; text-align: center; }
+.guide-quote p { font-weight: 300; font-size: clamp(2rem, 4.6vw, 3.8rem); line-height: 1.05; letter-spacing: -0.03em; text-transform: uppercase; }
+.guide-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(40px, 7vw, 120px); }
+.guide-columns .t-h2 { margin-bottom: var(--s-3); }
+@media (max-width: 860px) {
+    .guide-columns { grid-template-columns: 1fr; }
+    .guide-step { grid-template-columns: 1fr; gap: 12px; }
+}
+
