@@ -33,7 +33,7 @@ html {
 
     --text: #f5f3ef;
     --text-soft: rgba(245, 243, 239, 0.72);
-    --text-muted: rgba(245, 243, 239, 0.44);
+    --text-muted: rgba(245, 243, 239, 0.62);   /* raised from .44 for contrast */
     --accent: #f2e7d6;
     --accent-strong: #ffffff;
     --accent-dark: #080808;
@@ -1545,3 +1545,48 @@ section, footer, nav { position: relative; z-index: 1; }
     border: 1px solid currentColor;
 }
 .training-cta { margin-top: auto; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   HOMEPAGE — three routes, one per colour band
+═══════════════════════════════════════════════════════════════ */
+.visually-hidden {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.routes { padding: clamp(40px, 6vw, 64px) 0 0; position: relative; z-index: 1; }
+
+.route-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+.route {
+    display: flex; flex-direction: column;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.25s ease;
+}
+.route:hover { transform: translateY(-3px); }
+.route:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.route img {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block;
+}
+.route-body { display: flex; flex-direction: column; gap: 8px; padding: 22px 22px 26px; flex: 1; }
+.route h3 { font-family: var(--font-display); font-size: 1.6rem; line-height: 1.1; }
+.route p  { font-size: 0.95rem; }
+.route-cta { margin-top: auto; padding-top: 6px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+
+.route--products { background: #F2C6C2; color: #000000; }
+.route--services { background: #F3F1E8; color: #000000; border: 1px solid rgba(0,0,0,0.12); }
+.route--training { background: #000000; color: #F3F1E8; border: 1px solid rgba(243,241,232,0.2); }
+.route--products p, .route--services p { color: rgba(0,0,0,0.75); }
+.route--training p { color: rgba(243,241,232,0.72); }
+
+.routes-footer { margin-top: 22px; font-size: 0.92rem; color: var(--text-soft); text-align: center; }
+.routes-footer a { color: var(--text); text-underline-offset: 3px; }
+
+/* Hero visual: image tiles keep a fixed portrait shape now the feature card is gone */
+.hero-visual { grid-template-rows: auto; align-content: center; }
+.hero-mini-card { min-height: 0; aspect-ratio: 3 / 4; display: flex; align-items: flex-end; }
