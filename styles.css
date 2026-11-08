@@ -1439,3 +1439,111 @@ section, footer, nav { position: relative; z-index: 1; }
     .footer-shell { border-radius: 20px; padding: 18px; }
     .footer-bottom { font-size: 0.78rem; flex-direction: column; align-items: flex-start; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 2 — SERVICES (Cream band, black ink)
+   PHASE 3 — TRAINING (Midnight band, cream ink)
+═══════════════════════════════════════════════════════════════ */
+
+.services-band,
+.training-band {
+    width: 100%;
+    padding: clamp(56px, 8vw, 96px) 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Cream — services */
+.services-band {
+    background: #F3F1E8;
+    color: #000000;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+    margin-top: 36px;
+}
+.services-band .section-kicker { color: #000000; background: rgba(0, 0, 0, 0.06); border-color: rgba(0, 0, 0, 0.2); }
+.services-band .section-title  { color: #000000; }
+.services-band .section-copy   { color: rgba(0, 0, 0, 0.72); }
+
+.services-head,
+.training-head { max-width: 640px; margin-bottom: 36px; }
+
+.svc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+.svc-card {
+    display: flex; flex-direction: column;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+}
+.svc-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.6rem; line-height: 1.1;
+    color: #000000;
+}
+.svc-sub  { font-size: 0.9rem; color: rgba(0, 0, 0, 0.66); margin-top: 6px; }
+.svc-from { font-size: 0.95rem; font-weight: 700; color: #000000; margin-top: 10px; }
+.svc-list { list-style: none; margin: 16px 0 20px; padding: 0; }
+.svc-list li {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
+    font-size: 0.94rem; color: #000000;
+}
+.svc-price { font-weight: 600; white-space: nowrap; }
+.svc-btn {
+    margin-top: auto;
+    display: block; text-align: center;
+    background: #000000; color: #F3F1E8;
+    padding: 13px 18px;
+    border-radius: var(--radius-pill);
+    font-weight: 600; text-decoration: none;
+}
+.svc-btn:hover { background: #222222; }
+.svc-btn:focus-visible { outline: 2px solid #000000; outline-offset: 3px; }
+.svc-footer { margin-top: 28px; font-size: 0.95rem; color: rgba(0, 0, 0, 0.72); }
+.svc-footer a { color: #000000; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Midnight — training */
+.training-band {
+    background: #000000;
+    color: #F3F1E8;
+    border-top: 1px solid rgba(243, 241, 232, 0.12);
+}
+.training-band .section-kicker { color: #F3F1E8; background: rgba(243, 241, 232, 0.08); border-color: rgba(243, 241, 232, 0.25); }
+.training-band .section-title  { color: #F3F1E8; }
+.training-band .section-copy   { color: rgba(243, 241, 232, 0.72); }
+
+.training-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+}
+.training-card {
+    display: flex; flex-direction: column; gap: 10px;
+    padding: 26px;
+    border: 1px solid rgba(243, 241, 232, 0.2);
+    border-radius: var(--radius-lg);
+    color: #F3F1E8;
+    text-decoration: none;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+.training-card:hover { border-color: #F3F1E8; transform: translateY(-2px); }
+.training-card:focus-visible { outline: 2px solid #F3F1E8; outline-offset: 3px; }
+.training-card h3 { font-family: var(--font-display); font-size: 1.5rem; line-height: 1.1; color: #F3F1E8; }
+.training-card p  { font-size: 0.95rem; color: rgba(243, 241, 232, 0.72); }
+.training-card--feature { background: #F3F1E8; color: #000000; border-color: #F3F1E8; }
+.training-card--feature h3,
+.training-card--feature p { color: #000000; }
+.training-card--feature p { color: rgba(0, 0, 0, 0.75); }
+.training-tag {
+    align-self: flex-start;
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: var(--radius-pill);
+    border: 1px solid currentColor;
+}
+.training-cta { margin-top: auto; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
