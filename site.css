@@ -1087,3 +1087,21 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
     .guide-step { grid-template-columns: 1fr; gap: 12px; }
 }
 
+/* ── Guide PDFs: the print layout is black on white, with no navigation or photo ── */
+.print-only { display: none; }
+@media print {
+    .print-only { display: block; margin-bottom: 24px; }
+    .guide-page, .guide-page .band, .guide-page .page-hero, .guide-page .close-band { background: #fff !important; }
+    .guide-page * { color: #000 !important; border-color: rgba(0,0,0,0.25) !important; }
+    .guide-page .site-header, .guide-page .site-footer, .guide-page .skip-link,
+    .guide-page .close-band, .guide-page .page-hero-figure, .guide-page .actions { display: none !important; }
+    .guide-page .page-hero-grid { display: block; }
+    .guide-page .page-hero-copy .t-lead { margin-top: 14px; }
+    .guide-page .guide-band { padding-block: 12px; }
+    .guide-step { break-inside: avoid; grid-template-columns: 56px 1fr; padding-block: 16px; }
+    .guide-num { font-size: 1.8rem; }
+    .guide-quote { margin-top: 32px; }
+    .guide-columns { gap: 32px; }
+    .guide-columns > div { break-inside: avoid; }
+}
+
