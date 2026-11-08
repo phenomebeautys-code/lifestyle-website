@@ -138,7 +138,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await sendEmail(
       TEAM_EMAIL,
       `Workshop application: ${fullName}`,
-      `<p>A new application for the waxing workshop.</p><ul>${rows(summary)}</ul>`,
+      `<p>A new application for the waxing workshop. Send the deposit payment link to the applicant.</p><ul>${rows(summary)}</ul>`,
       email,
     );
 
@@ -151,7 +151,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         `<p>Hi ${esc(fullName.split(' ')[0])},</p>
          <p>Thank you for applying. Here is a copy of your responses.</p>
          <ul>${rows(summary)}</ul>
-         <p>Only 2 ladies are accepted per workshop. Your spot is secured only after paying a 50% deposit.</p>
+         <p>Next, we will email you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop. Your spot is secured only after paying the deposit.</p>
          <p>Phenomebeauty</p>`,
       );
     } catch {
