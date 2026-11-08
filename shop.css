@@ -1132,3 +1132,64 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .scb-expanded-subtotal span:last-child { font-weight: 700; color: var(--accent); }
 .scb-expanded-note { font-size: 0.72rem; color: var(--text-muted); text-align: right; }
 .scb-checkout-btn { width: 100%; justify-content: center; text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 1 REDESIGN — products (Blush band), filter, trust strip
+   Products are visible on first load. The segment chooser is gone:
+   the filter chips in the Blush band replace it.
+═══════════════════════════════════════════════════════════════ */
+
+/* Trust strip under the hero */
+.shop-trust {
+  list-style: none;
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 8px 22px;
+  margin: 22px 0 0;
+  padding: 0;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+.shop-trust li { display: inline-flex; align-items: center; gap: 8px; }
+.shop-trust a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Blush products band — full width, black ink */
+.shop-section {
+  background: #F2C6C2;
+  color: #000000;
+  padding: 36px 0 56px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  margin-top: 36px;
+}
+.shop-section .container { padding-top: 0; }
+.shop-section .tile-img-wrap { border: 1px solid rgba(0, 0, 0, 0.10); background: #F3F1E8; }
+.shop-section .tile-name  { color: #000000; white-space: normal; }
+.shop-section .tile-price { color: #000000; font-weight: 700; }
+.shop-section .tile-no-img { color: #000000; }
+.shop-section .tile-badge {
+  background: #000000; color: #F3F1E8; border-color: #000000;
+}
+.shop-section .noscript-notice { color: #000000; }
+
+/* Filter chips */
+.shop-filter {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 22px;
+}
+.shop-filter-chip {
+  font-family: var(--font-body);
+  font-size: 0.88rem; font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid #000000;
+  background: transparent;
+  color: #000000;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.shop-filter-chip[aria-pressed="true"] { background: #000000; color: #F3F1E8; }
+.shop-filter-chip:hover:not([aria-pressed="true"]) { background: rgba(0, 0, 0, 0.06); }
+.shop-filter-chip:focus-visible { outline: 2px solid #000000; outline-offset: 3px; }
+
+/* Tile price line: "From R…" */
+.tile-price .from { font-weight: 400; opacity: 0.75; margin-right: 3px; }
+

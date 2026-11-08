@@ -1,6 +1,8 @@
 # PhenomeBeauty Website Redesign: Review and Plan
 
 Branch: `claude/website-redesign-conversion`
+Status: **Phase 1 (products) implemented** on this branch. See §7.
+
 Scope of this document: review of the current site, the conversion problems found, the colour and section plan, and the phased order of work. No design or markup has changed yet.
 
 ---

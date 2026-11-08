@@ -71,7 +71,7 @@
   <link rel="stylesheet" href="styles.css?v=2" />
   <link rel="stylesheet" href="shop.css?v=2" />
 </head>
-<body>
+<body class="segment-chosen">
 
   <div id="bg-image" aria-hidden="true"></div>
   <div id="bg-overlay" aria-hidden="true"></div>
@@ -124,32 +124,24 @@
           <p id="shopHeroDesc">Carefully curated essentials for women who maintain their standards, and the professionals who help their clients, do the same.</p>
         </div>
 
-        <!-- Stage 2: segment selector — its own bubble, always visible -->
-        <div class="segment-bubble-wrap" id="segmentBubbleWrap">
-          <h2 class="segment-bubble-heading" id="shopHeroWho">Who are you shopping for?</h2>
-          <div class="segment-toggle-wrap" id="segmentToggleWrap">
-            <div class="segment-toggle" id="segmentToggle" role="group" aria-label="Shopping segment">
-              <button
-                class="segment-toggle-option"
-                id="toggleSelfCare"
-                onclick="selectSegment('self_care')"
-                aria-pressed="false"
-              >Self-Care</button>
-              <button
-                class="segment-toggle-option"
-                id="toggleProfessional"
-                onclick="selectSegment('professional')"
-                aria-pressed="false"
-              >Professional</button>
-            </div>
-          </div>
-        </div>
+        <!-- Trust strip: facts already stated elsewhere on the site -->
+        <ul class="shop-trust" aria-label="Shopping information">
+          <li>Secure checkout by Yoco</li>
+          <li>Delivery calculated at checkout</li>
+          <li><a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">Questions? WhatsApp us</a></li>
+        </ul>
 
       </div>
     </section>
 
+    <!-- Products band (Blush) -->
     <section class="shop-section" aria-label="Products">
       <div class="container">
+        <div class="shop-filter" id="shopFilter" role="group" aria-label="Filter products by who you are shopping for">
+          <button type="button" class="shop-filter-chip" data-segment-btn="all" aria-pressed="true">All</button>
+          <button type="button" class="shop-filter-chip" data-segment-btn="self_care" aria-pressed="false">Self-Care</button>
+          <button type="button" class="shop-filter-chip" data-segment-btn="professional" aria-pressed="false">Professional</button>
+        </div>
         <div class="product-grid" id="productGrid">
           <noscript>
             <div class="noscript-notice">

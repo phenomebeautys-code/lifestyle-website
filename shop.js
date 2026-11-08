@@ -660,18 +660,31 @@ function getSegment() {
   return localStorage.getItem(SEGMENT_KEY) || null;
 }
 
+/* Filter chips: All / Self-Care / Professional (null = All) */
 function _setToggleState(segment) {
-  const track = document.getElementById('segmentToggle');
-  const btnSelfCare     = document.getElementById('toggleSelfCare');
-  const btnProfessional = document.getElementById('toggleProfessional');
-  if (!track || !btnSelfCare || !btnProfessional) return;
+  document.querySelectorAll('[data-segment-btn]').forEach(btn => {
+    const value = btn.dataset.segmentBtn === 'all' ? null : btn.dataset.segmentBtn;
+    btn.setAttribute('aria-pressed', String(value === segment));
+  });
+}
 
-  const isSelfCare     = segment === 'self_care';
-  const isProfessional = segment === 'professional';
+/* Escape text before it goes into innerHTML */
+function esc(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
-  btnSelfCare.setAttribute('aria-pressed',     String(isSelfCare));
-  btnProfessional.setAttribute('aria-pressed',  String(isProfessional));
-  track.style.setProperty('--_slide', isProfessional ? '1' : '0');
+/* Lowest price a customer could pay for this product (base, variant or size) */
+function minPrice(p) {
+  const candidates = [Number(p.price) || 0];
+  (p.variants || []).forEach(v => { if (v.price != null) candidates.push(Number(v.price)); });
+  (p.sizes || []).forEach(s => { if (s.price != null) candidates.push(Number(s.price)); });
+  const positive = candidates.filter(n => n > 0);
+  return positive.length ? Math.min(...positive) : 0;
 }
 
 /* —— Filter cached products and re-render — no network call —— */
@@ -700,15 +713,15 @@ function _updateBubbleHeading(segment) {
   }
 }
 
+/* Filter by segment. null = All. The choice is remembered for returning visitors. */
 function selectSegment(segment) {
-  localStorage.setItem(SEGMENT_KEY, segment);
-  document.body.classList.add('segment-chosen');
-  const mount = document.getElementById('segmentSelectorMount');
-  if (mount) mount.style.display = 'none';
-  const prompt = document.getElementById('heroSubPrompt');
-  if (prompt) prompt.classList.add('hidden');
-  _updateBubbleHeading(segment);
-  applySegment(segment);
+  if (segment) {
+    localStorage.setItem(SEGMENT_KEY, segment);
+  } else {
+    localStorage.removeItem(SEGMENT_KEY);
+  }
+  _setToggleState(segment);
+  updateShopHero(segment);
   if (window._allProducts) {
     filterAndRender(segment);
   } else {
@@ -717,21 +730,7 @@ function selectSegment(segment) {
 }
 
 function browseAll() {
-  localStorage.removeItem(SEGMENT_KEY);
-  document.body.classList.add('segment-chosen');
-  const mount = document.getElementById('segmentSelectorMount');
-  if (mount) mount.style.display = 'none';
-  const prompt = document.getElementById('heroSubPrompt');
-  if (prompt) prompt.classList.add('hidden');
-  _updateBubbleHeading(null);
-  document.getElementById('segmentActiveBar')?.classList.remove('visible');
-  _setToggleState(null);
-  updateShopHero(null);
-  if (window._allProducts) {
-    filterAndRender(null);
-  } else {
-    fetchProducts();
-  }
+  selectSegment(null);
 }
 
 function resetSegment() {
@@ -831,27 +830,30 @@ function renderProducts(products) {
     }
 
     const imgHTML = tileImgSrc
-      ? `<img src="${transformImage(tileImgSrc, 600)}" alt="${p.name || ''}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
+      ? `<img src="${esc(transformImage(tileImgSrc, 600))}" alt="${esc(p.name || '')}" loading="${idx < 4 ? 'eager' : 'lazy'}" width="600" height="400" />`
       : `<div class="tile-no-img"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
 
+    /* Only the availability badge. Unverified "hero" claims were removed. */
     let badge = '';
-    if (p.hero_segment === 'self_care') {
-      badge = `<div class="tile-badge" aria-label="Hero pick">The Ritual They Return To</div>`;
-    } else if (p.hero_segment === 'professional') {
-      badge = `<div class="tile-badge" aria-label="Hero pick">TRUSTED BY PROFESSIONALS</div>`;
-    } else if (!available) {
-      badge = `<div class="tile-badge" aria-label="Unavailable">Coming Soon</div>`;
+    if (!available) {
+      badge = `<div class="tile-badge">Coming Soon</div>`;
     }
 
+    const lowest = minPrice(p);
+    const tilePriceLabel = lowest > 0
+      ? `<span class="from">From</span> R${lowest.toFixed(2)}`
+      : 'Coming Soon';
+    const name = esc(p.name || 'Product');
+
     return `
-<button class="product-tile${unavailableClass}" onclick="openProductDetail('${pid}')" aria-label="View ${p.name || 'product'}" data-pid="${pid}">
+<button class="product-tile${unavailableClass}" data-pid="${esc(pid)}" aria-label="View ${name}">
   <div class="tile-img-wrap">
     ${badge}
     ${imgHTML}
   </div>
   <div class="tile-info">
-    <div class="tile-name">${p.name || 'Product'}</div>
-    <div class="tile-price">${priceLabel}</div>
+    <div class="tile-name">${name}</div>
+    <div class="tile-price">${tilePriceLabel}</div>
   </div>
 </button>`;
   }).join('');
@@ -946,22 +948,22 @@ document.addEventListener('DOMContentLoaded', async function() {
      goToCheckout() hands checkout.html a live copy in both stores. */
   if (cart.length) saveCart(cart);
 
-  await loadSegmentSelector();
+  /* Products are shown on first load. The saved filter (if any) is restored. */
+  const saved = getSegment();
+  updateShopHero(saved);
+  _setToggleState(saved);
 
-  localStorage.removeItem(SEGMENT_KEY);
-  document.body.classList.remove('segment-chosen');
+  document.getElementById('shopFilter')?.addEventListener('click', e => {
+    const btn = e.target.closest('[data-segment-btn]');
+    if (!btn) return;
+    selectSegment(btn.dataset.segmentBtn === 'all' ? null : btn.dataset.segmentBtn);
+  });
 
-  const whoLabel = document.getElementById('shopHeroWho');
-  if (whoLabel) {
-    whoLabel.textContent = 'Who are you shopping for?';
-    whoLabel.style.display = '';
-  }
-
-  updateShopHero(null);
-  _setToggleState(null);
-
-  const grid = document.getElementById('productGrid');
-  if (grid) grid.innerHTML = '';
+  /* One delegated listener for all tiles, instead of inline onclick. */
+  document.getElementById('productGrid')?.addEventListener('click', e => {
+    const tile = e.target.closest('.product-tile');
+    if (tile) openProductDetail(tile.dataset.pid);
+  });
 
   updateBadges();
   if (cart.length) showStickyBar();
@@ -970,5 +972,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.history.replaceState({}, '', 'shop.html');
   }
 
-  prefetchProducts();
+  fetchProducts();
 });
