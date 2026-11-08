@@ -20,12 +20,13 @@ A blend of organic, minimal and editorial, where the style always serves the hie
 - **Organic:** arch-shaped and pill-shaped photo frames, one slowly breathing Blush form, sections that overlap with rounded tops like stacked sheets.
 - **Minimal:** no glass, no blur, no drop shadows, no gradients, no icon tiles, no eyebrow labels, no underlined links.
 
-## Type: two fonts
+## Type: three fonts
 
 | Font | Used for |
 |---|---|
-| **Abril Fatface** | The **Phenomebeauty** wordmark only: header and the giant footer signature. Loaded as a subset of just those letters. |
-| **Montserrat** | Everything else. Light 300 uppercase for headlines (matching the package cards), 400 for body, 500 to 700 for labels, links and buttons. |
+| **Abril Fatface** | The **Phenomebeauty** wordmark only: header and the giant footer signature. |
+| **Montserrat** | Everything else. Light 300 uppercase for headlines, 400 for body, 500 to 700 for labels, links and buttons. |
+| **Barlow Condensed** | All-caps taglines only: package names, package taglines, the call-out note and spotlight titles. Semibold 600, tight and bold. |
 
 The brand name is always written **Phenomebeauty** (lower-case b).
 
@@ -59,7 +60,7 @@ Rule: a filled button is only ever a product action. This is checked on every pa
 
 ## Components
 
-- **Package card** (`.pkg`): rebuilt from the four package images, with an asymmetric photo frame, light uppercase name, price with "excl. call-out fee", bold treatment list, tagline and a labelled "Book" button. It adapts to its own width with container queries, and the price drops under the name on narrow cards.
+- **Package card** (`.pkg`): rebuilt from the four package images, with an asymmetric photo frame, light uppercase name, price with "+ call-out fee", bold treatment list, tagline and a labelled "Book" button. It adapts to its own width with container queries, and the price drops under the name on narrow cards.
 - **Story spotlight** (homepage hero): a deck of story cards with progress bars, which advances every 6 seconds and can be paused, stepped or swiped. Each card has one labelled button.
 - **Product card** and **shop tile**: 4:5 photo, name, "From R…" price, and a labelled "View product" button.
 - **Price list**: category heading that sticks while you scroll its treatments, then name, description and price rows.
@@ -135,4 +136,4 @@ Checked on every public page: no sentence over 12 words, and no banned terms. Le
 
 Page roles: the homepage hero sells the product and the booking together. The services page keeps the package cards as the model for every treatment list, in Title Case. About us has three short paragraphs. Booking & FAQ carries the empathy for nervous first-timers.
 
-**Typography note:** the brief asks for a condensed, bolder face for all-caps taglines. The owner's rule is two fonts only, so taglines use Montserrat at a heavier weight instead. Adding a third font would be a separate decision.
+**Typography:** the brief's condensed, bolder face for all-caps taglines is Barlow Condensed. It is the third and last font, and it is used only for those taglines.
