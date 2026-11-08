@@ -19,6 +19,7 @@ A blend of organic, minimal and editorial, where the style always serves the hie
 - **Editorial:** big light uppercase headlines, hairline rules, price lists set like a menu, generous space.
 - **Organic:** arch-shaped and pill-shaped photo frames, one slowly breathing Blush form, sections that overlap with rounded tops like stacked sheets.
 - **Minimal:** no glass, no blur, no drop shadows, no gradients, no icon tiles, no eyebrow labels, no underlined links.
+  Exception: physical objects. The review notes, their pins, the curled corner and the iPhone frame are drawn as real objects, so they alone carry shadows and gradients.
 
 ## Type: three fonts
 
@@ -58,8 +59,16 @@ Rule: a filled button is only ever a product action. This is checked on every pa
 - **Navigation** marks the current page and hover with a small dot, echoing the carousel dots on the package cards.
 - **Focus** is always a visible 2px ring.
 
+## Spacing
+
+- **Sections:** every section has `--half` padding top and bottom. A sheet overlaps the section above it by `--r-sheet`, so that section gets `--half` plus `--r-sheet` at the bottom. The visible gap stays `--half`.
+- **Inner spacing:** use the `--s-*` scale and the `.mt-*`, `.stack-*` and `.btn-row` utilities, not inline margins.
+- **Inline styles:** only motion variables (`--d`, `--i`, `--interval`) and JavaScript show/hide state. Everything else is a class.
+
 ## Components
 
+- **Review notes** (`.review`): Google reviews word for word, pinned to a Cream pegboard (`.band--board`). Each note is Blush or a lighter tint.
+- **Phone frame** (`.iphone`): the booking app inside an iPhone 17 frame, with aluminium edges, a black bezel, a Dynamic Island and side buttons.
 - **Package card** (`.pkg`): rebuilt from the four package images, with an asymmetric photo frame, light uppercase name, price with "+ call-out fee", bold treatment list, tagline and a labelled "Book" button. It adapts to its own width with container queries, and the price drops under the name on narrow cards.
 - **Story spotlight** (homepage hero): a deck of story cards with progress bars, which advances every 6 seconds and can be paused, stepped or swiped. Each card has one labelled button.
 - **Product card** and **shop tile**: 4:5 photo, name, "From R…" price, and a labelled "View product" button.

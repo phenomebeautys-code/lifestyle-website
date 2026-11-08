@@ -31,19 +31,19 @@
   <div class="exit-nudge" id="exitNudge" role="alert" aria-live="polite">
     <p><strong>Don't lose your order!</strong> Your order hasn't been paid yet. Go back and tap <strong>Pay</strong> to complete it.</p>
     <div class="exit-nudge-actions">
-      <button class="primary-btn" style="padding:9px 16px;font-size:.84rem;" onclick="dismissNudge()">Complete payment</button>
-      <button class="ghost-btn" style="padding:9px 14px;font-size:.84rem;" onclick="dismissNudge()">Dismiss</button>
+      <button class="primary-btn co-nudge" onclick="dismissNudge()">Complete payment</button>
+      <button class="ghost-btn co-nudge" onclick="dismissNudge()">Dismiss</button>
     </div>
   </div>
 
   <main id="main" class="co-wrap">
     <h1 class="visually-hidden">Checkout</h1>
 
-    <div class="co-card empty-state" id="emptyState" style="margin-top:24px;">
+    <div class="co-card empty-state mt-3" id="emptyState">
       <h2>Your cart is empty</h2>
       <p>Add a few products before checking out. Once you have something you love, come back here and we'll guide you through delivery and payment.</p>
-      <div style="margin-top:20px">
-        <a class="primary-btn" href="shop.html" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+      <div class="mt-2">
+        <a class="primary-btn btn-row btn-row--center" href="shop.html">
           Back to shop
         </a>
       </div>
@@ -51,7 +51,7 @@
 
     <div class="co-layout" id="coLayout">
       <div class="co-stack" id="checkoutContent">
-        <section class="co-card" style="margin-top:24px;">
+        <section class="co-card mt-3">
 
           <div class="co-steps" id="stepsBar">
             <button type="button" class="step-pill active" id="breadcrumb-1" onclick="goToStep(1)"><span class="step-num">1</span> Contact</button>
@@ -79,7 +79,7 @@
                 <div class="error-text" id="err-phone">Please enter a valid phone number.</div>
               </div>
             </div>
-            <div class="field-grid one" style="margin-top:16px;">
+            <div class="field-grid one mt-2">
               <div class="field" id="field-email">
                 <label for="f-email">Email address</label>
                 <input id="f-email" type="email" autocomplete="email" placeholder="you@example.com" />
@@ -87,10 +87,10 @@
               </div>
             </div>
             <div class="nav-actions">
-              <a class="ghost-btn" href="shop.html" style="display:inline-flex;align-items:center;gap:6px;">
+              <a class="ghost-btn btn-row" href="shop.html">
                 Return to shop
               </a>
-              <button class="primary-btn" onclick="goToStep(2)" style="display:inline-flex;align-items:center;gap:6px;">
+              <button class="primary-btn btn-row" onclick="goToStep(2)">
                 Continue to delivery
               </button>
             </div>
@@ -99,7 +99,7 @@
           <!-- Step 2: Delivery -->
           <div class="step" id="panel-2">
             <div class="step-tag">Step 2</div>
-            <h2 class="step-title">Delivery method<span id="deliveryMethodLabel" style="font-size:.8rem;font-family:var(--font-body);font-weight:400;color:var(--text-muted);"></span></h2>
+            <h2 class="step-title">Delivery method<span class="co-step-note" id="deliveryMethodLabel"></span></h2>
             <p class="step-copy">Choose how you'd like to receive your order.</p>
             <div class="delivery-grid">
               <button type="button" class="delivery-card selected" id="opt-door" onclick="selectDelivery('door')">
@@ -128,16 +128,16 @@
             </div>
 
             <!-- Door fields -->
-            <div id="door-fields" style="margin-top:18px;">
+            <div class="mt-2" id="door-fields">
               <div class="field-grid one">
                 <div class="field" id="field-street">
                   <label for="f-street">Street address</label>
                   <input id="f-street" type="text" placeholder="Street address" autocomplete="off" />
                   <div class="error-text" id="err-street">Please enter your street address.</div>
-                  <div id="placesHint" style="display:none;font-size:.78rem;color:var(--text-muted);margin-top:4px;">Start typing and select from the suggestions to auto-fill your address.</div>
+                  <div class="co-hint" id="placesHint" style="display:none;">Start typing and select from the suggestions to auto-fill your address.</div>
                 </div>
               </div>
-              <div class="field-grid" style="margin-top:16px;">
+              <div class="field-grid mt-2">
                 <div class="field" id="field-suburb">
                   <label for="f-suburb">Suburb</label>
                   <input id="f-suburb" type="text" autocomplete="address-level3" placeholder="Suburb" />
@@ -159,16 +159,16 @@
                   <div class="error-text" id="err-province">Please enter your province.</div>
                 </div>
               </div>
-              <div class="field-grid one" style="margin-top:16px;">
+              <div class="field-grid one mt-2">
                 <div class="field">
-                  <label for="f-notes">Order notes <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+                  <label for="f-notes">Order notes <span class="co-label-note">(optional)</span></label>
                   <textarea id="f-notes" placeholder="Any special notes for your order&hellip;"></textarea>
                 </div>
               </div>
             </div>
 
             <!-- Locker fields -->
-            <div id="locker-fields" style="display:none;margin-top:18px;">
+            <div class="mt-2" id="locker-fields" style="display:none;">
               <div class="search-wrap">
                 <div class="field-grid one">
                   <div class="field">
@@ -177,10 +177,10 @@
                   </div>
                 </div>
                 <div class="search-actions">
-                  <button type="button" class="primary-btn" id="lockerSearchBtn" style="padding:11px 18px;" onclick="searchLockers()">Search</button>
+                  <button type="button" class="primary-btn co-btn-snug" id="lockerSearchBtn" onclick="searchLockers()">Search</button>
                   <button type="button" class="mini-btn" onclick="useMyLocation()">Use my location</button>
                 </div>
-                <div id="lockerPlacesHint" style="display:none;align-items:center;gap:6px;font-size:.8rem;color:var(--text-muted);padding:6px 0;">
+                <div class="co-hint-row" id="lockerPlacesHint" style="display:none;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                   Finding your location&hellip;
                 </div>
@@ -191,8 +191,8 @@
                 <div id="lockerSelectedDisplay" class="locker-selected" style="display:none;">
                   <strong id="lockerSelectedName"></strong>
                   <p id="lockerSelectedAddr"></p>
-                  <div id="lockerSelectedSizeNote" class="locker-size-note" style="display:none;margin-top:6px;font-size:.82rem;"></div>
-                  <button type="button" class="chip-btn" style="margin-top:10px;" onclick="clearLockerSelection()">Change locker</button>
+                  <div id="lockerSelectedSizeNote" class="locker-size-note co-hint-sm" style="display:none;"></div>
+                  <button type="button" class="chip-btn mt-1" onclick="clearLockerSelection()">Change locker</button>
                 </div>
                 <div class="error-text" id="err-locker">Please select a Pudo locker.</div>
               </div>
@@ -204,8 +204,8 @@
                 <span class="addons-label">Optional add-ons</span>
                 <svg class="addons-chevron" id="addonsChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
               </button>
-              <div id="addonsBody" style="overflow:hidden;max-height:0;transition:max-height .35s ease;">
-                <div style="padding-top:14px;display:grid;gap:12px;">
+              <div class="co-collapsible" id="addonsBody" style="max-height:0;">
+                <div class="co-addon-body">
                   <div id="deliverySpecialWrap">
                     <div class="toggle-row">
                       <div class="toggle-copy">
@@ -214,7 +214,7 @@
                       </div>
                       <button type="button" class="switch" id="specialToggle" aria-label="Toggle special instructions" onclick="toggleSpecial()"></button>
                     </div>
-                    <div id="specialFieldWrap" style="display:none;margin-top:14px;">
+                    <div class="mt-2" id="specialFieldWrap" style="display:none;">
                       <div class="field">
                         <label for="f-special">Instructions</label>
                         <textarea id="f-special" placeholder="e.g. Gate code 1234, ring bell on arrival&hellip;"></textarea>
@@ -231,8 +231,8 @@
                     <input type="checkbox" id="f-is-gift" style="display:none;" onchange="toggleGift()" />
                     <button type="button" class="switch" aria-label="Toggle gift" onclick="event.stopPropagation();toggleGift()"></button>
                   </div>
-                  <div id="giftReveal" style="overflow:hidden;max-height:0;transition:max-height .32s ease;">
-                    <div style="padding-top:14px;">
+                  <div class="co-collapsible" id="giftReveal" style="max-height:0;">
+                    <div class="pt-2">
                       <div class="field">
                         <label for="f-gift-message">Gift message</label>
                         <textarea id="f-gift-message" placeholder="Write your personalised gift message here&hellip;"></textarea>
@@ -245,10 +245,10 @@
             </div>
 
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goToStep(1)" style="display:inline-flex;align-items:center;gap:6px;">
+              <button class="ghost-btn btn-row" onclick="goToStep(1)">
                 Back
               </button>
-              <button class="primary-btn" onclick="goToStep(3)" style="display:inline-flex;align-items:center;gap:6px;">
+              <button class="primary-btn btn-row" onclick="goToStep(3)">
                 Review order
               </button>
             </div>
@@ -260,7 +260,7 @@
             <h2 class="step-title">Review &amp; pay</h2>
             <p class="step-copy">Check your details before we redirect you to Yoco to complete payment securely.</p>
             <div class="review-panel" id="reviewItems"></div>
-            <div class="review-panel" style="margin-top:16px;display:grid;gap:10px;">
+            <div class="review-panel mt-2 stack-md">
               <div class="done-block">
                 <h4>Contact</h4>
                 <p id="done-contact-val"></p>
@@ -268,12 +268,12 @@
               <div class="done-block">
                 <h4>Delivery</h4>
                 <p id="done-delivery-val"></p>
-                <p style="margin-top:4px;font-size:.82rem;color:var(--text-muted);">Est. <span id="rv-delivery-date"></span></p>
+                <p class="co-hint-sm">Est. <span id="rv-delivery-date"></span></p>
               </div>
-              <div class="done-block" style="display:grid;gap:6px;">
+              <div class="done-block stack-sm">
                 <div class="review-line"><span>Subtotal</span><span id="rv-subtotal"></span></div>
                 <div class="review-line"><span id="rv-delivery-label">Delivery</span><span id="rv-delivery"></span></div>
-                <div class="review-line" style="font-weight:800;font-size:1rem;color:var(--accent-strong);border-top:1px solid var(--glass-border);padding-top:8px;margin-top:4px;"><span>Total</span><span id="rv-total"></span></div>
+                <div class="review-line co-review-total"><span>Total</span><span id="rv-total"></span></div>
               </div>
               <div class="done-block" id="giftReviewBlock" style="display:none;">
                 <h4>Gift message</h4>
@@ -289,10 +289,10 @@
               </span>
             </div>
             <div class="nav-actions">
-              <button class="ghost-btn" onclick="goToStep(2)" style="display:inline-flex;align-items:center;gap:6px;">
+              <button class="ghost-btn btn-row" onclick="goToStep(2)">
                 Back
               </button>
-              <button class="primary-btn" id="payBtn" onclick="handlePay()" style="display:inline-flex;align-items:center;gap:6px;">
+              <button class="primary-btn btn-row" id="payBtn" onclick="handlePay()">
                 Pay <span id="payBtnTotal">R0</span>
               </button>
             </div>
@@ -307,7 +307,7 @@
           <div>
             <h2>Your order</h2>
             <p id="itemCountLabel">0 items in your cart</p>
-            <p id="done-contact-val-2" style="font-size:.8rem;color:var(--text-muted);margin-top:2px;"></p>
+            <p class="co-hint-xs" id="done-contact-val-2"></p>
           </div>
           <button class="edit-cart-btn" onclick="openCartEditor()" aria-label="Edit your cart">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -326,8 +326,8 @@
           <span>Order total</span>
           <strong id="msTotalDisplay">R0</strong>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-          <svg id="msChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transition:transform .2s ease"><path d="M6 9l6 6 6-6"/></svg>
+        <div class="row-gap">
+          <svg class="co-chevron" id="msChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </div>
       </button>
       <div class="mobile-summary-body" id="mobileSummaryBody">
@@ -353,7 +353,7 @@
         <span>Subtotal</span>
         <strong id="ceFooterSubtotal">R0</strong>
       </div>
-      <button class="primary-btn" onclick="closeCartEditor()" style="padding:11px 22px;">Done</button>
+      <button class="primary-btn co-btn-snug" onclick="closeCartEditor()">Done</button>
     </div>
   </div>
 

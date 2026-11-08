@@ -42,7 +42,7 @@
   --line: rgba(0,0,0,0.14); --line-strong: rgba(0,0,0,0.34);
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   margin-top: calc(-1 * var(--r-sheet));
-  padding: calc(var(--half) + var(--r-sheet)) 0 var(--half);
+  padding: var(--half) 0;
   min-height: 70vh;
 }
 

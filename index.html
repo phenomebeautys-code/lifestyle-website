@@ -202,7 +202,7 @@
             <div class="spot-controls">
               <span class="t-label" data-counter>1 / 3</span>
               <div class="spot-btns">
-                <button class="spot-btn" type="button" data-prev aria-label="Previous highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(180deg)"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></button>
+                <button class="spot-btn" type="button" data-prev aria-label="Previous highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="spot-flip"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></button>
                 <button class="spot-btn" type="button" data-toggle aria-label="Pause slideshow" aria-pressed="false"><svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5.5" width="3.2" height="13" rx="1"/><rect x="13.8" y="5.5" width="3.2" height="13" rx="1"/></svg><svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5L8 5.5Z"/></svg></button>
                 <button class="spot-btn" type="button" data-next aria-label="Next highlight"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M13 6l6 6-6 6"/></svg></button>
               </div>
@@ -281,8 +281,8 @@
 
         <div class="carousel" data-carousel>
           <div class="carousel-track" data-track data-stagger role="region" aria-label="Packages" tabindex="0">
-        <article class="pkg">
-          <div class="pkg-media"><img src="assets/packages/pamper.webp" alt="A woman relaxing with tea in an armchair while a house burns behind her" width="750" height="825" loading="lazy" style="object-position:50% 55%" /></div>
+        <article class="pkg pkg--pamper">
+          <div class="pkg-media"><img src="assets/packages/pamper.webp" alt="A woman relaxing with tea in an armchair while a house burns behind her" width="750" height="825" loading="lazy" /></div>
           <div class="pkg-body">
             <h3 class="pkg-name">Pamper</h3>
             <p class="pkg-price"><span class="amt">R1090</span><span class="note">155 min &middot; + call-out fee</span></p>
@@ -291,8 +291,8 @@
             <a class="pkg-link btn btn-secondary btn-sm pkg-cta" href="https://phenomebeauty.nextslot.co.za/" aria-label="Book the Pamper package, R1090 plus call-out fee">Book Pamper</a>
           </div>
         </article>
-        <article class="pkg">
-          <div class="pkg-media"><img src="assets/packages/maintenance.webp" alt="A phone showing early-morning alarms on a soft blanket" width="750" height="825" loading="lazy" style="object-position:50% 50%" /></div>
+        <article class="pkg pkg--maintenance">
+          <div class="pkg-media"><img src="assets/packages/maintenance.webp" alt="A phone showing early-morning alarms on a soft blanket" width="750" height="825" loading="lazy" /></div>
           <div class="pkg-body">
             <h3 class="pkg-name">Maintenance</h3>
             <p class="pkg-price"><span class="amt">R880</span><span class="note">125 min &middot; + call-out fee</span></p>
@@ -301,8 +301,8 @@
             <a class="pkg-link btn btn-secondary btn-sm pkg-cta" href="https://phenomebeauty.nextslot.co.za/" aria-label="Book the Maintenance package, R880 plus call-out fee">Book Maintenance</a>
           </div>
         </article>
-        <article class="pkg">
-          <div class="pkg-media"><img src="assets/packages/essential.webp" alt="A woman in black standing still on a busy crossing" width="750" height="825" loading="lazy" style="object-position:50% 40%" /></div>
+        <article class="pkg pkg--essential">
+          <div class="pkg-media"><img src="assets/packages/essential.webp" alt="A woman in black standing still on a busy crossing" width="750" height="825" loading="lazy" /></div>
           <div class="pkg-body">
             <h3 class="pkg-name">Essential</h3>
             <p class="pkg-price"><span class="amt">R580</span><span class="note">120 min &middot; + call-out fee</span></p>
@@ -311,8 +311,8 @@
             <a class="pkg-link btn btn-secondary btn-sm pkg-cta" href="https://phenomebeauty.nextslot.co.za/" aria-label="Book the Essential package, R580 plus call-out fee">Book Essential</a>
           </div>
         </article>
-        <article class="pkg">
-          <div class="pkg-media"><img src="assets/packages/smooth-start.webp" alt="A startled woman in a bucket hat, mid car ride" width="750" height="825" loading="lazy" style="object-position:50% 92%" /></div>
+        <article class="pkg pkg--smooth-start">
+          <div class="pkg-media"><img src="assets/packages/smooth-start.webp" alt="A startled woman in a bucket hat, mid car ride" width="750" height="825" loading="lazy" /></div>
           <div class="pkg-body">
             <h3 class="pkg-name">Smooth Start</h3>
             <p class="pkg-price"><span class="amt">R370</span><span class="note">55 min &middot; + call-out fee</span></p>
@@ -334,8 +334,8 @@
       </div>
     </section>
 
-    <!-- REVIEWS (Cream) -->
-    <section class="band band--paper" aria-labelledby="reviews-title">
+    <!-- REVIEWS (Cream pegboard) -->
+    <section class="band band--paper band--board" aria-labelledby="reviews-title">
       <div class="container">
         <div class="band-head">
           <h2 class="t-h2" id="reviews-title" data-reveal="lines"><span class="line"><span>What clients</span></span><span class="line"><span>say.</span></span></h2>

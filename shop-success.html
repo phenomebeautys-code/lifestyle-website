@@ -163,10 +163,10 @@
         <p class="sub">Your order is confirmed. We&rsquo;ll be in touch soon.</p>
         ${order ? `
         <div class="order-panel">
-          <div class="order-row"><span>Order reference</span><span style="font-family:ui-monospace,Menlo,monospace;letter-spacing:0.04em">${esc(fullRef)}</span></div>
-          <div class="order-row"><span>Delivery to</span><span style="max-width:220px">${esc(order.delivery_address)}</span></div>
+          <div class="order-row"><span>Order reference</span><span class="order-ref">${esc(fullRef)}</span></div>
+          <div class="order-row"><span>Delivery to</span><span class="order-addr">${esc(order.delivery_address)}</span></div>
           <div class="order-divider"></div>
-          <div id="itemsSlot" style="display:grid;gap:8px"></div>
+          <div id="itemsSlot" class="order-items"></div>
           <div class="order-divider"></div>
           <div class="order-row"><span>Delivery fee</span><span>R${esc(order.delivery_fee)}</span></div>
           <div class="order-row total"><span>Total paid</span><span>R${esc(order.total_amount)}</span></div>
