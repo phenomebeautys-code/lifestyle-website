@@ -1164,3 +1164,10 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .field-required { color: var(--fg); }
 .form-copy { margin-top: var(--s-3); font-size: var(--fs-sm); color: var(--fg-muted); }
 .terms-lead { margin-top: var(--s-3); font-size: var(--fs-sm); font-weight: 600; color: var(--fg-soft); }
+.kit-media { margin: 0 0 var(--s-3); overflow: hidden; border-radius: var(--r-photo); aspect-ratio: 1 / 1; background: var(--paper-2); }
+.kit-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The kit photo is a banner across the top row, so the three kit titles stay level */
+.kit-grid > .kit { grid-row: 2; }
+.kit-grid > .kit-media { grid-column: 1 / -1; grid-row: 1; margin-bottom: var(--s-3); aspect-ratio: 21 / 9; }
+.kit-grid > .kit-media img { object-position: 50% 45%; }
+@media (max-width: 960px) { .kit-grid > .kit, .kit-grid > .kit-media { grid-row: auto; grid-column: auto; } }
