@@ -307,7 +307,7 @@ function getVariantImage(p, variant) {
 
 function addToCartFromDetail(pid) {
   const panel = document.getElementById('pdpPanel');
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (!p || !panel) return;
 
   const variantEl = panel.querySelector('.pdp-thumb-col.active');
@@ -349,7 +349,7 @@ function addToCartFromDetail(pid) {
 }
 
 function addToCart(pid, cardEl) {
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (!p) return;
   const variantEl = cardEl.querySelector('.pdp-thumb-col.active');
   const sizeEl    = cardEl.querySelector('.s-pill.active');
@@ -377,7 +377,7 @@ function addToCart(pid, cardEl) {
 let _pdpCurrentPid = null;
 
 function openProductDetail(pid) {
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (!p) return;
   _pdpCurrentPid = pid;
 
@@ -575,7 +575,7 @@ function pdpSelectThumbCol(col, pid) {
     noteEl.style.display = isHeroCol ? '' : 'none';
   }
 
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (p) pdpUpdatePrice(pid);
   pdpUpdateAtcBtn(pid);
 }
@@ -590,7 +590,7 @@ function pdpSelectImage(btn, src) {
 function pdpSelectVariant(btn, pid) {
   btn.closest('.pill-group')?.querySelectorAll('.v-pill').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (p) {
     const variant = btn.dataset.variant || '';
     const heroImg = document.getElementById('pdpHeroImg');
@@ -607,7 +607,7 @@ function pdpSelectSize(btn, pid) {
 
 function pdpUpdatePrice(pid) {
   const panel = document.getElementById('pdpPanel');
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (!p || !panel) return;
   const thumbColEl = panel.querySelector('.pdp-thumb-col.active');
   const vPillEl    = panel.querySelector('.v-pill.active');
@@ -626,7 +626,7 @@ function pdpUpdatePrice(pid) {
 
 function pdpUpdateAtcBtn(pid) {
   const panel = document.getElementById('pdpPanel');
-  const p = window._products?.find(x => String(x.id) === String(pid));
+  const p = findProduct(pid);
   if (!p || !panel) return;
   const btn = panel.querySelector('.pdp-atc-btn');
   if (!btn) return;
@@ -658,6 +658,13 @@ const SEGMENT_KEY = 'pb_segment';
 
 function getSegment() {
   return localStorage.getItem(SEGMENT_KEY) || null;
+}
+
+/* Find a product in the current (filtered) list, falling back to the full
+   catalogue so deep links like shop.html?product=ID work under any filter. */
+function findProduct(pid) {
+  const match = x => String(x.id) === String(pid);
+  return window._products?.find(match) || window._allProducts?.find(match) || null;
 }
 
 /* Filter chips: All / Self-Care / Professional (null = All) */
@@ -948,10 +955,15 @@ document.addEventListener('DOMContentLoaded', async function() {
      goToCheckout() hands checkout.html a live copy in both stores. */
   if (cart.length) saveCart(cart);
 
-  /* Products are shown on first load. The saved filter (if any) is restored. */
+  /* Products are shown on first load. A ?segment= link (from the homepage)
+     wins over the saved filter; otherwise the saved filter is restored. */
+  const params = new URLSearchParams(location.search);
+  const linkedSegment = ['self_care', 'professional'].includes(params.get('segment')) ? params.get('segment') : null;
+  if (linkedSegment) localStorage.setItem(SEGMENT_KEY, linkedSegment);
   const saved = getSegment();
   updateShopHero(saved);
   _setToggleState(saved);
+  const linkedProduct = params.get('product');
 
   document.getElementById('shopFilter')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-segment-btn]');
@@ -972,5 +984,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.history.replaceState({}, '', 'shop.html');
   }
 
-  fetchProducts();
+  fetchProducts().then(() => {
+    /* ?product=ID opens that product's detail panel (homepage product cards). */
+    if (linkedProduct && findProduct(linkedProduct)) openProductDetail(linkedProduct);
+  });
 });

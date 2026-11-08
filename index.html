@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0a0e" />
+    <meta name="theme-color" content="#F3F1E8" />
 
     <!-- Primary SEO -->
-    <title>PhenomeBeauty | Mobile Waxing &amp; Beauty Specialist Cape Town</title>
-    <meta name="description" content="PhenomeBeauty is Cape Town's premier mobile beauty specialist. Professional waxing, gel nails, lash &amp; brow tinting delivered to your door. Easy online booking. Serving all areas of Cape Town." />
-    <meta name="keywords" content="mobile beauty Cape Town, mobile waxing Cape Town, Brazilian wax Cape Town, gel nails Cape Town, lash tinting Cape Town, brow tinting Cape Town, mobile nail technician Cape Town, beauty at home Cape Town, PhenomeBeauty" />
+    <title>PhenomeBeauty | Skincare, Wax Supplies &amp; Mobile Beauty in Cape Town</title>
+    <meta name="description" content="Shop The Phenome Collection: skincare and professional wax supplies. Plus mobile waxing, nails and tinting delivered to your door across Cape Town. Book online." />
     <meta name="author" content="PhenomeBeauty" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://phenomebeauty.co.za/" />
@@ -16,21 +15,20 @@
     <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="PhenomeBeauty" />
-    <meta property="og:title" content="PhenomeBeauty | Mobile Waxing &amp; Beauty Specialist Cape Town" />
-    <meta property="og:description" content="Professional mobile waxing, gel nails, and tinting delivered to your door across Cape Town. Book online instantly." />
+    <meta property="og:title" content="PhenomeBeauty | Skincare, Wax Supplies &amp; Mobile Beauty in Cape Town" />
+    <meta property="og:description" content="Shop The Phenome Collection, and book mobile waxing, nails and tinting across Cape Town." />
     <meta property="og:image" content="https://iili.io/fpiAjBj.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="PhenomeBeauty mobile beauty services Cape Town" />
+    <meta property="og:image:alt" content="PhenomeBeauty" />
     <meta property="og:url" content="https://phenomebeauty.co.za/" />
     <meta property="og:locale" content="en_ZA" />
 
     <!-- Twitter / X Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PhenomeBeauty | Mobile Waxing &amp; Beauty Specialist Cape Town" />
-    <meta name="twitter:description" content="Professional mobile waxing, gel nails, and tinting delivered to your door across Cape Town. Book online instantly." />
+    <meta name="twitter:title" content="PhenomeBeauty | Skincare, Wax Supplies &amp; Mobile Beauty in Cape Town" />
+    <meta name="twitter:description" content="Shop The Phenome Collection, and book mobile waxing, nails and tinting across Cape Town." />
     <meta name="twitter:image" content="https://iili.io/fpiAjBj.jpg" />
-    <meta name="twitter:image:alt" content="PhenomeBeauty mobile beauty services Cape Town" />
 
     <!-- Geo / Local SEO -->
     <meta name="geo.region" content="ZA-WC" />
@@ -135,347 +133,197 @@
     }
     </script>
 
-    <!-- Fonts -->
+    <!-- Fonts: Abril Fatface (display) + Glacial Indifference (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://fonts.cdnfonts.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
-    <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" /></noscript>
-    <link rel="stylesheet" href="styles.css?v=1" />
+    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.cdnfonts.com/css/glacial-indifference-2" rel="stylesheet" />
+    <link rel="stylesheet" href="site.css?v=1" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-    <!-- ═══════════════════════════════════════════════════════
-         FULL-BLEED BACKGROUND LAYER — iOS Safari proof
-         Using real divs instead of pseudo-elements avoids
-         the WebKit z-index painting bug entirely.
-         Both layers sit at z-index:0, body content at z-index:1.
-    ═══════════════════════════════════════════════════════ -->
-    <div id="bg-image" aria-hidden="true"></div>
-    <div id="bg-overlay" aria-hidden="true"></div>
+  <header class="site-header" id="navbar">
+    <div class="container header-inner">
+      <a href="index.html" class="brand"><img src="https://iili.io/fpiAjBj.jpg" alt="" width="36" height="36" /><span>PhenomeBeauty</span></a>
+      <nav class="site-nav" aria-label="Main">
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="#training">Training</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="shop.html" class="btn btn-primary btn-sm">Shop now</a>
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu" aria-expanded="false" aria-controls="navMenu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
 
-    <!-- NAVBAR -->
-    <nav class="navbar" id="navbar">
-        <div class="container">
-            <div class="navbar-inner">
+  <main id="main">
 
-                <a href="#home" class="logo-wrap">
-                    <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="logo-img" />
-                    <span class="logo-wordmark">PhenomeBeauty</span>
-                </a>
-
-                <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle menu" aria-expanded="false">
-                    <span></span><span></span><span></span>
-                </button>
-
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="#home" class="active">Home</a></li>
-                    <li><a href="#training">Training</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="shop.html">Shop</a></li>
-                    <li><a href="terms.html">T&amp;Cs</a></li>
-                    <li><a href="#booking">Book</a></li>
-                </ul>
-
-                <div class="nav-cta">
-                    <a href="#booking" class="btn btn-primary">Book Now</a>
-                </div>
-
-            </div>
+    <!-- 1. HERO — products lead (primary) -->
+    <section class="hero band-paper" aria-labelledby="hero-title">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1 class="display" id="hero-title">Make yourself<br />a priority.</h1>
+          <p class="lead">The Phenome Collection: carefully curated essentials for women who maintain their standards, and the professionals who help their clients do the same.</p>
+          <div class="hero-actions">
+            <a href="shop.html" class="btn btn-primary btn-lg">Shop the collection</a>
+            <a href="services.html" class="text-link">Or book a mobile treatment</a>
+          </div>
+          <ul class="hero-facts" aria-label="Good to know">
+            <li>Secure checkout by Yoco</li>
+            <li>Mobile treatments across Cape Town</li>
+            <li>Book online in minutes</li>
+          </ul>
         </div>
-    </nav>
-
-    <!-- HERO -->
-    <section id="home" class="hero section">
-        <div class="container">
-            <div class="hero-panel">
-                <div class="hero-layout">
-
-                    <div class="hero-copy">
-                        <span class="section-kicker">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
-                            Cape Town &middot; Mobile Beauty
-                        </span>
-                        <h1>Beauty,<br/>Refined.<br/>At Home.</h1>
-                        <p>Professional mobile waxing and beauty services delivered to your door with a luxury, client-first experience across Cape Town.</p>
-                        <div class="hero-actions">
-                            <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                                Book Appointment
-                            </a>
-                            <a href="shop.html" class="btn btn-secondary">Shop</a>
-                            <a href="#services" class="btn btn-secondary">View Services</a>
-                        </div>
-                        <div class="hero-meta">
-                            <span class="meta-pill">Mobile across Cape Town</span>
-                            <span class="meta-pill">Professional care</span>
-                            <span class="meta-pill">Easy online booking</span>
-                        </div>
-                    </div>
-
-                    <div class="hero-visual">
-                        <div class="hero-mini-grid">
-                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gbZN.png')"><span>Waxing &amp;<br/>Threading</span></div>
-                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gyGt.png')"><span>Nails &amp;<br/>Tinting</span></div>
-                            <div class="hero-mini-card" style="background-image:url('https://iili.io/Bs1gpnI.png')"><span>Body<br/>Waxing</span></div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ROUTES: three ways in, each matching a colour band -->
-    <section class="routes section" aria-labelledby="routes-title">
-      <div class="container">
-        <h2 id="routes-title" class="visually-hidden">Explore PhenomeBeauty</h2>
-        <div class="route-grid">
-
-          <a href="shop.html" class="route route--products">
-            <img src="https://iili.io/CAnabxS.webp" alt="" loading="lazy" />
-            <div class="route-body">
-              <h3>Shop products</h3>
-              <p>Skincare and wax supplies, for self-care and for professionals.</p>
-              <span class="route-cta">Browse the shop</span>
-            </div>
-          </a>
-
-          <a href="#services" class="route route--services">
-            <img src="https://iili.io/Bs1gbZN.png" alt="" loading="lazy" />
-            <div class="route-body">
-              <h3>Book a service</h3>
-              <p>Waxing, nails, tinting and more, delivered to your door. From R90.</p>
-              <span class="route-cta">See services and prices</span>
-            </div>
-          </a>
-
-          <a href="#training" class="route route--training">
-            <img src="https://iili.io/B4rdxlR.png" alt="" loading="lazy" />
-            <div class="route-body">
-              <h3>Guides &amp; workshops</h3>
-              <p>Prepare for your first wax, care for your skin, and learn waxing.</p>
-              <span class="route-cta">Open training</span>
-            </div>
-          </a>
-
-        </div>
-        <p class="routes-footer">Read our reviews on <a href="https://www.google.com/search?q=PhenomeBeauty+Reviews" target="_blank" rel="noopener noreferrer">Google</a>.</p>
+        <figure class="hero-figure">
+          <div class="arch"><img src="https://iili.io/CAnabxS.webp" alt="Products from The Phenome Collection" width="720" height="900" fetchpriority="high" /></div>
+        </figure>
       </div>
     </section>
 
-    <!-- SERVICES (Cream band) -->
-    <section id="services" class="services-band section" aria-labelledby="services-title">
+    <!-- 2. PRODUCTS (Blush) — primary conversion -->
+    <section class="band band-blush" id="shop" aria-labelledby="shop-title">
       <div class="container">
-        <header class="services-head">
-          <h2 class="section-title" id="services-title">Our Services</h2>
-          <p class="section-copy">Professional mobile beauty treatments delivered across Cape Town.</p>
-        </header>
-        <div class="svc-grid">
-        <article class="svc-card">
-          <header>
-            <h3>Intimate Waxing</h3>
-            <p class="svc-sub">Brazilian, Hollywood &amp; intimate care</p>
-            <p class="svc-from">From R90</p>
-          </header>
-          <ul class="svc-list">
-            <li><span>Brazilian</span><span class="svc-price">R320</span></li>
-            <li><span>Hollywood</span><span class="svc-price">R400</span></li>
-            <li><span>Garden Path</span><span class="svc-price">R90</span></li>
-            <li><span>Areola</span><span class="svc-price">R100</span></li>
-            <li><span>Tummy</span><span class="svc-price">R250</span></li>
-          </ul>
-          <a href="https://phenomebeauty.nextslot.co.za/" class="svc-btn">Book Intimate Waxing</a>
-        </article>
-        <article class="svc-card">
-          <header>
-            <h3>Body Waxing</h3>
-            <p class="svc-sub">Back, arms, legs, chest &amp; underarm</p>
-            <p class="svc-from">From R90</p>
-          </header>
-          <ul class="svc-list">
-            <li><span>Full Back</span><span class="svc-price">R350</span></li>
-            <li><span>Half Back</span><span class="svc-price">R280</span></li>
-            <li><span>Chest</span><span class="svc-price">R300</span></li>
-            <li><span>Full Leg</span><span class="svc-price">R350</span></li>
-            <li><span>Half Leg</span><span class="svc-price">R280</span></li>
-            <li><span>Full Arm</span><span class="svc-price">R350</span></li>
-            <li><span>Half Arm</span><span class="svc-price">R280</span></li>
-            <li><span>Underarm</span><span class="svc-price">R90</span></li>
-            <li><span>Hands or Feet</span><span class="svc-price">R100</span></li>
-          </ul>
-          <a href="https://phenomebeauty.nextslot.co.za/" class="svc-btn">Book Body Waxing</a>
-        </article>
-        <article class="svc-card">
-          <header>
-            <h3>Waxing &amp; Threading</h3>
-            <p class="svc-sub">Brows, lip, chin, face &amp; more</p>
-            <p class="svc-from">From R90</p>
-          </header>
-          <ul class="svc-list">
-            <li><span>Brow, Lip Or Chin</span><span class="svc-price">R90</span></li>
-            <li><span>Brow, Lip &amp; Chin</span><span class="svc-price">R240</span></li>
-            <li><span>Brow &amp; Lip Combo</span><span class="svc-price">R160</span></li>
-            <li><span>Sideburns</span><span class="svc-price">R90</span></li>
-            <li><span>Full Face excl. Brows</span><span class="svc-price">R300</span></li>
-            <li><span>Full Face incl. Brows</span><span class="svc-price">R340</span></li>
-            <li><span>Fingers or Toes</span><span class="svc-price">R90</span></li>
-          </ul>
-          <a href="https://phenomebeauty.nextslot.co.za/" class="svc-btn">Book Waxing & Threading</a>
-        </article>
-        <article class="svc-card">
-          <header>
-            <h3>Tinting</h3>
-            <p class="svc-sub">Lash tint, brow tint &amp; combos</p>
-            <p class="svc-from">From R110</p>
-          </header>
-          <ul class="svc-list">
-            <li><span>Lash &amp; Brow Combo</span><span class="svc-price">R200</span></li>
-            <li><span>Lash Tint</span><span class="svc-price">R110</span></li>
-            <li><span>Brow Tint</span><span class="svc-price">R110</span></li>
-          </ul>
-          <a href="https://phenomebeauty.nextslot.co.za/" class="svc-btn">Book Tinting</a>
-        </article>
-        <article class="svc-card">
-          <header>
-            <h3>Manicure &amp; Pedicure</h3>
-            <p class="svc-sub">Gel, soft tips, nail art &amp; finishing</p>
-            <p class="svc-from">From R90</p>
-          </header>
-          <ul class="svc-list">
-            <li><span>Full Gel Manicure</span><span class="svc-price">R390</span></li>
-            <li><span>Full Gel Pedicure</span><span class="svc-price">R450</span></li>
-            <li><span>Soft Gel Tips</span><span class="svc-price">R520</span></li>
-            <li><span>Gel Overlay - Hands</span><span class="svc-price">R300</span></li>
-            <li><span>Gel Overlay - Toes</span><span class="svc-price">R380</span></li>
-            <li><span>Gel Removal</span><span class="svc-price">R90</span></li>
-            <li><span>Acrylic or Soft Gel Removal</span><span class="svc-price">R150</span></li>
-            <li><span>Detailed Nail Art - Per Nail</span><span class="svc-price">R50</span></li>
-            <li><span>Basic Nail Art - Per Nail</span><span class="svc-price">R20</span></li>
-            <li><span>French Finish</span><span class="svc-price">R80</span></li>
-            <li><span>Chrome Finish</span><span class="svc-price">R80</span></li>
-          </ul>
-          <a href="https://phenomebeauty.nextslot.co.za/" class="svc-btn">Book Manicure & Pedicure</a>
-        </article>
+        <div class="band-head">
+          <div>
+            <h2 class="h2" id="shop-title">Shop the collection</h2>
+            <p>Self-care essentials for your own routine, and professional supplies for the people who look after their clients.</p>
+          </div>
+          <a href="shop.html" class="btn btn-primary">View all products</a>
         </div>
-        <p class="svc-footer">New to waxing? <a href="mobile-waxing-cape-town.html">Read about mobile waxing in Cape Town</a>.</p>
+
+        <div class="featured" id="featured" hidden>
+          <div class="product-row" id="featuredProducts"></div>
+        </div>
+
+        <div class="need">
+          <h3 class="h3 need-title">Or shop by who you care for</h3>
+          <div class="need-grid">
+          <a class="need-card" href="shop.html?segment=self_care">
+            <div class="arch"><img src="https://iili.io/CBd3vPp.webp" alt="" loading="lazy" width="800" height="640" /></div>
+            <span class="label">Self-care</span>
+            <h3 class="h3">I take care of myself</h3>
+            <span class="text-link">Shop self-care</span>
+          </a>
+          <a class="need-card" href="shop.html?segment=professional">
+            <div class="arch"><img src="https://iili.io/CBd0ev1.webp" alt="" loading="lazy" width="800" height="640" /></div>
+            <span class="label">Professional</span>
+            <h3 class="h3">I take care of others</h3>
+            <span class="text-link">Shop professional supplies</span>
+          </a>
+        </div>
+
+        </div>
+        <ul class="trust-row" aria-label="Shopping information">
+          <li>Delivery calculated at checkout</li>
+          <li><a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">Questions? WhatsApp us</a></li>
+        </ul>
       </div>
     </section>
 
-    <!-- TRAINING (Midnight band) -->
-    <section id="training" class="training-band section" aria-labelledby="training-title">
-      <div class="container">
-        <header class="training-head">
-          <h2 class="section-title" id="training-title">Guides &amp; Workshops</h2>
-          <p class="section-copy">Prepare for your first wax, look after your skin between appointments, and learn professional waxing.</p>
-        </header>
-        <div class="training-grid">
-          <a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer" class="training-card training-card--feature">
-            <span class="training-tag">Workshop</span>
-            <h3>Waxing Workshop</h3>
-            <p>Sign up to learn professional waxing.</p>
-            <span class="training-cta">Register</span>
-          </a>
-          <a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="training-card">
-            <span class="training-tag">Guide</span>
-            <h3>First Wax 101</h3>
-            <p>What to expect before, during and after your very first wax.</p>
-            <span class="training-cta">Read guide</span>
-          </a>
-          <a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer" class="training-card">
-            <span class="training-tag">Guide</span>
-            <h3>Pre &amp; Post Care</h3>
-            <p>How to prepare your skin, and how to keep it calm and smooth between appointments.</p>
-            <span class="training-cta">Download guide</span>
-          </a>
+    <!-- 3. SERVICES (Cream) — secondary -->
+    <section class="band band-paper" id="services" aria-labelledby="services-title">
+      <div class="container split">
+        <div class="split-intro">
+          <h2 class="h2" id="services-title">Mobile treatments, at your door.</h2>
+          <p>Professional waxing, nails and tinting across Cape Town. Choose a treatment, pick a time, and we come to you.</p>
+          <div class="split-actions">
+            <a href="services.html" class="btn btn-secondary">See treatments &amp; prices</a>
+            <a href="https://phenomebeauty.nextslot.co.za/" class="text-link">Book online</a>
+          </div>
         </div>
+        <ul class="price-index" aria-label="Treatment categories">
+            <li><a href="services.html#intimate-waxing"><span class="pi-name">Intimate waxing</span><span class="pi-sub">Brazilian, Hollywood &amp; intimate care</span><span class="pi-price">From R90</span></a></li>
+            <li><a href="services.html#body-waxing"><span class="pi-name">Body waxing</span><span class="pi-sub">Back, arms, legs, chest &amp; underarm</span><span class="pi-price">From R90</span></a></li>
+            <li><a href="services.html#waxing-threading"><span class="pi-name">Waxing &amp; threading</span><span class="pi-sub">Brows, lip, chin, face &amp; more</span><span class="pi-price">From R90</span></a></li>
+            <li><a href="services.html#tinting"><span class="pi-name">Tinting</span><span class="pi-sub">Lash tint, brow tint &amp; combos</span><span class="pi-price">From R110</span></a></li>
+            <li><a href="services.html#manicure-pedicure"><span class="pi-name">Manicure &amp; pedicure</span><span class="pi-sub">Gel, soft tips, nail art &amp; finishing</span><span class="pi-price">From R90</span></a></li>
+        </ul>
       </div>
     </section>
 
-    <!-- BOOKING -->
-    <section id="booking" class="section">
-        <div class="container">
-            <div class="glass-panel section-inner reveal">
-                <span class="section-kicker">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Booking
-                </span>
-                <div class="booking-content">
-                    <div class="booking-info">
-                        <h3>Book Your<br/>Appointment.</h3>
-                        <p>Mobile beauty services across Cape Town. Professional treatments in the comfort of your own space. No travel, no waiting rooms.</p>
-                        <ul class="booking-features">
-                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Mobile services across Cape Town</li>
-                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Waxing, nails, tinting &amp; more</li>
-                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Hygiene &amp; safety guaranteed</li>
-                            <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Flexible scheduling</li>
-                        </ul>
-                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                            Open Booking App
-                        </a>
-                    </div>
-                    <div class="phone-mockup">
-                        <a href="https://phenomebeauty.nextslot.co.za/" target="_blank" rel="noopener noreferrer" class="phone-frame">
-                            <div class="phone-notch"></div>
-                            <div class="phone-screen">
-                                <div class="phone-screen-content">
-                                    <img src="./PhenomeBeauty%20%20Book%20Online.png?v=1" class="phone-screenshot" alt="PhenomeBeauty online booking app screenshot" loading="lazy" width="390" height="844" />
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <!-- 4. TRAINING (Midnight) — secondary -->
+    <section class="band band-ink" id="training" aria-labelledby="training-title">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <h2 class="h2" id="training-title">Guides &amp; workshops</h2>
+            <p>Prepare for your first wax, look after your skin between appointments, and learn professional waxing.</p>
+          </div>
         </div>
+        <ul class="editorial-list">
+          <li><a href="https://forms.gle/cUaBzUQ5jnmZAV1H8" target="_blank" rel="noopener noreferrer">
+            <span class="el-kind">Workshop</span>
+            <span class="el-title">Waxing workshop</span>
+            <span class="el-action">Register</span>
+            <span class="el-desc">Sign up to learn professional waxing.</span>
+          </a></li>
+          <li><a href="https://drive.google.com/file/d/11849mtZpl8mLQ9o94i45Ry2UhkVzCAJZ/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">
+            <span class="el-kind">Guide</span>
+            <span class="el-title">First Wax 101</span>
+            <span class="el-action">Read the guide</span>
+            <span class="el-desc">What to expect before, during and after your very first wax.</span>
+          </a></li>
+          <li><a href="https://drive.google.com/file/d/1PsEa_J1HZt9lieSbTgXtw8MZnzqvA58S/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">
+            <span class="el-kind">Guide</span>
+            <span class="el-title">Pre &amp; post care</span>
+            <span class="el-action">Download the guide</span>
+            <span class="el-desc">How to prepare your skin, and keep it calm and smooth between appointments.</span>
+          </a></li>
+        </ul>
+      </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-shell">
-                <div class="footer-content">
-                    <div class="footer-section">
-                        <div class="footer-logo">
-                            <img src="https://iili.io/fpiAjBj.jpg" alt="PhenomeBeauty logo" class="footer-logo-img" />
-                            <span class="footer-logo-name">PhenomeBeauty</span>
-                        </div>
-                        <p>Mobile beauty specialist based in Cape Town. Professional waxing, nails, and tinting delivered to your door.</p>
-                    </div>
-                    <div class="footer-section">
-                        <h4>Quick Links</h4>
-                        <ul>
-                            <li><a href="#training">Training</a></li>
-                            <li><a href="#services">Services</a></li>
-                            <li><a href="shop.html">Shop</a></li>
-                            <li><a href="#booking">Book Now</a></li>
-                            <li><a href="terms.html">T&amp;Cs</a></li>
-                        </ul>
-                    </div>
-                    <div class="footer-section">
-                        <h4>Contact</h4>
-                        <p>hello@phenomebeauty.co.za</p>
-                        <p>+27 74 511 5725</p>
-                        <p>Cape Town, South Africa</p>
-                    </div>
-                    <div class="footer-section">
-                        <h4>Follow Us</h4>
-                        <div class="social-links">
-                            <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="Chat with PhenomeBeauty on WhatsApp" class="social-bubble"><img src="https://iili.io/B446wyx.png" alt="WhatsApp" class="social-icon" /></a>
-                            <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Facebook" class="social-bubble"><img src="https://iili.io/B44QEgt.png" alt="Facebook" class="social-icon" /></a>
-                            <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on Instagram" class="social-bubble"><img src="https://iili.io/B44QMdX.png" alt="Instagram" class="social-icon" /></a>
-                            <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="PhenomeBeauty on TikTok" class="social-bubble"><img src="https://iili.io/B4637cJ.png" alt="TikTok" class="social-icon" /></a>
-                        </div>
-                    </div>
-                </div>
-                <div class="footer-bottom">
-                    <p>&copy; <span id="footer-year">2026</span> PhenomeBeauty. All rights reserved. &nbsp;<a href="terms.html">T&amp;Cs</a></p>
-                    <p>Powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
-                </div>
+    <!-- 5. CLOSE (Blush) — end on the primary action -->
+    <section class="band band-blush" aria-labelledby="close-title">
+      <div class="container close-inner">
+        <h2 class="h2" id="close-title">Your standards, kept.</h2>
+        <a href="shop.html" class="btn btn-primary btn-lg">Shop the collection</a>
+        <p>See what clients say on <a href="https://www.google.com/search?q=PhenomeBeauty+Reviews" target="_blank" rel="noopener noreferrer">Google reviews</a>.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div>
+          <a href="index.html" class="brand"><img src="https://iili.io/fpiAjBj.jpg" alt="" width="36" height="36" /><span>PhenomeBeauty</span></a>
+          <p>Skincare, wax supplies and mobile beauty treatments. Cape Town, South Africa.</p>
+        </div>
+        <div class="footer-contact">
+          <a href="mailto:hello@phenomebeauty.co.za">hello@phenomebeauty.co.za</a>
+          <a href="tel:+27745115725">+27 74 511 5725</a>
+          <div class="social">
+              <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp"><img src="https://iili.io/B446wyx.png" alt="" /></a>
+              <a href="https://www.facebook.com/share/1Rz4vLJmpH/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><img src="https://iili.io/B44QEgt.png" alt="" /></a>
+              <a href="https://www.instagram.com/phenomebeauty?igsh=eGo3ZXd0Y2F3MXR4" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><img src="https://iili.io/B44QMdX.png" alt="" /></a>
+              <a href="https://www.tiktok.com/@phenomebeauty?_r=1&amp;_t=ZS-95nwQAk5cZ8" target="_blank" rel="noopener noreferrer" aria-label="TikTok"><img src="https://iili.io/B4637cJ.png" alt="" /></a>
             </div>
         </div>
-    </footer>
+      </div>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="shop.html">Shop all products</a>
+        <a href="shop.html?segment=self_care">Self-care</a>
+        <a href="shop.html?segment=professional">Professional</a>
+        <a href="services.html">Treatments &amp; prices</a>
+        <a href="index.html#training">Training</a>
+        <a href="mobile-waxing-cape-town.html">Mobile waxing in Cape Town</a>
+        <a href="terms.html">Terms &amp; conditions</a>
+      </nav>
+      <div class="footer-base">
+        <p>&copy; <span id="footer-year">2026</span> PhenomeBeauty. All rights reserved.</p>
+        <p>Bookings powered by <a href="https://nextslot.co.za" target="_blank" rel="noopener noreferrer">NextSlot</a></p>
+      </div>
+    </div>
+  </footer>
 
-    <script src="script.js?v=1" defer></script>
+  <script src="script.js?v=3" defer></script>
+  <script src="home.js?v=1" defer></script>
 </body>
 </html>
