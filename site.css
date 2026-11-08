@@ -475,7 +475,6 @@ strong, b { font-weight: 700; }
 :is(section, .hero, .page-hero, .shop-hero):has(+ .band--sheet, + .shop-section) {
     padding-bottom: calc(var(--half) + var(--r-sheet));
 }
-main:has(+ .site-footer) { padding-bottom: var(--r-sheet); }
 
 /* ── 8. Marquee (moves only as you scroll) ──────────────────── */
 .marquee {
@@ -1051,4 +1050,16 @@ li:has(> .ico)::before { content: none; }
 .carousel-track { overflow-y: hidden; }
 html { scrollbar-width: none; }
 html::-webkit-scrollbar { display: none; }
+
+/* ── Package price: the call-out fee is stated on its own line ── */
+.pkg-price .excl { display: block; margin-top: 4px; font-size: 0.78rem; line-height: 1.3; color: var(--fg-soft); text-transform: none; letter-spacing: 0; font-weight: 400; }
+@media (max-width: 1100px) { .pkg-price .excl { display: block; } }
+
+/* ── Pre-footer section: its blush runs under the black footer sheet ── */
+main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(--r-sheet)); }
+
+/* ── Product cards: name, price and button line up across the row ── */
+.pcard > div { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
+.pcard-name { min-height: 2.6em; }
+.pcard-cta { margin-top: auto; }
 
