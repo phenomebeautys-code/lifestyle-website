@@ -20,6 +20,13 @@ const TEAM_EMAIL   = 'phenomebeautys@gmail.com';
 // Public form: any origin may post (the input is validated), so previews work too.
 const ALLOWED_ORIGIN = '*';
 const EXPERIENCE   = new Set(['beginner', 'some', 'professional']);
+const KITS         = new Set(['foundation', 'precision', 'pro', 'unsure']);
+const KIT_LABEL: Record<string, string> = {
+  foundation: 'Foundation Kit (R2800)',
+  precision: 'Precision Kit (R3500)',
+  pro: 'Pro Confidence Kit (R4500)',
+  unsure: 'Not sure yet',
+};
 const EXPERIENCE_LABEL: Record<string, string> = {
   beginner: 'New to waxing',
   some: 'Some experience',
@@ -79,6 +86,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const email      = clean(body.email, 254).toLowerCase();
   const phone      = clean(body.phone, 20);
   const experience = clean(body.experience, 20);
+  const kit        = clean(body.kit, 20) || 'unsure';
   const notes      = clean(body.notes, 500);
   const consent    = body.consent === true;
 
@@ -86,6 +94,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (!EMAIL_RE.test(email))          return respond({ error: 'Please check your email address.' }, 400);
   if (phone.replace(/\D/g, '').length < 7) return respond({ error: 'Please check your phone number.' }, 400);
   if (!EXPERIENCE.has(experience))    return respond({ error: 'Please choose your experience level.' }, 400);
+  if (!KITS.has(kit))                 return respond({ error: 'Please choose a kit option.' }, 400);
   if (!consent)                       return respond({ error: 'Please tick the box so we can contact you.' }, 400);
 
   try {
@@ -98,6 +107,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       email,
       phone,
       experience,
+      kit,
       notes: notes || null,
       consent: true,
     });
@@ -111,6 +121,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
        <ul>
          <li>Email: <a href="mailto:${esc(email)}">${esc(email)}</a></li>
          <li>Phone: ${esc(phone)}</li>
+         <li>Kit: ${esc(KIT_LABEL[kit])}</li>
          <li>Experience: ${esc(EXPERIENCE_LABEL[experience])}</li>
          ${notes ? `<li>Notes: ${esc(notes)}</li>` : ''}
        </ul>`,

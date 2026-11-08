@@ -23,6 +23,7 @@
       full_name: form.full_name.value,
       email: form.email.value,
       phone: form.phone.value,
+      kit: (form.querySelector('input[name="kit"]:checked') || {}).value || 'unsure',
       experience: (form.querySelector('input[name="experience"]:checked') || {}).value || '',
       notes: form.notes.value,
       consent: form.consent.checked,

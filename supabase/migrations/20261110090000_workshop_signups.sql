@@ -9,6 +9,7 @@ create table if not exists public.workshop_signups (
   email        text not null check (char_length(email) between 5 and 254),
   phone        text not null check (char_length(phone) between 7 and 20),
   experience   text not null check (experience in ('beginner', 'some', 'professional')),
+  kit          text not null default 'unsure' check (kit in ('foundation', 'precision', 'pro', 'unsure')),
   notes        text check (notes is null or char_length(notes) <= 500),
   consent      boolean not null check (consent = true),
   source_page  text not null default 'workshop.html'

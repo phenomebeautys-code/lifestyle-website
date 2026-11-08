@@ -66,6 +66,45 @@
       </div>
     </section>
 
+    <section class="band band--paper" aria-labelledby="kits-title">
+      <div class="container">
+        <div class="band-head">
+          <h2 class="t-h2" id="kits-title" data-reveal="lines"><span class="line"><span>Training</span></span><span class="line"><span>kits.</span></span></h2>
+          <div class="band-head-side" data-reveal><p class="t-lead">Everything you need to start at home, with a kit made for your level.</p></div>
+        </div>
+        <div class="kit-grid" data-reveal>
+          <article class="kit">
+            <h3 class="t-h3">Foundation Kit</h3>
+            <p class="kit-price">R2800</p>
+            <ul class="feature-list">
+              <li>Training manual</li>
+              <li>500g film wax, 2 cartridges and a large wax sheet</li>
+              <li>20 body and 10 facial spatulas</li>
+              <li>Pre-wax lotion, post-wax oil and sanitising supplies</li>
+              <li>Tweezers, cotton rounds and nitrile gloves</li>
+              <li>20 pre-cut wax strips and a branded tote bag</li>
+            </ul>
+          </article>
+          <article class="kit">
+            <h3 class="t-h3">Precision Kit</h3>
+            <p class="kit-price">R3500</p>
+            <ul class="feature-list">
+              <li>Everything in the Foundation Kit</li>
+              <li>Hot wax heater</li>
+            </ul>
+          </article>
+          <article class="kit">
+            <h3 class="t-h3">Pro Confidence Kit</h3>
+            <p class="kit-price">R4500</p>
+            <ul class="feature-list">
+              <li>Everything in the Precision Kit</li>
+              <li>Cartridge heater</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="band band--paper" aria-labelledby="form-title">
       <div class="container form-split">
         <div class="form-intro" data-reveal>
@@ -89,6 +128,13 @@
                 <label for="w-phone">Cellphone</label>
                 <input id="w-phone" name="phone" type="tel" autocomplete="tel" required maxlength="20" />
               </div>
+              <fieldset class="field field--wide choice">
+                <legend>Which kit interests you? <span class="field-optional">(optional)</span></legend>
+                <label><input type="radio" name="kit" value="foundation" /> Foundation Kit, R2800</label>
+                <label><input type="radio" name="kit" value="precision" /> Precision Kit, R3500</label>
+                <label><input type="radio" name="kit" value="pro" /> Pro Confidence Kit, R4500</label>
+                <label><input type="radio" name="kit" value="unsure" checked /> Not sure yet</label>
+              </fieldset>
               <fieldset class="field field--wide choice">
                 <legend>Your experience with waxing</legend>
                 <label><input type="radio" name="experience" value="beginner" required /> New to waxing</label>

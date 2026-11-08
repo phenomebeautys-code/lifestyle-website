@@ -1142,3 +1142,13 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .form-done p { color: var(--fg-soft); max-width: 42ch; line-height: 1.7; }
 @media (max-width: 860px) { .form-split { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } }
 [hidden] { display: none !important; }
+
+/* ── Training kits: three columns, hairline tops, the price on its own line ── */
+.kit-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(24px, 3.4vw, 48px); }
+.kit { border-top: 1px solid var(--line-strong); padding-top: var(--s-3); min-width: 0; }
+.kit .t-h3 { margin-bottom: var(--s-2); }
+.kit-price { font-weight: 300; font-size: clamp(1.8rem, 3vw, 2.4rem); line-height: 1; letter-spacing: -0.02em; margin-bottom: var(--s-3); }
+.kit .feature-list { margin: 0; }
+.kit .feature-list li { font-size: 0.95rem; }
+@media (max-width: 960px) { .kit-grid { grid-template-columns: 1fr; } }
+
