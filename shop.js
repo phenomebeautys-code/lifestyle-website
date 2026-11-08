@@ -872,6 +872,7 @@ function renderProducts(products) {
   <div class="tile-info">
     <div class="tile-name">${name}</div>
     <div class="tile-price">${tilePriceLabel}</div>
+    <span class="tile-cta">View product</span>
   </div>
 </button>`;
   }).join('');

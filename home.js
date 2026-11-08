@@ -65,9 +65,10 @@
       row.innerHTML = list.map(function (p, i) {
         return '<a class="pcard" data-reveal style="--i:' + i + '" href="shop.html?product=' + encodeURIComponent(p.id) + '">' +
           '<div class="pcard-media"><img src="' + esc(img(firstImage(p))) + '" alt="" loading="lazy" width="600" height="750" />' +
-          '<span class="go" aria-hidden="true">' + ARROW + '</span></div>' +
+          '</div>' +
           '<div><p class="pcard-name">' + esc(p.name || 'Product') + '</p>' +
-          '<p class="pcard-price"><span class="from">From</span>R' + minPrice(p).toFixed(2) + '</p></div>' +
+          '<p class="pcard-price"><span class="from">From</span>R' + minPrice(p).toFixed(2) + '</p>' +
+          '<span class="btn btn-primary btn-sm pcard-cta">View product</span></div>' +
         '</a>';
       }).join('');
 

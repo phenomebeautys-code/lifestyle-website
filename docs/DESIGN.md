@@ -44,24 +44,26 @@ Secondary text is black at 72% and muted text at 60%; on Midnight, cream at 76% 
 | Priority | Actions | Treatment |
 |---|---|---|
 | 1 | Shop, add to cart, checkout, pay | **Filled button** (`.btn-primary`). Black on light; cream on Midnight. Hover floods with Blush, the product colour. |
-| 2 | Book, see prices, register, read a guide | **Outline button** (`.btn-secondary`) or **go-link** (`.link-go`: label plus circled arrow, from the package cards). |
+| 2 | Book, see prices, register, read a guide | **Outline button** (`.btn-secondary` or `.link-go`): a labelled pill that says what happens next. |
+
+**Arrows:** no arrow circles on calls to action. Icon-only controls (carousel prev and next, pause, close, cart) keep their icons. Every action names itself, such as "Shop self-care" or "Book Essential".
 
 Rule: a filled button is only ever a product action. This is checked on every page in testing.
 
 ## Links without underlines
 
-- **Standalone links** use the go-link: bold label plus a circled arrow that fills on hover.
+- **Standalone actions** are labelled outline pills (`.link-go`) that fill on hover.
 - **Inline links** in sentences (`.link`) are bold, so they differ from body text by weight as well as colour, and they fade on hover.
 - **Navigation** marks the current page and hover with a small dot, echoing the carousel dots on the package cards.
 - **Focus** is always a visible 2px ring.
 
 ## Components
 
-- **Package card** (`.pkg`): rebuilt from the four package images, with an asymmetric photo frame, light uppercase name, price with "excl. call-out fee", bold treatment list, tagline and circled arrow. The whole card links to booking. It adapts to its own width with container queries, and the price drops under the name on narrow cards.
-- **Story spotlight** (homepage hero): a deck of story cards with progress bars, which advances every 6 seconds and can be paused, stepped or swiped.
-- **Product card** and **shop tile**: 4:5 photo, name, "From R…" price, and a circled arrow that springs in on hover.
+- **Package card** (`.pkg`): rebuilt from the four package images, with an asymmetric photo frame, light uppercase name, price with "excl. call-out fee", bold treatment list, tagline and a labelled "Book" button. It adapts to its own width with container queries, and the price drops under the name on narrow cards.
+- **Story spotlight** (homepage hero): a deck of story cards with progress bars, which advances every 6 seconds and can be paused, stepped or swiped. Each card has one labelled button.
+- **Product card** and **shop tile**: 4:5 photo, name, "From R…" price, and a labelled "View product" button.
 - **Price list**: category heading that sticks while you scroll its treatments, then name, description and price rows.
-- **Editorial list** (training): large rows that slide on hover, with the guide image following the pointer on desktop.
+- **Editorial list** (training): large rows that slide on hover, each with a labelled action, and the guide image following the pointer on desktop.
 - **Footer signature**: a full-width Abril Fatface "Phenomebeauty", fitted exactly to the screen width.
 
 Package photos live in `assets/packages/`. They are cropped from the supplied 1080×1920 cards to remove the baked-in text and the corner "X", which reads as a close button on the web. The card text is real HTML, so it is readable by search engines and screen readers.

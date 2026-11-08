@@ -44,7 +44,6 @@
   function setMenu(open) {
     if (!header || !toggle) return;
     header.classList.toggle('menu-open', open);
-    header.classList.remove('is-hidden');
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
     d.body.classList.toggle('menu-locked', open);
@@ -69,31 +68,11 @@
   var onDesktop = function (e) { if (e.matches) setMenu(false); };
   if (desktopMQ.addEventListener) desktopMQ.addEventListener('change', onDesktop);
 
-  /* ── Smart header: hides on the way down, returns on the way up ── */
-  var lastY = w.scrollY;
+  /* ── Sticky header: always visible; gains a hairline once you scroll ── */
   function updateHeader() {
     if (!header) return;
-    var y = w.scrollY;
-    header.classList.toggle('is-scrolled', y > 8);
-    if (!header.classList.contains('menu-open')) {
-      if (y > lastY + 4 && y > 240) header.classList.add('is-hidden');
-      else if (y < lastY - 4 || y <= 240) header.classList.remove('is-hidden');
-    }
-    lastY = y;
+    header.classList.toggle('is-scrolled', w.scrollY > 8);
   }
-  if (header) header.addEventListener('focusin', function () { header.classList.remove('is-hidden'); });
-
-  /* ── Split text (footer wordmark) into letters ──────────── */
-  toArray(d.querySelectorAll('[data-split]')).forEach(function (el) {
-    var text = el.textContent;
-    el.textContent = '';
-    text.split('').forEach(function (ch, i) {
-      var s = d.createElement('span');
-      s.textContent = ch;
-      s.style.setProperty('--i', i);
-      el.appendChild(s);
-    });
-  });
 
   /* ── Fit text to its container (footer wordmark) ────────── */
   function fitText() {
