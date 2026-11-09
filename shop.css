@@ -399,5 +399,5 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .product-tile { display: flex; flex-direction: column; }
 .product-tile .tile-info { flex: 1; }
 .product-tile .tile-name { min-height: 2.6em; }
-.product-tile .tile-cta { margin-top: auto; align-self: flex-start; }
+.product-tile .tile-cta { margin-top: 14px; align-self: flex-start; }
 

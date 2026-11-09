@@ -1064,7 +1064,7 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 /* ── Product cards: name, price and button line up across the row ── */
 .pcard > div { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
 .pcard-name { min-height: 2.6em; }
-.pcard-cta { margin-top: auto; }
+.pcard-cta { margin-top: 14px; }
 
 /* ── Guides: editorial, on Midnight, with the Blush close ───── */
 .guide-band { padding-block: var(--half); }
@@ -1188,3 +1188,10 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .kit-per { font-size: 0.95rem; font-weight: 400; color: var(--fg-muted); margin-left: 6px; }
 .kit-join { margin-top: var(--s-3); }
 .kit .feature-list + .kit-join { margin-top: var(--s-3); }
+
+/* ── Shop reviews follow the product group on show ───────────── */
+.review-group + .review-group { margin-top: var(--s-5); }
+.review-group-title { font-family: var(--font-tag); font-weight: 600; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 var(--s-3); }
+body[data-segment="self_care"] [data-review-group="professional"],
+body[data-segment="professional"] [data-review-group="self_care"] { display: none; }
+

@@ -784,6 +784,7 @@ function applySegment(segment) {
 }
 
 function updateShopHero(segment) {
+  document.body.dataset.segment = segment || 'all';
   const heroTitle = document.getElementById('shopHeroTitle');
   const heroDesc  = document.getElementById('shopHeroDesc');
   if (!heroTitle || !heroDesc) return;
