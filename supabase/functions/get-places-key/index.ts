@@ -1,11 +1,8 @@
-const ALLOWED_ORIGINS = [
-  'https://www.phenomebeauty.co.za',
-  'https://phenomebeauty.co.za',
-];
+import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin') ?? '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = corsOrigin(origin);
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': allowedOrigin,

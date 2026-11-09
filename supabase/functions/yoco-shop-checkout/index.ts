@@ -1,11 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 
-const ORIGINS = ['https://www.phenomebeauty.co.za', 'https://phenomebeauty.co.za'];
+import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 Deno.serve(async req => {
   const origin = req.headers.get('origin') || '';
   const headers = {
-    'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0],
+    'Access-Control-Allow-Origin': corsOrigin(origin),
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, apikey, Authorization',
     'Content-Type': 'application/json',
@@ -21,7 +21,7 @@ Deno.serve(async req => {
     let successUrl, cancelUrl;
     try { successUrl = new URL(success_url); cancelUrl = new URL(cancel_url); }
     catch { return respond({error: 'Invalid payment return URL'}, 400); }
-    if ([successUrl, cancelUrl].some(url => !ORIGINS.includes(url.origin) || url.username || url.password)) {
+    if ([successUrl, cancelUrl].some(url => !isSiteOrigin(url.origin) || url.username || url.password)) {
       return respond({error: 'Payment return URLs must use the official PhenomeBeauty domain'}, 400);
     }
     const url = Deno.env.get('SUPABASE_URL');

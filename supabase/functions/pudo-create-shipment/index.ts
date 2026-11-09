@@ -17,10 +17,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
-const ALLOWED_ORIGINS = [
-  'https://www.phenomebeauty.co.za',
-  'https://phenomebeauty.co.za',
-];
+import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface CartItem          { productId: string; qty: number; }
@@ -140,7 +137,7 @@ function extractPrice(levels: any[], code: string): number | null {
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {
   const origin        = req.headers.get('origin') ?? '';
-  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowedOrigin = corsOrigin(origin);
   const corsHeaders   = {
     'Access-Control-Allow-Origin':  allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',

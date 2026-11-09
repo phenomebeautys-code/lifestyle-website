@@ -1,11 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 
-const ORIGINS = ['https://www.phenomebeauty.co.za', 'https://phenomebeauty.co.za'];
+import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 Deno.serve(async req => {
   const origin = req.headers.get('origin') || '';
   const headers = {
-    'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0],
+    'Access-Control-Allow-Origin': corsOrigin(origin),
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, apikey, Authorization',
     'Content-Type': 'application/json',
