@@ -114,14 +114,15 @@ button.step-pill.done:hover { color: var(--ink); }
 /* ── Delivery: two ruled rows, the chosen one in ink ───────── */
 .delivery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; margin-bottom: 0; border-top: 1px solid var(--line); }
 .delivery-card {
-  position: relative; overflow: hidden; text-align: left; padding: 26px 0 24px;
+  position: relative; overflow: hidden; text-align: left; padding: 26px clamp(40px, 3.6vw, 52px) 24px 0;
   border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none;
   cursor: pointer; font-family: var(--font-sans); color: var(--ink);
   transition: border-color 0.5s var(--co-ease);
 }
-.delivery-card + .delivery-card { padding-left: clamp(20px, 3vw, 36px); border-left: 1px solid var(--line); }
+.delivery-card + .delivery-card { padding-left: clamp(20px, 3vw, 36px); padding-right: clamp(40px, 3.6vw, 52px); border-left: 1px solid var(--line); }
 .delivery-card:hover { border-bottom-color: var(--ink); }
 .delivery-card.selected { border-bottom: 2px solid var(--ink); padding-bottom: 23px; }
+.delivery-card p { max-width: 40ch; }
 .delivery-card h3 { margin: 0 0 6px; font-size: 0.98rem; font-weight: 600; }
 .delivery-card p { margin: 0; color: var(--fg-soft); font-size: 0.88rem; line-height: 1.6; }
 .delivery-price { display: block; margin-top: 16px; font-size: 1.5rem; font-weight: 300; letter-spacing: -0.02em; line-height: 1; }
@@ -134,7 +135,9 @@ button.step-pill.done:hover { color: var(--ink); }
 .delivery-meta strong { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.95rem; }
 .delivery-meta p { margin: 0; color: var(--fg-soft); font-size: 0.9rem; line-height: 1.6; }
 .delivery-meta-sep { width: 1px; align-self: stretch; background: var(--line); flex-shrink: 0; }
-.delivery-window { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: var(--r-pill); background: var(--ok-bg); color: var(--ok); font-size: 0.82rem; font-weight: 600; }
+.delivery-window { display: grid; gap: 4px; justify-items: end; text-align: right; white-space: nowrap; }
+.delivery-window-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--fg-soft); }
+.delivery-window-date { font-size: 1.05rem; font-weight: 600; line-height: 1.3; color: var(--ok); }
 .co-divider { height: 1px; background: var(--line); margin: 28px 0; }
 
 /* ── Switch ─────────────────────────────────────────────────── */
@@ -401,3 +404,4 @@ body.ce-open .mobile-summary-bar { display: none !important; }
 .co-review-total { font-weight: 600; font-size: 1rem; color: var(--ink); border-top: 1px solid var(--ink); padding-top: 10px; margin-top: 6px; }
 .co-chevron { transition: transform 0.3s var(--co-ease); }
 
+.delivery-window > svg { display: none; }
