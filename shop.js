@@ -788,14 +788,18 @@ function updateShopHero(segment) {
   const heroTitle = document.getElementById('shopHeroTitle');
   const heroDesc  = document.getElementById('shopHeroDesc');
   if (!heroTitle || !heroDesc) return;
+  /* Each line is wrapped for the site's line reveal. The space between lines keeps the text readable. */
+  const setTitle = (...lines) => {
+    heroTitle.innerHTML = lines.map(l => `<span class="line"><span>${l}</span></span>`).join(' ');
+  };
   if (segment === 'self_care') {
-    heroTitle.innerHTML = 'Your Routine.<br/>Your Rules.';
+    setTitle('Your Routine.', 'Your Rules.');
     heroDesc.textContent = 'Self-care for your routine. Made for busy days.';
   } else if (segment === 'professional') {
-    heroTitle.innerHTML = 'Built for<br/>Professionals.';
+    setTitle('Built for', 'Professionals.');
     heroDesc.textContent = 'Supplies for the pros who care for others.';
   } else {
-    heroTitle.innerHTML = 'The Phenome<br/>Collection';
+    setTitle('The Phenome', 'Collection');
     heroDesc.textContent = 'Self-care for your routine. Supplies for the pros who care for others.';
   }
 }
@@ -834,8 +838,12 @@ function renderProducts(products) {
     const tiles = group.items.map(p => tileHTML(p, idx++)).join('');
     const cls = group.tone ? `collection collection--${group.tone}` : 'collection';
     const label = group.label ? ` aria-label="${esc(group.label)}"` : '';
-    return `<section class="${cls}"${label}>${head}<div class="collection-grid">${tiles}</div></section>`;
+    return `<section class="${cls}"${label} data-reveal="mask">${head}<div class="collection-grid">${tiles}</div></section>`;
   }).join('');
+  /* Sections are added after the page loads, so hand them to the site's reveal system. */
+  if (window.PB && typeof window.PB.reveal === 'function') {
+    grid.querySelectorAll('[data-reveal]').forEach(el => window.PB.reveal(el));
+  }
 
   updateBadges();
 }
@@ -858,11 +866,11 @@ function selfCareGroups(products) {
    "Self-care" and "Professional" each show one group. */
 function groupForSegment(products, segment) {
   if (segment === 'self_care') return selfCareGroups(products);
-  if (segment === 'professional') return [{ items: products }];
+  if (segment === 'professional') return [{ label: 'Professional', tone: 'professional', items: products }];
   const pro = products.filter(p => p.market === 'professional');
   const other = products.filter(p => p.market !== 'self_care' && p.market !== 'professional');
   const groups = selfCareGroups(products.filter(p => p.market === 'self_care'));
-  if (pro.length) groups.push({ label: 'Professional', items: pro });
+  if (pro.length) groups.push({ label: 'Professional', tone: 'professional', items: pro });
   if (other.length) groups.push({ items: other });
   return groups;
 }
