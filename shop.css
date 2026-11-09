@@ -427,3 +427,19 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 /* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
 .pdp-scroll-area, .cart-items, .scb-expanded-items { scrollbar-width: none; }
 .pdp-scroll-area::-webkit-scrollbar, .cart-items::-webkit-scrollbar, .scb-expanded-items::-webkit-scrollbar { display: none; }
+
+/* Swipe rows: each collection is one horizontal row on small screens. */
+@media (max-width: 719px) {
+  .collection-grid {
+    grid-template-columns: none; grid-auto-flow: column;
+    grid-auto-columns: min(62vw, 260px); gap: var(--sp-sm);
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+  }
+  .collection-grid::-webkit-scrollbar { display: none; }
+  .collection-grid > * { scroll-snap-align: start; }
+  /* Bands: bleed to the band edge. Unbanded groups: bleed to the screen edge. */
+  .collection--intimate .collection-grid, .collection--body .collection-grid, .collection--professional .collection-grid {
+    scroll-padding-inline: var(--sp-md); padding-inline: var(--sp-md); margin-inline: calc(-1 * var(--sp-md));
+  }
+}

@@ -1202,3 +1202,45 @@ body[data-segment="professional"] [data-review-group="self_care"] { display: non
 /* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
 .site-nav { scrollbar-width: none; }
 .site-nav::-webkit-scrollbar { display: none; }
+
+/* ── Swipe rows: card grids become one horizontal row on small screens ──
+   The next card peeks in from the right, so the row reads as scrollable.
+   Rows bleed to the screen edge and snap card by card. No visible scrollbar. */
+@media (max-width: 600px) {
+    .pkg-grid, .product-row {
+        grid-template-columns: none; grid-auto-flow: column;
+        grid-auto-columns: min(80vw, 330px);
+        overflow-x: auto; overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter);
+        padding-inline: var(--gutter); margin-inline: calc(-1 * var(--gutter));
+        scrollbar-width: none;
+    }
+    .product-row { grid-auto-columns: min(62vw, 260px); }
+    .pkg-grid::-webkit-scrollbar, .product-row::-webkit-scrollbar { display: none; }
+    .pkg-grid > *, .product-row > * { scroll-snap-align: start; }
+}
+/* Workshop kits swipe; the kit photo stays in place above them. */
+@media (max-width: 960px) {
+    .kit-grid {
+        grid-template-columns: none; grid-auto-flow: column;
+        grid-auto-columns: min(80vw, 330px);
+        overflow-x: auto; overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory; scroll-padding-inline: var(--gutter);
+        padding-inline: var(--gutter); margin-inline: calc(-1 * var(--gutter));
+        scrollbar-width: none;
+    }
+    .kit-grid::-webkit-scrollbar { display: none; }
+    .kit-grid > .kit { grid-row: 2; scroll-snap-align: start; }
+    .kit-grid > .kit-media {
+        grid-row: 1; grid-column: 1 / span 3;
+        position: sticky; left: 0;
+        width: calc(100vw - 2 * var(--gutter));
+    }
+}
+
+/* ── Shared entrance motion: hero image and status cards, on every page ── */
+.page-hero-figure { animation: fade-up 1s var(--ease) both; animation-delay: 0.25s; }
+.status-card > * { animation: fade-up 0.9s var(--ease) both; }
+.status-card > :nth-child(2) { animation-delay: 0.08s; }
+.status-card > :nth-child(3) { animation-delay: 0.16s; }
+.status-card > :nth-child(n+4) { animation-delay: 0.24s; }
