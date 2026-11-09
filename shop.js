@@ -841,8 +841,8 @@ function renderProducts(products) {
 function groupForSegment(products, segment) {
   if (segment !== 'self_care') return [{ items: products }];
   const defs = [
-    { key: 'intimate', label: 'Intimate Collection', note: 'Formulated for intimate areas, and can be used all over the body.' },
-    { key: 'body', label: 'Body Collection', note: 'Formulated for all over the body. Not recommended for intimate areas.' },
+    { key: 'intimate', label: 'Intimate Collection', note: 'Specifically formulated for intimate areas. Can be used all over the body.' },
+    { key: 'body', label: 'Body Collection', note: 'Formulated for all over the body, but not recommended for intimate areas.' },
   ];
   const groups = defs.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
   const rest = products.filter(p => !defs.some(d => d.key === p.collection));
