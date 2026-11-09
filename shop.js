@@ -854,6 +854,8 @@ const COLLECTIONS = [
   { key: 'body', tone: 'body', label: 'Body Collection', note: 'Formulated for all over the body, but not recommended for intimate areas.' },
 ];
 
+const PRO_NOTE = 'Supplies for the pros who care for others.';
+
 /* Self-care products split into the two collections. Anything without a collection goes last. */
 function selfCareGroups(products) {
   const groups = COLLECTIONS.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
@@ -866,11 +868,11 @@ function selfCareGroups(products) {
    "Self-care" and "Professional" each show one group. */
 function groupForSegment(products, segment) {
   if (segment === 'self_care') return selfCareGroups(products);
-  if (segment === 'professional') return [{ label: 'Professional', tone: 'professional', items: products }];
+  if (segment === 'professional') return [{ label: 'Professional', tone: 'professional', note: PRO_NOTE, items: products }];
   const pro = products.filter(p => p.market === 'professional');
   const other = products.filter(p => p.market !== 'self_care' && p.market !== 'professional');
   const groups = selfCareGroups(products.filter(p => p.market === 'self_care'));
-  if (pro.length) groups.push({ label: 'Professional', tone: 'professional', items: pro });
+  if (pro.length) groups.push({ label: 'Professional', tone: 'professional', note: PRO_NOTE, items: pro });
   if (other.length) groups.push({ items: other });
   return groups;
 }
