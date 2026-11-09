@@ -1244,3 +1244,15 @@ body[data-segment="professional"] [data-review-group="self_care"] { display: non
 .status-card > :nth-child(2) { animation-delay: 0.08s; }
 .status-card > :nth-child(3) { animation-delay: 0.16s; }
 .status-card > :nth-child(n+4) { animation-delay: 0.24s; }
+
+/* Hero jump chips: one swipe row on small screens, so the hero keeps the same height as other pages. */
+@media (max-width: 600px) {
+    .page-hero .chips {
+        flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+        padding-inline: var(--gutter); margin-inline: calc(-1 * var(--gutter));
+    }
+    .page-hero .chips::-webkit-scrollbar { display: none; }
+    /* The copy column must be allowed to shrink, or the unwrapped chips widen the whole hero. */
+    .page-hero-grid > *, .page-hero-copy > * { min-width: 0; }
+    .page-hero .chips a { flex: none; }
+}
