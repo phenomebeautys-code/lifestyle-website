@@ -34,11 +34,11 @@
 .shop-trust a { font-weight: 700; color: var(--fg); }
 .shop-trust a:hover { opacity: 0.6; }
 
-/* ── Products band (Blush sheet) ────────────────────────────── */
+/* ── Products sheet (cream, so the blush Body band stands out) ── */
 .shop-section {
   position: relative;
-  background: var(--blush); color: var(--ink);
-  --bg: var(--blush); --fg: var(--ink); --fg-soft: rgba(0,0,0,0.74); --fg-muted: rgba(0,0,0,0.64);
+  background: var(--paper); color: var(--ink);
+  --bg: var(--paper); --fg: var(--ink); --fg-soft: rgba(0,0,0,0.74); --fg-muted: rgba(0,0,0,0.64);
   --line: rgba(0,0,0,0.14); --line-strong: rgba(0,0,0,0.34);
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   margin-top: calc(-1 * var(--r-sheet));
@@ -398,12 +398,26 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 /* Product tiles: name, price and button line up across the row */
 .product-tile { display: flex; flex-direction: column; }
 
-/* Collection heading inside the product grid. It spans every column; the
-   negative bottom margin cancels part of the grid row gap (36px) so the
-   heading sits var(--sp-md) above its tiles. */
-.collection-head { grid-column: 1 / -1; margin-bottom: calc(var(--sp-md) - 36px); }
+/* Product list: one section per group (collection or professional). */
+#productGrid.product-grid { display: block; }
+.collection + .collection { margin-top: var(--sp-xl); }
+.collection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px var(--sp-sm); }
+@media (min-width: 720px)  { .collection-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1080px) { .collection-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.collection-head { margin-bottom: var(--sp-md); }
 .collection-head h3 { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-h3); margin: 0 0 var(--sp-sm); }
 .collection-head p { margin: 0; font-size: var(--fs-sm); color: var(--fg-soft); max-width: 46ch; }
+
+/* Collection bands. Intimate is black with cream text; Body is blush with the usual dark text.
+   The intimate band redefines the colour tokens so tiles, badges and buttons invert together. */
+.collection--intimate, .collection--body { padding: var(--sp-lg) var(--sp-md); border-radius: var(--r-card); }
+.collection--intimate {
+  background: #000; color: #F3F1E8;
+  --ink: #F3F1E8; --paper: #000; --paper-2: #1a1a1a;
+  --fg: #F3F1E8; --fg-soft: rgba(243, 241, 232, 0.8); --fg-muted: rgba(243, 241, 232, 0.66);
+  --line: rgba(243, 241, 232, 0.2); --line-strong: rgba(243, 241, 232, 0.5);
+}
+.collection--body { background: var(--blush); color: var(--ink); }
 .product-tile .tile-info { flex: 1; }
 .product-tile .tile-name { min-height: 2.6em; }
 .product-tile .tile-cta { margin-top: 14px; align-self: flex-start; }

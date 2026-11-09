@@ -828,26 +828,43 @@ function renderProducts(products) {
   const groups = groupForSegment(products, document.body.dataset.segment);
   let idx = 0;
   grid.innerHTML = groups.map(group => {
-    const heading = group.label
-      ? `<div class="collection-head"><h3>${group.label}</h3><p>${group.note}</p></div>`
+    const head = group.label
+      ? `<div class="collection-head"><h3>${group.label}</h3>${group.note ? `<p>${group.note}</p>` : ''}</div>`
       : '';
-    return heading + group.items.map(p => tileHTML(p, idx++)).join('');
+    const tiles = group.items.map(p => tileHTML(p, idx++)).join('');
+    const cls = group.tone ? `collection collection--${group.tone}` : 'collection';
+    const label = group.label ? ` aria-label="${esc(group.label)}"` : '';
+    return `<section class="${cls}"${label}>${head}<div class="collection-grid">${tiles}</div></section>`;
   }).join('');
 
   updateBadges();
 }
 
 /* Self-care is shown as two collections. Other segments render as one group. */
-function groupForSegment(products, segment) {
-  if (segment !== 'self_care') return [{ items: products }];
-  const defs = [
-    { key: 'intimate', label: 'Intimate Collection', note: 'Specifically formulated for intimate areas. Can be used all over the body.' },
-    { key: 'body', label: 'Body Collection', note: 'Formulated for all over the body, but not recommended for intimate areas.' },
-  ];
-  const groups = defs.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
-  const rest = products.filter(p => !defs.some(d => d.key === p.collection));
+const COLLECTIONS = [
+  { key: 'intimate', tone: 'intimate', label: 'Intimate Collection', note: 'Specifically formulated for intimate areas. Can be used all over the body.' },
+  { key: 'body', tone: 'body', label: 'Body Collection', note: 'Formulated for all over the body, but not recommended for intimate areas.' },
+];
+
+/* Self-care products split into the two collections. Anything without a collection goes last. */
+function selfCareGroups(products) {
+  const groups = COLLECTIONS.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
+  const rest = products.filter(p => !COLLECTIONS.some(d => d.key === p.collection));
   if (rest.length) groups.push({ items: rest });
   return groups.filter(g => g.items.length);
+}
+
+/* "All": self-care collections first, then professional, then anything else.
+   "Self-care" and "Professional" each show one group. */
+function groupForSegment(products, segment) {
+  if (segment === 'self_care') return selfCareGroups(products);
+  if (segment === 'professional') return [{ items: products }];
+  const pro = products.filter(p => p.market === 'professional');
+  const other = products.filter(p => p.market !== 'self_care' && p.market !== 'professional');
+  const groups = selfCareGroups(products.filter(p => p.market === 'self_care'));
+  if (pro.length) groups.push({ label: 'Professional', items: pro });
+  if (other.length) groups.push({ items: other });
+  return groups;
 }
 
 function tileHTML(p, idx) {
