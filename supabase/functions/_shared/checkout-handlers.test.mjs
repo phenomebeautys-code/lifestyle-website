@@ -32,7 +32,9 @@ function harness(kind, overrides={}) {
   const deno={serve(fn){handler=fn;},env:{get(name){return {SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-service',YOCO_SECRET_KEY:'test-yoco'}[name];}}};
   const path=kind==='order'?'../create-order/index.ts':'../yoco-shop-checkout/index.ts';
   const source=readFileSync(new URL(path,import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
-  new Function('createClient','CartError','trustedCart','Deno','fetch',source)(()=>database,CartError,trustedCart,deno,fetchMock);
+  const origin=readFileSync(new URL('./site-origin.ts',import.meta.url),'utf8').replace(/^export /gm,'');
+  const {corsOrigin,isSiteOrigin}=new Function(`${origin}\nreturn {corsOrigin,isSiteOrigin};`)();
+  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,deno,fetchMock);
   return {calls,run(body=kind==='order'?requestBody:{order_id:'test-order',success_url:'https://www.phenomebeauty.co.za/shop-success.html',cancel_url:'https://www.phenomebeauty.co.za/shop.html'},method='POST'){
     return handler(new Request('https://example.com',{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})}));
   }};

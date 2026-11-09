@@ -825,7 +825,32 @@ function renderProducts(products) {
     return;
   }
 
-  grid.innerHTML = products.map((p, idx) => {
+  const groups = groupForSegment(products, document.body.dataset.segment);
+  let idx = 0;
+  grid.innerHTML = groups.map(group => {
+    const heading = group.label
+      ? `<div class="collection-head"><h3>${group.label}</h3><p>${group.note}</p></div>`
+      : '';
+    return heading + group.items.map(p => tileHTML(p, idx++)).join('');
+  }).join('');
+
+  updateBadges();
+}
+
+/* Self-care is shown as two collections. Other segments render as one group. */
+function groupForSegment(products, segment) {
+  if (segment !== 'self_care') return [{ items: products }];
+  const defs = [
+    { key: 'intimate', label: 'Intimate Collection', note: 'Formulated for intimate areas, and can be used all over the body.' },
+    { key: 'body', label: 'Body Collection', note: 'Formulated for all over the body. Not recommended for intimate areas.' },
+  ];
+  const groups = defs.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
+  const rest = products.filter(p => !defs.some(d => d.key === p.collection));
+  if (rest.length) groups.push({ items: rest });
+  return groups.filter(g => g.items.length);
+}
+
+function tileHTML(p, idx) {
     const pid       = p.id;
     const available = p.active === true &&
       p.availability !== 'coming_soon' &&
@@ -876,9 +901,6 @@ function renderProducts(products) {
     <span class="tile-cta">View product</span>
   </div>
 </button>`;
-  }).join('');
-
-  updateBadges();
 }
 
 /* Compatibility shims */

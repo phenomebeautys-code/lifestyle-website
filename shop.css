@@ -397,6 +397,13 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 
 /* Product tiles: name, price and button line up across the row */
 .product-tile { display: flex; flex-direction: column; }
+
+/* Collection heading inside the product grid. It spans every column; the
+   negative bottom margin cancels part of the grid row gap (36px) so the
+   heading sits var(--sp-md) above its tiles. */
+.collection-head { grid-column: 1 / -1; margin-bottom: calc(var(--sp-md) - 36px); }
+.collection-head h3 { font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-h3); margin: 0 0 var(--sp-sm); }
+.collection-head p { margin: 0; font-size: var(--fs-sm); color: var(--fg-soft); max-width: 46ch; }
 .product-tile .tile-info { flex: 1; }
 .product-tile .tile-name { min-height: 2.6em; }
 .product-tile .tile-cta { margin-top: 14px; align-self: flex-start; }
