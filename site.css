@@ -1256,3 +1256,17 @@ body[data-segment="professional"] [data-review-group="self_care"] { display: non
     .page-hero-grid > *, .page-hero-copy > * { min-width: 0; }
     .page-hero .chips a { flex: none; }
 }
+
+/* ── Home product cards: each product in its own cream card, like the package cards ── */
+.pcard {
+    background: var(--paper-2); color: var(--ink);
+    border: 1px solid rgba(0,0,0,0.14); border-radius: 38px;
+    padding: 12px 12px 22px;
+}
+.pcard > div:not(.pcard-media) { padding: 2px 10px 0; }
+.pcard-media { flex: none; }
+.pcard > div:not(.pcard-media) { flex: 0 1 auto; }
+@media (max-width: 600px) { .product-row { grid-auto-columns: min(70vw, 290px); } }
+
+/* A band that sits directly above the footer clears the footer sheet, the same as the last section inside main. */
+.band:has(+ .site-footer) { padding-bottom: calc(var(--half) + var(--r-sheet)); }

@@ -443,3 +443,19 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
     scroll-padding-inline: var(--sp-md); padding-inline: var(--sp-md); margin-inline: calc(-1 * var(--sp-md));
   }
 }
+
+/* ── Product cards: every product sits in its own card, like the package cards ──
+   The card resets the colour tokens, so it stays cream with dark text inside the black band. */
+.product-tile {
+  --ink: #000; --paper: #F3F1E8; --paper-2: #FAF9F5;
+  --fg: #000; --fg-soft: rgba(0,0,0,0.74); --fg-muted: rgba(0,0,0,0.64); --line: rgba(0,0,0,0.14);
+  background: var(--paper-2); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 38px;
+  padding: 12px 12px 22px;
+}
+.product-tile .tile-info { padding: 16px 10px 0; }
+.collection--professional .product-tile { background: var(--paper); }
+/* Coming-soon cards stay solid; only their contents are dimmed. */
+.product-tile.is-unavailable { opacity: 1; }
+.product-tile.is-unavailable .tile-img-wrap img, .product-tile.is-unavailable .tile-info { opacity: 0.62; }
+@media (max-width: 719px) { .collection-grid { grid-auto-columns: min(70vw, 290px); } }
