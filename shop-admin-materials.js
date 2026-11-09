@@ -24,7 +24,11 @@
       { value: 'calm', label: 'Calm (Chamomile)' },
       { value: 'balance', label: 'Balance (Lavender)' },
       { value: 'bloom', label: 'Bloom (Rose Geranium)' },
-      { value: 'pure', label: 'Pure (Unscented)' }
+      { value: 'pure', label: 'Pure (Unscented)' },
+      { value: 'jasmine', label: 'Jasmine' },
+      { value: 'spiced-orange', label: 'Spiced Orange' },
+      { value: 'watermelon', label: 'Watermelon' },
+      { value: 'lemon-grass', label: 'Lemon grass' }
     ],
     'restore-moisturising-cream': [
       { value: 'calm', label: 'Calm (Chamomile)' },
