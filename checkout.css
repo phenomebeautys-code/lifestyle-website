@@ -182,7 +182,7 @@ button.step-pill.done:hover { color: var(--ink); }
 .summary-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
 .summary-title h2 { margin: 0; font-weight: 300; font-size: 1.8rem; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; }
 .summary-title p { margin: 8px 0 0; color: var(--fg-soft); font-size: 0.86rem; }
-.summary-rows { display: grid; gap: 0; max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.summary-rows { display: grid; gap: 0; }
 .cart-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); animation: co-rise 0.6s var(--co-ease) both; }
 .cart-item img { width: 56px; height: 68px; border-radius: var(--r-sm); object-fit: cover; background: var(--blush); }
 .cart-item h4 { margin: 0 0 4px; font-size: 0.92rem; font-weight: 600; }
@@ -216,7 +216,7 @@ button.step-pill.done:hover { color: var(--ink); }
 /* ── Locker search: ruled rows ──────────────────────────────── */
 .search-wrap { display: grid; gap: 14px; }
 .search-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.locker-results { display: grid; gap: 0; margin-top: 16px; max-height: 420px; overflow-y: auto; -webkit-overflow-scrolling: touch; border-top: 1px solid var(--line); }
+.locker-results { display: grid; gap: 0; margin-top: 16px; border-top: 1px solid var(--line); }
 .locker-item { padding: 18px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; display: grid; gap: 10px; animation: co-rise 0.5s var(--co-ease) both; }
 .locker-item-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
 .locker-item h4 { margin: 0; font-size: 0.95rem; font-weight: 600; }
@@ -310,7 +310,7 @@ body.ce-open .mobile-summary-bar { display: none !important; }
 .cart-editor {
   position: fixed; z-index: 61; top: 50%; left: 50%;
   transform: translate(-50%, -46%) scale(0.98);
-  width: min(92vw, 580px); max-height: 82vh; overflow-y: auto;
+  width: min(92vw, 580px); max-height: 82vh; overflow-y: auto; scrollbar-width: none;
   padding: 32px; border-radius: var(--r-card); background: var(--paper);
   opacity: 0; pointer-events: none;
   transition: opacity 0.4s ease, transform 0.6s var(--co-ease);
@@ -405,3 +405,6 @@ body.ce-open .mobile-summary-bar { display: none !important; }
 .co-chevron { transition: transform 0.3s var(--co-ease); }
 
 .delivery-window > svg { display: none; }
+
+/* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
+.cart-editor::-webkit-scrollbar { display: none; }

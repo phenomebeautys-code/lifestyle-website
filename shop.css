@@ -408,3 +408,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .product-tile .tile-name { min-height: 2.6em; }
 .product-tile .tile-cta { margin-top: 14px; align-self: flex-start; }
 
+
+/* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
+.pdp-scroll-area, .cart-items, .scb-expanded-items { scrollbar-width: none; }
+.pdp-scroll-area::-webkit-scrollbar, .cart-items::-webkit-scrollbar, .scb-expanded-items::-webkit-scrollbar { display: none; }

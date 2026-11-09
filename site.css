@@ -1198,3 +1198,7 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 body[data-segment="self_care"] [data-review-group="professional"],
 body[data-segment="professional"] [data-review-group="self_care"] { display: none; }
 
+
+/* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
+.site-nav { scrollbar-width: none; }
+.site-nav::-webkit-scrollbar { display: none; }
