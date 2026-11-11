@@ -473,3 +473,22 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 /* Cards keep the colour they had: cream in every band. Shape stays solid with rounded top corners. */
 .product-tile { background: var(--paper-2); }
 .collection--professional .product-tile { background: var(--paper); }
+
+/* ── Collection bands: edge to edge, like the hero and the rest of the site ──
+   Each band spans the full viewport. Its content lines up with the page gutter. */
+.collection--intimate, .collection--body, .collection--professional {
+  --bandpad: max(var(--gutter), calc((100vw - var(--container)) / 2 + var(--gutter)));
+  width: 100vw; margin-left: calc(50% - 50vw);
+  border-radius: 0;
+  padding: var(--sp-lg) var(--bandpad);
+}
+.collection--professional { background: var(--paper); }
+.collection--professional .product-tile { background: var(--paper-2); }
+@media (max-width: 719px) {
+  .collection--intimate .collection-grid, .collection--body .collection-grid, .collection--professional .collection-grid {
+    scroll-padding-inline: var(--bandpad); padding-inline: var(--bandpad); margin-inline: calc(-1 * var(--bandpad));
+  }
+}
+/* The scroll-reveal mask rounds its clip; collection bands stay square. */
+.motion-ready .collection[data-reveal="mask"] { clip-path: inset(0); }
+.motion-ready .collection[data-reveal="mask"]:not(.is-in) { clip-path: inset(100% 0 0 0); }
