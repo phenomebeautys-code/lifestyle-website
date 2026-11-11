@@ -66,7 +66,6 @@
 
 .product-tile {
   display: flex; flex-direction: column;
-  background: none; border: 0; padding: 0;
   text-align: left; cursor: pointer;
   font-family: var(--font-sans); color: var(--ink);
   -webkit-tap-highlight-color: transparent;
@@ -460,13 +459,6 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .product-tile.is-unavailable .tile-img-wrap img, .product-tile.is-unavailable .tile-info { opacity: 0.62; }
 @media (max-width: 719px) { .collection-grid { grid-auto-columns: min(70vw, 290px); } }
 
-/* ── Product cards: solid blush with rounded top corners, like the home hero sheet ──
-   Cream on the blush Body band so the cards stay visible. Still swipe inside each band. */
-.product-tile {
-  background: var(--blush); border: 0;
-  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
-  padding: 14px 14px 22px;
-}
 .collection--professional .product-tile,
 .collection--body .product-tile { background: var(--paper-2); }
 
@@ -479,7 +471,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .collection--intimate, .collection--body, .collection--professional {
   --bandpad: max(var(--gutter), calc((100vw - var(--container)) / 2 + var(--gutter)));
   width: 100vw; margin-left: calc(50% - 50vw);
-  border-radius: 0;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   padding: var(--sp-lg) var(--bandpad);
 }
 .collection--professional { background: var(--paper); }
@@ -490,5 +482,5 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   }
 }
 /* The scroll-reveal mask rounds its clip; collection bands stay square. */
-.motion-ready .collection[data-reveal="mask"] { clip-path: inset(0); }
+.motion-ready .collection[data-reveal="mask"] { clip-path: inset(0 0 0 0 round var(--r-sheet) var(--r-sheet) 0 0); }
 .motion-ready .collection[data-reveal="mask"]:not(.is-in) { clip-path: inset(100% 0 0 0); }
