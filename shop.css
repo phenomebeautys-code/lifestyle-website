@@ -492,3 +492,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 
 /* The bands end the products sheet, so it adds no bottom padding of its own. */
 .shop-section { padding-bottom: 0; }
+
+/* A sheet band overlaps the band above it. As the first group it must not overlap the filter pills. */
+.collection--body.band--sheet:first-child,
+.collection--professional.band--sheet:first-child { margin-top: 0; padding-top: var(--sp-lg); }
