@@ -469,3 +469,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 }
 .collection--professional .product-tile,
 .collection--body .product-tile { background: var(--paper-2); }
+
+/* Cards keep the colour they had: cream in every band. Shape stays solid with rounded top corners. */
+.product-tile { background: var(--paper-2); }
+.collection--professional .product-tile { background: var(--paper); }
