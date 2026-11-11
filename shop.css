@@ -398,7 +398,7 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 
 /* Product list: one section per group (collection or professional). */
 #productGrid.product-grid { display: block; }
-.collection + .collection { margin-top: var(--sp-xl); }
+.collection + .collection:not(.band--sheet) { margin-top: var(--sp-xl); }
 .collection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px var(--sp-sm); }
 @media (min-width: 720px)  { .collection-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1080px) { .collection-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -474,6 +474,8 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   padding: var(--sp-lg) var(--bandpad);
 }
+/* Sheet bands keep the site's sheet spacing: the top padding matches the overlap. */
+.collection--body, .collection--professional { padding: var(--half) var(--bandpad) var(--sp-lg); }
 .collection--professional { background: var(--paper); }
 .collection--professional .product-tile { background: var(--paper-2); }
 @media (max-width: 719px) {

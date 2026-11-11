@@ -836,7 +836,9 @@ function renderProducts(products) {
       ? `<div class="collection-head"><h3>${group.label}</h3>${group.note ? `<p>${group.note}</p>` : ''}</div>`
       : '';
     const tiles = group.items.map(p => tileHTML(p, idx++)).join('');
-    const cls = group.tone ? `collection collection--${group.tone}` : 'collection';
+    /* Bands use the site's shared band and sheet classes. Body and Professional overlap the band above. */
+    const cls = ['collection', group.tone && `collection--${group.tone}`, group.tone && 'band',
+      (group.tone === 'body' || group.tone === 'professional') && 'band--sheet'].filter(Boolean).join(' ');
     const label = group.label ? ` aria-label="${esc(group.label)}"` : '';
     return `<section class="${cls}"${label} data-reveal="mask">${head}<div class="collection-grid">${tiles}</div></section>`;
   }).join('');
