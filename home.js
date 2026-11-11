@@ -67,7 +67,7 @@
           '<div class="pcard-media"><img src="' + esc(img(firstImage(p))) + '" alt="" loading="lazy" width="600" height="750" />' +
           '</div>' +
           '<div><p class="pcard-name">' + esc(p.name || 'Product') + '</p>' +
-          '<p class="pcard-price"><span class="from">From</span>R' + minPrice(p).toFixed(2) + '</p>' +
+          '<p class="pcard-price">R' + minPrice(p).toFixed(2) + '</p>' +
           '<span class="btn btn-primary btn-sm pcard-cta">View product</span></div>' +
         '</a>';
       }).join('');

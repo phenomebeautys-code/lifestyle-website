@@ -930,7 +930,7 @@ function tileHTML(p, idx) {
 
     const lowest = minPrice(p);
     const tilePriceLabel = lowest > 0
-      ? `<span class="from">From</span> R${lowest.toFixed(2)}`
+      ? `R${lowest.toFixed(2)}`
       : 'Coming Soon';
     const name = esc(p.name || 'Product');
 
