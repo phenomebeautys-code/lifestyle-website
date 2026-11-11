@@ -61,8 +61,8 @@ test('order rejects oversized unverified standard tariff',async()=>{
 test('order validates complete address before persistence',async()=>{
   const h=harness('order');assert.equal((await h.run({...requestBody,delivery_address:{street:'Test'}})).status,400);assert.equal(h.calls.inserted.length,0);
 });
-test('variant stock flag does not block an order',async()=>{
-  const h=harness('order',{products:[{...wax,variants:[{name:'Type: Onyx',in_stock:false}]}]});assert.equal((await h.run()).status,200);assert.equal(h.calls.inserted.length,1);
+test('order enforces configured variant unavailability',async()=>{
+  const h=harness('order',{products:[{...wax,variants:[{name:'Type: Onyx',in_stock:false}]}]});assert.equal((await h.run()).status,409);assert.equal(h.calls.inserted.length,0);
 });
 test('payment uses trusted R360 price plus quoted delivery in cents',async()=>{
   const h=harness('payment');const response=await h.run();assert.equal(response.status,200);
