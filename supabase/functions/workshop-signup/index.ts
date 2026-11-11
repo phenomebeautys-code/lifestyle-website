@@ -83,12 +83,17 @@ function rand(amount: number): string {
 
 // One shared layout for both emails, so they read as the same brand.
 function shell(preheader: string, heading: string, inner: string): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet"></head>
 <body style="margin:0;padding:0;background:${TOKEN.cream};font-family:Montserrat,Helvetica,Arial,sans-serif;color:${TOKEN.ink};">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TOKEN.cream};"><tr><td align="center" style="padding:32px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-    <tr><td style="padding:0 8px 20px;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;letter-spacing:-0.01em;">Phenomebeauty</td></tr>
+    <tr><td style="padding:0 8px 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+        <td style="vertical-align:middle;"><img src="https://iili.io/fpiAjBj.jpg" width="40" height="40" alt="Phenomebeauty logo" style="display:block;width:40px;height:40px;border-radius:50%;border:0;"></td>
+        <td style="vertical-align:middle;padding-left:12px;font-family:'Abril Fatface',Georgia,'Times New Roman',serif;font-size:26px;line-height:1;color:${TOKEN.ink};">Phenomebeauty</td>
+      </tr></table>
+    </td></tr>
     <tr><td style="background:${TOKEN.blush};border-radius:48px 48px 0 0;padding:40px 32px 36px;">
       <h1 style="margin:0 0 20px;font-weight:500;font-size:30px;line-height:1.15;letter-spacing:-0.01em;">${esc(heading)}</h1>
       ${inner}
