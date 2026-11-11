@@ -18,7 +18,7 @@ function selectOption(options, selected, kind) {
   const match = selected ? list.filter(option => label(option) === selected)
     : list.length === 1 ? list : [];
   if (match.length !== 1) throw new CartError(`Select a valid ${kind}`);
-  if (match[0].in_stock === false) throw new CartError(`Selected ${kind} is unavailable`);
+  // Variant stock flags (in_stock) and recipes do not block an order. Sales are gated by product availability.
   return match[0];
 }
 export function trustedCart(cart, products) {

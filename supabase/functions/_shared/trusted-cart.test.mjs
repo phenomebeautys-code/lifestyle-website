@@ -19,7 +19,7 @@ test('unknown or missing multi-size rejected',()=>{
   for(const size of ['fake','']) assert.throws(()=>trustedCart([line(size)],[wax]),CartError);
 });
 test('unknown variant rejected',()=>assert.throws(()=>trustedCart([{...line(),variant:'fake'}],[wax]),CartError));
-test('out-of-stock variant rejected',()=>assert.throws(()=>trustedCart([line()],[{...wax,variants:[{name:'Type: Onyx',in_stock:false}]}]),CartError));
+test('variant stock flag does not block an order',()=>assert.equal(trustedCart([line()],[{...wax,variants:[{name:'Type: Onyx',in_stock:false}]}]).items.length,1));
 test('inactive and coming-soon products rejected',()=>{
   for(const patch of [{active:false},{availability:'coming_soon'}]) assert.throws(()=>trustedCart([line()],[{...wax,...patch}]),CartError);
 });
