@@ -83,10 +83,10 @@ function rand(amount: number): string {
 
 // One shared layout for both emails, so they read as the same brand.
 function shell(preheader: string, heading: string, inner: string): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet"></head>
-<body style="margin:0;padding:0;background:${TOKEN.cream};font-family:Montserrat,Helvetica,Arial,sans-serif;color:${TOKEN.ink};">
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"><link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet"></head>
+<body bgcolor="${TOKEN.cream}" style="margin:0;padding:0;background:${TOKEN.cream};font-family:Montserrat,Helvetica,Arial,sans-serif;color:${TOKEN.ink};">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TOKEN.cream};"><tr><td align="center" style="padding:32px 16px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${TOKEN.cream}" style="background:${TOKEN.cream};"><tr><td align="center" bgcolor="${TOKEN.cream}" style="padding:32px 16px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
     <tr><td style="padding:0 8px 20px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
@@ -94,11 +94,11 @@ function shell(preheader: string, heading: string, inner: string): string {
         <td style="vertical-align:middle;padding-left:12px;font-family:'Abril Fatface',Georgia,'Times New Roman',serif;font-size:26px;line-height:1;color:${TOKEN.ink};">Phenomebeauty</td>
       </tr></table>
     </td></tr>
-    <tr><td style="background:${TOKEN.blush};border-radius:48px 48px 0 0;padding:40px 32px 36px;">
+    <tr><td bgcolor="${TOKEN.blush}" style="background:${TOKEN.blush};border-radius:48px 48px 0 0;padding:40px 32px 36px;">
       <h1 style="margin:0 0 20px;font-weight:500;font-size:30px;line-height:1.15;letter-spacing:-0.01em;">${esc(heading)}</h1>
       ${inner}
     </td></tr>
-    <tr><td style="background:${TOKEN.ink};border-radius:0 0 48px 48px;padding:28px 32px;color:${TOKEN.cream};font-size:13px;line-height:1.6;">
+    <tr><td bgcolor="${TOKEN.ink}" style="background:${TOKEN.ink};border-radius:0 0 48px 48px;padding:28px 32px;color:${TOKEN.cream};font-size:13px;line-height:1.6;">
       <p style="margin:0 0 6px;font-weight:600;">Phenomebeauty</p>
       <p style="margin:0;opacity:0.8;">Mobile beauty across Cape Town. WhatsApp <a href="https://wa.me/27745115725" style="color:${TOKEN.cream};text-decoration:none;">+27 74 511 5725</a></p>
     </td></tr>
@@ -112,7 +112,7 @@ function summaryTable(pairs: Array<[string, string]>): string {
       <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;width:40%;font-size:13px;font-weight:600;color:${TOKEN.soft};">${esc(label)}</td>
       <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;font-size:15px;">${esc(value)}</td>
     </tr>`).join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TOKEN.paper};border-radius:20px;padding:4px 20px;">${cells}</table>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${TOKEN.paper}" style="background:${TOKEN.paper};border-radius:20px;padding:4px 20px;">${cells}</table>`;
 }
 
 Deno.serve(async (req: Request): Promise<Response> => {
@@ -215,7 +215,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           `Thank you, ${esc(fullName.split(' ')[0])}`,
           `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;">You are on the waitlist for the waxing workshop. Here is a copy of your answers for your records.</p>
            ${summaryTable(summary)}
-           <div style="margin:28px 0 0;background:${TOKEN.paper};border-radius:20px;padding:20px;">
+           <div bgcolor="${TOKEN.paper}" style="margin:28px 0 0;background:${TOKEN.paper};border-radius:20px;padding:20px;">
              <p style="margin:0 0 8px;font-weight:600;font-size:15px;">What happens next</p>
              <p style="margin:0;font-size:14px;line-height:1.6;">We will send you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop.</p>
            </div>`,
