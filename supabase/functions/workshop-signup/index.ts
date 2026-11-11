@@ -90,8 +90,8 @@ function shell(preheader: string, heading: string, inner: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
     <tr><td style="padding:0 8px 20px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-        <td style="vertical-align:middle;"><img src="https://iili.io/fpiAjBj.jpg" width="40" height="40" alt="Phenomebeauty logo" style="display:block;width:40px;height:40px;border-radius:50%;border:0;"></td>
-        <td style="vertical-align:middle;padding-left:12px;font-family:'Abril Fatface',Georgia,'Times New Roman',serif;font-size:26px;line-height:1;color:${TOKEN.ink};">Phenomebeauty</td>
+        <td style="vertical-align:middle;"><img src="https://iili.io/fpiAjBj.jpg" width="64" height="64" alt="Phenomebeauty logo" style="display:block;width:64px;height:64px;border-radius:50%;border:0;"></td>
+        <td style="vertical-align:middle;padding-left:16px;font-family:'Abril Fatface',Georgia,'Times New Roman',serif;font-size:34px;line-height:1;color:${TOKEN.ink};">Phenomebeauty</td>
       </tr></table>
     </td></tr>
     <tr><td bgcolor="${TOKEN.blush}" style="background:${TOKEN.blush};border-radius:48px 48px 0 0;padding:40px 32px 36px;">
@@ -109,8 +109,8 @@ function shell(preheader: string, heading: string, inner: string): string {
 function summaryTable(pairs: Array<[string, string]>): string {
   const cells = pairs.map(([label, value]) => `
     <tr>
-      <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;width:40%;font-size:13px;font-weight:600;color:${TOKEN.soft};">${esc(label)}</td>
-      <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;font-size:15px;">${esc(value)}</td>
+      <td style="padding:12px 20px 12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;width:38%;font-size:13px;font-weight:600;line-height:1.4;color:${TOKEN.soft};">${esc(label)}</td>
+      <td style="padding:12px 0 12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;font-size:15px;line-height:1.5;">${esc(value)}</td>
     </tr>`).join('');
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${TOKEN.paper}" style="background:${TOKEN.paper};border-radius:20px;padding:4px 20px;">${cells}</table>`;
 }
