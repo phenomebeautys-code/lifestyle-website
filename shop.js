@@ -146,7 +146,13 @@ function updateStickyBar() {
 
 /* —— Checkout navigation — saves cart before leaving ————————— */
 
+function cartBlocked() {
+  if (!window._allProducts || !window.PBCartStock) return [];
+  return PBCartStock.problems(cart, window._allProducts);
+}
+
 function goToCheckout() {
+  if (cartBlocked().length) { renderCartDrawer(); return; }
   saveCart(cart);
   window.location.href = 'checkout.html';
 }
@@ -247,9 +253,16 @@ function renderCartDrawer() {
   if (footerEl) footerEl.style.display = '';
   if (subtotalEl) subtotalEl.textContent = 'R' + cartTotal().toFixed(2);
   itemsEl.innerHTML = '';
+  const blocked = {};
+  cartBlocked().forEach(b => { blocked[b.index] = b.reason; });
+  const hasBlocked = Object.keys(blocked).length > 0;
+  document.querySelectorAll('.cart-primary-cta, .scb-checkout-btn').forEach(btn => {
+    btn.disabled = hasBlocked;
+    btn.setAttribute('aria-disabled', hasBlocked ? 'true' : 'false');
+  });
   cart.forEach((item, idx) => {
     const row = document.createElement('div');
-    row.className = 'cart-item';
+    row.className = 'cart-item' + (blocked[idx] ? ' cart-item--blocked' : '');
     const thumb = buildCartThumb(item.image, item.name, 72);
     row.appendChild(thumb);
     const info = document.createElement('div');
@@ -259,6 +272,7 @@ function renderCartDrawer() {
       <div class="cart-item-name">${item.name || 'Product'}</div>
       <div class="cart-item-variant">${variantDisplay}</div>
       <div class="cart-item-price">R${((Number(item.price)||0)*(Number(item.qty)||1)).toFixed(2)}</div>
+      ${blocked[idx] ? `<div class="cart-item-note" role="status">${blocked[idx]} Remove it to check out.</div>` : ''}
       <div class="cart-item-qty">
         <button class="qty-btn" onclick="changeQty(${idx},-1)" aria-label="Decrease quantity">&#8722;</button>
         <span class="qty-num">${item.qty || 1}</span>
@@ -325,6 +339,7 @@ function addToCartFromDetail(pid) {
   const sizeEl    = panel.querySelector('.s-pill.active');
   const variant   = variantEl?.dataset.variant || '';
   const sizeName  = sizeEl?.dataset.size       || '';
+  if (window.PBCartStock && PBCartStock.lineProblem({ productId: pid, variant }, [p])) return;
 
   let unitPrice = Number(p.price) || 0;
   if (variant && p.variants) {
@@ -366,6 +381,7 @@ function addToCart(pid, cardEl) {
   const sizeEl    = cardEl.querySelector('.s-pill.active');
   const variant   = variantEl?.dataset.variant || '';
   const sizeName  = sizeEl?.dataset.size       || '';
+  if (window.PBCartStock && PBCartStock.lineProblem({ productId: pid, variant }, [p])) return;
   let unitPrice = Number(p.price) || 0;
   if (variant && p.variants) {
     const vObj = p.variants.find(v => (v.name || v.label || v.value || '') === variant);
@@ -984,6 +1000,7 @@ async function fetchProducts() {
     const all = Array.isArray(data) ? data : [];
     window._allProducts = all;
    sanitiseCart(all);
+    renderCartDrawer();
     const segment = getSegment();
     filterAndRender(segment);
   } catch(err) {

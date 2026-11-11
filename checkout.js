@@ -99,6 +99,38 @@ async function loadShippingQuote() {
   }
 }
 
+/* ── Stock: the cart must be sellable before any step opens ── */
+let stockProblems = [];
+let stockChecked  = false;
+
+function showStockNotice() {
+  const el = document.getElementById('stockNotice');
+  if (!el) return;
+  if (!stockProblems.length) { el.classList.remove('show'); el.textContent = ''; return; }
+  const lines = stockProblems.map(p => `${p.item.name || 'An item'}${p.item.variant ? ' (' + p.item.variant.replace(/^[^:]+:\s*/, '') + ')' : ''}: ${p.reason}`);
+  el.innerHTML = '<strong>Some items in your bag cannot be bought right now.</strong> ' +
+    lines.map(l => '<div>' + l + '</div>').join('') +
+    '<p style="margin:10px 0 0;"><a href="shop.html?cart=open">Return to your bag</a> and remove them to continue.</p>';
+  el.classList.add('show');
+}
+
+async function checkStock() {
+  try {
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/get-products`, {
+      headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${SUPABASE_ANON}` },
+      cache: 'no-store'
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const products = await resp.json();
+    stockProblems = window.PBCartStock ? PBCartStock.problems(cart, Array.isArray(products) ? products : []) : [];
+    stockChecked = true;
+    showStockNotice();
+  } catch (err) {
+    // If the catalogue cannot be read, the server still refuses blocked lines at payment.
+    console.warn('Stock check unavailable:', err);
+  }
+}
+
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
   cart = loadCart();
@@ -106,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSidebar();
   renderMobileSummary();
   calcDelivery();
+  checkStock();
   prefillContact();
   restoreDraft();
   attachInputListeners();
@@ -463,6 +496,7 @@ function restoreDraft() {
 
 /* ── Steps ── */
 function goToStep(n) {
+  if (stockProblems.length) { showStockNotice(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   if (n === 2) { loadMapsIfNeeded(); deliverySelected = true; } // FIX 5: set flag and fix brace
   if (n === 2 && !validateStep1()) return;
   if (n === 3 && !validateStep2()) return;
@@ -858,6 +892,7 @@ function populateReview() {
 
 /* ── Pay ── */
 async function handlePay() {
+  if (stockProblems.length) { showStockNotice(); return; }
   const btn = document.getElementById('payBtn');
   btn.disabled    = true;
   btn.textContent = 'Processing\u2026';
