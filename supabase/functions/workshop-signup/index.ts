@@ -74,6 +74,42 @@ function rows(pairs: Array<[string, string]>): string {
   return pairs.map(([label, value]) => `<li><strong>${esc(label)}:</strong> ${esc(value)}</li>`).join('');
 }
 
+// Brand tokens from the website (site.css): cream page, blush sheet, black ink.
+const TOKEN = { cream: '#F3F1E8', blush: '#F2C6C2', paper: '#FAF9F5', ink: '#000000', soft: '#3d3d3d', line: '#e4dfd2' };
+
+function rand(amount: number): string {
+  return 'R' + String(amount).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+// One shared layout for both emails, so they read as the same brand.
+function shell(preheader: string, heading: string, inner: string): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:${TOKEN.cream};font-family:Montserrat,Helvetica,Arial,sans-serif;color:${TOKEN.ink};">
+<span style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TOKEN.cream};"><tr><td align="center" style="padding:32px 16px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
+    <tr><td style="padding:0 8px 20px;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:26px;letter-spacing:-0.01em;">Phenomebeauty</td></tr>
+    <tr><td style="background:${TOKEN.blush};border-radius:48px 48px 0 0;padding:40px 32px 36px;">
+      <h1 style="margin:0 0 20px;font-weight:500;font-size:30px;line-height:1.15;letter-spacing:-0.01em;">${esc(heading)}</h1>
+      ${inner}
+    </td></tr>
+    <tr><td style="background:${TOKEN.ink};border-radius:0 0 48px 48px;padding:28px 32px;color:${TOKEN.cream};font-size:13px;line-height:1.6;">
+      <p style="margin:0 0 6px;font-weight:600;">Phenomebeauty</p>
+      <p style="margin:0;opacity:0.8;">Mobile beauty across Cape Town. WhatsApp <a href="https://wa.me/27745115725" style="color:${TOKEN.cream};text-decoration:none;">+27 74 511 5725</a></p>
+    </td></tr>
+  </table>
+</td></tr></table></body></html>`;
+}
+
+function summaryTable(pairs: Array<[string, string]>): string {
+  const cells = pairs.map(([label, value]) => `
+    <tr>
+      <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;width:40%;font-size:13px;font-weight:600;color:${TOKEN.soft};">${esc(label)}</td>
+      <td style="padding:12px 0;border-top:1px solid ${TOKEN.line};vertical-align:top;font-size:15px;">${esc(value)}</td>
+    </tr>`).join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${TOKEN.paper};border-radius:20px;padding:4px 20px;">${cells}</table>`;
+}
+
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
   if (req.method !== 'POST') return respond({ error: 'Method not allowed' }, 405);
@@ -119,8 +155,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ['Waxing experience', EXPERIENCE[experience]],
     ['Why they want to attend', motivation],
     ['Available', days.map((d) => DAYS[d]).join(', ')],
-    ['Kit', `${kitInfo.label}, R${kitInfo.price} per person`],
-    ['50% deposit', `R${deposit}`],
+    ['Kit', `${kitInfo.label}, ${rand(kitInfo.price)} per person`],
+    ['50% deposit', rand(deposit)],
   ];
   if (notes) summary.push(['Anything to know', notes]);
 
@@ -154,7 +190,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     await sendEmail(
       TEAM_EMAIL,
       `Waitlist: ${fullName}`,
-      `<p>New waitlist entry. Status: waitlist. Send the 50% deposit payment link.</p><ul>${rows(summary)}</ul>`,
+      shell(
+        `${fullName} has joined the waxing workshop waitlist`,
+        'New waitlist entry',
+        `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;">${esc(fullName)} has joined the waitlist. Status: <strong>waitlist</strong>. Send the 50% deposit payment link.</p>
+         ${summaryTable(summary)}
+         <p style="margin:24px 0 0;font-size:13px;color:${TOKEN.soft};">Reply to this email to reach ${esc(fullName.split(' ')[0])} directly.</p>`,
+      ),
       email,
     );
 
@@ -163,11 +205,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
       await sendEmail(
         email,
         'Your waxing workshop waitlist',
-        `<p>Hi ${esc(fullName.split(' ')[0])},</p>
-         <p>Thank you for joining the waitlist. Here is a copy of your answers.</p>
-         <ul>${rows(summary)}</ul>
-         <p>Next, we will email you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop.</p>
-         <p>Phenomebeauty</p>`,
+        shell(
+          'You are on the waitlist. Here is a copy of your answers.',
+          `Thank you, ${esc(fullName.split(' ')[0])}`,
+          `<p style="margin:0 0 20px;font-size:15px;line-height:1.6;">You are on the waitlist for the waxing workshop. Here is a copy of your answers for your records.</p>
+           ${summaryTable(summary)}
+           <div style="margin:28px 0 0;background:${TOKEN.paper};border-radius:20px;padding:20px;">
+             <p style="margin:0 0 8px;font-weight:600;font-size:15px;">What happens next</p>
+             <p style="margin:0;font-size:14px;line-height:1.6;">We will send you a payment link for your 50% deposit. Only 2 ladies are accepted per workshop.</p>
+           </div>`,
+        ),
       );
     } catch {
       // Logged by the platform; the team still has the entry.
