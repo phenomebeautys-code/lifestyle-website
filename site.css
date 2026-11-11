@@ -1193,7 +1193,8 @@ main:has(+ .site-footer) > :last-child { padding-bottom: calc(var(--half) + var(
 .kit .feature-list + .kit-join { margin-top: var(--s-3); }
 
 /* ── Shop reviews follow the product group on show ───────────── */
-.review-group + .review-group { margin-top: var(--s-5); }
+/* Only when both groups show (All view). A hidden group must not add space above the other. */
+body[data-segment="all"] .review-group + .review-group { margin-top: var(--s-5); }
 .review-group-title { font-family: var(--font-tag); font-weight: 600; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.01em; margin: 0 0 var(--s-3); }
 body[data-segment="self_care"] [data-review-group="professional"],
 body[data-segment="professional"] [data-review-group="self_care"] { display: none; }

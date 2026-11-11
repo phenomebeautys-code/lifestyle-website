@@ -489,3 +489,6 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 /* Cart lines that cannot be bought right now: the note says why and what to do. */
 .cart-item-note { margin-top: 6px; font-size: 0.82rem; font-weight: 600; line-height: 1.4; color: var(--ink); }
 .cart-item--blocked .cart-item-name::after { content: ' (unavailable)'; font-weight: 400; }
+
+/* The bands end the products sheet, so it adds no bottom padding of its own. */
+.shop-section { padding-bottom: 0; }
