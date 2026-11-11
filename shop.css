@@ -459,3 +459,13 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 .product-tile.is-unavailable { opacity: 1; }
 .product-tile.is-unavailable .tile-img-wrap img, .product-tile.is-unavailable .tile-info { opacity: 0.62; }
 @media (max-width: 719px) { .collection-grid { grid-auto-columns: min(70vw, 290px); } }
+
+/* ── Product cards: solid blush with rounded top corners, like the home hero sheet ──
+   Cream on the blush Body band so the cards stay visible. Still swipe inside each band. */
+.product-tile {
+  background: var(--blush); border: 0;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+  padding: 14px 14px 22px;
+}
+.collection--professional .product-tile,
+.collection--body .product-tile { background: var(--paper-2); }

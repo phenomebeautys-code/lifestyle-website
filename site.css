@@ -1270,3 +1270,10 @@ body[data-segment="professional"] [data-review-group="self_care"] { display: non
 
 /* A band that sits directly above the footer clears the footer sheet, the same as the last section inside main. */
 .band:has(+ .site-footer) { padding-bottom: calc(var(--half) + var(--r-sheet)); }
+
+/* Home product cards: solid, rounded top corners, like the hero sheet. Cream on the blush section. */
+.pcard {
+    background: var(--paper-2); border: 0;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    padding: 14px 14px 22px;
+}
