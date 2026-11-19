@@ -753,6 +753,12 @@ function _updateBubbleHeading(segment) {
 
 /* Filter by segment. null = All. The choice is remembered for returning visitors. */
 function selectSegment(segment) {
+  if (segment === 'gift_cards') {
+    /* Gift cards are a view, not a product filter, so the saved filter is left alone. */
+    _setToggleState(segment);
+    updateShopHero(segment);
+    return;
+  }
   if (segment) {
     localStorage.setItem(SEGMENT_KEY, segment);
   } else {
@@ -805,6 +811,11 @@ function applySegment(segment) {
 
 function updateShopHero(segment) {
   document.body.dataset.segment = segment || 'all';
+  const giftView = segment === 'gift_cards';
+  const pane = document.getElementById('giftCardsPane');
+  if (pane) pane.hidden = !giftView;
+  const grid = document.getElementById('productGrid');
+  if (grid) grid.hidden = giftView;
   const heroTitle = document.getElementById('shopHeroTitle');
   const heroDesc  = document.getElementById('shopHeroDesc');
   if (!heroTitle || !heroDesc) return;
@@ -812,7 +823,10 @@ function updateShopHero(segment) {
   const setTitle = (...lines) => {
     heroTitle.innerHTML = lines.map(l => `<span class="line"><span>${l}</span></span>`).join(' ');
   };
-  if (segment === 'self_care') {
+  if (segment === 'gift_cards') {
+    setTitle('Give the gift', 'of self-care.');
+    heroDesc.textContent = 'Gift cards for products in our online shop, emailed straight to them.';
+  } else if (segment === 'self_care') {
     setTitle('Your Routine.', 'Your Rules.');
     heroDesc.textContent = 'Self-care for your routine. Made for busy days.';
   } else if (segment === 'professional') {
@@ -851,7 +865,11 @@ function renderProducts(products) {
 
   const groups = groupForSegment(products, document.body.dataset.segment);
   let idx = 0;
-  grid.innerHTML = groups.map(group => {
+  const reviews = reviewGroups();
+  /* Each market's reviews come straight after its last product group. */
+  const lastOf = {};
+  groups.forEach((g, i) => { if (g.market) lastOf[g.market] = i; });
+  grid.innerHTML = groups.map((group, gi) => {
     const head = group.label
       ? `<div class="collection-head"><h3>${group.label}</h3>${group.note ? `<p>${group.note}</p>` : ''}</div>`
       : '';
@@ -860,8 +878,16 @@ function renderProducts(products) {
     const cls = ['collection', group.tone && `collection--${group.tone}`, group.tone && 'band',
       (group.tone === 'body' || group.tone === 'professional') && 'band--sheet'].filter(Boolean).join(' ');
     const label = group.label ? ` aria-label="${esc(group.label)}"` : '';
-    return `<section class="${cls}"${label} data-reveal="mask">${head}<div class="collection-grid">${tiles}</div></section>`;
+    const section = `<section class="${cls}"${label} data-reveal="mask">${head}<div class="collection-grid">${tiles}</div></section>`;
+    const slot = group.market && lastOf[group.market] === gi && reviews[group.market]
+      ? `<section class="collection collection--reviews band band--paper band--sheet" data-review-slot="${group.market}" aria-label="${group.market === 'professional' ? 'Reviews from professionals' : 'Self-care reviews'}"></section>`
+      : '';
+    return section + slot;
   }).join('');
+  grid.querySelectorAll('[data-review-slot]').forEach(slot => slot.appendChild(reviews[slot.dataset.reviewSlot]));
+  /* The reviews now sit with the products, so the separate reviews band is not needed. */
+  const band = document.getElementById('reviewsBand');
+  if (band) band.hidden = true;
   /* Sections are added after the page loads, so hand them to the site's reveal system. */
   if (window.PB && typeof window.PB.reveal === 'function') {
     grid.querySelectorAll('[data-reveal]').forEach(el => window.PB.reveal(el));
@@ -878,11 +904,21 @@ const COLLECTIONS = [
 
 const PRO_NOTE = 'Supplies for the pros who care for others.';
 
+/* The review groups from the page, kept so they can be moved next to their products on every render. */
+let _reviewNodes = null;
+function reviewGroups() {
+  if (!_reviewNodes) {
+    _reviewNodes = {};
+    document.querySelectorAll('#reviewsBand [data-review-group]').forEach(el => { _reviewNodes[el.dataset.reviewGroup] = el; });
+  }
+  return _reviewNodes;
+}
+
 /* Self-care products split into the two collections. Anything without a collection goes last. */
 function selfCareGroups(products) {
-  const groups = COLLECTIONS.map(d => ({ ...d, items: products.filter(p => p.collection === d.key) }));
+  const groups = COLLECTIONS.map(d => ({ ...d, market: 'self_care', items: products.filter(p => p.collection === d.key) }));
   const rest = products.filter(p => !COLLECTIONS.some(d => d.key === p.collection));
-  if (rest.length) groups.push({ items: rest });
+  if (rest.length) groups.push({ market: 'self_care', items: rest });
   return groups.filter(g => g.items.length);
 }
 
@@ -890,11 +926,11 @@ function selfCareGroups(products) {
    "Self-care" and "Professional" each show one group. */
 function groupForSegment(products, segment) {
   if (segment === 'self_care') return selfCareGroups(products);
-  if (segment === 'professional') return [{ label: 'Professional', tone: 'professional', note: PRO_NOTE, items: products }];
+  if (segment === 'professional') return [{ label: 'Professional', tone: 'professional', market: 'professional', note: PRO_NOTE, items: products }];
   const pro = products.filter(p => p.market === 'professional');
   const other = products.filter(p => p.market !== 'self_care' && p.market !== 'professional');
   const groups = selfCareGroups(products.filter(p => p.market === 'self_care'));
-  if (pro.length) groups.push({ label: 'Professional', tone: 'professional', note: PRO_NOTE, items: pro });
+  if (pro.length) groups.push({ label: 'Professional', tone: 'professional', market: 'professional', note: PRO_NOTE, items: pro });
   if (other.length) groups.push({ items: other });
   return groups;
 }
@@ -1044,9 +1080,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   /* Products are shown on first load. A ?segment= link (from the homepage)
      wins over the saved filter; otherwise the saved filter is restored. */
   const params = new URLSearchParams(location.search);
-  const linkedSegment = ['self_care', 'professional'].includes(params.get('segment')) ? params.get('segment') : null;
-  if (linkedSegment) localStorage.setItem(SEGMENT_KEY, linkedSegment);
-  const saved = getSegment();
+  const linkedSegment = ['self_care', 'professional', 'gift_cards'].includes(params.get('segment')) ? params.get('segment') : null;
+  if (linkedSegment && linkedSegment !== 'gift_cards') localStorage.setItem(SEGMENT_KEY, linkedSegment);
+  const saved = linkedSegment === 'gift_cards' ? 'gift_cards' : getSegment();
   updateShopHero(saved);
   _setToggleState(saved);
   const linkedProduct = params.get('product');

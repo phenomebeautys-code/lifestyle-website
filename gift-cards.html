@@ -2,109 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#F3F1E8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gift cards | Phenomebeauty</title>
-    <meta name="description" content="Give the gift of self-care. Phenomebeauty gift cards are emailed instantly and can be spent on skincare, wax and professional products in our online shop." />
-    <link rel="canonical" href="https://www.phenomebeauty.co.za/gift-cards" />
-    <link rel="icon" href="https://iili.io/fpiAjBj.jpg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;text=Phenomebauty&amp;display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="site.css?v=9" />
-    <link rel="stylesheet" href="gift-cards.css?v=3" />
+    <meta name="robots" content="noindex, follow" />
+    <link rel="canonical" href="https://www.phenomebeauty.co.za/shop?segment=gift_cards" />
+    <meta http-equiv="refresh" content="0; url=shop.html?segment=gift_cards" />
+    <script>location.replace('shop.html?segment=gift_cards');</script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <header class="site-header" id="navbar">
-    <div class="container header-inner">
-      <a href="index.html" class="brand" aria-label="Phenomebeauty home">
-        <img src="https://iili.io/fpiAjBj.jpg" alt="" width="34" height="34" />
-        <span class="wordmark">Phenomebeauty</span>
-      </a>
-      <nav class="site-nav" id="siteNav" aria-label="Main">
-        <ul class="nav-menu">
-          <li><a href="shop.html">Shop</a></li>
-          <li><a href="services.html">Services</a></li>
-          <li><a href="training.html">Training</a></li>
-        </ul>
-        <div class="nav-extra">
-          <a href="shop.html" class="btn btn-primary btn-lg">Shop the collection</a>
-          <p>Mobile beauty across Cape Town. <a class="link" href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">WhatsApp us</a></p>
-        </div>
-      </nav>
-      <div class="header-actions">
-        <a href="shop.html?cart=open" class="cart-link" data-cart-link aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg><span class="cart-label">Cart</span><span class="cart-count" data-cart-count>0</span></a>
-        <a href="shop.html" class="btn btn-primary btn-sm">Shop now</a>
-        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="siteNav"><span></span><span></span></button>
-      </div>
-    </div>
-  </header>
-
-  <main id="main">
-    <section class="gc">
-      <div class="container gc-grid">
-        <div class="gc-intro">
-          <h1 class="t-h1">Gift cards</h1>
-          <p class="gc-lead">Give someone the gift of making themselves a priority. Gift cards are emailed straight to them and can be spent on products in our online shop, over more than one order.</p>
-          <div class="gc-card" id="gcCard" aria-hidden="true">
-            <div class="gc-card-in">
-              <div class="gc-card-top"><span class="gc-card-mark">Phenomebeauty</span><span class="gc-card-amount" id="gcPreviewAmount">R500</span></div>
-              <div class="gc-card-word"><span>Gift</span><span>Card</span></div>
-            </div>
-          </div>
-          <ul class="gc-points">
-            <li>Emailed within minutes of payment</li>
-            <li>Valid for 3 years</li>
-            <li>Spend it on skincare, wax and professional products in our online shop</li>
-            <li>For products only; not valid for services yet</li>
-          </ul>
-        </div>
-
-        <form class="gc-form" id="gcForm" novalidate hidden>
-          <fieldset>
-            <legend>Amount</legend>
-            <div class="gc-amounts" id="gcAmounts" role="radiogroup" aria-label="Gift card amount"></div>
-          </fieldset>
-          <fieldset>
-            <legend>Who is it for?</legend>
-            <label class="gc-field"><span>Their name</span><input id="gcRecipientName" maxlength="120" autocomplete="off" required /></label>
-            <label class="gc-field"><span>Their email</span><input id="gcRecipientEmail" type="email" maxlength="254" autocomplete="off" required /></label>
-            <label class="gc-field"><span>Message (optional)</span><textarea id="gcMessage" maxlength="500" rows="3" placeholder="Happy birthday! Treat yourself."></textarea></label>
-          </fieldset>
-          <fieldset>
-            <legend>Your details</legend>
-            <label class="gc-field"><span>Your name</span><input id="gcBuyerName" maxlength="120" autocomplete="name" required /></label>
-            <label class="gc-field"><span>Your email (for the receipt)</span><input id="gcBuyerEmail" type="email" maxlength="254" autocomplete="email" required /></label>
-            <label class="gc-field"><span>Your phone</span><input id="gcBuyerPhone" type="tel" maxlength="40" autocomplete="tel" required /></label>
-          </fieldset>
-          <p class="gc-error" id="gcError" role="alert" hidden></p>
-          <button class="btn btn-primary btn-lg gc-pay" id="gcPay" type="submit">Pay <span id="gcPayAmount">R500</span></button>
-          <p class="gc-small">Secure payment with Yoco. For products only, not services. By buying a gift card you agree to our <a class="link" href="terms.html#clause-12">terms</a>.</p>
-        </form>
-
-        <div class="gc-off" id="gcOff" hidden>
-          <h2>Gift cards are coming soon</h2>
-          <p>Want one now? <a class="link" href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">WhatsApp us</a> and we will set it up for you.</p>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container">
-      <div class="footer-base">
-        <p>&copy; <span data-year>2026</span> Phenomebeauty. All rights reserved.</p>
-        <p><a href="shop.html">Shop</a> · <a href="terms.html">Terms &amp; conditions</a> · <a href="https://wa.me/27745115725" target="_blank" rel="noopener noreferrer">WhatsApp</a></p>
-      </div>
-    </div>
-  </footer>
-
-  <script src="site.js?v=1" defer></script>
-  <script src="track.js?v=2" defer></script>
-  <script src="gift-cards.js?v=4" defer></script>
+  <p><a href="shop.html?segment=gift_cards">Gift cards are in the shop.</a></p>
 </body>
 </html>

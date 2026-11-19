@@ -6,6 +6,16 @@
       "source": "/favicon.ico",
       "destination": "https://iili.io/fpiAjBj.jpg",
       "permanent": false
+    },
+    {
+      "source": "/gift-cards",
+      "destination": "/shop?segment=gift_cards",
+      "permanent": false
+    },
+    {
+      "source": "/gift-cards.html",
+      "destination": "/shop?segment=gift_cards",
+      "permanent": false
     }
   ],
   "headers": [

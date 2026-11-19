@@ -1,10 +1,12 @@
-/* Gift card purchase page. Amounts come from admin → Gift cards (via shop-config).
+/* Gift cards, shown in the shop under the Gift cards pill.
+   The pill only appears while gift cards are on sale (admin → Gift cards, via shop-config).
    buy-gift-card creates the order and the Yoco checkout; the card is emailed once paid. */
 (function () {
   'use strict';
 
   var BASE = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/';
   var $ = function (id) { return document.getElementById(id); };
+  if (!$('giftCardsPane')) return;
   var amount = null;
   var amounts = [];
 
@@ -34,12 +36,12 @@
       b.setAttribute('aria-checked', on ? 'true' : 'false');
     });
     $('gcPreviewAmount').textContent = rand(value);
+    $('gcPayAmount').textContent = rand(value);
     var t = themeFor(value), card = $('gcCard');
     card.style.setProperty('--gc-bg', t.bg);
     card.style.setProperty('--gc-type', t.type);
     card.style.setProperty('--gc-mark', t.mark);
     card.style.setProperty('--gc-edge', t.bg === '#F3F1E8' ? 'rgba(0,0,0,0.14)' : 'transparent');
-    $('gcPayAmount').textContent = rand(value);
   }
 
   function showError(text) {
@@ -48,7 +50,11 @@
   }
 
   function setup(settings) {
-    if (!settings || !settings.enabled) { $('gcOff').hidden = false; return; }
+    var on = !!(settings && settings.enabled);
+    var pill = document.querySelector('[data-segment-btn="gift_cards"]');
+    if (pill) pill.hidden = !on;
+    if (!on) { $('gcOff').hidden = false; $('gcForm').hidden = true; return; }
+    $('gcOff').hidden = true;
     $('gcForm').hidden = false;
     amounts = settings.amounts.slice().sort(function (a, b) { return a - b; });
     $('gcAmounts').innerHTML = amounts.map(function (a) {
@@ -56,12 +62,13 @@
       return '<button type="button" role="radio" aria-checked="false" data-amount="' + a + '">' +
         '<span class="gc-swatch" aria-hidden="true" style="background:linear-gradient(135deg,' + t.bg + ' 50%,' + t.type + ' 50%)"></span>' + rand(a) + '</button>';
     }).join('');
-    $('gcAmounts').addEventListener('click', function (e) {
-      var b = e.target.closest('button[data-amount]');
-      if (b) choose(Number(b.dataset.amount));
-    });
     choose(amounts[Math.min(1, amounts.length - 1)]);
   }
+
+  $('gcAmounts').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-amount]');
+    if (b) choose(Number(b.dataset.amount));
+  });
 
   $('gcForm').addEventListener('input', function () { if (!$('gcError').hidden) showError(''); });
 
@@ -81,9 +88,8 @@
     var email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!data.recipient_name || !email.test(data.recipient_email)) { showError("Add the recipient's name and email address."); return; }
     if (!data.buyer_name || !email.test(data.buyer_email) || !data.buyer_phone) { showError('Add your name, email and phone number.'); return; }
-    var origin = location.origin;
-    data.success_url = origin + '/shop-success.html';
-    data.cancel_url = origin + '/gift-cards.html';
+    data.success_url = location.origin + '/shop-success.html';
+    data.cancel_url = location.origin + '/shop.html?segment=gift_cards';
     var btn = $('gcPay');
     btn.disabled = true;
     btn.textContent = 'Taking you to Yoco…';

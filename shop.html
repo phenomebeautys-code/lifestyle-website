@@ -46,7 +46,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;text=Phenomebauty&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="site.css?v=9" />
-    <link rel="stylesheet" href="shop.css?v=17" />
+    <link rel="stylesheet" href="shop.css?v=18" />
+    <link rel="stylesheet" href="gift-cards.css?v=4" />
 </head>
 <body class="segment-chosen">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -104,6 +105,7 @@
           <button type="button" class="shop-filter-chip" data-segment-btn="all" aria-pressed="true">All</button>
           <button type="button" class="shop-filter-chip" data-segment-btn="self_care" aria-pressed="false">Self-care</button>
           <button type="button" class="shop-filter-chip" data-segment-btn="professional" aria-pressed="false">Professional</button>
+          <button type="button" class="shop-filter-chip" data-segment-btn="gift_cards" aria-pressed="false" hidden>Gift cards</button>
         </div>
         <div class="product-grid" id="productGrid">
           <noscript>
@@ -112,6 +114,52 @@
               Turn on JavaScript, then refresh to browse the collection.
             </div>
           </noscript>
+        </div>
+
+        <!-- Gift cards: shown by the Gift cards pill. Amounts and on/off come from admin → Gift cards. -->
+        <div class="gc" id="giftCardsPane" hidden>
+          <div class="gc-grid">
+            <div class="gc-intro">
+              <div class="gc-card" id="gcCard" aria-hidden="true">
+                <div class="gc-card-in">
+                  <div class="gc-card-top"><span class="gc-card-mark">Phenomebeauty</span><span class="gc-card-amount" id="gcPreviewAmount">R500</span></div>
+                  <div class="gc-card-word"><span>Gift</span><span>Card</span></div>
+                </div>
+              </div>
+              <ul class="gc-points">
+                <li>Emailed within minutes of payment</li>
+                <li>Valid for 3 years</li>
+                <li>Spend it on skincare, wax and professional products in our online shop</li>
+                <li>For products only; not valid for services yet</li>
+              </ul>
+            </div>
+
+            <form class="gc-form" id="gcForm" novalidate hidden>
+              <fieldset>
+                <legend>Amount</legend>
+                <div class="gc-amounts" id="gcAmounts" role="radiogroup" aria-label="Gift card amount"></div>
+              </fieldset>
+              <fieldset>
+                <legend>Who is it for?</legend>
+                <label class="gc-field"><span>Their name</span><input id="gcRecipientName" maxlength="120" autocomplete="off" required /></label>
+                <label class="gc-field"><span>Their email</span><input id="gcRecipientEmail" type="email" maxlength="254" autocomplete="off" required /></label>
+                <label class="gc-field"><span>Message (optional)</span><textarea id="gcMessage" maxlength="500" rows="3" placeholder="Happy birthday! Treat yourself."></textarea></label>
+              </fieldset>
+              <fieldset>
+                <legend>Your details</legend>
+                <label class="gc-field"><span>Your name</span><input id="gcBuyerName" maxlength="120" autocomplete="name" required /></label>
+                <label class="gc-field"><span>Your email (for the receipt)</span><input id="gcBuyerEmail" type="email" maxlength="254" autocomplete="email" required /></label>
+                <label class="gc-field"><span>Your phone</span><input id="gcBuyerPhone" type="tel" maxlength="40" autocomplete="tel" required /></label>
+              </fieldset>
+              <p class="gc-error" id="gcError" role="alert" hidden></p>
+              <button class="btn btn-primary btn-lg gc-pay" id="gcPay" type="submit">Pay <span id="gcPayAmount">R500</span></button>
+              <p class="gc-small">Secure payment with Yoco. For products only, not services. By buying a gift card you agree to our <a class="link" href="terms.html#clause-12">terms</a>.</p>
+            </form>
+
+            <div class="gc-off" id="gcOff" hidden>
+              <h2>Gift cards are coming soon</h2>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -173,7 +221,7 @@
     <button type="button" class="scb-cta" id="scbToggleBtn" onclick="toggleStickyCart()">View cart</button>
   </div>
 
-  <section class="band band--paper" aria-label="Client reviews">
+  <section class="band band--paper" id="reviewsBand" aria-label="Client reviews">
     <div class="container">
     <div class="review-group" data-review-group="self_care">
       <p class="review-group-title">For self-care</p>
@@ -261,7 +309,7 @@
               <li><a href="shop.html?segment=self_care">Self-care</a></li>
               <li><a href="shop.html?segment=professional">Professional</a></li>
               <li><a href="shop.html?cart=open">Your cart</a></li>
-              <li><a href="gift-cards.html">Gift cards</a></li>
+              <li><a href="shop.html?segment=gift_cards">Gift cards</a></li>
             </ul>
           </div>
           <div data-reveal style="--i:1">
@@ -294,7 +342,8 @@
   <script src="site.js?v=1" defer></script>
   <script src="cart-stock.js?v=2" defer></script>
   <script src="free-delivery.js?v=1" defer></script>
-  <script src="shop.js?v=11" defer></script>
+  <script src="shop.js?v=12" defer></script>
+  <script src="gift-cards.js?v=5" defer></script>
   <script src="track.js?v=2" defer></script>
 </body>
 </html>
