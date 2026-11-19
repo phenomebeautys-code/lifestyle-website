@@ -117,6 +117,7 @@
       <div class="sidebar-section-label">Marketing</div>
       <button class="nav-item" data-page="discounts">Discount codes</button>
       <button class="nav-item" data-page="campaigns">Email campaigns</button>
+      <button class="nav-item" data-page="feeds">Product feeds</button>
     </div>
 
     <div class="sidebar-section">
@@ -474,6 +475,37 @@
           <thead><tr><th>When</th><th>Campaign</th><th>To</th><th>Status</th><th>Detail</th></tr></thead>
           <tbody id="campaignLog"></tbody>
         </table></div>
+      </div>
+    </section>
+
+    <!-- PRODUCT FEEDS -->
+    <section class="page" id="page-feeds" aria-label="Product feeds">
+      <div class="page-head">
+        <div>
+          <h2>Product feeds</h2>
+          <p>Your products for Google Shopping. It updates itself from your product list.</p>
+        </div>
+      </div>
+      <div class="panel ops-panel">
+        <div class="panel-title">Google Merchant Center</div>
+        <div class="ops-form mk-form" style="margin-top:12px">
+          <label class="field-label" for="feedUrl">Feed link</label>
+          <div class="ops-row"><input class="field-input" id="feedUrl" readonly /><button class="btn btn-secondary" id="feedCopy">Copy</button></div>
+          <ol class="ops-hint feed-steps">
+            <li>In Google Merchant Center, go to Products, then Add products, then Add from a file, and choose to add a file link.</li>
+            <li>Paste the feed link above and set it to fetch daily.</li>
+            <li>Set up shipping for South Africa in Merchant Center (Shipping and returns). Use your Pudo rates, and your free-delivery amount if it is on.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="panel ops-panel">
+        <div class="panel-title">What Google sees</div>
+        <p class="ops-hint" id="feedSummary"></p>
+        <div class="table-wrap ops-table"><table>
+          <thead><tr><th></th><th>Listing</th><th>Price</th><th>Stock</th></tr></thead>
+          <tbody id="feedBody"></tbody>
+        </table></div>
+        <p class="ops-hint" id="feedSkipped" style="margin-top:12px"></p>
       </div>
     </section>
 

@@ -335,9 +335,38 @@
     }
   }
 
+  /* ── Product feeds ─────────────────────────────────────────────── */
+
+  const FEED_URL = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/product-feed';
+
+  async function loadFeeds() {
+    $('feedUrl').value = FEED_URL;
+    const body = $('feedBody');
+    body.innerHTML = '<tr class="empty-row"><td colspan="4"><span class="spinner"></span>Loading…</td></tr>';
+    try {
+      const res = await fetch(FEED_URL + '?format=json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('The feed could not be loaded.');
+      const { items, skipped } = await res.json();
+      const inStock = items.filter(i => i.availability === 'in_stock').length;
+      $('feedSummary').textContent = `${items.length} listing${items.length === 1 ? '' : 's'} · ${inStock} in stock · ${items.length - inStock} out of stock`;
+      body.innerHTML = items.length ? items.map(i => `<tr>
+        <td><img class="feed-thumb" src="${esc(i.image_link)}" alt="" loading="lazy" /></td>
+        <td><div style="font-weight:600;color:var(--accent-strong)">${esc(i.title)}</div><div class="ops-hint">${esc(i.product_type)} · ${esc(i.id)}</div></td>
+        <td style="white-space:nowrap">${esc(i.price.replace(' ZAR', '').replace(/^/, 'R'))}</td>
+        <td><span class="badge ${i.availability === 'in_stock' ? 'badge-paid' : 'badge-unpaid'}">${i.availability === 'in_stock' ? 'In stock' : 'Out of stock'}</span></td>
+      </tr>`).join('') : '<tr class="empty-row"><td colspan="4">No products can be listed yet.</td></tr>';
+      $('feedSkipped').innerHTML = skipped.length
+        ? '<strong>Not listed:</strong> ' + skipped.map(x => `${esc(x.name)} (${esc(x.reason.toLowerCase())})`).join(', ') + '. They are added automatically once they are available with a price.'
+        : '';
+    } catch (err) {
+      body.innerHTML = `<tr class="empty-row"><td colspan="4">${esc(err.message)}</td></tr>`;
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     $('newDiscountBtn').addEventListener('click', () => openDiscount(null));
+    $('feedCopy').addEventListener('click', () => copy(FEED_URL));
   });
 
-  window.ShopAdminMarketing = { loadDiscounts, loadCampaigns };
+  window.ShopAdminMarketing = { loadDiscounts, loadCampaigns, loadFeeds };
 })();

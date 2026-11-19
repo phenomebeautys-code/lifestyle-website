@@ -97,6 +97,7 @@ const PAGE_TITLES = {
   settings: 'Settings',
   discounts: 'Discount codes',
   campaigns: 'Email campaigns',
+  feeds: 'Product feeds',
   abandoned: 'Abandoned checkouts',
   activity: 'Activity',
   account: 'Account',
@@ -574,6 +575,7 @@ function navTo(page, btn) {
   if (window.ShopAdminMarketing) {
     if (page === 'discounts') window.ShopAdminMarketing.loadDiscounts();
     if (page === 'campaigns') window.ShopAdminMarketing.loadCampaigns();
+    if (page === 'feeds') window.ShopAdminMarketing.loadFeeds();
   }
 
   if (page === 'settings' && window.ShopAdminSettings) {

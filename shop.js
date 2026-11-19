@@ -1078,6 +1078,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   fetchProducts().then(() => {
     /* ?product=ID opens that product's detail panel (homepage product cards). */
-    if (linkedProduct && findProduct(linkedProduct)) openProductDetail(linkedProduct);
+    if (linkedProduct && findProduct(linkedProduct)) {
+      openProductDetail(linkedProduct);
+      // &variant= (from the Google product feed) selects that scent or type in the panel.
+      const linkedVariant = params.get('variant');
+      if (linkedVariant) {
+        const col = [...document.querySelectorAll('#pdpPanel .pdp-thumb-col')].find(c => c.dataset.variant === linkedVariant);
+        if (col && typeof pdpSelectThumbCol === 'function') pdpSelectThumbCol(col, linkedProduct);
+      }
+    }
   });
 });
