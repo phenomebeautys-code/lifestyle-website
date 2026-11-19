@@ -149,7 +149,9 @@
 
     const expectedFee = expectedFeeForBox(result.box, order.delivery_method || 'door');
     const chargedFee = order.delivery_fee != null ? Number(order.delivery_fee) : null;
-    const feeMismatch = expectedFee != null && chargedFee != null && Math.abs(expectedFee - chargedFee) > 0.5;
+    // Free delivery over the owner's threshold is recorded on the order; R0 is then correct.
+    const freeDelivery = order.delivery_meta && order.delivery_meta.free_delivery === true;
+    const feeMismatch = !freeDelivery && expectedFee != null && chargedFee != null && Math.abs(expectedFee - chargedFee) > 0.5;
 
     let title = `Recommended: ${result.box} box — ${result.totalWeightKg}kg, tallest item ${result.maxHeightCm}cm`;
     if (expectedFee != null) title += ` — expected fee R${expectedFee.toFixed(2)}`;

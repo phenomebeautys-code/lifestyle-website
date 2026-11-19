@@ -94,6 +94,7 @@ const PAGE_TITLES = {
   materials: 'Materials & Recipes',
   customers: 'Customers',
   analytics: 'Analytics',
+  settings: 'Settings',
   abandoned: 'Abandoned checkouts',
   activity: 'Activity',
   account: 'Account',
@@ -566,6 +567,10 @@ function navTo(page, btn) {
     if (page === 'customers') window.ShopAdminOps.loadCustomers();
     if (page === 'abandoned') window.ShopAdminOps.loadAbandoned();
     if (page === 'activity') window.ShopAdminOps.loadActivity();
+  }
+
+  if (page === 'settings' && window.ShopAdminSettings) {
+    window.ShopAdminSettings.load();
   }
 
   if (page === 'analytics' && window.ShopAdminAnalytics) {

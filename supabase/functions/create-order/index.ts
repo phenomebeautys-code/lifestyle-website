@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
+import { loadFreeDelivery, qualifiesForFreeDelivery } from '../_shared/free-delivery.mjs';
 
 import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 Deno.serve(async req => {
@@ -54,14 +55,17 @@ Deno.serve(async req => {
     if (quote.oversized || rawFee == null || !Number.isFinite(fee) || fee < 0) {
       return respond({error: 'This cart cannot use a standard delivery rate. Please contact the shop.'}, 409);
     }
-    const feeCents = Math.round(fee * 100);
-    if (body.delivery_fee != null && (!Number.isFinite(Number(body.delivery_fee)) || Math.round(Number(body.delivery_fee) * 100) !== feeCents)) {
+    // Free delivery over the owner's threshold, worked out from the trusted subtotal.
+    const freeDelivery = qualifiesForFreeDelivery(trusted.subtotalCents, delivery_method, await loadFreeDelivery(supabase));
+    const feeCents = freeDelivery ? 0 : Math.round(fee * 100);
+    // A browser that missed the free-delivery setting shows the normal fee; charging less than shown is fine.
+    if (!freeDelivery && body.delivery_fee != null && (!Number.isFinite(Number(body.delivery_fee)) || Math.round(Number(body.delivery_fee) * 100) !== feeCents)) {
       return respond({error: 'Delivery rate changed. Refresh your delivery selection before paying.'}, 409);
     }
     const instructions = typeof body.special_instructions === 'string' ? body.special_instructions : '';
     const deliveryMeta = delivery_method === 'door'
-      ? {...delivery_address, special_instructions: instructions}
-      : {locker_id, locker_name, locker_address, special_instructions: instructions};
+      ? {...delivery_address, special_instructions: instructions, free_delivery: freeDelivery}
+      : {locker_id, locker_name, locker_address, special_instructions: instructions, free_delivery: freeDelivery};
     const {data: order, error} = await supabase.from('shop_orders').insert({
       customer_name: customer.name.trim(), customer_email: customer.email.trim(), customer_phone: customer.phone.trim(),
       delivery_address: address, delivery_method, delivery_meta: deliveryMeta,

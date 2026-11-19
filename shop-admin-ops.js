@@ -294,7 +294,7 @@
     update_settings: 'Changed reorder settings', initial_stock: 'Set opening stock', receive_stock: 'Received stock',
     adjust_stock: 'Adjusted stock', upsert_material: 'Saved a material', delete_material: 'Deleted a material',
     save_conversion: 'Saved a conversion', delete_conversion: 'Deleted a conversion', run_conversion: 'Ran a conversion',
-    save_recipe: 'Saved a recipe',
+    save_recipe: 'Saved a recipe', save_free_delivery: 'Changed free delivery',
   };
 
   function describe(a) {
@@ -302,6 +302,7 @@
     if (a.action === 'update_status' && d.to) return `${d.from} → ${d.to}`;
     if (a.action === 'record_refund' && d.amount != null) return `${money(d.amount)}${d.reason ? ' · ' + d.reason : ''}`;
     if (a.action === 'cancel_order' && d.reason) return d.reason;
+    if (a.action === 'save_free_delivery') return d.enabled ? `On from ${money(d.threshold)} (${(d.methods || []).join(' and ')})` : 'Off';
     if (d.name) return d.name;
     if (d.tags) return d.tags.join(', ') || 'cleared';
     if (d.tracking_ref) return d.tracking_ref;

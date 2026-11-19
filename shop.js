@@ -252,6 +252,7 @@ function renderCartDrawer() {
   }
   if (footerEl) footerEl.style.display = '';
   if (subtotalEl) subtotalEl.textContent = 'R' + cartTotal().toFixed(2);
+  if (window.PBFreeDelivery) PBFreeDelivery.renderNote(document.getElementById('deliveryNote'), cartTotal());
   itemsEl.innerHTML = '';
   const blocked = {};
   cartBlocked().forEach(b => { blocked[b.index] = b.reason; });
@@ -1033,6 +1034,7 @@ async function loadSegmentSelector() {
 /* —— Init ———————————————————————————————————————————————————— */
 
 document.addEventListener('DOMContentLoaded', async function() {
+  if (window.PBFreeDelivery) PBFreeDelivery.onReady(() => { if (cart.length) renderCartDrawer(); });
   /* Re-persist cart immediately — guards against sessionStorage being wiped
      when a returning user navigates back after an incomplete checkout.
      localStorage still holds the cart; this restores sessionStorage so

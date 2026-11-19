@@ -46,7 +46,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&amp;text=Phenomebauty&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="site.css?v=9" />
-    <link rel="stylesheet" href="shop.css?v=16" />
+    <link rel="stylesheet" href="shop.css?v=17" />
 </head>
 <body class="segment-chosen">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -145,7 +145,7 @@
         <span>Subtotal</span>
         <span id="subtotalDisplay"></span>
       </div>
-      <p class="delivery-note">Delivery calculated at checkout</p>
+      <p class="delivery-note" id="deliveryNote" aria-live="polite">Delivery calculated at checkout</p>
       <div class="cart-footer-ctas">
         <button class="continue-shopping" onclick="closeCart()">Continue shopping</button>
         <button class="btn btn-primary cart-primary-cta" onclick="goToCheckout()">Checkout</button>
@@ -292,7 +292,8 @@
 
   <script src="site.js?v=1" defer></script>
   <script src="cart-stock.js?v=2" defer></script>
-  <script src="shop.js?v=9" defer></script>
+  <script src="free-delivery.js?v=1" defer></script>
+  <script src="shop.js?v=10" defer></script>
   <script src="track.js?v=1" defer></script>
 </body>
 </html>

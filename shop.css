@@ -496,3 +496,9 @@ body.cart-bar-active { padding-bottom: var(--cart-bar-h); }
 /* A sheet band overlaps the band above it. As the first group it must not overlap the filter pills. */
 .collection--body.band--sheet:first-child,
 .collection--professional.band--sheet:first-child { margin-top: 0; padding-top: var(--sp-lg); }
+
+/* Free-delivery progress in the cart drawer (amount set in admin → Settings). */
+.delivery-note.has-free { color: var(--ink); }
+.delivery-note .free-bar { display: block; height: 6px; margin-top: 8px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+.delivery-note .free-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--ink); transition: width 0.4s ease; }
+@media (prefers-reduced-motion: reduce) { .delivery-note .free-bar > span { transition: none; } }

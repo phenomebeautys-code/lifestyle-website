@@ -2,6 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { logActivity, ownerExists, resolveAdmin } from '../_shared/admin-auth.ts';
 import { corsOrigin } from '../_shared/site-origin.ts';
+import { loadFreeDelivery, normaliseFreeDelivery } from '../_shared/free-delivery.mjs';
 
 /**
  * shop-admin: back end for shop-admin.html.
@@ -502,6 +503,26 @@ Deno.serve(async (req: Request) => {
     if (error) return json({ error: error.message }, 500, cors);
     await logActivity(supabase, actor, 'save_customer', 'customer', email, { tags });
     return json({ ok: true }, 200, cors);
+  }
+
+  /* ── Shop settings ──────────────────────────────────────────────── */
+
+  if (action === 'get_settings') {
+    return json({ free_delivery: await loadFreeDelivery(supabase) }, 200, cors);
+  }
+
+  if (action === 'save_free_delivery') {
+    const input = body.free_delivery && typeof body.free_delivery === 'object' ? body.free_delivery : {};
+    const wantOn = input.enabled === true;
+    const rule = normaliseFreeDelivery({ ...input, enabled: wantOn });
+    if (wantOn && !rule.enabled) {
+      return json({ error: 'Enter an amount between R1 and R100 000 and choose at least one delivery method.' }, 400, cors);
+    }
+    const { error } = await supabase.from('shop_settings')
+      .upsert({ key: 'free_delivery', value: rule, updated_at: new Date().toISOString(), updated_by: actor }, { onConflict: 'key' });
+    if (error) return json({ error: error.message }, 500, cors);
+    await logActivity(supabase, actor, 'save_free_delivery', 'setting', 'free_delivery', rule);
+    return json({ free_delivery: rule }, 200, cors);
   }
 
   /* ── Sales analytics ────────────────────────────────────────────── */

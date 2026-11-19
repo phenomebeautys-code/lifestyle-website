@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CartError, trustedCart } from './trusted-cart.mjs';
+import { normaliseFreeDelivery, qualifiesForFreeDelivery } from './free-delivery.mjs';
 const wax = {id:'film-wax-collection',name:'Film Wax',price:200,active:true,availability:'available',variants:[{name:'Type: Onyx',in_stock:true}],sizes:[{name:'500g',price:200},{name:'500g x 2',price:360}]};
 const item = {productId:wax.id,qty:1,variant:'Type: Onyx',size:'500g x 2',price:360};
 const customer = {name:'Test Buyer',email:'buyer@example.com',phone:'0800000000'};
@@ -34,7 +35,8 @@ function harness(kind, overrides={}) {
   const source=readFileSync(new URL(path,import.meta.url),'utf8').replace(/^import .*;\n/gm,'');
   const origin=readFileSync(new URL('./site-origin.ts',import.meta.url),'utf8').replace(/^export /gm,'');
   const {corsOrigin,isSiteOrigin}=new Function(`${origin}\nreturn {corsOrigin,isSiteOrigin};`)();
-  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,deno,fetchMock);
+  const loadFreeDelivery=async()=>normaliseFreeDelivery(overrides.freeRule);
+  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','loadFreeDelivery','qualifiesForFreeDelivery','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,loadFreeDelivery,qualifiesForFreeDelivery,deno,fetchMock);
   return {calls,run(body=kind==='order'?requestBody:{order_id:'test-order',success_url:'https://www.phenomebeauty.co.za/shop-success.html',cancel_url:'https://www.phenomebeauty.co.za/shop.html'},method='POST'){
     return handler(new Request('https://example.com',{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})}));
   }};
@@ -88,4 +90,46 @@ test('payment rejects external return URLs before provider call',async()=>{
 });
 test('handlers enforce methods and allow preflight',async()=>{
   for(const kind of ['order','payment']) {const h=harness(kind);assert.equal((await h.run(null,'GET')).status,405);assert.equal((await h.run(null,'OPTIONS')).status,204);}
+});
+
+const freeOn={enabled:true,threshold:300,methods:['locker','door']};
+test('free delivery: qualifying order pays no delivery and records it',async()=>{
+  const h=harness('order',{freeRule:freeOn});const response=await h.run({...requestBody,delivery_fee:0});assert.equal(response.status,200);
+  const row=h.calls.inserted[0];assert.equal(row.delivery_fee,0);assert.equal(row.total_amount,360);assert.equal(row.delivery_meta.free_delivery,true);
+});
+test('free delivery: browser that showed the normal fee is still given free delivery',async()=>{
+  const h=harness('order',{freeRule:freeOn});assert.equal((await h.run()).status,200);assert.equal(h.calls.inserted[0].total_amount,360);
+});
+test('free delivery: below the amount pays the normal fee',async()=>{
+  const h=harness('order',{freeRule:{...freeOn,threshold:361}});assert.equal((await h.run()).status,200);
+  assert.equal(h.calls.inserted[0].delivery_fee,59);assert.equal(h.calls.inserted[0].delivery_meta.free_delivery,false);
+});
+test('free delivery: browser claiming free below the amount is refused',async()=>{
+  const h=harness('order',{freeRule:{...freeOn,threshold:361}});assert.equal((await h.run({...requestBody,delivery_fee:0})).status,409);assert.equal(h.calls.inserted.length,0);
+});
+test('free delivery: only the chosen delivery methods qualify',async()=>{
+  const h=harness('order',{freeRule:{...freeOn,methods:['locker']}});assert.equal((await h.run()).status,200);assert.equal(h.calls.inserted[0].delivery_fee,59);
+  const l=harness('order',{freeRule:{...freeOn,methods:['locker']}});
+  assert.equal((await l.run({...requestBody,delivery_method:'locker',delivery_fee:0,locker_id:'L1',locker_name:'Locker',locker_address:'Somewhere'})).status,200);assert.equal(l.calls.inserted[0].delivery_fee,0);
+});
+test('free delivery: switched off means normal fee',async()=>{
+  const h=harness('order',{freeRule:{...freeOn,enabled:false}});assert.equal((await h.run()).status,200);assert.equal(h.calls.inserted[0].delivery_fee,59);
+});
+test('free delivery: a forged flag in the address is overwritten by the server',async()=>{
+  const h=harness('order');assert.equal((await h.run({...requestBody,delivery_address:{...address,free_delivery:true}})).status,200);
+  assert.equal(h.calls.inserted[0].delivery_meta.free_delivery,false);assert.equal(h.calls.inserted[0].delivery_fee,59);
+});
+test('free delivery: payment charges the recorded free order without the delivery fee',async()=>{
+  const h=harness('payment',{order:{delivery_fee:0,total_amount:360,delivery_meta:{free_delivery:true}}});assert.equal((await h.run()).status,200);
+  assert.equal(h.calls.payments[0].amount,36000);
+});
+test('free delivery: payment refuses a zero-fee order the server did not mark free',async()=>{
+  const h=harness('payment',{order:{delivery_fee:0,total_amount:360,delivery_meta:{}}});assert.equal((await h.run()).status,409);assert.equal(h.calls.payments.length,0);
+});
+test('free delivery rule: malformed settings are treated as off',()=>{
+  for(const bad of [null,{enabled:true},{enabled:true,threshold:-5,methods:['door']},{enabled:true,threshold:500,methods:['drone']},{enabled:'yes',threshold:500,methods:['door']}]) {
+    assert.equal(normaliseFreeDelivery(bad).enabled,false,JSON.stringify(bad));
+  }
+  assert.equal(qualifiesForFreeDelivery(50000,'door',normaliseFreeDelivery({enabled:true,threshold:500,methods:['door']})),true);
+  assert.equal(qualifiesForFreeDelivery(49999,'door',normaliseFreeDelivery({enabled:true,threshold:500,methods:['door']})),false);
 });

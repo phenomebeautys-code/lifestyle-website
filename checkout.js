@@ -43,7 +43,11 @@ let _mapsLoaded  = false;
 let _mapsLoading = false;
 
 /* ── Delivery fee resolver ── */
+function freeFor(method) {
+  return !!(window.PBFreeDelivery && PBFreeDelivery.qualifies(cartSubtotal(), method));
+}
 function deliveryFee() {
+  if (freeFor(deliveryMethod)) return 0;
   if (shippingQuote) {
     const fee = deliveryMethod === 'locker'
       ? Number(shippingQuote.locker_fee)
@@ -133,6 +137,9 @@ async function checkStock() {
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.PBFreeDelivery) PBFreeDelivery.onReady(() => {
+    try { updateDeliveryPriceDisplay(); renderTotals(); renderMobileSummary(); } catch (e) { /* page not ready */ }
+  });
   cart = loadCart();
   if (!cart.length) { showEmpty(); return; }
   renderSidebar();
@@ -389,10 +396,12 @@ function calcDelivery() {
 }
 function updateDeliveryPriceDisplay() {
   const sub = cartSubtotal();
-  const doorLabel   = shippingQuoteLoading ? 'Calculating...'
+  const doorLabel   = freeFor('door') ? 'Free'
+    : shippingQuoteLoading ? 'Calculating...'
     : shippingQuote ? 'R' + Number(shippingQuote.door_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : (sub >= 1500 ? 'Free' : 'R' + FALLBACK_DOOR_FEE);
-  const lockerLabel = shippingQuoteLoading ? 'Calculating...'
+    : 'R' + FALLBACK_DOOR_FEE;
+  const lockerLabel = freeFor('locker') ? 'Free'
+    : shippingQuoteLoading ? 'Calculating...'
     : shippingQuote ? 'R' + Number(shippingQuote.locker_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : 'R' + FALLBACK_LOCKER_FEE;
   const dp = document.getElementById('door-price-display');
@@ -729,7 +738,7 @@ function renderLockers(data) {
           </div>
         </div>
         <div class="locker-cta">
-          <span style="font-size:.82rem;color:var(--text-muted);">R${shippingQuote ? Number(shippingQuote.locker_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : FALLBACK_LOCKER_FEE} delivery</span>
+          <span style="font-size:.82rem;color:var(--text-muted);">${freeFor('locker') ? 'Free delivery' : 'R' + (shippingQuote ? Number(shippingQuote.locker_fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : FALLBACK_LOCKER_FEE) + ' delivery'}</span>
           <button type="button" class="mini-btn" onclick="selectLockerByIndex(${idx})">Select this locker</button>
         </div>
       </div>`;

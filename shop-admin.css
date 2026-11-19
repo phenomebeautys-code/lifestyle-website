@@ -1123,3 +1123,8 @@ textarea.field-input { resize: vertical; min-height: 90px; font-family: inherit;
 .an-bar-track { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.05); overflow: hidden; }
 .an-bar { height: 100%; border-radius: 5px; background: var(--accent-strong); }
 #page-analytics code { font-size: 0.72rem; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+
+/* ─── Settings ──────────────────────────────────────────────────── */
+.ops-switch { display: flex; align-items: center; gap: 10px; font-size: 0.86rem; cursor: pointer; }
+.ops-switch input { width: 18px; height: 18px; accent-color: var(--accent-strong); }
+#fdFields.is-off { opacity: 0.45; pointer-events: none; }

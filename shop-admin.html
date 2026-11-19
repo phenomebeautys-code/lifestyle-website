@@ -115,6 +115,7 @@
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Admin</div>
+      <button class="nav-item" data-page="settings">Settings</button>
       <button class="nav-item" data-page="activity">Activity</button>
       <button class="nav-item" data-page="account">
         Account
@@ -430,6 +431,32 @@
           <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead>
           <tbody id="activityBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="page" id="page-settings" aria-label="Settings">
+      <div class="page-head">
+        <div>
+          <h2>Settings</h2>
+          <p>Shop rules that apply at checkout</p>
+        </div>
+      </div>
+      <div class="panel ops-panel">
+        <div class="panel-title">Free delivery</div>
+        <p class="ops-help" id="fdSummary">Loading…</p>
+        <div class="ops-form">
+          <label class="ops-switch"><input type="checkbox" id="fdEnabled" /> <span>Offer free delivery over a set amount</span></label>
+          <div id="fdFields" class="ops-form">
+            <label class="field-label" for="fdThreshold">Order amount for free delivery (R, products before delivery)</label>
+            <input class="field-input" id="fdThreshold" type="number" min="1" max="100000" step="1" placeholder="e.g. 800" />
+            <div class="field-label">Applies to</div>
+            <label class="ops-switch"><input type="checkbox" id="fdLocker" /> <span>Pudo locker delivery</span></label>
+            <label class="ops-switch"><input type="checkbox" id="fdDoor" /> <span>Door delivery</span></label>
+          </div>
+          <p class="ops-hint">The cart shows shoppers how much more they need to spend. Pudo still charges you for delivery, so set an amount that covers it.</p>
+          <button class="btn btn-primary" id="fdSave">Save</button>
+        </div>
       </div>
     </section>
 
@@ -881,6 +908,7 @@
 <script src="shop-admin-account.js"></script>
 <script src="shop-admin-ops.js"></script>
 <script src="shop-admin-analytics.js"></script>
+<script src="shop-admin-settings.js"></script>
 <script src="shop-admin.js"></script>
 
 </body>
