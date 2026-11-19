@@ -114,6 +114,12 @@
     </div>
 
     <div class="sidebar-section">
+      <div class="sidebar-section-label">Marketing</div>
+      <button class="nav-item" data-page="discounts">Discount codes</button>
+      <button class="nav-item" data-page="campaigns">Email campaigns</button>
+    </div>
+
+    <div class="sidebar-section">
       <div class="sidebar-section-label">Admin</div>
       <button class="nav-item" data-page="settings">Settings</button>
       <button class="nav-item" data-page="activity">Activity</button>
@@ -431,6 +437,43 @@
           <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead>
           <tbody id="activityBody"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- DISCOUNT CODES -->
+    <section class="page" id="page-discounts" aria-label="Discount codes">
+      <div class="page-head">
+        <div>
+          <h2>Discount codes</h2>
+          <p>Codes for Instagram, WhatsApp, emails and loyal customers. Shoppers enter them at checkout, or use a code link.</p>
+        </div>
+        <button class="btn btn-primary" id="newDiscountBtn">New code</button>
+      </div>
+      <div class="table-wrap ops-table" role="region" aria-label="Discount codes">
+        <table>
+          <thead><tr><th>Code</th><th>Offer</th><th>Conditions</th><th>Paid uses</th><th>Sales</th><th>Status</th><th></th></tr></thead>
+          <tbody id="discountsBody"></tbody>
+        </table>
+      </div>
+      <p class="ops-hint" style="margin-top:12px">Copy link gives you a shop link that applies the code for the shopper, e.g. phenomebeauty.co.za/shop?code=WELCOME10.</p>
+    </section>
+
+    <!-- EMAIL CAMPAIGNS -->
+    <section class="page" id="page-campaigns" aria-label="Email campaigns">
+      <div class="page-head">
+        <div>
+          <h2>Email campaigns</h2>
+          <p>Automatic emails to customers after they buy. Every email has an unsubscribe link.</p>
+        </div>
+      </div>
+      <div id="campaignCards" class="an-grid"></div>
+      <div class="panel ops-panel">
+        <div class="panel-title">Send log</div>
+        <p class="ops-hint" id="campaignOptouts"></p>
+        <div class="table-wrap ops-table"><table>
+          <thead><tr><th>When</th><th>Campaign</th><th>To</th><th>Status</th><th>Detail</th></tr></thead>
+          <tbody id="campaignLog"></tbody>
+        </table></div>
       </div>
     </section>
 
@@ -909,6 +952,7 @@
 <script src="shop-admin-ops.js"></script>
 <script src="shop-admin-analytics.js"></script>
 <script src="shop-admin-settings.js"></script>
+<script src="shop-admin-marketing.js"></script>
 <script src="shop-admin.js"></script>
 
 </body>

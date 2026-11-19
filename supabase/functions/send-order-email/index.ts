@@ -12,6 +12,8 @@
  *   RESEND_API_KEY             — re_... key scoped to phenomebeauty.co.za
  *   SUPABASE_URL               — injected automatically
  *   SUPABASE_SERVICE_ROLE_KEY  — injected automatically
+ *
+ * Synced from live version 26, plus discount and free-delivery lines in the totals.
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -78,6 +80,12 @@ function shortId(id: string): string {
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
 }
+function hasDiscount(order: Record<string, any>): boolean {
+  return Number(order.discount_amount || 0) > 0;
+}
+function deliveryText(order: Record<string, any>): string {
+  return order.delivery_meta?.free_delivery === true && Number(order.delivery_fee) === 0 ? 'Free' : fmt(order.delivery_fee);
+}
 
 /* ── Delivery label ────────────────────────────────────────────────────────── */
 function deliveryLabel(order: Record<string, any>): { method: string; address: string } {
@@ -120,8 +128,11 @@ function totalsHTML(order: Record<string, any>): string {
   if (order.subtotal != null) {
     html += `<div style="${rowStyle}"><span>Subtotal</span><span style="${valStyle}">${fmt(order.subtotal)}</span></div>`;
   }
+  if (hasDiscount(order)) {
+    html += `<div style="${rowStyle}"><span>Discount${order.discount_code ? ' (' + esc(order.discount_code) + ')' : ''}</span><span style="${valStyle}">&minus;${fmt(order.discount_amount)}</span></div>`;
+  }
   if (order.delivery_fee != null) {
-    html += `<div style="${rowStyle}"><span>Delivery</span><span style="${valStyle}">${fmt(order.delivery_fee)}</span></div>`;
+    html += `<div style="${rowStyle}"><span>Delivery</span><span style="${valStyle}">${deliveryText(order)}</span></div>`;
   }
   html += `<div style="${grandRow}"><span>Total</span><span style="${grandVal}">${fmt(order.total_amount)}</span></div>`;
   return html;
@@ -186,7 +197,7 @@ function buildOrderPlaced(order: Record<string, any>): { subject: string; html: 
     </div>` : ''}
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
-      Questions about your order? 
+      Questions about your order?
       <a href="${WA_LINK}" style="color:#b8a98a">Contact us on WhatsApp</a>.
     </p>
 
@@ -305,7 +316,8 @@ function buildAdminPaymentNotification(order: Record<string, any>): { subject: s
     <tr><td>Delivery</td><td>${esc(delivery.method)}${delivery.address ? '<br>' + esc(delivery.address) : ''}</td></tr>
     <tr><td>Items</td><td>${itemLines || '—'}</td></tr>
     ${order.subtotal   != null ? `<tr><td>Subtotal</td><td>${fmt(order.subtotal)}</td></tr>` : ''}
-    ${order.delivery_fee != null ? `<tr><td>Delivery fee</td><td>${fmt(order.delivery_fee)}</td></tr>` : ''}
+    ${hasDiscount(order) ? `<tr><td>Discount</td><td>&minus;${fmt(order.discount_amount)}${order.discount_code ? ' (code ' + esc(order.discount_code) + ')' : ''}</td></tr>` : ''}
+    ${order.delivery_fee != null ? `<tr><td>Delivery fee</td><td>${deliveryText(order)}</td></tr>` : ''}
     <tr><td>Total</td><td class="total">${fmt(order.total_amount)}</td></tr>
     ${order.is_gift ? `<tr><td>Gift order</td><td>${order.gift_message ? '&ldquo;' + esc(order.gift_message) + '&rdquo;' : 'Yes (no message)'}</td></tr>` : ''}
     ${order.notes ? `<tr><td>Notes</td><td>${esc(order.notes)}</td></tr>` : ''}
@@ -428,7 +440,10 @@ async function sendEmail(opts: {
   html: string;
 }): Promise<void> {
   const apiKey = Deno.env.get('RESEND_API_KEY');
-  if (!apiKey) { console.error('[send-order-email] RESEND_API_KEY not set'); return; }
+  if (!apiKey) {
+    console.error('[send-order-email] RESEND_API_KEY not set');
+    throw new Error('Email provider is not configured');
+  }
 
   const payload: Record<string, unknown> = {
     from:     FROM,
@@ -446,11 +461,12 @@ async function sendEmail(opts: {
 
   if (!res.ok) {
     const err = await res.text();
-    console.error('[send-order-email] Resend error:', res.status, err);
-  } else {
-    const data = await res.json();
-    console.log('[send-order-email] Sent OK:', data.id);
+    console.error('[send-order-email] Resend rejected email:', res.status, err);
+    throw new Error(`Email provider rejected request (${res.status})`);
   }
+
+  const data = await res.json();
+  console.log('[send-order-email] Accepted by Resend:', data.id);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -459,6 +475,11 @@ async function sendEmail(opts: {
 Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
+  }
+
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+  if (!serviceKey || req.headers.get('authorization') !== `Bearer ${serviceKey}`) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
 
   let body: { type?: string; order_id?: string; status?: string };
@@ -479,7 +500,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: order, error } = await supabase
     .from('shop_orders')
-    .select('id, created_at, paid_at, customer_name, customer_email, customer_phone, delivery_method, delivery_address, delivery_meta, delivery_fee, items, subtotal, total_amount, payment_status, status, is_gift, gift_message, notes')
+    .select('id, created_at, paid_at, payment_status, payment_id, yoco_checkout_id, customer_name, customer_email, customer_phone, delivery_method, delivery_address, delivery_meta, delivery_fee, discount_code, discount_amount, items, subtotal, total_amount, payment_status, status, is_gift, gift_message, notes')
     .eq('id', order_id)
     .single();
 
@@ -488,32 +509,93 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Order not found' }), { status: 404 });
   }
 
-  if (!order.customer_email) {
+  if (!order.customer_email && type !== 'payment_received') {
     console.error('[send-order-email] Order has no customer email:', order_id);
     return new Response(JSON.stringify({ error: 'No customer email' }), { status: 422 });
   }
 
   try {
     if (type === 'order_placed') {
+      if (order.payment_status !== 'unpaid') {
+        return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'order_not_unpaid' }), { status: 200 });
+      }
       const { subject, html } = buildOrderPlaced(order);
-      await sendEmail({ to: order.customer_email, subject, html });
+      await sendEmail({ to: order.customer_email, subject: `Order received, payment pending — #${shortId(order.id)}`, html });
+
+    } else if (type === 'payment_reminder') {
+      if (order.payment_status !== 'unpaid' || order.status !== 'pending' ||
+          Date.now() - new Date(order.created_at).getTime() < 30 * 60 * 1000) {
+        return new Response(JSON.stringify({ ok: true, skipped: true, reason: 'order_not_eligible_for_reminder' }), { status: 200 });
+      }
+      const base = buildOrderPlaced(order);
+      const html = base.html
+        .replace('Order received.', 'A quick payment reminder.')
+        .replace("Thank you for choosing PhenomeBeauty.<br><br>\n      We've received your order and it is currently awaiting payment confirmation. Once payment has been received, we'll begin preparing your order with care.",
+          "This is a friendly reminder that payment for this order is still outstanding.<br><br>\n      If you have already paid, please contact us so we can check your payment status. We will begin preparing your order once payment is confirmed.");
+      await sendEmail({ to: order.customer_email, subject: `Payment reminder: order #${shortId(order.id)} is still awaiting payment`, html });
 
     } else if (type === 'payment_received') {
-    /* Customer email — branded */
-    const { subject, html } = buildPaymentReceived(order);
-    await sendEmail({ to: order.customer_email, subject, html });
-    
-    /* 300ms delay before admin notification */
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    /* Admin system notification — separate plain email */
-    const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
-    await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+      if (order.payment_status !== 'paid' || !order.paid_at || !order.payment_id || !order.yoco_checkout_id) {
+        console.error('[send-order-email] Blocked payment confirmation without recorded payment evidence:', order.id);
+        return new Response(JSON.stringify({ error: 'Payment is not verified for this order' }), { status: 409 });
+      }
+
+      let customerEmailSent = false;
+      let customerEmailError: string | null = null;
+      if (order.customer_email) {
+        try {
+          const { subject, html } = buildPaymentReceived(order);
+          await sendEmail({ to: order.customer_email, subject, html });
+          customerEmailSent = true;
+        } catch (sendErr) {
+          customerEmailError = String(sendErr);
+          console.error('[send-order-email] Customer payment confirmation failed; continuing to admin notification:', sendErr);
+        }
+      } else {
+        customerEmailError = 'No customer email';
+        console.error('[send-order-email] No customer email; continuing to admin notification:', order.id);
+      }
+
+      /* Admin alert is attempted independently so a customer-address failure cannot suppress it. */
+      await new Promise(resolve => setTimeout(resolve, 300));
+      let adminEmailSent = false;
+      let adminEmailError: string | null = null;
+      try {
+        const { subject: adminSubject, html: adminHtml } = buildAdminPaymentNotification(order);
+        await sendEmail({ to: ADMIN_EMAIL, subject: adminSubject, html: adminHtml });
+        adminEmailSent = true;
+      } catch (sendErr) {
+        adminEmailError = String(sendErr);
+        console.error('[send-order-email] Admin payment notification failed:', sendErr);
+      }
+
+      if (!adminEmailSent) {
+        return new Response(JSON.stringify({
+          error: 'Admin payment notification failed',
+          customer_email_sent: customerEmailSent,
+          customer_email_error: customerEmailError,
+          admin_email_sent: false,
+          admin_email_error: adminEmailError,
+        }), { status: 502 });
+      }
+
+      return new Response(JSON.stringify({
+        ok: true,
+        customer_email_sent: customerEmailSent,
+        ...(customerEmailError ? { customer_email_error: customerEmailError } : {}),
+        admin_email_sent: true,
+      }), { status: 200 });
 
     } else if (type === 'status_update') {
       const resolvedStatus = status || order.status;
       if (!['dispatched', 'delivered'].includes(resolvedStatus)) {
         return new Response(JSON.stringify({ ok: true, skipped: true }), { status: 200 });
+      }
+      if (order.payment_status !== 'paid') {
+        return new Response(JSON.stringify({ error: 'Status notifications require a paid order' }), { status: 409 });
+      }
+      if (resolvedStatus !== order.status) {
+        return new Response(JSON.stringify({ error: 'Requested status does not match the saved order status' }), { status: 409 });
       }
       const { subject, html } = buildStatusUpdate(order, resolvedStatus);
       await sendEmail({ to: order.customer_email, subject, html });

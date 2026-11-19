@@ -102,6 +102,7 @@
         ${itemsHTML || '<div style="color:var(--text-muted);font-size:0.85rem;padding:8px 0">No items</div>'}
         <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px">
           ${o.subtotal != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Subtotal</span><span>R${Number(o.subtotal).toLocaleString('en-ZA')}</span></div>` : ''}
+          ${Number(o.discount_amount) > 0 ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Discount${o.discount_code ? ' (' + esc(o.discount_code) + ')' : ''}</span><span>&minus;R${Number(o.discount_amount).toLocaleString('en-ZA')}</span></div>` : ''}
           ${o.delivery_fee != null ? `<div style="display:flex;justify-content:space-between;font-size:0.84rem;color:var(--text-muted)"><span>Delivery fee</span><span>${o.delivery_meta && o.delivery_meta.free_delivery === true ? 'Free (over the free-delivery amount)' : 'R' + Number(o.delivery_fee).toLocaleString('en-ZA')}</span></div>` : ''}
           <div style="display:flex;justify-content:space-between;font-size:1rem;font-weight:700;border-top:1px solid var(--glass-border);padding-top:8px;margin-top:2px"><span>Total</span><span style="color:var(--accent)">R${Number(o.total_amount).toLocaleString('en-ZA')}</span></div>
         </div>

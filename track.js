@@ -8,6 +8,13 @@
   var ENDPOINT = 'https://papdxjcfimeyjgzmatpl.supabase.co/functions/v1/track';
   var KEY = 'pb_visit';
 
+  // A discount code in a campaign link (?code=WELCOME10) is kept for this visit and applied at checkout.
+  // This is not tracking, so it runs even when tracking is switched off.
+  try {
+    var linkCode = new URLSearchParams(location.search).get('code');
+    if (linkCode && /^[A-Za-z0-9_-]{3,30}$/.test(linkCode)) sessionStorage.setItem('pb_discount_code', linkCode.toUpperCase());
+  } catch (e) { /* ignore */ }
+
   var noop = { event: function () {} };
   try {
     if (navigator.globalPrivacyControl === true || navigator.doNotTrack === '1' || window.doNotTrack === '1') {

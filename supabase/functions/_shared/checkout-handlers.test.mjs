@@ -36,7 +36,8 @@ function harness(kind, overrides={}) {
   const origin=readFileSync(new URL('./site-origin.ts',import.meta.url),'utf8').replace(/^export /gm,'');
   const {corsOrigin,isSiteOrigin}=new Function(`${origin}\nreturn {corsOrigin,isSiteOrigin};`)();
   const loadFreeDelivery=async()=>normaliseFreeDelivery(overrides.freeRule);
-  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','loadFreeDelivery','qualifiesForFreeDelivery','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,loadFreeDelivery,qualifiesForFreeDelivery,deno,fetchMock);
+  const evaluateDiscount=async(db,code,subtotalCents,email)=>{calls.discountChecks=(calls.discountChecks||[]);calls.discountChecks.push({code,subtotalCents,email});return overrides.discount||{ok:false,error:'That code is not valid.'};};
+  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','loadFreeDelivery','qualifiesForFreeDelivery','evaluateDiscount','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,loadFreeDelivery,qualifiesForFreeDelivery,evaluateDiscount,deno,fetchMock);
   return {calls,run(body=kind==='order'?requestBody:{order_id:'test-order',success_url:'https://www.phenomebeauty.co.za/shop-success.html',cancel_url:'https://www.phenomebeauty.co.za/shop.html'},method='POST'){
     return handler(new Request('https://example.com',{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})}));
   }};
@@ -132,4 +133,36 @@ test('free delivery rule: malformed settings are treated as off',()=>{
   }
   assert.equal(qualifiesForFreeDelivery(50000,'door',normaliseFreeDelivery({enabled:true,threshold:500,methods:['door']})),true);
   assert.equal(qualifiesForFreeDelivery(49999,'door',normaliseFreeDelivery({enabled:true,threshold:500,methods:['door']})),false);
+});
+
+test('discount: valid code lowers the total and is recorded',async()=>{
+  const h=harness('order',{discount:{ok:true,code:'WELCOME10',kind:'percent',label:'10% off',discountCents:3600,freeDelivery:false}});
+  assert.equal((await h.run({...requestBody,discount_code:'welcome10'})).status,200);
+  const row=h.calls.inserted[0];assert.equal(row.discount_code,'WELCOME10');assert.equal(row.discount_amount,36);assert.equal(row.total_amount,383);assert.equal(row.subtotal,360);
+  assert.equal(h.calls.discountChecks[0].subtotalCents,36000);assert.equal(h.calls.discountChecks[0].email,customer.email);
+});
+test('discount: invalid code is refused with a message and no order',async()=>{
+  const h=harness('order');const response=await h.run({...requestBody,discount_code:'NOPE'});assert.equal(response.status,409);
+  const data=await response.json();assert.equal(data.discount_error,true);assert.equal(h.calls.inserted.length,0);
+});
+test('discount: no code means no discount check and no discount',async()=>{
+  const h=harness('order');assert.equal((await h.run()).status,200);assert.equal(h.calls.discountChecks,undefined);
+  assert.equal(h.calls.inserted[0].discount_amount,0);assert.equal(h.calls.inserted[0].discount_code,null);
+});
+test('discount: free-delivery code removes the delivery fee',async()=>{
+  const h=harness('order',{discount:{ok:true,code:'SHIPFREE',kind:'free_delivery',label:'Free delivery',discountCents:0,freeDelivery:true}});
+  assert.equal((await h.run({...requestBody,discount_code:'SHIPFREE',delivery_fee:0})).status,200);
+  const row=h.calls.inserted[0];assert.equal(row.delivery_fee,0);assert.equal(row.total_amount,360);assert.equal(row.delivery_meta.free_delivery,true);
+});
+test('discount: free-delivery threshold is checked after the discount',async()=>{
+  const h=harness('order',{freeRule:{enabled:true,threshold:350,methods:['door']},discount:{ok:true,code:'TEN',kind:'fixed',label:'R20 off',discountCents:2000,freeDelivery:false}});
+  assert.equal((await h.run({...requestBody,discount_code:'TEN'})).status,200);assert.equal(h.calls.inserted[0].delivery_fee,59);assert.equal(h.calls.inserted[0].total_amount,399);
+});
+test('discount: payment charges subtotal minus recorded discount plus delivery',async()=>{
+  const h=harness('payment',{order:{discount_amount:36,total_amount:383}});assert.equal((await h.run()).status,200);assert.equal(h.calls.payments[0].amount,38300);
+});
+test('discount: payment refuses a recorded discount that is not possible',async()=>{
+  for(const order of [{discount_amount:360,total_amount:59},{discount_amount:-5,total_amount:424},{discount_amount:36,total_amount:419}]) {
+    const h=harness('payment',{order});assert.equal((await h.run()).status,409,JSON.stringify(order));assert.equal(h.calls.payments.length,0);
+  }
 });

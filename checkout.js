@@ -44,7 +44,87 @@ let _mapsLoading = false;
 
 /* ── Delivery fee resolver ── */
 function freeFor(method) {
-  return !!(window.PBFreeDelivery && PBFreeDelivery.qualifies(cartSubtotal(), method));
+  if (appliedDiscount && appliedDiscount.free_delivery) return true;
+  return !!(window.PBFreeDelivery && PBFreeDelivery.qualifies(cartSubtotal() - discountAmount(), method));
+}
+
+/* ── Discount code ──
+   Checked by the check-discount function and again by create-order when the order is placed.
+   A code from a campaign link (?code=...) is remembered for the visit and applied here. */
+const DISCOUNT_KEY = 'pb_discount_code';
+let appliedDiscount = null;   // { code, label, discount, free_delivery }
+function discountAmount() {
+  return appliedDiscount ? Number(appliedDiscount.discount) || 0 : 0;
+}
+function money2(n) {
+  return 'R' + Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function discountRowHTML(extraStyle) {
+  if (!appliedDiscount) return '';
+  const val = appliedDiscount.free_delivery ? 'Free delivery' : '−' + money2(discountAmount());
+  return `<div class="total-row"${extraStyle ? ` style="${extraStyle}"` : ''}><span>Discount (${appliedDiscount.code})</span><span>${val}</span></div>`;
+}
+function refreshTotalsEverywhere() {
+  try { updateDeliveryPriceDisplay(); renderTotals(); renderMobileSummary(); } catch (e) { /* not ready */ }
+  if (document.getElementById('panel-3')?.classList.contains('active')) { try { populateReview(); } catch (e) { /* ignore */ } }
+}
+function showDiscountState(message, isError) {
+  const msg = document.getElementById('discountMsg');
+  const input = document.getElementById('discountInput');
+  const apply = document.getElementById('discountApply');
+  if (!msg || !input || !apply) return;
+  if (appliedDiscount) {
+    input.value = appliedDiscount.code;
+    input.disabled = true;
+    apply.textContent = 'Remove';
+    msg.textContent = `${appliedDiscount.label} applied.`;
+    msg.classList.remove('is-error');
+  } else {
+    input.disabled = false;
+    apply.textContent = 'Apply';
+    msg.textContent = message || '';
+    msg.classList.toggle('is-error', !!isError);
+  }
+}
+async function checkDiscount(code, quiet) {
+  const clean = String(code || '').trim().toUpperCase();
+  if (!clean) { showDiscountState('Enter a code first.', true); return; }
+  const apply = document.getElementById('discountApply');
+  if (apply) apply.disabled = true;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/check-discount`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: clean,
+        email: (document.getElementById('f-email')?.value || '').trim(),
+        cart: cart.map(i => ({ productId: i.productId, qty: i.qty, variant: i.variant || '', size: i.size || '' })),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data.ok) {
+      appliedDiscount = data;
+      try { sessionStorage.setItem(DISCOUNT_KEY, data.code); } catch (e) { /* ignore */ }
+      showDiscountState();
+    } else {
+      appliedDiscount = null;
+      if (quiet) { try { sessionStorage.removeItem(DISCOUNT_KEY); } catch (e) { /* ignore */ } }
+      showDiscountState(`${clean}: ${data.error || 'That code could not be applied.'}`, true);
+    }
+  } catch (e) {
+    if (!quiet) showDiscountState('Could not check the code. Please try again.', true);
+  } finally {
+    if (apply) apply.disabled = false;
+    refreshTotalsEverywhere();
+  }
+}
+function removeDiscount() {
+  appliedDiscount = null;
+  try { sessionStorage.removeItem(DISCOUNT_KEY); } catch (e) { /* ignore */ }
+  const input = document.getElementById('discountInput');
+  if (input) input.value = '';
+  showDiscountState();
+  refreshTotalsEverywhere();
 }
 function deliveryFee() {
   if (freeFor(deliveryMethod)) return 0;
@@ -137,6 +217,12 @@ async function checkStock() {
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('discountApply')?.addEventListener('click', () => {
+    if (appliedDiscount) removeDiscount(); else checkDiscount(document.getElementById('discountInput').value, false);
+  });
+  document.getElementById('discountInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); checkDiscount(e.target.value, false); }
+  });
   if (window.PBFreeDelivery) PBFreeDelivery.onReady(() => {
     try { updateDeliveryPriceDisplay(); renderTotals(); renderMobileSummary(); } catch (e) { /* page not ready */ }
   });
@@ -152,6 +238,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBeforeUnload();
   setupVisibilityNudge();
   loadShippingQuote();
+  // A code from a campaign link, or applied earlier in this visit, is checked again for this cart.
+  try {
+    const saved = sessionStorage.getItem(DISCOUNT_KEY);
+    if (saved) checkDiscount(saved, true);
+  } catch (e) { /* ignore */ }
 });
 
 /* ── Google Maps lazy loader ── */
@@ -205,7 +296,7 @@ function cartSubtotal() {
   return cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
 }
 function cartTotal() {
-  return cartSubtotal() + deliveryFee();
+  return cartSubtotal() - discountAmount() + deliveryFee();
 }
 
 /* Shared cart quantity helper for checkout */
@@ -272,12 +363,14 @@ function renderTotals() {
     ? 'Select at step 2'
     : shippingQuoteLoading ? 'Calculating...'
     : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const disc = discountAmount();
   const totalLabel = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   tot.innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+    ${discountRowHTML()}
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
 }
@@ -311,17 +404,19 @@ function renderMobileSummary() {
     ? 'Select at step 2'
     : shippingQuoteLoading ? 'Calculating...'
     : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const disc = discountAmount();
   const totalLabel = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (totals) totals.innerHTML = `
     <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+    ${discountRowHTML()}
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
   if (grand) grand.textContent = (!deliverySelected)
-    ? 'R' + sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -857,7 +952,16 @@ function populateReview() {
   const email   = document.getElementById('f-email').value.trim();
   const sub     = cartSubtotal();
   const fee     = deliveryFee();
-  const total   = sub + fee;
+  const disc    = discountAmount();
+  const total   = sub - disc + fee;
+  const discRow = document.getElementById('rv-discount-row');
+  if (discRow) {
+    discRow.hidden = !appliedDiscount;
+    if (appliedDiscount) {
+      document.getElementById('rv-discount-label').textContent = `Discount (${appliedDiscount.code})`;
+      document.getElementById('rv-discount').textContent = appliedDiscount.free_delivery ? 'Free delivery' : '−' + money2(disc);
+    }
+  }
   const feeLabel = shippingQuoteLoading ? 'Calculating...' : (fee === 0 ? 'Free' : 'R' + fee.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
   document.getElementById('done-contact-val').textContent   = `${name} | ${phone} | ${email}`;
   document.getElementById('done-contact-val-2').textContent = `${name} | ${email}`;
@@ -935,7 +1039,7 @@ async function handlePay() {
   }
 
   const fee   = deliveryFee();
-  const total = cartSubtotal() + fee;
+  const total = cartSubtotal() - discountAmount() + fee;
 
   // Combine special instructions and gift message into one notes string
   const combinedNotes = [special, gift ? 'Gift message: ' + gift : '', notes]
@@ -971,10 +1075,19 @@ async function handlePay() {
         locker_address:       lockerAddress,
         special_instructions: combinedNotes,
         cart:                 orderCart,
+        discount_code:        appliedDiscount ? appliedDiscount.code : undefined,
       }),
     });
 
     const orderData = await orderRes.json();
+    if (orderData && orderData.discount_error) {
+      // The code stopped applying (expired, used up). Show the new total before taking payment.
+      appliedDiscount = null;
+      try { sessionStorage.removeItem(DISCOUNT_KEY); } catch (e) { /* ignore */ }
+      showDiscountState(orderData.error + ' Your total has been updated; check it and pay again.', true);
+      refreshTotalsEverywhere();
+      throw new Error(orderData.error + ' Your total has been updated.');
+    }
     if (!orderRes.ok || orderData.error) throw new Error(orderData.error || 'Could not create your order.');
 
     const orderId    = orderData.order_id;

@@ -95,6 +95,8 @@ const PAGE_TITLES = {
   customers: 'Customers',
   analytics: 'Analytics',
   settings: 'Settings',
+  discounts: 'Discount codes',
+  campaigns: 'Email campaigns',
   abandoned: 'Abandoned checkouts',
   activity: 'Activity',
   account: 'Account',
@@ -567,6 +569,11 @@ function navTo(page, btn) {
     if (page === 'customers') window.ShopAdminOps.loadCustomers();
     if (page === 'abandoned') window.ShopAdminOps.loadAbandoned();
     if (page === 'activity') window.ShopAdminOps.loadActivity();
+  }
+
+  if (window.ShopAdminMarketing) {
+    if (page === 'discounts') window.ShopAdminMarketing.loadDiscounts();
+    if (page === 'campaigns') window.ShopAdminMarketing.loadCampaigns();
   }
 
   if (page === 'settings' && window.ShopAdminSettings) {

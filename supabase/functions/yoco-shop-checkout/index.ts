@@ -28,7 +28,7 @@ Deno.serve(async req => {
     const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(url, key);
     const {data: order, error: orderError} = await supabase.from('shop_orders')
-      .select('id, customer_token, payment_status, status, items, delivery_method, delivery_fee, delivery_meta, customer_email, yoco_checkout_id, subtotal, total_amount')
+      .select('id, customer_token, payment_status, status, items, delivery_method, delivery_fee, delivery_meta, discount_amount, customer_email, yoco_checkout_id, subtotal, total_amount')
       .eq('id', order_id).single();
     if (orderError || !order) return respond({error: 'Order not found'}, 404);
     if (order.status !== 'pending' || order.payment_status !== 'unpaid') return respond({error: 'Order is not awaiting payment'}, 409);
@@ -50,7 +50,12 @@ Deno.serve(async req => {
     if (quote.oversized || rawFee == null || !Number.isFinite(fee) || fee < 0) return respond({error: 'Standard delivery unavailable'}, 409);
     // Free delivery is decided once, by create-order, and recorded on the order by the server.
     const feeCents = order.delivery_meta?.free_delivery === true ? 0 : Math.round(fee * 100);
-    const totalCents = trusted.subtotalCents + feeCents;
+    // A discount is decided once, by create-order, and recorded on the order by the server.
+    const discountCents = Math.round(Number(order.discount_amount || 0) * 100);
+    if (!Number.isSafeInteger(discountCents) || discountCents < 0 || discountCents >= trusted.subtotalCents) {
+      return respond({error: 'Order discount is not valid. Please refresh your cart and create a new order.'}, 409);
+    }
+    const totalCents = trusted.subtotalCents - discountCents + feeCents;
     // Do not silently reprice an existing order or mutate a checkout that may already be paid.
     if (Math.round(Number(order.subtotal) * 100) !== trusted.subtotalCents
       || Math.round(Number(order.delivery_fee) * 100) !== feeCents

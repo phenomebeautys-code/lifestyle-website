@@ -3,6 +3,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import { logActivity, ownerExists, resolveAdmin } from '../_shared/admin-auth.ts';
 import { corsOrigin } from '../_shared/site-origin.ts';
 import { loadFreeDelivery, normaliseFreeDelivery } from '../_shared/free-delivery.mjs';
+import { CODE_RE, normaliseCode } from '../_shared/discounts.mjs';
+import { CAMPAIGN_KEYS, normaliseSettings } from '../_shared/campaigns.mjs';
 
 /**
  * shop-admin: back end for shop-admin.html.
@@ -51,7 +53,7 @@ function json(data: unknown, status = 200, cors: Record<string, string>) {
 }
 
 const VALID_AVAILABILITY = ['available', 'unavailable', 'coming_soon'];
-const ORDER_COLUMNS = 'id, created_at, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_meta, items, subtotal, delivery_fee, total_amount, payment_status, payment_id, paid_at, status, is_gift, gift_message, notes, tags, archived_at, cancelled_at, cancel_reason, refunded_amount, pudo_tracking_ref, pudo_shipment_id, reminder_sent';
+const ORDER_COLUMNS = 'id, created_at, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_meta, items, subtotal, delivery_fee, total_amount, payment_status, payment_id, paid_at, status, is_gift, gift_message, notes, tags, archived_at, cancelled_at, cancel_reason, refunded_amount, pudo_tracking_ref, pudo_shipment_id, reminder_sent, discount_code, discount_amount';
 
 function cents(value: unknown): number {
   return Math.round(Number(value) * 100);
@@ -523,6 +525,129 @@ Deno.serve(async (req: Request) => {
     if (error) return json({ error: error.message }, 500, cors);
     await logActivity(supabase, actor, 'save_free_delivery', 'setting', 'free_delivery', rule);
     return json({ free_delivery: rule }, 200, cors);
+  }
+
+  /* ── Discount codes ─────────────────────────────────────────────── */
+
+  if (action === 'get_discounts') {
+    const [{ data: codes, error }, { data: used }] = await Promise.all([
+      supabase.from('discount_codes').select('*').order('created_at', { ascending: false }),
+      supabase.from('shop_orders').select('discount_code, total_amount, refunded_amount, discount_amount, payment_status, cancelled_at')
+        .not('discount_code', 'is', null),
+    ]);
+    if (error) return json({ error: error.message }, 500, cors);
+    // deno-lint-ignore no-explicit-any
+    const stats: Record<string, any> = {};
+    for (const o of used ?? []) {
+      const st = (stats[o.discount_code] ||= { orders: 0, sales: 0, discount_given: 0, unpaid: 0 });
+      if (o.payment_status === 'paid' && !o.cancelled_at) {
+        st.orders += 1;
+        st.sales = Math.round((st.sales + Number(o.total_amount) - Number(o.refunded_amount || 0)) * 100) / 100;
+        st.discount_given = Math.round((st.discount_given + Number(o.discount_amount || 0)) * 100) / 100;
+      } else st.unpaid += 1;
+    }
+    return json({ discounts: (codes ?? []).map((c: { code: string }) => ({ ...c, stats: stats[c.code] || { orders: 0, sales: 0, discount_given: 0, unpaid: 0 } })) }, 200, cors);
+  }
+
+  if (action === 'save_discount') {
+    const d = body.discount && typeof body.discount === 'object' ? body.discount : {};
+    const kind = ['percent', 'fixed', 'free_delivery'].includes(d.kind) ? d.kind : null;
+    if (!kind) return json({ error: 'Choose the type of discount.' }, 400, cors);
+    const value = kind === 'free_delivery' ? 0 : Number(d.value);
+    if (kind === 'percent' && !(value > 0 && value <= 90)) return json({ error: 'A percentage discount must be between 1% and 90%.' }, 400, cors);
+    if (kind === 'fixed' && !(value > 0 && value <= 100000)) return json({ error: 'Enter the rand amount off.' }, 400, cors);
+    const minSubtotal = d.min_subtotal === '' || d.min_subtotal == null ? 0 : Number(d.min_subtotal);
+    if (!(minSubtotal >= 0 && minSubtotal <= 100000)) return json({ error: 'The minimum order must be zero or more.' }, 400, cors);
+    const maxUses = d.max_uses === '' || d.max_uses == null ? null : Math.round(Number(d.max_uses));
+    if (maxUses !== null && !(maxUses >= 1 && maxUses <= 100000)) return json({ error: 'Total uses must be 1 or more, or left empty for no limit.' }, 400, cors);
+    const date = (v: unknown) => { if (!v) return null; const t = new Date(String(v)); return isNaN(t.getTime()) ? undefined : t.toISOString(); };
+    const startsAt = date(d.starts_at), endsAt = date(d.ends_at);
+    if (startsAt === undefined || endsAt === undefined) return json({ error: 'Check the start and end dates.' }, 400, cors);
+    if (startsAt && endsAt && endsAt <= startsAt) return json({ error: 'The end date must be after the start date.' }, 400, cors);
+    const row = {
+      kind, value, min_subtotal: minSubtotal, max_uses: maxUses, starts_at: startsAt, ends_at: endsAt,
+      once_per_customer: d.once_per_customer === true, active: d.active !== false,
+      campaign: cleanText(d.campaign, 80) || null, note: cleanText(d.note, 500) || null, updated_at: new Date().toISOString(),
+    };
+    if (d.id) {
+      const { data, error } = await supabase.from('discount_codes').update(row).eq('id', d.id).select('*').maybeSingle();
+      if (error) return json({ error: error.message }, 500, cors);
+      if (!data) return json({ error: 'Discount code not found' }, 404, cors);
+      await logActivity(supabase, actor, 'update_discount', 'discount', data.code, { kind, value, active: row.active });
+      return json({ discount: data }, 200, cors);
+    }
+    const code = normaliseCode(d.code);
+    if (!CODE_RE.test(code)) return json({ error: 'Codes are 3 to 30 letters, numbers, dashes or underscores, e.g. WELCOME10.' }, 400, cors);
+    const { data, error } = await supabase.from('discount_codes').insert({ ...row, code, created_by: actor }).select('*').single();
+    if (error) return json({ error: error.code === '23505' ? 'That code already exists.' : error.message }, error.code === '23505' ? 409 : 500, cors);
+    await logActivity(supabase, actor, 'create_discount', 'discount', code, { kind, value });
+    return json({ discount: data }, 200, cors);
+  }
+
+  if (action === 'delete_discount') {
+    const { data: d } = await supabase.from('discount_codes').select('id, code').eq('id', body.id).maybeSingle();
+    if (!d) return json({ error: 'Discount code not found' }, 404, cors);
+    const { count } = await supabase.from('shop_orders').select('id', { count: 'exact', head: true }).eq('discount_code', d.code);
+    if ((count || 0) > 0) return json({ error: 'This code is on existing orders, so it is kept for your records. Switch it off instead.' }, 409, cors);
+    const { error } = await supabase.from('discount_codes').delete().eq('id', d.id);
+    if (error) return json({ error: error.message }, 500, cors);
+    await logActivity(supabase, actor, 'delete_discount', 'discount', d.code, null);
+    return json({ ok: true }, 200, cors);
+  }
+
+  /* ── Email campaigns ────────────────────────────────────────────── */
+
+  if (action === 'get_campaigns') {
+    const [{ data: rows, error }, { data: sends }, { count: optouts }] = await Promise.all([
+      supabase.from('email_campaigns').select('*'),
+      supabase.from('campaign_sends').select('id, campaign, order_id, email, sent_at, status, detail').order('sent_at', { ascending: false }).limit(200),
+      supabase.from('email_optouts').select('email', { count: 'exact', head: true }),
+    ]);
+    if (error) return json({ error: error.message }, 500, cors);
+    return json({ campaigns: rows ?? [], sends: sends ?? [], optouts: optouts || 0 }, 200, cors);
+  }
+
+  if (action === 'save_campaign') {
+    if (!CAMPAIGN_KEYS.includes(body.key)) return json({ error: 'Unknown campaign' }, 400, cors);
+    const checked = normaliseSettings(body.key, body.settings);
+    if (checked.error) return json({ error: checked.error }, 400, cors);
+    if (checked.settings.discount_code) {
+      const { data: code } = await supabase.from('discount_codes').select('code').eq('code', checked.settings.discount_code).maybeSingle();
+      if (!code) return json({ error: `There is no discount code ${checked.settings.discount_code}. Create it under Discount codes first.` }, 400, cors);
+    }
+    const { data: current } = await supabase.from('email_campaigns').select('enabled, enabled_at').eq('key', body.key).maybeSingle();
+    const enabled = body.enabled === true;
+    // Switching on starts from now, so customers from before (or from while it was off) are not emailed.
+    const enabledAt = enabled ? (current?.enabled && current.enabled_at ? current.enabled_at : new Date().toISOString()) : null;
+    const { data, error } = await supabase.from('email_campaigns')
+      .upsert({ key: body.key, enabled, enabled_at: enabledAt, settings: checked.settings, updated_at: new Date().toISOString(), updated_by: actor }, { onConflict: 'key' })
+      .select('*').single();
+    if (error) return json({ error: error.message }, 500, cors);
+    await logActivity(supabase, actor, 'save_campaign', 'campaign', body.key, { enabled, delay_days: checked.settings.delay_days });
+    return json({ campaign: data }, 200, cors);
+  }
+
+  // Preview, send a test to the owner, list who is due, or send what is due now.
+  if (action === 'campaign_tool') {
+    const mode = ['preview', 'test', 'dry_run', 'run'].includes(body.mode) ? body.mode : null;
+    if (!mode) return json({ error: 'Unknown tool' }, 400, cors);
+    const to = admin.via === 'account' ? actor : OWNER_EMAIL;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/run-campaigns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_SERVICE}`, apikey: SUPABASE_SERVICE },
+      body: JSON.stringify({ mode, key: body.key, settings: body.settings, to }),
+    });
+    const data = await res.json().catch(() => ({ error: 'Campaign service unavailable' }));
+    if (mode === 'test' || mode === 'run') await logActivity(supabase, actor, `campaign_${mode}`, 'campaign', body.key || 'all', null);
+    return json(data, res.ok ? 200 : res.status, cors);
+  }
+
+  if (action === 'retry_failed_sends') {
+    if (!CAMPAIGN_KEYS.includes(body.key)) return json({ error: 'Unknown campaign' }, 400, cors);
+    const { error } = await supabase.from('campaign_sends').delete().eq('campaign', body.key).eq('status', 'failed');
+    if (error) return json({ error: error.message }, 500, cors);
+    await logActivity(supabase, actor, 'retry_failed_sends', 'campaign', body.key, null);
+    return json({ ok: true }, 200, cors);
   }
 
   /* ── Sales analytics ────────────────────────────────────────────── */

@@ -408,3 +408,14 @@ body.ce-open .mobile-summary-bar { display: none !important; }
 
 /* Panels that scroll on small screens hide the bar. Touch and wheel still scroll. */
 .cart-editor::-webkit-scrollbar { display: none; }
+
+/* Discount code on the review step. */
+.co-discount-row { display: flex; gap: 10px; margin-top: 10px; }
+.co-discount-row input {
+  flex: 1; min-width: 0; min-height: 46px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: var(--r-pill, 999px);
+  background: transparent; font: inherit; font-size: 0.95rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
+}
+.co-discount-row input::placeholder { text-transform: none; letter-spacing: 0; color: rgba(0, 0, 0, 0.36); }
+.co-discount-row input:focus { outline: none; border-color: var(--ink); }
+.co-discount-row input:disabled { opacity: 0.7; }
+#discountMsg.is-error { color: #a1271b; }

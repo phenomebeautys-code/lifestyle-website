@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 import { loadFreeDelivery, qualifiesForFreeDelivery } from '../_shared/free-delivery.mjs';
+import { evaluateDiscount } from '../_shared/discounts.mjs';
 
 import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 Deno.serve(async req => {
@@ -55,8 +56,16 @@ Deno.serve(async req => {
     if (quote.oversized || rawFee == null || !Number.isFinite(fee) || fee < 0) {
       return respond({error: 'This cart cannot use a standard delivery rate. Please contact the shop.'}, 409);
     }
-    // Free delivery over the owner's threshold, worked out from the trusted subtotal.
-    const freeDelivery = qualifiesForFreeDelivery(trusted.subtotalCents, delivery_method, await loadFreeDelivery(supabase));
+    // A discount code is checked again here, against the trusted subtotal and the customer's email.
+    let discount = null;
+    if (typeof body.discount_code === 'string' && body.discount_code.trim()) {
+      discount = await evaluateDiscount(supabase, body.discount_code, trusted.subtotalCents, customer.email);
+      if (!discount.ok) return respond({error: discount.error, discount_error: true}, 409);
+    }
+    const discountCents = discount ? discount.discountCents : 0;
+    // Free delivery: from a free-delivery code, or over the owner's threshold (after any discount).
+    const freeDelivery = (discount?.freeDelivery === true)
+      || qualifiesForFreeDelivery(trusted.subtotalCents - discountCents, delivery_method, await loadFreeDelivery(supabase));
     const feeCents = freeDelivery ? 0 : Math.round(fee * 100);
     // A browser that missed the free-delivery setting shows the normal fee; charging less than shown is fine.
     if (!freeDelivery && body.delivery_fee != null && (!Number.isFinite(Number(body.delivery_fee)) || Math.round(Number(body.delivery_fee) * 100) !== feeCents)) {
@@ -70,7 +79,8 @@ Deno.serve(async req => {
       customer_name: customer.name.trim(), customer_email: customer.email.trim(), customer_phone: customer.phone.trim(),
       delivery_address: address, delivery_method, delivery_meta: deliveryMeta,
       items: trusted.items, subtotal: trusted.subtotalCents / 100, delivery_fee: feeCents / 100,
-      total_amount: (trusted.subtotalCents + feeCents) / 100, notes: instructions || null,
+      discount_code: discount ? discount.code : null, discount_amount: discountCents / 100,
+      total_amount: (trusted.subtotalCents - discountCents + feeCents) / 100, notes: instructions || null,
       payment_status: 'unpaid', status: 'pending', is_gift: false, gift_message: null,
     }).select('id, customer_token').single();
     if (error || !order) return respond({error: 'Could not create order'}, 500);
