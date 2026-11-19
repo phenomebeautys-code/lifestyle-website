@@ -1031,3 +1031,63 @@ details.modal-images[open] .modal-images-summary::after { content: '-'; }
 /* Panels that scroll hide the bar. Touch and wheel still scroll. */
 .sidebar, .modal, .modal-product { scrollbar-width: none; }
 .sidebar::-webkit-scrollbar, .modal::-webkit-scrollbar, .modal-product::-webkit-scrollbar { display: none; }
+
+/* ─── Phase 1: sign-in, order tools, customers, activity ─────────── */
+.login-fields { display: flex; flex-direction: column; gap: 14px; }
+.login-fields[hidden] { display: none; }
+.login-hint { font-size: 0.74rem; color: var(--text-muted); line-height: 1.5; }
+.login-error.login-note { color: #4ade80; background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.25); }
+.login-link {
+  background: none; border: none; color: var(--text-muted); font: inherit; font-size: 0.78rem;
+  cursor: pointer; align-self: center; padding: 4px;
+}
+.login-link:hover { color: var(--accent-strong); }
+.sidebar-user { font-size: 0.72rem; color: var(--text-muted); padding: 0 10px 4px; overflow-wrap: anywhere; }
+.sidebar-user:empty { display: none; }
+.badge-cancelled { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.25); color: #f87171; }
+
+.ops-tools { margin-top: 18px; border-top: 1px solid var(--glass-border); padding-top: 16px; display: flex; flex-direction: column; gap: 14px; }
+.ops-block { display: flex; flex-direction: column; gap: 8px; }
+.ops-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+.ops-details > summary { cursor: pointer; list-style: none; }
+.ops-details > summary::-webkit-details-marker { display: none; }
+.ops-details > summary::after { content: ' +'; }
+.ops-details[open] > summary::after { content: ' −'; }
+.ops-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ops-row > .field-input { flex: 1; min-width: 160px; }
+.ops-actions > .btn { flex: 1; justify-content: center; min-width: 140px; }
+.ops-danger { color: #f87171; border-color: rgba(248,113,113,0.3); }
+.ops-hint { font-size: 0.76rem; color: var(--text-muted); line-height: 1.5; }
+.ops-help { font-size: 0.84rem; color: var(--text-soft, var(--text)); line-height: 1.6; margin: 8px 0 14px; }
+.ops-form { display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+.ops-form .btn { align-self: flex-start; margin-top: 6px; }
+.ops-check { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.82rem; }
+.ops-qty { width: 80px; flex: none; }
+.ops-alert { font-size: 0.82rem; padding: 10px 12px; border-radius: 8px; color: #f87171; background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); }
+.ops-alert--soft { color: var(--text-muted); background: rgba(255,255,255,0.04); border-color: var(--glass-border); }
+.ops-tag { display: inline-block; font-size: 0.68rem; padding: 2px 8px; margin: 1px 3px 1px 0; border-radius: 20px; border: 1px solid var(--glass-border); color: var(--accent-strong); background: rgba(255,255,255,0.05); }
+.ops-timeline { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; }
+.ops-event { padding: 10px 0 10px 16px; border-left: 2px solid var(--glass-border); position: relative; }
+.ops-event::before { content: ''; position: absolute; left: -5px; top: 15px; width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
+.ops-event--note::before { background: var(--accent); }
+.ops-event--refund::before, .ops-event--cancel::before { background: #f87171; }
+.ops-event--payment::before { background: #4ade80; }
+.ops-event-msg { font-size: 0.84rem; color: var(--text); line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ops-event-meta { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.ops-empty { color: var(--text-muted); font-size: 0.84rem; padding: 12px 0; list-style: none; }
+.ops-click { cursor: pointer; }
+.ops-click:hover td { background: rgba(255,255,255,0.03); }
+.ops-panel { margin-bottom: 16px; padding: 20px; }
+.ops-order-line {
+  display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; width: 100%; text-align: left;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 8px;
+  padding: 10px 12px; color: var(--text); font: inherit; font-size: 0.8rem; cursor: pointer;
+}
+.ops-order-line:hover { border-color: rgba(255,255,255,0.2); }
+textarea.field-input { resize: vertical; min-height: 90px; font-family: inherit; }
+#page-customers .page-head { flex-wrap: wrap; gap: 12px; }
+/* The orders table becomes cards on small screens; these tables stay and scroll sideways. */
+.table-wrap.ops-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 860px) {
+  .ops-table table { min-width: 640px; }
+}

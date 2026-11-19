@@ -13,9 +13,13 @@
 
   function getFiltered() {
     const q = (document.getElementById('searchInput').value || '').toLowerCase();
-    let orders = allOrders;
-    if (activeFilter !== 'all') {
+    let orders = activeFilter === 'archived'
+      ? allOrders.filter(o => o.archived_at)
+      : allOrders.filter(o => !o.archived_at);
+    if (activeFilter !== 'all' && activeFilter !== 'archived') {
       orders = orders.filter(o => o.payment_status === activeFilter || o.status === activeFilter);
+      // Cancelled orders only show under their own filter.
+      if (activeFilter !== 'cancelled') orders = orders.filter(o => o.status !== 'cancelled');
     }
     if (q) {
       orders = orders.filter(o =>
@@ -144,8 +148,8 @@
         e.stopPropagation();
         printLabel(o);
       });
-      actions.appendChild(sel);
-      if (o.payment_status !== 'paid') {
+      if (o.status !== 'cancelled') actions.appendChild(sel);
+      if (o.payment_status !== 'paid' && o.status !== 'cancelled') {
         const mpBtn = document.createElement('button');
         mpBtn.className = 'btn btn-primary';
         mpBtn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
@@ -266,13 +270,13 @@
 
   function mkSelectTd(o) {
     const td = document.createElement('td');
-    td.appendChild(makeStatusSelect(o));
+    if (o.status !== 'cancelled') td.appendChild(makeStatusSelect(o));
     return td;
   }
 
   function mkMarkPaidTd(o) {
     const td = document.createElement('td');
-    if (o.payment_status !== 'paid') {
+    if (o.payment_status !== 'paid' && o.status !== 'cancelled') {
       const btn = document.createElement('button');
       btn.className = 'btn btn-primary';
       btn.style.cssText = 'font-size:0.72rem;padding:5px 10px;white-space:nowrap';
@@ -294,7 +298,8 @@
         return;
       }
       if (!res.ok) {
-        showToast('Failed to update.', true);
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Failed to update.', true);
         return;
       }
       const o = allOrders.find(x => x.id === id);

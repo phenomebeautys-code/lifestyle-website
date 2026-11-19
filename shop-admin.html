@@ -21,18 +21,43 @@
     <div>
       <div class="login-brand">PhenomeBeauty</div>
       <div class="login-title">Shop Admin</div>
-      <div class="login-sub">Enter your admin password to continue.</div>
+      <div class="login-sub">Sign in with the owner account.</div>
     </div>
 
-    <div>
-      <label class="field-label" for="pwInput">Password</label>
-      <input
-        class="field-input"
-        type="password"
-        id="pwInput"
-        placeholder="••••••••"
-        autocomplete="current-password"
-      />
+    <div class="login-fields" id="loginForm">
+      <div>
+        <label class="field-label" for="emailInput">Email</label>
+        <input
+          class="field-input"
+          type="email"
+          id="emailInput"
+          placeholder="you@example.com"
+          autocomplete="username"
+        />
+      </div>
+      <div>
+        <label class="field-label" for="pwInput">Password</label>
+        <input
+          class="field-input"
+          type="password"
+          id="pwInput"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </div>
+      <p class="login-hint">Owner account not set up yet? Leave email empty and use the shared password once, then create the owner account under Account.</p>
+    </div>
+
+    <div class="login-fields" id="resetForm" hidden>
+      <div>
+        <label class="field-label" for="newPw">New password (at least 12 characters)</label>
+        <input class="field-input" type="password" id="newPw" autocomplete="new-password" />
+      </div>
+      <div>
+        <label class="field-label" for="newPw2">Confirm password</label>
+        <input class="field-input" type="password" id="newPw2" autocomplete="new-password" />
+      </div>
+      <button class="btn btn-primary" id="resetBtn" style="width:100%;justify-content:center;">Save new password</button>
     </div>
 
     <p class="login-error" id="loginError" role="alert"></p>
@@ -44,6 +69,7 @@
     >
       Sign In
     </button>
+    <button class="login-link" id="forgotBtn" type="button">Forgot password?</button>
   </div>
 </div>
 
@@ -75,6 +101,8 @@
         Orders
         <span class="nav-badge" id="navOrdersBadge" hidden></span>
       </button>
+      <button class="nav-item" data-page="abandoned">Abandoned checkouts</button>
+      <button class="nav-item" data-page="customers">Customers</button>
     </div>
 
     <div class="sidebar-section">
@@ -84,7 +112,17 @@
       <button class="nav-item" data-page="materials">Materials &amp; Recipes</button>
     </div>
 
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Admin</div>
+      <button class="nav-item" data-page="activity">Activity</button>
+      <button class="nav-item" data-page="account">
+        Account
+        <span class="nav-badge" id="accountBadge" hidden>!</span>
+      </button>
+    </div>
+
     <div class="sidebar-footer">
+      <div class="sidebar-user" id="sidebarUser"></div>
       <a href="index.html" class="sidebar-link">View Site</a>
       <button class="sidebar-link" id="logoutBtn">Sign Out</button>
     </div>
@@ -240,6 +278,8 @@
         <button class="filter-btn" data-filter="processing">Processing</button>
         <button class="filter-btn" data-filter="dispatched">Dispatched</button>
         <button class="filter-btn" data-filter="delivered">Delivered</button>
+        <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+        <button class="filter-btn" data-filter="archived">Archived</button>
 
         <input
           class="search-input"
@@ -278,6 +318,66 @@
       </div>
 
       <div class="order-cards" id="orderCards" aria-label="Orders list"></div>
+    </section>
+
+    <!-- ABANDONED CHECKOUTS -->
+    <section class="page" id="page-abandoned" aria-label="Abandoned checkouts">
+      <div class="page-head">
+        <div>
+          <h2>Abandoned checkouts</h2>
+          <p id="abandonedSummary">Checkouts that were started but never paid</p>
+        </div>
+      </div>
+      <div class="table-wrap ops-table" role="region" aria-label="Abandoned checkouts">
+        <table>
+          <thead><tr><th>Started</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Reminder</th></tr></thead>
+          <tbody id="abandonedBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CUSTOMERS -->
+    <section class="page" id="page-customers" aria-label="Customers">
+      <div class="page-head">
+        <div>
+          <h2>Customers</h2>
+          <p id="customerCount">Built from order history</p>
+        </div>
+        <input class="search-input" type="search" id="customerSearch" placeholder="Search name, email, phone or tag…" aria-label="Search customers" />
+      </div>
+      <div class="table-wrap ops-table" role="region" aria-label="Customers">
+        <table>
+          <thead><tr><th>Customer</th><th>Phone</th><th>Orders</th><th>Spent</th><th>Last order</th><th>Tags</th></tr></thead>
+          <tbody id="customersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="page" id="page-activity" aria-label="Activity">
+      <div class="page-head">
+        <div>
+          <h2>Activity</h2>
+          <p>Every change made in the admin, newest first</p>
+        </div>
+      </div>
+      <div class="table-wrap ops-table" role="region" aria-label="Activity log">
+        <table>
+          <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section class="page" id="page-account" aria-label="Account">
+      <div class="page-head">
+        <div>
+          <h2>Account</h2>
+          <p>Owner sign-in and password</p>
+        </div>
+      </div>
+      <div id="accountBody" class="ops-account"></div>
     </section>
 
     <!-- PRODUCTS -->
@@ -690,6 +790,17 @@
   </div>
 </div>
 
+<!-- CUSTOMER MODAL -->
+<div class="modal-overlay" id="opsModal" role="dialog" aria-modal="true" aria-labelledby="opsModalTitle" hidden style="align-items:flex-start;padding:24px 16px;overflow-y:auto">
+  <div class="modal" style="max-width:560px;width:100%;margin:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="modal-title" id="opsModalTitle" style="margin-bottom:0">Customer</div>
+      <button id="opsModalClose" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;line-height:1;padding:2px 6px" aria-label="Close">&times;</button>
+    </div>
+    <div id="opsModalBody"></div>
+  </div>
+</div>
+
 <!-- PRINT LABEL AREA -->
 <div id="printLabelArea"></div>
 
@@ -703,6 +814,8 @@
 <script src="shop-admin-inventory.js"></script>
 <script src="shop-admin-products.js"></script>
 <script src="shop-admin-materials.js"></script>
+<script src="shop-admin-account.js"></script>
+<script src="shop-admin-ops.js"></script>
 <script src="shop-admin.js"></script>
 
 </body>

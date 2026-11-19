@@ -64,7 +64,7 @@
       </div>`;
     }
 
-    const markPaidRow = !isPaid ? `
+    const markPaidRow = !isPaid && !o.cancelled_at ? `
       <div style="margin-top:10px">
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="markAsPaid('${o.id}')">Mark as Paid</button>
       </div>` : '';
@@ -129,7 +129,11 @@
         <button class="btn btn-secondary" style="flex:1;min-width:120px;justify-content:center" onclick="printLabel(allOrders.find(x=>x.id==='${o.id}'))">Print Label</button>
       </div>
 
-      ${markPaidRow}`;
+      ${markPaidRow}
+
+      <div id="odTools" class="ops-tools"></div>`;
+
+    if (window.ShopAdminOps) window.ShopAdminOps.renderOrderTools(o);
 
     const modal = document.getElementById('orderDetailModal');
     modal.removeAttribute('hidden');

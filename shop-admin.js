@@ -74,6 +74,7 @@ const BADGE_MAP = {
   processing: 'badge-processing',
   dispatched: 'badge-dispatched',
   delivered: 'badge-delivered',
+  cancelled: 'badge-cancelled',
 };
 
 const STATUS_LABELS = {
@@ -81,6 +82,7 @@ const STATUS_LABELS = {
   processing: 'Processing',
   dispatched: 'Dispatched',
   delivered: 'Delivered',
+  cancelled: 'Cancelled',
 };
 
 const PAGE_TITLES = {
@@ -89,6 +91,11 @@ const PAGE_TITLES = {
   products: 'Products',
   inventory: 'Inventory & Stock',
   reports: 'Reports',
+  materials: 'Materials & Recipes',
+  customers: 'Customers',
+  abandoned: 'Abandoned checkouts',
+  activity: 'Activity',
+  account: 'Account',
 };
 
 /* ─── SVG ICONS ────────────────────────────────── */
@@ -217,11 +224,16 @@ document.getElementById('productSearch').addEventListener('input', renderProduct
 
 document.getElementById('loginBtn').addEventListener('click', login);
 
-document.getElementById('pwInput').addEventListener('keydown', event => {
-  if (event.key === 'Enter') {
-    login();
-  }
+['emailInput', 'pwInput'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      login();
+    }
+  });
 });
+
+window.ShopAdminAccount.setupLoginCard();
+resumeSession();
 
 document.getElementById('logoutBtn').addEventListener('click', logout);
 
@@ -294,6 +306,7 @@ async function hashToken(password) {
 }
 
 async function login() {
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
   const password = document.getElementById('pwInput').value;
   const button = document.getElementById('loginBtn');
 
@@ -308,9 +321,21 @@ async function login() {
   hideLoginError();
 
   try {
+    // With an email, sign in to the owner account. Without one, try the old shared password,
+    // which the server accepts only until the owner account exists.
+    let credential = password;
+    if (email) {
+      try {
+        credential = await window.ShopAdminAccount.signIn(email, password);
+      } catch (err) {
+        showLoginError(err.message);
+        return;
+      }
+    }
+
     const response = await callEdge({
       action: 'get_orders',
-      password,
+      password: credential,
     });
 
     if (response.status === 429) {
@@ -318,8 +343,16 @@ async function login() {
       return;
     }
 
-    if (response.status === 401) {
-      showLoginError('Incorrect password.');
+    if (response.status === 401 || response.status === 403) {
+      const data = await response.json().catch(() => ({}));
+      if (email) await window.ShopAdminAccount.signOut();
+      if (data.code === 'account_required') {
+        showLoginError('The shared password is no longer used. Sign in with the owner email and password.');
+      } else if (data.code === 'not_admin') {
+        showLoginError('This account does not have admin access.');
+      } else {
+        showLoginError(email ? 'Incorrect email or password.' : 'Incorrect password.');
+      }
       return;
     }
 
@@ -329,41 +362,64 @@ async function login() {
     }
 
     const data = await response.json();
-
-    adminToken = password;
-    window.ShopAdmin.adminToken = adminToken;
-    sessionStorage.setItem('_at_hash', await hashToken(password));
-
-    document.getElementById('loginWrap').style.display = 'none';
-
-    const adminUI = document.getElementById('adminUI');
-    adminUI.classList.add('visible');
-    adminUI.removeAttribute('aria-hidden');
-
-    allOrders = data.orders || [];
-
-    Promise.all([
-      loadProducts(),
-      window.ShopAdminPackaging ? window.ShopAdminPackaging.loadPudoRates() : Promise.resolve(),
-    ]).then(() => {
-      renderTable();
-      renderCards();
-    }).catch(() => { /* badges fall back to '?' if this fails */ });
-
-    updateStats();
-    renderRecent();
-    renderTable();
-    renderCards();
-    updateReports();
-    updateOrdersBadge();
-
-    startPolling();
+    document.getElementById('pwInput').value = '';
+    enterAdmin(credential, data.orders || []);
   } catch {
     showLoginError('Network error. Check your connection.');
   } finally {
     button.disabled = false;
     button.innerHTML = 'Sign In';
   }
+}
+
+function enterAdmin(credential, orders) {
+  adminToken = credential;
+  window.ShopAdmin.adminToken = adminToken;
+
+  document.getElementById('loginWrap').style.display = 'none';
+
+  const adminUI = document.getElementById('adminUI');
+  adminUI.classList.add('visible');
+  adminUI.removeAttribute('aria-hidden');
+
+  allOrders = orders;
+
+  Promise.all([
+    loadProducts(),
+    window.ShopAdminPackaging ? window.ShopAdminPackaging.loadPudoRates() : Promise.resolve(),
+  ]).then(() => {
+    renderTable();
+    renderCards();
+  }).catch(() => { /* badges fall back to '?' if this fails */ });
+
+  updateStats();
+  renderRecent();
+  renderTable();
+  renderCards();
+  updateReports();
+  updateOrdersBadge();
+
+  startPolling();
+
+  window.ShopAdminAccount.whoami().then(me => {
+    document.getElementById('sidebarUser').textContent = window.ShopAdminAccount.signedInLabel();
+    if (me.via === 'password') {
+      document.getElementById('accountBadge').hidden = false;
+      showToast('Set up the owner account under Account. The shared password stops working once it exists.');
+    }
+  }).catch(() => { /* the account page shows the error */ });
+}
+
+/** Signs back in after a reload or a password reset, using this tab's saved session. */
+async function resumeSession() {
+  const token = window.ShopAdmin.adminToken || await window.ShopAdminAccount.restore();
+  if (!token) return;
+  try {
+    const response = await callEdge({ action: 'get_orders', password: token });
+    if (!response.ok) { await window.ShopAdminAccount.signOut(); return; }
+    const data = await response.json();
+    enterAdmin(token, data.orders || []);
+  } catch { /* stay on the sign-in card */ }
 }
 
 function showLoginError(message) {
@@ -376,10 +432,11 @@ function hideLoginError() {
   document.getElementById('loginError').style.display = 'none';
 }
 
-function logout() {
+async function logout() {
   stopPolling();
 
   sessionStorage.removeItem('_at_hash');
+  await window.ShopAdminAccount.signOut();
 
   adminToken = '';
   window.ShopAdmin.adminToken = '';
@@ -387,7 +444,7 @@ function logout() {
   location.reload();
 }
 
-function callEdge(body) {
+function postEdge(body) {
   return fetch(EDGE_URL, {
     method: 'POST',
     headers: {
@@ -395,6 +452,18 @@ function callEdge(body) {
     },
     body: JSON.stringify(body),
   });
+}
+
+/** Calls shop-admin. If the owner's access token has expired, refreshes it once and retries. */
+async function callEdge(body) {
+  const response = await postEdge(body);
+  if (response.status !== 401 || !window.ShopAdminAccount || !window.ShopAdminAccount.isAccountSession()) {
+    return response;
+  }
+  const fresh = await window.ShopAdminAccount.refresh();
+  if (!fresh) return response;
+  adminToken = fresh;
+  return postEdge({ ...body, password: fresh });
 }
 
 /* ─── AUTO-REFRESH POLLING ────────────────────── */
@@ -488,9 +557,19 @@ function navTo(page, btn) {
     window.ShopAdminInventory.init();
   }
 
-   if (page === 'materials' && window.ShopAdminMaterials) {
-  window.ShopAdminMaterials.init();
-   }
+  if (page === 'materials' && window.ShopAdminMaterials) {
+    window.ShopAdminMaterials.init();
+  }
+
+  if (window.ShopAdminOps) {
+    if (page === 'customers') window.ShopAdminOps.loadCustomers();
+    if (page === 'abandoned') window.ShopAdminOps.loadAbandoned();
+    if (page === 'activity') window.ShopAdminOps.loadActivity();
+  }
+
+  if (page === 'account' && window.ShopAdminAccount) {
+    window.ShopAdminAccount.renderAccountPage();
+  }
 }
 
 /* ─── REFRESH ──────────────────────────────────── */
@@ -557,12 +636,12 @@ async function refreshData() {
 
 function updateStats() {
   const paid = allOrders.filter(order => order.payment_status === 'paid');
-  const unpaid = allOrders.filter(order => order.payment_status !== 'paid');
+  const unpaid = allOrders.filter(order => order.payment_status !== 'paid' && !order.cancelled_at && !order.archived_at);
   const dispatched = allOrders.filter(order => order.status === 'dispatched');
   const delivered = allOrders.filter(order => order.status === 'delivered');
 
   const revenue = paid.reduce(
-    (sum, order) => sum + Number(order.total_amount || 0),
+    (sum, order) => sum + Number(order.total_amount || 0) - Number(order.refunded_amount || 0),
     0
   );
 
@@ -593,7 +672,7 @@ function updateStats() {
 
 function updateOrdersBadge() {
   const unpaidCount = allOrders.filter(
-    order => order.payment_status !== 'paid'
+    order => order.payment_status !== 'paid' && !order.cancelled_at && !order.archived_at
   ).length;
 
   const badge = document.getElementById('navOrdersBadge');
@@ -618,12 +697,12 @@ function updateReports() {
   });
 
   const weekRevenue = weekOrders.reduce(
-    (sum, order) => sum + Number(order.total_amount || 0),
+    (sum, order) => sum + Number(order.total_amount || 0) - Number(order.refunded_amount || 0),
     0
   );
 
   const monthRevenue = monthOrders.reduce(
-    (sum, order) => sum + Number(order.total_amount || 0),
+    (sum, order) => sum + Number(order.total_amount || 0) - Number(order.refunded_amount || 0),
     0
   );
 
@@ -1054,4 +1133,5 @@ window.ShopAdmin.renderRecent = renderRecent;
 window.ShopAdmin.updateReports = updateReports;
 window.ShopAdmin.updateOrdersBadge = updateOrdersBadge;
 window.ShopAdmin.markAsPaid = markAsPaid;
+window.ShopAdmin.resumeSession = resumeSession;
 window.ShopAdmin.printLabel = printLabel;
