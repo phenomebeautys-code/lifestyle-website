@@ -816,6 +816,15 @@ function updateShopHero(segment) {
   if (pane) pane.hidden = !giftView;
   const grid = document.getElementById('productGrid');
   if (grid) grid.hidden = giftView;
+  /* Gift cards get their own hero photo; every other view keeps the product photo. */
+  const heroImg = document.getElementById('shopHeroImg');
+  if (heroImg) {
+    if (!heroImg.dataset.productSrc) { heroImg.dataset.productSrc = heroImg.src; heroImg.dataset.productAlt = heroImg.alt; }
+    const src = giftView ? 'assets/gift-cards-hero.webp' : heroImg.dataset.productSrc;
+    if (heroImg.getAttribute('src') !== src) heroImg.setAttribute('src', src);
+    heroImg.alt = giftView ? 'Two friends sharing a secret' : heroImg.dataset.productAlt;
+    heroImg.style.objectPosition = giftView ? 'center 30%' : '';
+  }
   const heroTitle = document.getElementById('shopHeroTitle');
   const heroDesc  = document.getElementById('shopHeroDesc');
   if (!heroTitle || !heroDesc) return;

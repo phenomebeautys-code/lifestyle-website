@@ -56,3 +56,6 @@
   .gc-form, .gc-off { padding: 24px 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .gc-card, .gc-card-word { transition: none; } }
+
+/* Gift cards are emailed, so the delivery note in the shop hero does not apply. */
+body[data-segment="gift_cards"] .shop-trust li:nth-child(2) { display: none; }
