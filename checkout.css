@@ -418,4 +418,4 @@ body.ce-open .mobile-summary-bar { display: none !important; }
 .co-discount-row input::placeholder { text-transform: none; letter-spacing: 0; color: rgba(0, 0, 0, 0.36); }
 .co-discount-row input:focus { outline: none; border-color: var(--ink); }
 .co-discount-row input:disabled { opacity: 0.7; }
-#discountMsg.is-error { color: #a1271b; }
+#discountMsg.is-error, #giftMsg.is-error { color: #a1271b; }

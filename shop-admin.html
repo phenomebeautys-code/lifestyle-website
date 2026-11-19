@@ -117,6 +117,7 @@
       <div class="sidebar-section-label">Marketing</div>
       <button class="nav-item" data-page="discounts">Discount codes</button>
       <button class="nav-item" data-page="campaigns">Email campaigns</button>
+      <button class="nav-item" data-page="giftcards">Gift cards</button>
       <button class="nav-item" data-page="feeds">Product feeds</button>
     </div>
 
@@ -476,6 +477,33 @@
           <thead><tr><th>When</th><th>Campaign</th><th>To</th><th>Status</th><th>Detail</th></tr></thead>
           <tbody id="campaignLog"></tbody>
         </table></div>
+      </div>
+    </section>
+
+    <!-- GIFT CARDS -->
+    <section class="page" id="page-giftcards" aria-label="Gift cards">
+      <div class="page-head">
+        <div>
+          <h2>Gift cards</h2>
+          <p id="gcSummary">Sold at phenomebeauty.co.za/gift-cards and issued here</p>
+        </div>
+        <button class="btn btn-primary" id="gcIssueBtn">Issue a gift card</button>
+      </div>
+      <div class="panel ops-panel">
+        <div class="panel-title">Selling online</div>
+        <div class="ops-form mk-form" style="margin-top:12px">
+          <label class="ops-switch"><input type="checkbox" id="gcOnline" /> <span>Sell gift cards on the website</span></label>
+          <label class="field-label" for="gcAmountsInput">Amounts offered (R, separated by commas)</label>
+          <input class="field-input" id="gcAmountsInput" placeholder="250, 500, 1000" />
+          <p class="ops-hint">Cards are emailed to the recipient within about 5 minutes of payment and are valid for 3 years. At checkout a card pays for products and delivery, leaving at least R10 to pay by card.</p>
+          <button class="btn btn-primary" id="gcSaveSettings">Save</button>
+        </div>
+      </div>
+      <div class="table-wrap ops-table" role="region" aria-label="Gift cards">
+        <table>
+          <thead><tr><th>Card</th><th>For</th><th>Balance</th><th>Valid until</th><th>Email</th><th>Status</th></tr></thead>
+          <tbody id="gcBody"></tbody>
+        </table>
       </div>
     </section>
 

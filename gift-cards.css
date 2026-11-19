@@ -1,0 +1,57 @@
+/* Gift cards page. Uses the site tokens from site.css. */
+.gc { padding-block: var(--half) var(--band-pad); }
+.gc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; }
+.gc-intro { display: grid; gap: 24px; }
+.gc-lead { font-size: var(--fs-lead); color: var(--fg-soft); max-width: 46ch; line-height: 1.55; }
+.gc-card {
+  --gc-bg: #000000; --gc-type: #F2C6C2; --gc-mark: #F2C6C2; --gc-edge: transparent;
+  container-type: inline-size; width: 100%; max-width: 380px; aspect-ratio: 5 / 7;
+  border-radius: 20px; background: var(--gc-bg); color: var(--gc-mark); border: 1px solid var(--gc-edge);
+  box-shadow: 0 30px 60px -32px rgba(0, 0, 0, 0.45); overflow: hidden;
+  transition: background-color 0.45s var(--ease, ease), color 0.45s var(--ease, ease), border-color 0.45s;
+}
+.gc-card-in { height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 7cqi 7cqi 6cqi; }
+.gc-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.gc-card-mark { font-family: var(--font-mark); font-size: 8.5cqi; line-height: 1; }
+.gc-card-amount { font-weight: 600; font-size: 7cqi; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.gc-card-word {
+  display: flex; flex-direction: column; color: var(--gc-type); font-weight: 600; text-transform: uppercase;
+  font-size: 31cqi; line-height: 0.8; letter-spacing: -0.055em; transition: color 0.45s var(--ease, ease);
+}
+.gc-card-word span:first-child { align-self: flex-end; }
+.gc-card-word span:last-child { align-self: flex-start; margin-left: -0.05em; }
+.gc-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; color: var(--fg-soft); }
+.gc-points li::before { content: '✓'; margin-right: 10px; color: var(--ink); }
+
+.gc-form, .gc-off { background: var(--paper-2); border-radius: var(--r-card); padding: 32px; display: grid; gap: 22px; }
+.gc-form fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
+.gc-form legend { font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; }
+.gc-amounts { display: flex; flex-wrap: wrap; gap: 10px; }
+.gc-amounts button {
+  min-height: 52px; min-width: 96px; padding: 0 22px; border-radius: var(--r-pill); border: 1px solid var(--line-strong);
+  background: transparent; font: inherit; font-weight: 600; font-size: 1rem; color: var(--ink); cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.gc-amounts button { display: inline-flex; align-items: center; gap: 10px; }
+.gc-amounts button.is-on, .gc-amounts button:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.gc-swatch { width: 18px; height: 18px; border-radius: 50%; flex: none; border: 1px solid rgba(0, 0, 0, 0.2); }
+.gc-amounts button.is-on .gc-swatch, .gc-amounts button:hover .gc-swatch { border-color: rgba(255, 255, 255, 0.45); }
+.gc-field { display: grid; gap: 6px; font-size: var(--fs-sm); color: var(--fg-soft); }
+.gc-field input, .gc-field textarea {
+  min-height: 50px; padding: 12px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  background: var(--paper); font: inherit; font-size: 1rem; color: var(--ink);
+}
+.gc-field textarea { resize: vertical; min-height: 90px; }
+.gc-field input:focus, .gc-field textarea:focus { outline: none; border-color: var(--ink); }
+.gc-error { color: #a1271b; font-size: var(--fs-sm); margin: 0; }
+.gc-pay { width: 100%; justify-content: center; }
+.gc-small { font-size: var(--fs-xs); color: var(--fg-muted); margin: 0; text-align: center; }
+.gc-off h2 { font-size: var(--fs-h3); font-weight: 500; margin: 0; }
+.gc-off p { margin: 0; color: var(--fg-soft); }
+
+@media (max-width: 860px) {
+  .gc-grid { grid-template-columns: 1fr; gap: 32px; }
+  .gc-card { max-width: 340px; }
+  .gc-form, .gc-off { padding: 24px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .gc-card, .gc-card-word { transition: none; } }

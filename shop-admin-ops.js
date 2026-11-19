@@ -298,6 +298,8 @@
     create_discount: 'Created a discount code', update_discount: 'Edited a discount code', delete_discount: 'Deleted a discount code',
     save_campaign: 'Changed an email campaign', campaign_test: 'Sent a test campaign email', campaign_run: 'Sent due campaign emails',
     retry_failed_sends: 'Retried failed campaign emails',
+    issue_gift_card: 'Issued a gift card', resend_gift_card: 'Resent a gift card email', adjust_gift_card: 'Changed a gift card balance',
+    set_gift_card_status: 'Switched a gift card on or off', save_gift_card_settings: 'Changed gift card sales',
   };
 
   function describe(a) {

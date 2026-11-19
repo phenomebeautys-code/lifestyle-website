@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { loadFreeDelivery } from '../_shared/free-delivery.mjs';
+import { loadGiftSettings } from '../_shared/gift-cards.mjs';
 import { corsOrigin } from '../_shared/site-origin.ts';
 
 /**
@@ -22,6 +23,6 @@ Deno.serve(async (req: Request) => {
   };
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
-  const freeDelivery = await loadFreeDelivery(supabase);
-  return new Response(JSON.stringify({ free_delivery: freeDelivery }), { status: 200, headers });
+  const [freeDelivery, giftCards] = await Promise.all([loadFreeDelivery(supabase), loadGiftSettings(supabase)]);
+  return new Response(JSON.stringify({ free_delivery: freeDelivery, gift_cards: giftCards }), { status: 200, headers });
 });

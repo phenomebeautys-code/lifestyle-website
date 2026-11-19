@@ -5,6 +5,7 @@ import { corsOrigin } from '../_shared/site-origin.ts';
 import { loadFreeDelivery, normaliseFreeDelivery } from '../_shared/free-delivery.mjs';
 import { CODE_RE, normaliseCode } from '../_shared/discounts.mjs';
 import { CAMPAIGN_KEYS, normaliseSettings } from '../_shared/campaigns.mjs';
+import { loadGiftSettings, normaliseGiftSettings } from '../_shared/gift-cards.mjs';
 
 /**
  * shop-admin: back end for shop-admin.html.
@@ -53,7 +54,7 @@ function json(data: unknown, status = 200, cors: Record<string, string>) {
 }
 
 const VALID_AVAILABILITY = ['available', 'unavailable', 'coming_soon'];
-const ORDER_COLUMNS = 'id, created_at, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_meta, items, subtotal, delivery_fee, total_amount, payment_status, payment_id, paid_at, status, is_gift, gift_message, notes, tags, archived_at, cancelled_at, cancel_reason, refunded_amount, pudo_tracking_ref, pudo_shipment_id, reminder_sent, discount_code, discount_amount';
+const ORDER_COLUMNS = 'id, created_at, customer_name, customer_email, customer_phone, delivery_address, delivery_method, delivery_meta, items, subtotal, delivery_fee, total_amount, payment_status, payment_id, paid_at, status, is_gift, gift_message, notes, tags, archived_at, cancelled_at, cancel_reason, refunded_amount, pudo_tracking_ref, pudo_shipment_id, reminder_sent, discount_code, discount_amount, gift_card_amount';
 
 function cents(value: unknown): number {
   return Math.round(Number(value) * 100);
@@ -327,6 +328,11 @@ Deno.serve(async (req: Request) => {
     if (error) return json({ error: error.message }, 500, cors);
     if (!updated) return json({ error: 'Order changed concurrently; refresh before trying again' }, 409, cors);
     await addEvent(supabase, order_id, actor, 'cancel', `Cancelled: ${reason}`, { from: current.status });
+    // Any gift card amount held for this order goes back on the card.
+    try {
+      const { data: given } = await supabase.rpc('gift_card_release', { p_order: order_id, p_note: 'Order cancelled' });
+      if (Number(given) > 0) await addEvent(supabase, order_id, actor, 'note', `R${Number(given).toFixed(2)} given back to the gift card.`);
+    } catch { /* the hourly job also gives back holds on cancelled orders */ }
     await logActivity(supabase, actor, 'cancel_order', 'order', order_id, { reason });
     return json({ ok: true, cancelled_at: cancelledAt }, 200, cors);
   }
@@ -648,6 +654,75 @@ Deno.serve(async (req: Request) => {
     if (error) return json({ error: error.message }, 500, cors);
     await logActivity(supabase, actor, 'retry_failed_sends', 'campaign', body.key, null);
     return json({ ok: true }, 200, cors);
+  }
+
+  /* ── Gift cards ─────────────────────────────────────────────────── */
+
+  if (action === 'get_gift_cards') {
+    const [{ data: cards, error }, settings] = await Promise.all([
+      supabase.from('gift_cards').select('id, code, initial_amount, balance, expires_at, status, recipient_name, recipient_email, sender_name, source, purchase_order_id, emailed_at, created_at, created_by')
+        .order('created_at', { ascending: false }).limit(500),
+      loadGiftSettings(supabase),
+    ]);
+    if (error) return json({ error: error.message }, 500, cors);
+    const now = Date.now();
+    const live = (cards ?? []).filter((c: { status: string; expires_at: string }) => c.status === 'active' && new Date(c.expires_at).getTime() > now);
+    const outstanding = Math.round(live.reduce((sum: number, c: { balance: number }) => sum + Number(c.balance), 0) * 100) / 100;
+    // Codes are shown in full only when a card is opened, not in the list.
+    const list = (cards ?? []).map((c: { code: string }) => ({ ...c, code: undefined, last4: c.code.slice(-4) }));
+    return json({ cards: list, settings, outstanding, live: live.length }, 200, cors);
+  }
+
+  if (action === 'get_gift_card') {
+    const { data: card } = await supabase.from('gift_cards').select('*').eq('id', body.card_id).maybeSingle();
+    if (!card) return json({ error: 'Gift card not found' }, 404, cors);
+    const { data: ledger } = await supabase.from('gift_card_ledger').select('*').eq('card_id', card.id).order('at', { ascending: false }).limit(200);
+    return json({ card, ledger: ledger ?? [] }, 200, cors);
+  }
+
+  if (action === 'issue_gift_card' || action === 'resend_gift_card') {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/gift-card-jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_SERVICE}`, apikey: SUPABASE_SERVICE },
+      body: JSON.stringify(action === 'issue_gift_card'
+        ? { mode: 'issue', amount: body.amount, recipient_name: body.recipient_name, recipient_email: body.recipient_email, sender_name: body.sender_name, message: body.message, send_email: body.send_email === true, actor }
+        : { mode: 'resend', card_id: body.card_id }),
+    });
+    const data = await res.json().catch(() => ({ error: 'Gift card service unavailable' }));
+    if (res.ok) await logActivity(supabase, actor, action, 'gift_card', data.card ? data.card.id : body.card_id, action === 'issue_gift_card' ? { amount: Number(body.amount) } : null);
+    return json(data, res.ok ? 200 : res.status, cors);
+  }
+
+  if (action === 'adjust_gift_card') {
+    const change = Math.round(Number(body.change) * 100) / 100;
+    const kind = body.kind === 'topup' ? 'topup' : 'adjust';
+    const note = cleanText(body.note, 300);
+    if (!Number.isFinite(change) || change === 0 || Math.abs(change) > 50000) return json({ error: 'Enter an amount to add or take off.' }, 400, cors);
+    if (kind === 'topup' && change < 0) return json({ error: 'A top-up adds to the balance.' }, 400, cors);
+    if (!note) return json({ error: 'Add a short note so the history makes sense later.' }, 400, cors);
+    const { data: balance, error } = await supabase.rpc('gift_card_adjust', { p_card: body.card_id, p_change: change, p_kind: kind, p_actor: actor, p_note: note });
+    if (error) return json({ error: /GIFT_CARD_BALANCE/.test(error.message) ? 'The balance cannot go below zero.' : error.message }, 400, cors);
+    await logActivity(supabase, actor, 'adjust_gift_card', 'gift_card', body.card_id, { change, kind, note });
+    return json({ balance }, 200, cors);
+  }
+
+  if (action === 'set_gift_card_status') {
+    const status = body.status === 'disabled' ? 'disabled' : 'active';
+    const { data, error } = await supabase.from('gift_cards').update({ status }).eq('id', body.card_id).select('id').maybeSingle();
+    if (error) return json({ error: error.message }, 500, cors);
+    if (!data) return json({ error: 'Gift card not found' }, 404, cors);
+    await logActivity(supabase, actor, 'set_gift_card_status', 'gift_card', body.card_id, { status });
+    return json({ ok: true, status }, 200, cors);
+  }
+
+  if (action === 'save_gift_card_settings') {
+    const input = body.settings && typeof body.settings === 'object' ? body.settings : {};
+    const settings = normaliseGiftSettings(input);
+    if (input.enabled === true && !settings.enabled) return json({ error: 'Add at least one amount between R50 and R10 000.' }, 400, cors);
+    const { error } = await supabase.from('shop_settings').upsert({ key: 'gift_cards', value: settings, updated_at: new Date().toISOString(), updated_by: actor }, { onConflict: 'key' });
+    if (error) return json({ error: error.message }, 500, cors);
+    await logActivity(supabase, actor, 'save_gift_card_settings', 'setting', 'gift_cards', settings);
+    return json({ settings }, 200, cors);
   }
 
   /* ── Sales analytics ────────────────────────────────────────────── */

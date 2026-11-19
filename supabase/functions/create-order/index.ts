@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CartError, trustedCart } from '../_shared/trusted-cart.mjs';
 import { loadFreeDelivery, qualifiesForFreeDelivery } from '../_shared/free-delivery.mjs';
-import { evaluateDiscount } from '../_shared/discounts.mjs';
+import { evaluateDiscount, MIN_PAYABLE_CENTS } from '../_shared/discounts.mjs';
+import { giftCardError, normaliseGiftCode } from '../_shared/gift-cards.mjs';
 
 import { corsOrigin, isSiteOrigin } from '../_shared/site-origin.ts';
 Deno.serve(async req => {
@@ -75,15 +76,36 @@ Deno.serve(async req => {
     const deliveryMeta = delivery_method === 'door'
       ? {...delivery_address, special_instructions: instructions, free_delivery: freeDelivery}
       : {locker_id, locker_name, locker_address, special_instructions: instructions, free_delivery: freeDelivery};
+    // A gift card pays for part of the order. The amount is held on the card now and given back
+    // if the order is not paid. At least R10 is always left to pay through Yoco.
+    const orderId = crypto.randomUUID();
+    const beforeCardCents = trusted.subtotalCents - discountCents + feeCents;
+    let giftCard = null;
+    if (typeof body.gift_card_code === 'string' && body.gift_card_code.trim()) {
+      const giftCode = normaliseGiftCode(body.gift_card_code);
+      if (!giftCode) return respond({error: 'Gift card codes look like PB-XXXX-XXXX-XXXX.', gift_card_error: true}, 409);
+      const maxCents = beforeCardCents - MIN_PAYABLE_CENTS;
+      if (maxCents <= 0) return respond({error: 'This order is too small to use a gift card on.', gift_card_error: true}, 409);
+      const {data: held, error: holdError} = await supabase.rpc('gift_card_hold', {p_code: giftCode, p_order: orderId, p_max_cents: maxCents, p_actor: 'checkout'});
+      const row = Array.isArray(held) ? held[0] : held;
+      if (holdError || !row) return respond({error: giftCardError(holdError?.message), gift_card_error: true}, 409);
+      giftCard = {id: row.out_card_id, cents: Math.round(Number(row.out_held) * 100)};
+    }
+    const giftCents = giftCard ? giftCard.cents : 0;
     const {data: order, error} = await supabase.from('shop_orders').insert({
+      id: orderId,
       customer_name: customer.name.trim(), customer_email: customer.email.trim(), customer_phone: customer.phone.trim(),
       delivery_address: address, delivery_method, delivery_meta: deliveryMeta,
       items: trusted.items, subtotal: trusted.subtotalCents / 100, delivery_fee: feeCents / 100,
       discount_code: discount ? discount.code : null, discount_amount: discountCents / 100,
-      total_amount: (trusted.subtotalCents - discountCents + feeCents) / 100, notes: instructions || null,
+      gift_card_id: giftCard ? giftCard.id : null, gift_card_amount: giftCents / 100,
+      total_amount: (beforeCardCents - giftCents) / 100, notes: instructions || null,
       payment_status: 'unpaid', status: 'pending', is_gift: false, gift_message: null,
     }).select('id, customer_token').single();
-    if (error || !order) return respond({error: 'Could not create order'}, 500);
+    if (error || !order) {
+      if (giftCard) await supabase.rpc('gift_card_release', {p_order: orderId, p_note: 'Order could not be created'});
+      return respond({error: 'Could not create order'}, 500);
+    }
     return respond({order_id: order.id, order_ref: order.id, customer_token: order.customer_token});
   } catch (error) {
     if (error instanceof CartError) return respond({error: error.message}, 409);

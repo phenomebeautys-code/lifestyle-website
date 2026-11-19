@@ -421,3 +421,180 @@
 
   window.ShopAdminMarketing = { loadDiscounts, loadCampaigns, loadFeeds };
 })();
+
+/* ─── GIFT CARDS ─────────────────────────────────────────────────────────
+   Online sales on/off and amounts, issue cards, top up or correct balances,
+   switch cards off, resend the email, and see each card's history.
+──────────────────────────────────────────────────────────────────────── */
+(function () {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const money = n => 'R' + Number(n || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const day = iso => iso ? new Date(iso).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+  const when = iso => iso ? new Date(iso).toLocaleString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  const KIND = { issue: 'Issued', hold: 'Used at checkout', release: 'Given back', adjust: 'Correction', topup: 'Top-up' };
+
+  async function call(action, payload) {
+    const res = await callEdge({ action, password: window.ShopAdmin.adminToken, ...(payload || {}) });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Something went wrong. Try again.');
+    return data;
+  }
+
+  function openModal(title, html) {
+    $('opsModalTitle').textContent = title;
+    $('opsModalBody').innerHTML = html;
+    $('opsModal').removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  let cards = [];
+
+  async function load() {
+    $('gcBody').innerHTML = '<tr class="empty-row"><td colspan="6"><span class="spinner"></span>Loading…</td></tr>';
+    try {
+      const data = await call('get_gift_cards');
+      cards = data.cards || [];
+      $('gcSummary').textContent = `${data.live} live card${data.live === 1 ? '' : 's'} · ${money(data.outstanding)} still to be spent`;
+      $('gcOnline').checked = data.settings.enabled;
+      $('gcAmountsInput').value = data.settings.amounts.join(', ');
+      render();
+    } catch (err) {
+      $('gcBody').innerHTML = `<tr class="empty-row"><td colspan="6">${esc(err.message)}</td></tr>`;
+    }
+  }
+
+  function status(c) {
+    if (c.status !== 'active') return ['Off', 'badge-cancelled'];
+    if (new Date(c.expires_at) <= new Date()) return ['Expired', 'badge-cancelled'];
+    if (Number(c.balance) <= 0) return ['Spent', 'badge-unpaid'];
+    return ['Live', 'badge-paid'];
+  }
+
+  function render() {
+    $('gcBody').innerHTML = cards.length ? cards.map(c => {
+      const [label, cls] = status(c);
+      return `<tr class="ops-click" data-card="${esc(c.id)}">
+        <td><div class="mk-code">•••• ${esc(c.last4)}</div><div class="ops-hint">${c.source === 'online' ? 'Bought online' : 'Issued by ' + esc(c.created_by || 'admin')} · ${day(c.created_at)}</div></td>
+        <td>${esc(c.recipient_name || '—')}<div class="ops-hint">${esc(c.recipient_email || '')}</div></td>
+        <td style="white-space:nowrap"><strong style="color:var(--accent)">${money(c.balance)}</strong><div class="ops-hint">of ${money(c.initial_amount)}</div></td>
+        <td style="white-space:nowrap">${day(c.expires_at)}</td>
+        <td>${c.emailed_at ? '<span class="ops-hint">Emailed ' + day(c.emailed_at) + '</span>' : '<span class="ops-hint">Not emailed</span>'}</td>
+        <td><span class="badge ${cls}">${label}</span></td>
+      </tr>`;
+    }).join('') : '<tr class="empty-row"><td colspan="6">No gift cards yet.</td></tr>';
+    $('gcBody').querySelectorAll('tr[data-card]').forEach(tr => tr.addEventListener('click', () => openCard(tr.dataset.card)));
+  }
+
+  async function saveSettings() {
+    const amounts = $('gcAmountsInput').value.split(/[,\s]+/).map(Number).filter(Boolean);
+    $('gcSaveSettings').disabled = true;
+    try {
+      const data = await call('save_gift_card_settings', { settings: { enabled: $('gcOnline').checked, amounts } });
+      $('gcOnline').checked = data.settings.enabled;
+      $('gcAmountsInput').value = data.settings.amounts.join(', ');
+      showToast(data.settings.enabled ? 'Gift cards are on sale at phenomebeauty.co.za/gift-cards.' : 'Online gift card sales are off.');
+    } catch (err) { showToast(err.message, true); }
+    $('gcSaveSettings').disabled = false;
+  }
+
+  function openIssue() {
+    openModal('Issue a gift card', `
+      <div class="ops-form mk-form">
+        <label class="field-label" for="giAmount">Amount (R)</label>
+        <input class="field-input" id="giAmount" type="number" min="10" step="1" placeholder="e.g. 500" />
+        <label class="field-label" for="giName">Recipient name</label>
+        <input class="field-input" id="giName" maxlength="120" />
+        <label class="field-label" for="giEmail">Recipient email (optional if you hand it over yourself)</label>
+        <input class="field-input" id="giEmail" type="email" maxlength="254" />
+        <label class="field-label" for="giFrom">From (optional)</label>
+        <input class="field-input" id="giFrom" maxlength="120" placeholder="e.g. Phenomebeauty" />
+        <label class="field-label" for="giMessage">Message (optional)</label>
+        <textarea class="field-input" id="giMessage" rows="3" maxlength="500"></textarea>
+        <label class="ops-switch"><input type="checkbox" id="giSend" checked /> <span>Email the card to the recipient now</span></label>
+        <div class="ops-hint">Valid for 3 years from today. Use this for cards sold in person, prizes or goodwill.</div>
+        <button class="btn btn-primary" id="giIssue">Issue card</button>
+      </div>`);
+    $('giIssue').addEventListener('click', async () => {
+      $('giIssue').disabled = true;
+      try {
+        const data = await call('issue_gift_card', {
+          amount: $('giAmount').value, recipient_name: $('giName').value, recipient_email: $('giEmail').value,
+          sender_name: $('giFrom').value, message: $('giMessage').value, send_email: $('giSend').checked,
+        });
+        const emailed = data.emailed ? (data.emailed.ok ? ' and emailed' : ', but the email failed: ' + data.emailed.error) : '';
+        openModal('Gift card issued', `
+          <p class="ops-help">Card for ${money(data.card.initial_amount)} created${esc(emailed)}.</p>
+          <div class="gc-admin-code">${esc(data.card.code)}</div>
+          <p class="ops-hint">Valid until ${day(data.card.expires_at)}. You can see this code again by opening the card.</p>`);
+        load();
+      } catch (err) {
+        showToast(err.message, true);
+        $('giIssue').disabled = false;
+      }
+    });
+  }
+
+  async function openCard(id) {
+    openModal('Gift card', '<div class="ops-empty"><span class="spinner"></span>Loading…</div>');
+    try {
+      const { card, ledger } = await call('get_gift_card', { card_id: id });
+      const [label, cls] = status(card);
+      $('opsModalTitle').textContent = `Gift card •••• ${card.code.slice(-4)}`;
+      $('opsModalBody').innerHTML = `
+        <div class="gc-admin-code">${esc(card.code)}</div>
+        <div class="ops-row" style="justify-content:space-between;margin-bottom:12px">
+          <div><strong style="font-size:1.3rem;color:var(--accent)">${money(card.balance)}</strong> <span class="ops-hint">of ${money(card.initial_amount)}</span></div>
+          <span class="badge ${cls}">${label}</span>
+        </div>
+        <p class="ops-hint">For ${esc(card.recipient_name || 'no name')}${card.recipient_email ? ' · ' + esc(card.recipient_email) : ''}${card.sender_name ? ' · from ' + esc(card.sender_name) : ''}. Valid until ${day(card.expires_at)}.</p>
+        ${card.message ? `<p class="ops-help">“${esc(card.message)}”</p>` : ''}
+        <div class="ops-block" style="margin-top:18px">
+          <div class="ops-label">Change the balance</div>
+          <div class="mk-two">
+            <div><label class="field-label" for="gaKind">Type</label><select class="field-input" id="gaKind"><option value="topup">Top-up (add)</option><option value="adjust">Correction (add or take off)</option></select></div>
+            <div><label class="field-label" for="gaAmount">Amount (R, use minus to take off)</label><input class="field-input" id="gaAmount" type="number" step="0.01" /></div>
+          </div>
+          <label class="field-label" for="gaNote">Note</label>
+          <input class="field-input" id="gaNote" maxlength="300" placeholder="e.g. Topped up for birthday" />
+          <button class="btn btn-secondary" id="gaSave" style="margin-top:8px">Save change</button>
+        </div>
+        <div class="ops-row ops-actions" style="margin:14px 0 18px">
+          <button class="btn btn-secondary" id="gcResend" ${card.recipient_email ? '' : 'disabled'}>Resend email</button>
+          <button class="btn btn-secondary ${card.status === 'active' ? 'ops-danger' : ''}" id="gcToggle">${card.status === 'active' ? 'Switch off' : 'Switch back on'}</button>
+        </div>
+        <div class="ops-block">
+          <div class="ops-label">History</div>
+          <ol class="ops-timeline">${ledger.map(l => `<li class="ops-event"><div class="ops-event-msg">${KIND[l.kind] || l.kind}: ${Number(l.change) >= 0 ? '+' : '−'}${money(Math.abs(l.change))}${l.kind === 'hold' && l.hold_state ? ` (${l.hold_state === 'held' ? 'awaiting payment' : l.hold_state === 'redeemed' ? 'spent' : 'given back'})` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
+            <div class="ops-event-meta">${when(l.at)} · ${esc(l.actor || 'system')}${l.order_id ? ' · order #' + esc(String(l.order_id).slice(0, 8).toUpperCase()) : ''}</div></li>`).join('')}</ol>
+        </div>`;
+      $('gaSave').addEventListener('click', async () => {
+        try {
+          const out = await call('adjust_gift_card', { card_id: card.id, kind: $('gaKind').value, change: $('gaAmount').value, note: $('gaNote').value });
+          showToast(`Balance is now ${money(out.balance)}.`);
+          openCard(card.id); load();
+        } catch (err) { showToast(err.message, true); }
+      });
+      $('gcResend').addEventListener('click', async () => {
+        try { await call('resend_gift_card', { card_id: card.id }); showToast('Gift card email sent again.'); openCard(card.id); load(); }
+        catch (err) { showToast(err.message, true); }
+      });
+      $('gcToggle').addEventListener('click', async () => {
+        const off = card.status === 'active';
+        if (off && !confirm('Switch this card off? It cannot be used until you switch it back on.')) return;
+        try { await call('set_gift_card_status', { card_id: card.id, status: off ? 'disabled' : 'active' }); showToast(off ? 'Card switched off.' : 'Card switched back on.'); openCard(card.id); load(); }
+        catch (err) { showToast(err.message, true); }
+      });
+    } catch (err) {
+      $('opsModalBody').innerHTML = `<div class="ops-empty">${esc(err.message)}</div>`;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    $('gcIssueBtn').addEventListener('click', openIssue);
+    $('gcSaveSettings').addEventListener('click', saveSettings);
+  });
+
+  window.ShopAdminGiftCards = { load };
+})();

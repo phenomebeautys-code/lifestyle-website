@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { CartError, trustedCart } from './trusted-cart.mjs';
 import { normaliseFreeDelivery, qualifiesForFreeDelivery } from './free-delivery.mjs';
+import { giftCardError, normaliseGiftCode } from './gift-cards.mjs';
+import { MIN_PAYABLE_CENTS } from './discounts.mjs';
 const wax = {id:'film-wax-collection',name:'Film Wax',price:200,active:true,availability:'available',variants:[{name:'Type: Onyx',in_stock:true}],sizes:[{name:'500g',price:200},{name:'500g x 2',price:360}]};
 const item = {productId:wax.id,qty:1,variant:'Type: Onyx',size:'500g x 2',price:360};
 const customer = {name:'Test Buyer',email:'buyer@example.com',phone:'0800000000'};
@@ -11,7 +13,11 @@ const requestBody = {customer,delivery_method:'door',delivery_address:address,de
 const savedOrder = {id:'test-order',customer_token:'test-token',status:'pending',payment_status:'unpaid',items:[item],delivery_method:'door',delivery_fee:59,subtotal:360,total_amount:419,customer_email:customer.email};
 function harness(kind, overrides={}) {
   const calls={inserted:[],updated:[],quotes:[],payments:[]};
-  const database={from(table){
+  const database={rpc(fn,args){calls.rpc=(calls.rpc||[]);calls.rpc.push({fn,args});
+      if(fn==='gift_card_hold'){if(overrides.giftError)return Promise.resolve({data:null,error:{message:overrides.giftError}});
+        const held=Math.min(overrides.giftBalance??100,args.p_max_cents/100);return Promise.resolve({data:[{out_card_id:'card-1',out_held:held}],error:null});}
+      return Promise.resolve({data:0,error:null});},
+    from(table){
     let operation='read';
     const query={select(){return this;},in(){return this;},eq(){return this;},
       insert(value){operation='insert';calls.inserted.push(value);return this;},
@@ -37,7 +43,7 @@ function harness(kind, overrides={}) {
   const {corsOrigin,isSiteOrigin}=new Function(`${origin}\nreturn {corsOrigin,isSiteOrigin};`)();
   const loadFreeDelivery=async()=>normaliseFreeDelivery(overrides.freeRule);
   const evaluateDiscount=async(db,code,subtotalCents,email)=>{calls.discountChecks=(calls.discountChecks||[]);calls.discountChecks.push({code,subtotalCents,email});return overrides.discount||{ok:false,error:'That code is not valid.'};};
-  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','loadFreeDelivery','qualifiesForFreeDelivery','evaluateDiscount','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,loadFreeDelivery,qualifiesForFreeDelivery,evaluateDiscount,deno,fetchMock);
+  new Function('createClient','CartError','trustedCart','corsOrigin','isSiteOrigin','loadFreeDelivery','qualifiesForFreeDelivery','evaluateDiscount','MIN_PAYABLE_CENTS','giftCardError','normaliseGiftCode','Deno','fetch',source)(()=>database,CartError,trustedCart,corsOrigin,isSiteOrigin,loadFreeDelivery,qualifiesForFreeDelivery,evaluateDiscount,MIN_PAYABLE_CENTS,giftCardError,normaliseGiftCode,deno,fetchMock);
   return {calls,run(body=kind==='order'?requestBody:{order_id:'test-order',success_url:'https://www.phenomebeauty.co.za/shop-success.html',cancel_url:'https://www.phenomebeauty.co.za/shop.html'},method='POST'){
     return handler(new Request('https://example.com',{method,headers:{'Content-Type':'application/json'},...(method==='POST'?{body:JSON.stringify(body)}:{})}));
   }};
@@ -165,4 +171,27 @@ test('discount: payment refuses a recorded discount that is not possible',async(
   for(const order of [{discount_amount:360,total_amount:59},{discount_amount:-5,total_amount:424},{discount_amount:36,total_amount:419}]) {
     const h=harness('payment',{order});assert.equal((await h.run()).status,409,JSON.stringify(order));assert.equal(h.calls.payments.length,0);
   }
+});
+
+test('gift card: held amount lowers the total and is recorded on the order',async()=>{
+  const h=harness('order',{giftBalance:100});assert.equal((await h.run({...requestBody,gift_card_code:'pb-7kq4-mx2r-9tva'})).status,200);
+  const hold=h.calls.rpc.find(r=>r.fn==='gift_card_hold');assert.equal(hold.args.p_code,'PB-7KQ4-MX2R-9TVA');assert.equal(hold.args.p_max_cents,41900-1000);
+  const row=h.calls.inserted[0];assert.equal(row.id,hold.args.p_order,'order id is the one held against');
+  assert.equal(row.gift_card_amount,100);assert.equal(row.gift_card_id,'card-1');assert.equal(row.total_amount,319);
+});
+test('gift card: never pays the last R10',async()=>{
+  const h=harness('order',{giftBalance:5000});assert.equal((await h.run({...requestBody,gift_card_code:'PB-7KQ4-MX2R-9TVA'})).status,200);
+  assert.equal(h.calls.inserted[0].gift_card_amount,409);assert.equal(h.calls.inserted[0].total_amount,10);
+});
+test('gift card: problems are reported and no order is made',async()=>{
+  for(const [over,code,re] of [[{giftError:'GIFT_CARD_EXPIRED'},'PB-7KQ4-MX2R-9TVA',/expired/],[{},'NOT-A-CODE',/PB-XXXX/]]) {
+    const h=harness('order',over);const r=await h.run({...requestBody,gift_card_code:code});assert.equal(r.status,409);
+    const d=await r.json();assert.equal(d.gift_card_error,true);assert.match(d.error,re);assert.equal(h.calls.inserted.length,0);
+  }
+});
+test('gift card: payment charges the rest after the gift card',async()=>{
+  const h=harness('payment',{order:{gift_card_amount:100,total_amount:319}});assert.equal((await h.run()).status,200);assert.equal(h.calls.payments[0].amount,31900);
+});
+test('gift card: payment refuses an order that would charge less than R10',async()=>{
+  const h=harness('payment',{order:{gift_card_amount:415,total_amount:4}});assert.equal((await h.run()).status,409);assert.equal(h.calls.payments.length,0);
 });

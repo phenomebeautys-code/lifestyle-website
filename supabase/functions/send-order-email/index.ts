@@ -13,7 +13,8 @@
  *   SUPABASE_URL               — injected automatically
  *   SUPABASE_SERVICE_ROLE_KEY  — injected automatically
  *
- * Synced from live version 26, plus discount and free-delivery lines in the totals.
+ * Synced from live version 26, plus discount, free-delivery and gift card lines in the totals,
+ * and gift card purchase wording (delivery_method 'digital').
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -89,6 +90,9 @@ function deliveryText(order: Record<string, any>): string {
 
 /* ── Delivery label ────────────────────────────────────────────────────────── */
 function deliveryLabel(order: Record<string, any>): { method: string; address: string } {
+  if (order.delivery_method === 'digital') {
+    return { method: 'Gift card by email', address: order.delivery_address || '' };
+  }
   if (order.delivery_method === 'locker') {
     const meta = order.delivery_meta || {};
     return {
@@ -131,8 +135,11 @@ function totalsHTML(order: Record<string, any>): string {
   if (hasDiscount(order)) {
     html += `<div style="${rowStyle}"><span>Discount${order.discount_code ? ' (' + esc(order.discount_code) + ')' : ''}</span><span style="${valStyle}">&minus;${fmt(order.discount_amount)}</span></div>`;
   }
-  if (order.delivery_fee != null) {
+  if (order.delivery_fee != null && order.delivery_method !== 'digital') {
     html += `<div style="${rowStyle}"><span>Delivery</span><span style="${valStyle}">${deliveryText(order)}</span></div>`;
+  }
+  if (Number(order.gift_card_amount || 0) > 0) {
+    html += `<div style="${rowStyle}"><span>Gift card</span><span style="${valStyle}">&minus;${fmt(order.gift_card_amount)}</span></div>`;
   }
   html += `<div style="${grandRow}"><span>Total</span><span style="${grandVal}">${fmt(order.total_amount)}</span></div>`;
   return html;
@@ -241,7 +248,9 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
     <p style="font-size:15px;color:#b0a898;line-height:1.7;margin:0 0 24px">
       Hi <strong style="color:#f5f0e8">${esc(order.customer_name)}</strong>,<br><br>
       Your payment of <strong style="color:#b8a98a">${fmt(order.total_amount)}</strong> has been successfully received on ${paidAt}.<br><br>
-      We're now preparing your order and will have it on its way to you soon.
+      ${order.delivery_method === 'digital'
+        ? `Your gift card is being emailed to ${esc(order.delivery_meta?.gift_card?.recipient_name || 'the recipient')} at ${esc(order.delivery_meta?.gift_card?.recipient_email || '')}. It usually arrives within a few minutes.`
+        : "We're now preparing your order and will have it on its way to you soon."}
     </p>
 
     <div class="section">
@@ -262,9 +271,9 @@ function buildPaymentReceived(order: Record<string, any>): { subject: string; ht
       <div class="gift-msg">&ldquo;${esc(order.gift_message)}&rdquo;</div>
     </div>` : ''}
 
-    <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
+    ${order.delivery_method === 'digital' ? '' : `<p style="font-size:14px;color:#b0a898;line-height:1.7;margin:0 0 8px">
       We'll send another update as soon as your order has been dispatched.
-    </p>
+    </p>`}
 
     <p style="font-size:14px;color:#b0a898;line-height:1.7;margin:8px 0 0">
       Questions? <a href="${WA_LINK}" style="color:#b8a98a">Chat with us on WhatsApp</a>.
@@ -317,7 +326,8 @@ function buildAdminPaymentNotification(order: Record<string, any>): { subject: s
     <tr><td>Items</td><td>${itemLines || '—'}</td></tr>
     ${order.subtotal   != null ? `<tr><td>Subtotal</td><td>${fmt(order.subtotal)}</td></tr>` : ''}
     ${hasDiscount(order) ? `<tr><td>Discount</td><td>&minus;${fmt(order.discount_amount)}${order.discount_code ? ' (code ' + esc(order.discount_code) + ')' : ''}</td></tr>` : ''}
-    ${order.delivery_fee != null ? `<tr><td>Delivery fee</td><td>${deliveryText(order)}</td></tr>` : ''}
+    ${order.delivery_fee != null && order.delivery_method !== 'digital' ? `<tr><td>Delivery fee</td><td>${deliveryText(order)}</td></tr>` : ''}
+    ${Number(order.gift_card_amount || 0) > 0 ? `<tr><td>Gift card</td><td>&minus;${fmt(order.gift_card_amount)}</td></tr>` : ''}
     <tr><td>Total</td><td class="total">${fmt(order.total_amount)}</td></tr>
     ${order.is_gift ? `<tr><td>Gift order</td><td>${order.gift_message ? '&ldquo;' + esc(order.gift_message) + '&rdquo;' : 'Yes (no message)'}</td></tr>` : ''}
     ${order.notes ? `<tr><td>Notes</td><td>${esc(order.notes)}</td></tr>` : ''}
@@ -500,7 +510,7 @@ Deno.serve(async (req: Request) => {
 
   const { data: order, error } = await supabase
     .from('shop_orders')
-    .select('id, created_at, paid_at, payment_status, payment_id, yoco_checkout_id, customer_name, customer_email, customer_phone, delivery_method, delivery_address, delivery_meta, delivery_fee, discount_code, discount_amount, items, subtotal, total_amount, payment_status, status, is_gift, gift_message, notes')
+    .select('id, created_at, paid_at, payment_status, payment_id, yoco_checkout_id, customer_name, customer_email, customer_phone, delivery_method, delivery_address, delivery_meta, delivery_fee, discount_code, discount_amount, gift_card_amount, items, subtotal, total_amount, payment_status, status, is_gift, gift_message, notes')
     .eq('id', order_id)
     .single();
 

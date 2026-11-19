@@ -275,6 +275,7 @@
                 <div class="review-line"><span>Subtotal</span><span id="rv-subtotal"></span></div>
                 <div class="review-line" id="rv-discount-row" hidden><span id="rv-discount-label">Discount</span><span id="rv-discount"></span></div>
                 <div class="review-line"><span id="rv-delivery-label">Delivery</span><span id="rv-delivery"></span></div>
+                <div class="review-line" id="rv-gift-row" hidden><span>Gift card</span><span id="rv-gift"></span></div>
                 <div class="review-line co-review-total"><span>Total</span><span id="rv-total"></span></div>
               </div>
               <div class="done-block co-discount">
@@ -284,6 +285,14 @@
                   <button type="button" class="mini-btn" id="discountApply">Apply</button>
                 </div>
                 <p class="co-hint-sm" id="discountMsg" role="status" aria-live="polite"></p>
+              </div>
+              <div class="done-block co-discount">
+                <h4><label for="giftInput">Gift card</label></h4>
+                <div class="co-discount-row">
+                  <input id="giftInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="PB-XXXX-XXXX-XXXX" maxlength="20" />
+                  <button type="button" class="mini-btn" id="giftApply">Apply</button>
+                </div>
+                <p class="co-hint-sm" id="giftMsg" role="status" aria-live="polite"></p>
               </div>
               <div class="done-block" id="giftReviewBlock" style="display:none;">
                 <h4>Gift message</h4>
@@ -385,7 +394,7 @@
 
   <script src="cart-stock.js?v=2"></script>
   <script src="free-delivery.js?v=1"></script>
-  <script src="checkout.js?v=7"></script>
+  <script src="checkout.js?v=8"></script>
   <script src="track.js?v=2" defer></script>
 </body>
 </html>

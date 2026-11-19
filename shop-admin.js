@@ -98,6 +98,7 @@ const PAGE_TITLES = {
   discounts: 'Discount codes',
   campaigns: 'Email campaigns',
   feeds: 'Product feeds',
+  giftcards: 'Gift cards',
   abandoned: 'Abandoned checkouts',
   activity: 'Activity',
   account: 'Account',
@@ -576,6 +577,7 @@ function navTo(page, btn) {
     if (page === 'discounts') window.ShopAdminMarketing.loadDiscounts();
     if (page === 'campaigns') window.ShopAdminMarketing.loadCampaigns();
     if (page === 'feeds') window.ShopAdminMarketing.loadFeeds();
+    if (page === 'giftcards' && window.ShopAdminGiftCards) window.ShopAdminGiftCards.load();
   }
 
   if (page === 'settings' && window.ShopAdminSettings) {
@@ -831,6 +833,14 @@ function getDeliveryLabel(order) {
     };
   }
 
+  if (method === 'digital') {
+    return {
+      icon: SVG.door,
+      label: 'Gift card by email',
+      sub: order.delivery_address || '',
+    };
+  }
+
   return {
     icon: SVG.door,
     label: 'Door Delivery',
@@ -948,7 +958,7 @@ function exportOrdersCSV() {
       order.payment_status || '',
       order.delivery_method === 'locker'
         ? 'Pudo Locker'
-        : 'Door Delivery',
+        : order.delivery_method === 'digital' ? 'Gift card by email' : 'Door Delivery',
       order.delivery_address || '',
       order.status || '',
       order.is_gift ? 'Yes' : 'No',

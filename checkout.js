@@ -118,6 +118,70 @@ async function checkDiscount(code, quiet) {
     refreshTotalsEverywhere();
   }
 }
+/* ── Gift card ──
+   check-gift-card shows the balance; create-order holds the amount when the order is placed.
+   At least R10 is always paid through Yoco. */
+const GIFT_KEY = 'pb_gift_card_code';
+let appliedGift = null;   // { code, balance }
+function giftAmount() {
+  if (!appliedGift) return 0;
+  const before = cartSubtotal() - discountAmount() + (deliverySelected ? deliveryFee() : 0);
+  return Math.max(0, Math.min(Number(appliedGift.balance) || 0, Math.round((before - 10) * 100) / 100));
+}
+function giftRowHTML() {
+  return appliedGift && giftAmount() > 0 ? `<div class="total-row"><span>Gift card</span><span>−${money2(giftAmount())}</span></div>` : '';
+}
+function showGiftState(message, isError) {
+  const msg = document.getElementById('giftMsg');
+  const input = document.getElementById('giftInput');
+  const apply = document.getElementById('giftApply');
+  if (!msg || !input || !apply) return;
+  if (appliedGift) {
+    input.value = appliedGift.code;
+    input.disabled = true;
+    apply.textContent = 'Remove';
+    const left = Number(appliedGift.balance) - giftAmount();
+    msg.textContent = `Balance ${money2(appliedGift.balance)}.` + (left > 0.004 ? ` ${money2(left)} stays on the card.` : '');
+    msg.classList.remove('is-error');
+  } else {
+    input.disabled = false;
+    apply.textContent = 'Apply';
+    msg.textContent = message || '';
+    msg.classList.toggle('is-error', !!isError);
+  }
+}
+async function checkGift(code, quiet) {
+  const clean = String(code || '').trim();
+  if (!clean) { showGiftState('Enter the gift card code first.', true); return; }
+  const apply = document.getElementById('giftApply');
+  if (apply) apply.disabled = true;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/check-gift-card`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: clean }) });
+    const data = await res.json().catch(() => ({}));
+    if (data.ok) {
+      appliedGift = { code: data.code, balance: Number(data.balance) };
+      try { sessionStorage.setItem(GIFT_KEY, data.code); } catch (e) { /* ignore */ }
+    } else {
+      appliedGift = null;
+      if (quiet) { try { sessionStorage.removeItem(GIFT_KEY); } catch (e) { /* ignore */ } }
+      showGiftState(data.error || 'That gift card could not be used.', true);
+    }
+  } catch (e) {
+    if (!quiet) showGiftState('Could not check the gift card. Please try again.', true);
+  } finally {
+    if (apply) apply.disabled = false;
+    refreshTotalsEverywhere();
+    if (appliedGift) showGiftState();
+  }
+}
+function removeGift() {
+  appliedGift = null;
+  try { sessionStorage.removeItem(GIFT_KEY); } catch (e) { /* ignore */ }
+  const input = document.getElementById('giftInput');
+  if (input) input.value = '';
+  showGiftState();
+  refreshTotalsEverywhere();
+}
 function removeDiscount() {
   appliedDiscount = null;
   try { sessionStorage.removeItem(DISCOUNT_KEY); } catch (e) { /* ignore */ }
@@ -217,6 +281,12 @@ async function checkStock() {
 
 /* ── Boot ── */
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('giftApply')?.addEventListener('click', () => {
+    if (appliedGift) removeGift(); else checkGift(document.getElementById('giftInput').value, false);
+  });
+  document.getElementById('giftInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); checkGift(e.target.value, false); }
+  });
   document.getElementById('discountApply')?.addEventListener('click', () => {
     if (appliedDiscount) removeDiscount(); else checkDiscount(document.getElementById('discountInput').value, false);
   });
@@ -242,6 +312,8 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const saved = sessionStorage.getItem(DISCOUNT_KEY);
     if (saved) checkDiscount(saved, true);
+    const savedGift = sessionStorage.getItem(GIFT_KEY);
+    if (savedGift) checkGift(savedGift, true);
   } catch (e) { /* ignore */ }
 });
 
@@ -296,7 +368,7 @@ function cartSubtotal() {
   return cart.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
 }
 function cartTotal() {
-  return cartSubtotal() - discountAmount() + deliveryFee();
+  return cartSubtotal() - discountAmount() + deliveryFee() - giftAmount();
 }
 
 /* Shared cart quantity helper for checkout */
@@ -367,11 +439,12 @@ function renderTotals() {
   const totalLabel = (!deliverySelected)
     ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : 'R' + (sub - disc + fee - giftAmount()).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   tot.innerHTML = `
     <div class="total-row"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
     ${discountRowHTML()}
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
+    ${deliverySelected ? giftRowHTML() : ''}
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
 }
 function updateItemCount() {
@@ -408,15 +481,16 @@ function renderMobileSummary() {
   const totalLabel = (!deliverySelected)
     ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : shippingQuoteLoading ? 'Calculating...'
-    : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : 'R' + (sub - disc + fee - giftAmount()).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (totals) totals.innerHTML = `
     <div class="total-row" style="margin-top:8px"><span>Subtotal</span><span>R${sub.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
     ${discountRowHTML()}
     <div class="total-row"><span>Delivery</span><span>${feeLabel}</span></div>
+    ${deliverySelected ? giftRowHTML() : ''}
     <div class="total-row grand"><span>Total</span><span>${totalLabel}</span></div>`;
   if (grand) grand.textContent = (!deliverySelected)
     ? 'R' + (sub - disc).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub - disc + fee).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    : shippingQuoteLoading ? 'Calculating...' : 'R' + (sub - disc + fee - giftAmount()).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 function toggleMobileSummary() {
   const body    = document.getElementById('mobileSummaryBody');
@@ -953,7 +1027,13 @@ function populateReview() {
   const sub     = cartSubtotal();
   const fee     = deliveryFee();
   const disc    = discountAmount();
-  const total   = sub - disc + fee;
+  const gift    = giftAmount();
+  const total   = sub - disc + fee - gift;
+  const giftRow = document.getElementById('rv-gift-row');
+  if (giftRow) {
+    giftRow.hidden = !(gift > 0);
+    document.getElementById('rv-gift').textContent = '−' + money2(gift);
+  }
   const discRow = document.getElementById('rv-discount-row');
   if (discRow) {
     discRow.hidden = !appliedDiscount;
@@ -1039,7 +1119,7 @@ async function handlePay() {
   }
 
   const fee   = deliveryFee();
-  const total = cartSubtotal() - discountAmount() + fee;
+  const total = cartSubtotal() - discountAmount() + fee - giftAmount();
 
   // Combine special instructions and gift message into one notes string
   const combinedNotes = [special, gift ? 'Gift message: ' + gift : '', notes]
@@ -1076,6 +1156,7 @@ async function handlePay() {
         special_instructions: combinedNotes,
         cart:                 orderCart,
         discount_code:        appliedDiscount ? appliedDiscount.code : undefined,
+        gift_card_code:       appliedGift && giftAmount() > 0 ? appliedGift.code : undefined,
       }),
     });
 
@@ -1085,6 +1166,13 @@ async function handlePay() {
       appliedDiscount = null;
       try { sessionStorage.removeItem(DISCOUNT_KEY); } catch (e) { /* ignore */ }
       showDiscountState(orderData.error + ' Your total has been updated; check it and pay again.', true);
+      refreshTotalsEverywhere();
+      throw new Error(orderData.error + ' Your total has been updated.');
+    }
+    if (orderData && orderData.gift_card_error) {
+      appliedGift = null;
+      try { sessionStorage.removeItem(GIFT_KEY); } catch (e) { /* ignore */ }
+      showGiftState(orderData.error + ' Your total has been updated; check it and pay again.', true);
       refreshTotalsEverywhere();
       throw new Error(orderData.error + ' Your total has been updated.');
     }

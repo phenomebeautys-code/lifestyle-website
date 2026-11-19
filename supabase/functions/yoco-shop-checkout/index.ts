@@ -28,7 +28,7 @@ Deno.serve(async req => {
     const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(url, key);
     const {data: order, error: orderError} = await supabase.from('shop_orders')
-      .select('id, customer_token, payment_status, status, items, delivery_method, delivery_fee, delivery_meta, discount_amount, customer_email, yoco_checkout_id, subtotal, total_amount')
+      .select('id, customer_token, payment_status, status, items, delivery_method, delivery_fee, delivery_meta, discount_amount, gift_card_amount, customer_email, yoco_checkout_id, subtotal, total_amount')
       .eq('id', order_id).single();
     if (orderError || !order) return respond({error: 'Order not found'}, 404);
     if (order.status !== 'pending' || order.payment_status !== 'unpaid') return respond({error: 'Order is not awaiting payment'}, 409);
@@ -55,7 +55,13 @@ Deno.serve(async req => {
     if (!Number.isSafeInteger(discountCents) || discountCents < 0 || discountCents >= trusted.subtotalCents) {
       return respond({error: 'Order discount is not valid. Please refresh your cart and create a new order.'}, 409);
     }
-    const totalCents = trusted.subtotalCents - discountCents + feeCents;
+    // The gift card amount was held on the card by create-order and recorded on the order.
+    const giftCents = Math.round(Number(order.gift_card_amount || 0) * 100);
+    if (!Number.isSafeInteger(giftCents) || giftCents < 0) {
+      return respond({error: 'Order gift card amount is not valid. Please create a new order.'}, 409);
+    }
+    const totalCents = trusted.subtotalCents - discountCents + feeCents - giftCents;
+    if (totalCents < 1000) return respond({error: 'Order total is not valid. Please create a new order.'}, 409);
     // Do not silently reprice an existing order or mutate a checkout that may already be paid.
     if (Math.round(Number(order.subtotal) * 100) !== trusted.subtotalCents
       || Math.round(Number(order.delivery_fee) * 100) !== feeCents
