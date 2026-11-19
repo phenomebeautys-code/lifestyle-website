@@ -45,12 +45,18 @@ export async function evaluateDiscount(supabase, rawCode, subtotalCents, email, 
   const code = normaliseCode(rawCode);
   if (!CODE_RE.test(code)) return { ok: false, error: 'That code is not valid.' };
   const { data: row, error } = await supabase.from('discount_codes')
-    .select('id, code, kind, value, min_subtotal, starts_at, ends_at, max_uses, once_per_customer, active')
+    .select('id, code, kind, value, min_subtotal, starts_at, ends_at, max_uses, once_per_customer, active, customer_email')
     .eq('code', code).maybeSingle();
   if (error) return { ok: false, error: 'Discount codes are unavailable right now. Please try again.' };
   if (!row || row.active !== true) return { ok: false, error: 'That code is not valid.' };
   if (row.starts_at && now < new Date(row.starts_at)) return { ok: false, error: 'That code is not active yet.' };
   if (row.ends_at && now >= new Date(row.ends_at)) return { ok: false, error: 'That code has expired.' };
+  const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  // Personal codes (loyalty rewards) only work for the email they were sent to.
+  if (row.customer_email) {
+    if (!cleanEmail) return { ok: false, error: 'This is a personal code. Enter the email address it was sent to first.' };
+    if (cleanEmail !== row.customer_email) return { ok: false, error: 'This code belongs to a different email address. Use the email it was sent to.' };
+  }
   const minCents = Math.round((Number(row.min_subtotal) || 0) * 100);
   if (subtotalCents < minCents) {
     return { ok: false, error: `This code needs an order of R${(minCents / 100).toFixed(0)} or more (before delivery).` };
@@ -62,7 +68,6 @@ export async function evaluateDiscount(supabase, rawCode, subtotalCents, email, 
     if (countError) return { ok: false, error: 'Discount codes are unavailable right now. Please try again.' };
     if ((count || 0) >= row.max_uses) return { ok: false, error: 'That code has been fully used.' };
   }
-  const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
   if (row.once_per_customer && cleanEmail) {
     const { count, error: usedError } = await supabase.from('shop_orders')
       .select('id', { count: 'exact', head: true })

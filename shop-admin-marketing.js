@@ -70,14 +70,19 @@
 
   function renderDiscounts() {
     const body = $('discountsBody');
-    if (!discounts.length) {
+    const personal = discounts.filter(d => d.customer_email);
+    const toggle = $('showPersonalCodes');
+    if (toggle) toggle.closest('label').hidden = !personal.length;
+    if ($('personalCount')) $('personalCount').textContent = personal.length;
+    const list = toggle && toggle.checked ? discounts : discounts.filter(d => !d.customer_email);
+    if (!list.length) {
       body.innerHTML = '<tr class="empty-row"><td colspan="7">No discount codes yet. Create one to share on Instagram, WhatsApp or in your emails.</td></tr>';
       return;
     }
-    body.innerHTML = discounts.map(d => {
+    body.innerHTML = list.map(d => {
       const [label, cls] = status(d);
       return `<tr>
-        <td><div class="mk-code">${esc(d.code)}</div>${d.campaign ? `<div class="ops-hint">${esc(d.campaign)}</div>` : ''}</td>
+        <td><div class="mk-code">${esc(d.code)}</div>${d.campaign ? `<div class="ops-hint">${esc(d.campaign)}</div>` : ''}${d.customer_email ? `<div class="ops-hint">Only for ${esc(d.customer_email)}</div>` : ''}</td>
         <td>${offer(d)}</td>
         <td class="ops-hint" style="max-width:220px">${esc(conditions(d))}</td>
         <td>${d.stats.orders}${d.max_uses ? ` / ${d.max_uses}` : ''}</td>
@@ -195,6 +200,11 @@
       what: 'Reminds customers to restock a set number of days after they paid. Skips customers who have already ordered again. You can add a discount code.',
       delayLabel: 'Days after payment',
     },
+    loyalty_reward: {
+      title: 'Loyalty reward',
+      what: 'Thanks regular customers with a personal, single-use code that only works with their email. Earned every few orders, or each time their total spend passes an amount you choose.',
+      delayLabel: 'Days after the order that earns it',
+    },
   };
   let campaignData = null;
 
@@ -220,6 +230,13 @@
       link: $(`cg-${key}-link`).value,
     };
     if (key === 'replenishment') s.discount_code = $(`cg-${key}-code`).value || null;
+    if (key === 'loyalty_reward') Object.assign(s, {
+      trigger: $('cg-loyalty_reward-trigger').value,
+      every: $('cg-loyalty_reward-every').value,
+      reward_kind: $('cg-loyalty_reward-kind').value,
+      reward_value: $('cg-loyalty_reward-value').value,
+      valid_days: $('cg-loyalty_reward-valid').value,
+    });
     return s;
   }
 
@@ -227,7 +244,7 @@
     const { campaigns, sends, optouts } = campaignData;
     const byKey = Object.fromEntries(campaigns.map(c => [c.key, c]));
     $('campaignOptouts').textContent = `${optouts} customer${optouts === 1 ? ' has' : 's have'} unsubscribed from campaign emails. Order emails still reach them.`;
-    $('campaignCards').innerHTML = ['review_request', 'replenishment'].map(key => {
+    $('campaignCards').innerHTML = ['review_request', 'replenishment', 'loyalty_reward'].map(key => {
       const c = byKey[key] || { key, enabled: false, settings: {} };
       const s = c.settings || {};
       const counts = sends.filter(x => x.campaign === key).reduce((a, x) => { a[x.status] = (a[x.status] || 0) + 1; return a; }, {});
@@ -237,6 +254,28 @@
           <option value="">No code</option>
           ${discounts.map(d => `<option value="${esc(d.code)}"${s.discount_code === d.code ? ' selected' : ''}>${esc(d.code)} · ${esc(offer(d))}${d.active ? '' : ' (off)'}</option>`).join('')}
         </select>` : '';
+      const rewardFields = key === 'loyalty_reward' ? `
+        <div class="mk-two">
+          <div><label class="field-label" for="cg-${key}-trigger">Earned</label>
+            <select class="field-input" id="cg-${key}-trigger">
+              <option value="orders"${s.trigger !== 'spend' ? ' selected' : ''}>Every few orders</option>
+              <option value="spend"${s.trigger === 'spend' ? ' selected' : ''}>Each time total spend passes an amount</option>
+            </select></div>
+          <div><label class="field-label" for="cg-${key}-every" id="cg-${key}-every-label">${s.trigger === 'spend' ? 'Spend amount (R)' : 'Every how many orders'}</label>
+            <input class="field-input" id="cg-${key}-every" type="number" min="2" value="${esc(s.every ?? '')}" /></div>
+        </div>
+        <div class="mk-two">
+          <div><label class="field-label" for="cg-${key}-kind">Reward</label>
+            <select class="field-input" id="cg-${key}-kind">
+              <option value="percent"${s.reward_kind === 'percent' ? ' selected' : ''}>Percentage off</option>
+              <option value="fixed"${s.reward_kind === 'fixed' ? ' selected' : ''}>Rand amount off</option>
+              <option value="free_delivery"${s.reward_kind === 'free_delivery' ? ' selected' : ''}>Free delivery</option>
+            </select></div>
+          <div><label class="field-label" for="cg-${key}-value">Value (% or R)</label>
+            <input class="field-input" id="cg-${key}-value" type="number" min="1" value="${esc(s.reward_kind === 'free_delivery' ? '' : (s.reward_value ?? ''))}" /></div>
+        </div>
+        <label class="field-label" for="cg-${key}-valid">Code valid for (days)</label>
+        <input class="field-input" id="cg-${key}-valid" type="number" min="7" max="365" value="${esc(s.valid_days ?? '')}" />` : '';
       return `<div class="panel ops-panel mk-campaign" data-key="${key}">
         <div class="mk-campaign-head">
           <div>
@@ -247,6 +286,7 @@
         </div>
         <div class="ops-form mk-form">
           <label class="ops-switch"><input type="checkbox" id="cg-${key}-on" ${c.enabled ? 'checked' : ''}/> <span>Send automatically (checked every hour)</span></label>
+          ${rewardFields}
           <label class="field-label" for="cg-${key}-delay">${INFO[key].delayLabel}</label>
           <input class="field-input" id="cg-${key}-delay" type="number" min="1" max="365" value="${esc(s.delay_days ?? '')}" />
           <label class="field-label" for="cg-${key}-subject">Email subject</label>
@@ -255,7 +295,7 @@
           <input class="field-input" id="cg-${key}-heading" maxlength="120" value="${esc(s.heading || '')}" />
           <label class="field-label" for="cg-${key}-body">Message</label>
           <textarea class="field-input" id="cg-${key}-body" rows="7" maxlength="3000">${esc(s.body || '')}</textarea>
-          <div class="ops-hint">You can use {first_name}, {products}, {first_product}${key === 'replenishment' ? ', {code} and {offer}' : ''}. Leave a blank line between paragraphs.</div>
+          <div class="ops-hint">You can use {first_name}, {products}, {first_product}${key !== 'review_request' ? ', {code} and {offer}' : ''}. Leave a blank line between paragraphs.</div>
           <div class="mk-two">
             <div><label class="field-label" for="cg-${key}-button">Button text</label><input class="field-input" id="cg-${key}-button" maxlength="40" value="${esc(s.button_label || '')}" /></div>
             <div><label class="field-label" for="cg-${key}-link">Button link</label><input class="field-input" id="cg-${key}-link" value="${esc(s.link || '')}" /></div>
@@ -267,7 +307,7 @@
             <button class="btn btn-secondary" data-act="test">Send test to me</button>
             <button class="btn btn-secondary" data-act="due">Who is due?</button>
           </div>
-          <div class="ops-hint" id="cg-${key}-status">Sent: ${counts.sent || 0} · Failed: ${counts.failed || 0} · Tests: ${counts.test || 0}${counts.failed ? ' · <button class="mk-link" data-act="retry">Retry failed</button>' : ''}</div>
+          <div class="ops-hint" id="cg-${key}-status">Sent: ${counts.sent || 0} · Failed: ${counts.failed || 0} · Tests: ${counts.test || 0}${counts.skipped ? ' · Not emailed: ' + counts.skipped : ''}${counts.failed ? ' · <button class="mk-link" data-act="retry">Retry failed</button>' : ''}</div>
         </div>
       </div>`;
     }).join('');
@@ -275,9 +315,19 @@
     $('campaignCards').querySelectorAll('.mk-campaign').forEach(card => {
       const key = card.dataset.key;
       card.querySelectorAll('[data-act]').forEach(btn => btn.addEventListener('click', () => campaignAction(key, btn.dataset.act, btn)));
+      if (key === 'loyalty_reward') {
+        const sync = () => {
+          $('cg-loyalty_reward-every-label').textContent = $('cg-loyalty_reward-trigger').value === 'spend' ? 'Spend amount (R)' : 'Every how many orders';
+          $('cg-loyalty_reward-value').disabled = $('cg-loyalty_reward-kind').value === 'free_delivery';
+        };
+        $('cg-loyalty_reward-trigger').addEventListener('change', sync);
+        $('cg-loyalty_reward-kind').addEventListener('change', sync);
+        sync();
+      }
     });
 
-    $('campaignLog').innerHTML = sends.length ? sends.map(x => `<tr>
+    const logged = sends.filter(x => x.status !== 'skipped');
+    $('campaignLog').innerHTML = logged.length ? logged.map(x => `<tr>
       <td style="white-space:nowrap;color:var(--text-muted)">${when(x.sent_at)}</td>
       <td>${INFO[x.campaign] ? INFO[x.campaign].title : esc(x.campaign)}</td>
       <td>${esc(x.email)}</td>
@@ -366,6 +416,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     $('newDiscountBtn').addEventListener('click', () => openDiscount(null));
     $('feedCopy').addEventListener('click', () => copy(FEED_URL));
+    $('showPersonalCodes').addEventListener('change', renderDiscounts);
   });
 
   window.ShopAdminMarketing = { loadDiscounts, loadCampaigns, loadFeeds };

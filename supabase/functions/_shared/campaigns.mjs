@@ -7,8 +7,8 @@
  * Plain JavaScript on purpose: the handler tests load this file as source text.
  */
 
-export const CAMPAIGN_KEYS = ['review_request', 'replenishment'];
-export const CAMPAIGN_NAMES = { review_request: 'Review request', replenishment: 'Running low reminder' };
+export const CAMPAIGN_KEYS = ['review_request', 'replenishment', 'loyalty_reward'];
+export const CAMPAIGN_NAMES = { review_request: 'Review request', replenishment: 'Running low reminder', loyalty_reward: 'Loyalty reward' };
 
 const TOKEN = { cream: '#F3F1E8', paper: '#FAF9F5', blush: '#F2C6C2', ink: '#000000' };
 
@@ -44,7 +44,43 @@ export function normaliseSettings(key, input) {
     const code = typeof s.discount_code === 'string' ? s.discount_code.trim().toUpperCase() : '';
     settings.discount_code = code || null;
   }
+  if (key === 'loyalty_reward') {
+    const trigger = s.trigger === 'spend' ? 'spend' : s.trigger === 'orders' ? 'orders' : null;
+    if (!trigger) return { error: 'Choose when customers earn a reward.' };
+    const every = Number(s.every);
+    if (trigger === 'orders' && !(Number.isInteger(every) && every >= 2 && every <= 50)) return { error: 'Choose a number of orders between 2 and 50.' };
+    if (trigger === 'spend' && !(every >= 100 && every <= 100000)) return { error: 'Choose a spend amount between R100 and R100 000.' };
+    const kind = ['percent', 'fixed', 'free_delivery'].includes(s.reward_kind) ? s.reward_kind : null;
+    if (!kind) return { error: 'Choose the reward.' };
+    const value = kind === 'free_delivery' ? 0 : Number(s.reward_value);
+    if (kind === 'percent' && !(value >= 1 && value <= 90)) return { error: 'A percentage reward must be between 1% and 90%.' };
+    if (kind === 'fixed' && !(value >= 1 && value <= 100000)) return { error: 'Enter the rand amount of the reward.' };
+    const validDays = Math.round(Number(s.valid_days));
+    if (!(validDays >= 7 && validDays <= 365)) return { error: 'The reward must be valid for 7 to 365 days.' };
+    Object.assign(settings, { trigger, every: trigger === 'orders' ? every : Math.round(every * 100) / 100, reward_kind: kind, reward_value: value, valid_days: validDays });
+  }
   return { settings };
+}
+
+/**
+ * Loyalty: does this order earn a reward? history is the customer's paid, not cancelled orders
+ * ({ id, net }) in the order they were placed. 'orders': every Nth order. 'spend': each time the
+ * customer's total spend (after refunds) passes another multiple of the amount.
+ */
+export function earnsReward(settings, history, orderId) {
+  const i = history.findIndex(o => o.id === orderId);
+  if (i < 0) return false;
+  if (settings.trigger === 'orders') return (i + 1) % settings.every === 0;
+  const before = history.slice(0, i).reduce((sum, o) => sum + Number(o.net || 0), 0);
+  const after = before + Number(history[i].net || 0);
+  return Math.floor(after / settings.every) > Math.floor(before / settings.every);
+}
+
+/** A personal reward code, e.g. THANKS-7KQ4MX. No look-alike characters. */
+export function rewardCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return 'THANKS-' + Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
 }
 
 export function firstName(name) {

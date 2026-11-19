@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { CAMPAIGN_KEYS, normaliseSettings, renderCampaign, unsubscribeUrl } from '../_shared/campaigns.mjs';
+import { CAMPAIGN_KEYS, earnsReward, normaliseSettings, renderCampaign, rewardCode, unsubscribeUrl } from '../_shared/campaigns.mjs';
 import { describeDiscount } from '../_shared/discounts.mjs';
 
 /**
@@ -16,7 +16,9 @@ import { describeDiscount } from '../_shared/discounts.mjs';
  * Who is emailed: paid, not cancelled orders, paid after the campaign was switched on and at least
  * `delay_days` ago, whose customer has not unsubscribed. Each order gets each campaign once.
  * Review requests skip fully refunded orders; running-low reminders skip customers who have
- * already ordered again.
+ * already ordered again; loyalty rewards go to orders that reach the owner's milestone (every Nth
+ * order, or each time total spend passes a set amount) and create a personal, single-use code.
+ * Orders a campaign decides not to email are recorded as 'skipped' so they are not looked at again.
  */
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -86,7 +88,8 @@ Deno.serve(async (req: Request) => {
     if (!CAMPAIGN_KEYS.includes(body.key)) return json({ error: 'Unknown campaign' }, 400);
     const checked = normaliseSettings(body.key, body.settings);
     if (checked.error) return json({ error: checked.error }, 400);
-    const discount = body.key === 'replenishment' ? await activeDiscount(supabase, checked.settings.discount_code) : null;
+    const discount = body.key === 'replenishment' ? await activeDiscount(supabase, checked.settings.discount_code)
+      : body.key === 'loyalty_reward' ? { code: 'THANKS-SAMPLE', label: describeDiscount({ kind: checked.settings.reward_kind, value: checked.settings.reward_value }) } : null;
     const to = typeof body.to === 'string' ? body.to.trim().toLowerCase() : '';
     const unsub = await unsubscribeUrl(SUPABASE_URL, to || 'preview@example.com', SERVICE_KEY);
     const email = renderCampaign(body.key, checked.settings, SAMPLE_ORDER, discount, unsub);
@@ -115,20 +118,11 @@ Deno.serve(async (req: Request) => {
     const settings = checked.settings;
     const cutoff = new Date(Date.now() - settings.delay_days * 86_400_000).toISOString();
 
-    const { data: orders, error } = await supabase.from('shop_orders')
-      .select('id, created_at, paid_at, customer_name, customer_email, items, total_amount, refunded_amount')
-      .eq('payment_status', 'paid').is('cancelled_at', null)
-      .gte('paid_at', row.enabled_at).lte('paid_at', cutoff)
-      .order('paid_at', { ascending: true }).limit(200);
+    const { data: orders, error } = await supabase.rpc('campaign_candidates', { p_key: row.key, p_since: row.enabled_at, p_cutoff: cutoff, p_limit: 200 });
     if (error) { results[row.key] = { error: error.message }; continue; }
 
-    const ids = (orders ?? []).map((o: { id: string }) => o.id);
     const emails = [...new Set((orders ?? []).map((o: { customer_email: string }) => String(o.customer_email || '').toLowerCase()).filter(Boolean))];
-    const [{ data: done }, { data: optouts }] = await Promise.all([
-      ids.length ? supabase.from('campaign_sends').select('order_id').eq('campaign', row.key).in('order_id', ids) : Promise.resolve({ data: [] }),
-      emails.length ? supabase.from('email_optouts').select('email').in('email', emails) : Promise.resolve({ data: [] }),
-    ]);
-    const doneSet = new Set((done ?? []).map((d: { order_id: string }) => d.order_id));
+    const { data: optouts } = emails.length ? await supabase.from('email_optouts').select('email').in('email', emails) : { data: [] };
     const optSet = new Set((optouts ?? []).map((d: { email: string }) => d.email));
     const discount = row.key === 'replenishment' ? await activeDiscount(supabase, settings.discount_code) : null;
 
@@ -136,16 +130,26 @@ Deno.serve(async (req: Request) => {
     const sent: string[] = [];
     const failed: Array<{ order_id: string; error: string }> = [];
     let skipped = 0;
+    // deno-lint-ignore no-explicit-any
+    const skip = async (o: any, reason: string) => {
+      skipped++;
+      if (mode === 'run') await supabase.from('campaign_sends').insert({ campaign: row.key, order_id: o.id, email: String(o.customer_email || '').toLowerCase(), status: 'skipped', detail: reason });
+    };
     for (const o of orders ?? []) {
       if (budget <= 0) break;
       const email = String(o.customer_email || '').trim().toLowerCase();
-      if (!email || doneSet.has(o.id)) continue;
-      if (optSet.has(email)) { skipped++; continue; }
-      if (row.key === 'review_request' && Number(o.refunded_amount || 0) >= Number(o.total_amount)) { skipped++; continue; }
+      if (optSet.has(email)) { await skip(o, 'Unsubscribed'); continue; }
+      if (row.key === 'review_request' && Number(o.refunded_amount || 0) >= Number(o.total_amount)) { await skip(o, 'Fully refunded'); continue; }
       if (row.key === 'replenishment') {
         const { count } = await supabase.from('shop_orders').select('id', { count: 'exact', head: true })
           .ilike('customer_email', email).eq('payment_status', 'paid').is('cancelled_at', null).gt('created_at', o.created_at);
-        if ((count || 0) > 0) { skipped++; continue; }
+        if ((count || 0) > 0) { await skip(o, 'Already ordered again'); continue; }
+      }
+      if (row.key === 'loyalty_reward') {
+        const { data: history } = await supabase.from('shop_orders').select('id, created_at, total_amount, refunded_amount')
+          .ilike('customer_email', email).eq('payment_status', 'paid').is('cancelled_at', null).order('created_at', { ascending: true });
+        const list = (history ?? []).map((h: { id: string; total_amount: number; refunded_amount: number }) => ({ id: h.id, net: Number(h.total_amount) - Number(h.refunded_amount || 0) }));
+        if (!earnsReward(settings, list, o.id)) { await skip(o, 'Not a reward milestone'); continue; }
       }
       if (mode === 'dry_run') { due.push({ order_id: o.id, email }); budget--; continue; }
 
@@ -154,8 +158,25 @@ Deno.serve(async (req: Request) => {
       if (claimError) continue;
       budget--;
       try {
+        let offer = discount;
+        if (row.key === 'loyalty_reward') {
+          // A personal, single-use code that only works with this customer's email.
+          const ends = new Date(Date.now() + settings.valid_days * 86_400_000).toISOString();
+          let created = null;
+          for (let attempt = 0; attempt < 3 && !created; attempt++) {
+            const { data: codeRow } = await supabase.from('discount_codes').insert({
+              code: rewardCode(), kind: settings.reward_kind, value: settings.reward_value, min_subtotal: 0,
+              ends_at: ends, max_uses: 1, once_per_customer: true, active: true, customer_email: email,
+              campaign: 'Loyalty reward', note: `Earned with order ${String(o.id).slice(0, 8).toUpperCase()}`, created_by: 'loyalty',
+            }).select('code, kind, value').maybeSingle();
+            created = codeRow;
+          }
+          if (!created) throw new Error('Could not create the reward code');
+          offer = { code: created.code, label: describeDiscount(created) };
+          await supabase.from('campaign_sends').update({ detail: `Code ${created.code}` }).eq('campaign', row.key).eq('order_id', o.id);
+        }
         const unsub = await unsubscribeUrl(SUPABASE_URL, email, SERVICE_KEY);
-        const msg = renderCampaign(row.key, settings, o, discount, unsub);
+        const msg = renderCampaign(row.key, settings, o, offer, unsub);
         await sendEmail(email, msg.subject, msg.html, msg.text, unsub);
         sent.push(o.id);
       } catch (err) {

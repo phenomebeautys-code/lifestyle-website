@@ -39,3 +39,21 @@ test('unsubscribe tokens cannot be forged', async () => {
   assert.equal(await validUnsubscribe('a@b.co', u.searchParams.get('t'), 'other'), false);
   assert.equal(await validUnsubscribe('a@b.co', 'short', 'secret'), false);
 });
+
+import { earnsReward, rewardCode } from './campaigns.mjs';
+test('loyalty settings and milestones', () => {
+  const base = { delay_days: 1, subject: 's', heading: 'h', body: 'b', button_label: 'b', link: 'https://x.co' };
+  const ok = normaliseSettings('loyalty_reward', { ...base, trigger: 'orders', every: 3, reward_kind: 'percent', reward_value: 15, valid_days: 60 });
+  assert.equal(ok.settings.every, 3);
+  assert.match(normaliseSettings('loyalty_reward', { ...base, trigger: 'orders', every: 1, reward_kind: 'percent', reward_value: 15, valid_days: 60 }).error, /2 and 50/);
+  assert.match(normaliseSettings('loyalty_reward', { ...base, trigger: 'spend', every: 50, reward_kind: 'percent', reward_value: 15, valid_days: 60 }).error, /R100/);
+  assert.match(normaliseSettings('loyalty_reward', { ...base, trigger: 'orders', every: 3, reward_kind: 'percent', reward_value: 95, valid_days: 60 }).error, /90%/);
+  assert.match(normaliseSettings('loyalty_reward', { ...base, trigger: 'orders', every: 3, reward_kind: 'fixed', reward_value: 50, valid_days: 3 }).error, /7 to 365/);
+  assert.equal(normaliseSettings('loyalty_reward', { ...base, trigger: 'orders', every: 3, reward_kind: 'free_delivery', reward_value: 99, valid_days: 30 }).settings.reward_value, 0);
+  const h = [{ id: 'a', net: 300 }, { id: 'b', net: 300 }, { id: 'c', net: 500 }, { id: 'd', net: 100 }];
+  assert.deepEqual(['a', 'b', 'c', 'd'].map(id => earnsReward({ trigger: 'orders', every: 2 }, h, id)), [false, true, false, true]);
+  assert.deepEqual(['a', 'b', 'c', 'd'].map(id => earnsReward({ trigger: 'spend', every: 500 }, h, id)), [false, true, true, false]);
+  assert.equal(earnsReward({ trigger: 'orders', every: 2 }, h, 'zz'), false);
+  const codes = new Set(Array.from({ length: 200 }, () => rewardCode()));
+  assert.ok([...codes].every(c => /^THANKS-[A-HJ-NP-Z2-9]{6}$/.test(c)) && codes.size > 195);
+});

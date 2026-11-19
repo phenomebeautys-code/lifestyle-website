@@ -47,3 +47,9 @@ test('free delivery code and database failure', async () => {
   assert.equal((await evaluateDiscount(fake(base, { fail: true }), 'WELCOME10', 36000)).ok, false);
   assert.equal((await evaluateDiscount(fake(base), 'x', 36000)).ok, false);
 });
+test('personal codes only work for their email', async () => {
+  const row = { ...base, customer_email: 'lindi@x.com' };
+  assert.match((await evaluateDiscount(fake(row), 'WELCOME10', 36000, '')).error, /personal code/);
+  assert.match((await evaluateDiscount(fake(row), 'WELCOME10', 36000, 'other@x.com')).error, /different email/);
+  assert.equal((await evaluateDiscount(fake(row), 'WELCOME10', 36000, ' Lindi@X.com ')).ok, true);
+});
