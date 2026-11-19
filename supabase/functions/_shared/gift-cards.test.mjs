@@ -56,7 +56,7 @@ test('gift card email uses the colour for its price point', () => {
 
 test('gift card email says products only, not services', () => {
   const e = renderGiftCardEmail({ code: 'PB-7KQ4-MX2R-9TVA', initial_amount: 250, expires_at: '2029-11-19T10:00:00Z' }, [250]);
-  assert.match(e.html, /products only and cannot be used for services/);
-  assert.match(e.text, /not services/);
+  assert.match(e.html, /cannot be used for services, only products/);
+  assert.match(e.text, /cannot be used for services, only products/);
   assert.doesNotMatch(e.html, /waxing/);
 });

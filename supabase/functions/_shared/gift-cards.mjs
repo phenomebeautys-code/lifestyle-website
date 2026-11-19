@@ -131,7 +131,7 @@ export function renderGiftCardEmail(card, amounts) {
         <div class="gc-code" style="font-size:22px;font-weight:600;letter-spacing:0.12em;white-space:nowrap;color:${T.ink};">${esc(card.code)}</div>
         <div style="font-size:12px;color:#555;margin-top:8px;">${esc(rand(card.initial_amount))} &middot; valid until ${esc(expires)}</div>
       </td></tr></table>
-      <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">Enter the code at checkout under Gift card. You can use it over more than one order until the balance is spent. Gift cards are for products only and cannot be used for services yet.</p>
+      <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">Enter the code at checkout under Gift card. You can use it over more than one order until the balance is spent. Gift cards cannot be used for services, only products.</p>
       <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="${T.ink}" style="background:${T.ink};border-radius:999px;">
         <a href="${link}" style="display:inline-block;padding:15px 30px;font-size:15px;font-weight:600;color:${T.cream};text-decoration:none;">Start shopping</a></td></tr></table>
     </td></tr>
@@ -141,6 +141,6 @@ export function renderGiftCardEmail(card, amounts) {
     </td></tr>
   </table>
 </td></tr></table></body></html>`;
-  const text = `${from ? from + ' sent you' : 'You have'} a Phenomebeauty gift card of ${rand(card.initial_amount)}.\n${card.message ? '"' + card.message + '"\n' : ''}\nCode: ${card.code}\nValid until ${expires}.\nEnter the code at checkout under Gift card: ${link}\nFor products in our online shop only, not services.`;
+  const text = `${from ? from + ' sent you' : 'You have'} a Phenomebeauty gift card of ${rand(card.initial_amount)}.\n${card.message ? '"' + card.message + '"\n' : ''}\nCode: ${card.code}\nValid until ${expires}.\nEnter the code at checkout under Gift card: ${link}\nGift cards cannot be used for services, only products.`;
   return { subject, html, text };
 }
