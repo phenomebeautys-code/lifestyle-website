@@ -1,18 +1,15 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { logActivity, resolveAdmin } from "../_shared/admin-auth.ts";
+import { corsOrigin } from "../_shared/site-origin.ts";
 
 const ADMIN_PASSWORD = Deno.env.get("SHOP_ADMIN_PASSWORD") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const ALLOWED_ORIGINS = [
-  "https://phenomebeauty.co.za",
-  "https://www.phenomebeauty.co.za",
-];
 
 function corsHeaders(req: Request) {
-  const origin = req.headers.get("origin") ?? "";
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Origin": corsOrigin(req.headers.get("origin") ?? ""),
     "Access-Control-Allow-Headers": "content-type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
@@ -23,13 +20,6 @@ function json(data: unknown, status: number, cors: Record<string, string>) {
     status,
     headers: { ...cors, "Content-Type": "application/json" },
   });
-}
-
-function authorised(password: unknown) {
-  if (typeof password !== "string" || !ADMIN_PASSWORD || password.length !== ADMIN_PASSWORD.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < ADMIN_PASSWORD.length; i++) mismatch |= password.charCodeAt(i) ^ ADMIN_PASSWORD.charCodeAt(i);
-  return mismatch === 0;
 }
 
 function parseNonNegative(value: unknown) {
@@ -53,7 +43,9 @@ function toStockStatus(stock: number, reorderLevel: number, reorderQuantity: num
 
 const productSelect = "id, name, price, cost_price, sku, active, availability, stock_on_hand, reorder_level, reorder_quantity, stock_status";
 
-Deno.serve(async (req: Request) => {
+type Ctx = { actor?: string; action?: unknown; target?: unknown; supabase?: ReturnType<typeof createClient> };
+
+async function handle(req: Request, ctx: Ctx): Promise<Response> {
   const cors = corsHeaders(req);
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405, cors);
@@ -65,9 +57,13 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Invalid JSON" }, 400, cors);
   }
 
-  if (!authorised(body.password)) return json({ error: "Unauthorized" }, 401, cors);
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE);
+  const admin = await resolveAdmin(supabase, body.password, ADMIN_PASSWORD);
+  if (!admin.ok) return json({ error: admin.error, code: admin.code }, admin.status, cors);
+  ctx.actor = admin.actor;
+  ctx.supabase = supabase;
+  ctx.action = body.action;
+  ctx.target = body.product_id ?? body.material_id ?? body.conversion_id ?? (body.material as { id?: unknown } | undefined)?.id ?? null;
   const action = body.action;
 
   if (action === "get_summary") {
@@ -148,4 +144,14 @@ Deno.serve(async (req: Request) => {
   }
 
   return json({ error: "Unknown action" }, 400, cors);
+}
+
+// Every successful change is written to the admin activity log. Reads (get_*) are not logged.
+Deno.serve(async (req: Request) => {
+  const ctx: Ctx = {};
+  const response = await handle(req, ctx);
+  if (response.status === 200 && ctx.actor && ctx.supabase && typeof ctx.action === "string" && !ctx.action.startsWith("get_")) {
+    await logActivity(ctx.supabase, ctx.actor, ctx.action, "product_stock", ctx.target ?? null, null);
+  }
+  return response;
 });
