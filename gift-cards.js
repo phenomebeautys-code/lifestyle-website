@@ -1,5 +1,6 @@
 /* Gift cards, shown in the shop under the Gift cards pill.
-   The pill only appears while gift cards are on sale (admin → Gift cards, via shop-config).
+   The pill is always shown. While gift cards are off (admin → Gift cards, via shop-config)
+   it shows "Gift cards are coming soon" and nothing can be bought.
    buy-gift-card creates the order and the Yoco checkout; the card is emailed once paid. */
 (function () {
   'use strict';
@@ -51,8 +52,6 @@
 
   function setup(settings) {
     var on = !!(settings && settings.enabled);
-    var pill = document.querySelector('[data-segment-btn="gift_cards"]');
-    if (pill) pill.hidden = !on;
     if (!on) { $('gcOff').hidden = false; $('gcForm').hidden = true; return; }
     $('gcOff').hidden = true;
     $('gcForm').hidden = false;

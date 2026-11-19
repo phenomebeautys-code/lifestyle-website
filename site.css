@@ -682,7 +682,7 @@ strong, b { font-weight: 700; }
     border-radius: 58% 42% 50% 50% / 52% 48% 52% 48%;
     animation: morph 20s ease-in-out infinite alternate;
 }
-@media (max-width: 860px) { .booking-split { grid-template-columns: 1fr; } .phone-figure { width: min(70%, 280px); } }
+@media (max-width: 860px) { .booking-split { grid-template-columns: minmax(0, 1fr); } .phone-figure { width: min(70%, 280px); } }
 
 /* ── 12. Training list (Midnight) ──────────────────────────── */
 .train-list { border-top: 1px solid var(--line-strong); }
@@ -1266,3 +1266,13 @@ body[data-segment="professional"] [data-review-group="self_care"] { display: non
 /* A band that sits directly above the footer clears the footer sheet, the same as the last section inside main. */
 .band:has(+ .site-footer) { padding-bottom: calc(var(--half) + var(--r-sheet)); }
 
+
+/* ── Hero titles fit their column ──────────────────────────────
+   The title is sized from the width of its own column, not the window, so the longest word
+   ("Professionals.", 8.3em wide) always fits beside the photo. 11.8cqi leaves a little room. */
+.page-hero-copy { container-type: inline-size; }
+.page-hero-grid .t-h1 { font-size: min(var(--fs-h1), 11.8cqi); }
+@media (min-width: 861px) { .page-hero-grid .t-h1 { font-size: min(var(--fs-h1), 6.4vw, 11.8cqi); } }
+
+/* A long button label wraps instead of pushing its column past the screen edge. */
+@media (max-width: 480px) { .btn { white-space: normal; text-align: center; max-width: 100%; } }
