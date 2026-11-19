@@ -1091,3 +1091,35 @@ textarea.field-input { resize: vertical; min-height: 90px; font-family: inherit;
 @media (max-width: 860px) {
   .ops-table table { min-width: 640px; }
 }
+
+/* ─── Analytics ─────────────────────────────────────────────────── */
+#page-analytics .page-head { flex-wrap: wrap; gap: 12px; }
+.an-range { margin: 0; }
+.an-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.an-tile .stat-value { font-size: 1.7rem; }
+.an-tile-foot { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-top: 6px; min-height: 1.1em; }
+.an-delta { font-size: 0.74rem; font-weight: 700; color: var(--text-muted); }
+.an-up { color: #4ade80; }
+.an-down { color: #f87171; }
+.an-hint, .an-muted { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
+.an-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.an-grid > .panel { margin-bottom: 16px; min-width: 0; }
+.an-chart { position: relative; margin-top: 12px; }
+.an-col { fill: var(--accent-strong); }
+.an-hit { fill: transparent; cursor: pointer; }
+.an-hit.on { fill: rgba(255,255,255,0.06); }
+.an-base { stroke: var(--glass-border); stroke-width: 1; }
+.an-axis { fill: var(--text-muted); font-size: 10px; font-family: inherit; }
+.an-tip {
+  position: absolute; top: 0; width: 140px; pointer-events: none; z-index: 2;
+  background: #1c1c1e; border: 1px solid var(--glass-border); border-radius: 8px;
+  padding: 8px 10px; font-size: 0.74rem; line-height: 1.45; color: var(--text);
+}
+.an-table-toggle { margin-top: 10px; font-size: 0.78rem; color: var(--text-muted); }
+.an-table-toggle summary { cursor: pointer; }
+.an-table-toggle .table-wrap { margin-top: 8px; }
+.an-funnel { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.an-step-head { display: flex; justify-content: space-between; gap: 10px; font-size: 0.82rem; margin-bottom: 5px; flex-wrap: wrap; }
+.an-bar-track { height: 10px; border-radius: 5px; background: rgba(255,255,255,0.05); overflow: hidden; }
+.an-bar { height: 100%; border-radius: 5px; background: var(--accent-strong); }
+#page-analytics code { font-size: 0.72rem; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }

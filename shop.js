@@ -360,6 +360,7 @@ function addToCartFromDetail(pid) {
   saveCart(cart);
   updateBadges();
   showStickyBar();
+  if (window.PBTrack) PBTrack.event('add_to_cart', { product_id: pid });
 
   const btn = panel.querySelector('.pdp-atc-btn');
   if (btn) {
@@ -397,6 +398,7 @@ function addToCart(pid, cardEl) {
   if (ex) { ex.qty++; if (!ex.image && imageUrl) ex.image = imageUrl; }
   else cart.push({ key, productId: pid, name: p.name, variant: variant || '', size: sizeName || '', price: unitPrice, qty: 1, image: imageUrl || '' });
   saveCart(cart); updateBadges(); showStickyBar();
+  if (window.PBTrack) PBTrack.event('add_to_cart', { product_id: pid });
 }
 
 /* —— Product Detail Panel ——————————————————————————————————— */
@@ -407,6 +409,7 @@ function openProductDetail(pid) {
   const p = findProduct(pid);
   if (!p) return;
   _pdpCurrentPid = pid;
+  if (window.PBTrack) PBTrack.event('product_view', { product_id: pid });
 
   const panel   = document.getElementById('pdpPanel');
   const overlay = document.getElementById('pdpOverlay');

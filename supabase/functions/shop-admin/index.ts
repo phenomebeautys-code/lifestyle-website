@@ -504,6 +504,23 @@ Deno.serve(async (req: Request) => {
     return json({ ok: true }, 200, cors);
   }
 
+  /* ── Sales analytics ────────────────────────────────────────────── */
+
+  // Report for the last N days, plus the N days before that for comparison.
+  if (action === 'get_analytics') {
+    const days = [7, 30, 90, 365].includes(Number(body.days)) ? Number(body.days) : 30;
+    const to = new Date();
+    const from = new Date(to.getTime() - days * 86_400_000);
+    const prevFrom = new Date(from.getTime() - days * 86_400_000);
+    const [current, previous] = await Promise.all([
+      supabase.rpc('admin_sales_report', { p_from: from.toISOString(), p_to: to.toISOString() }),
+      supabase.rpc('admin_sales_report', { p_from: prevFrom.toISOString(), p_to: from.toISOString() }),
+    ]);
+    if (current.error) return json({ error: current.error.message }, 500, cors);
+    if (previous.error) return json({ error: previous.error.message }, 500, cors);
+    return json({ days, current: current.data, previous: previous.data }, 200, cors);
+  }
+
   /* ── Products (unchanged from live version 46, plus the activity log) ─ */
 
   if (action === 'get_products') {

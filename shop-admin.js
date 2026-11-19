@@ -93,6 +93,7 @@ const PAGE_TITLES = {
   reports: 'Reports',
   materials: 'Materials & Recipes',
   customers: 'Customers',
+  analytics: 'Analytics',
   abandoned: 'Abandoned checkouts',
   activity: 'Activity',
   account: 'Account',
@@ -209,7 +210,7 @@ document.querySelectorAll('.report-card[data-nav]').forEach(card => {
   });
 });
 
-document.querySelectorAll('.filter-btn').forEach(btn => {
+document.querySelectorAll('.filter-btn[data-filter]').forEach(btn => {
   btn.addEventListener('click', () => {
     applyFilter(btn.dataset.filter, btn);
   });
@@ -565,6 +566,10 @@ function navTo(page, btn) {
     if (page === 'customers') window.ShopAdminOps.loadCustomers();
     if (page === 'abandoned') window.ShopAdminOps.loadAbandoned();
     if (page === 'activity') window.ShopAdminOps.loadActivity();
+  }
+
+  if (page === 'analytics' && window.ShopAdminAnalytics) {
+    window.ShopAdminAnalytics.load();
   }
 
   if (page === 'account' && window.ShopAdminAccount) {

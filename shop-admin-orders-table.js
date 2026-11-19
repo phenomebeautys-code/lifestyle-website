@@ -4,7 +4,7 @@
 
   function applyFilter(filter, btn) {
     activeFilter = filter;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn[data-filter]').forEach(b => b.classList.remove('active'));
     const target = btn || document.querySelector(`.filter-btn[data-filter="${filter}"]`);
     if (target) target.classList.add('active');
     renderTable();

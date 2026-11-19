@@ -92,6 +92,7 @@
     <div class="sidebar-section">
       <div class="sidebar-section-label">Overview</div>
       <button class="nav-item active" data-page="hub">Hub</button>
+      <button class="nav-item" data-page="analytics">Analytics</button>
       <button class="nav-item" data-page="reports">Reports</button>
     </div>
 
@@ -318,6 +319,69 @@
       </div>
 
       <div class="order-cards" id="orderCards" aria-label="Orders list"></div>
+    </section>
+
+    <!-- ANALYTICS -->
+    <section class="page" id="page-analytics" aria-label="Analytics">
+      <div class="page-head">
+        <div>
+          <h2>Analytics</h2>
+          <p id="anStatus">Sales, visits and where shoppers drop off</p>
+        </div>
+        <div class="filters an-range" role="group" aria-label="Period">
+          <button class="filter-btn" data-an-days="7">7 days</button>
+          <button class="filter-btn active" data-an-days="30">30 days</button>
+          <button class="filter-btn" data-an-days="90">90 days</button>
+          <button class="filter-btn" data-an-days="365">12 months</button>
+        </div>
+      </div>
+
+      <div class="an-tiles" id="anTiles"></div>
+
+      <div class="an-grid">
+        <div class="panel ops-panel">
+          <div class="panel-title">Net sales per day</div>
+          <div class="an-chart" id="anDaily"></div>
+          <details class="an-table-toggle">
+            <summary>Show as table</summary>
+            <div class="table-wrap ops-table"><table><thead><tr><th>Day</th><th>Net sales</th><th>Orders</th><th>Visits</th></tr></thead><tbody id="anDailyTable"></tbody></table></div>
+          </details>
+        </div>
+        <div class="panel ops-panel">
+          <div class="panel-title">Where shoppers drop off</div>
+          <div id="anFunnel" class="an-funnel"></div>
+        </div>
+      </div>
+
+      <div class="panel ops-panel">
+        <div class="panel-title">Sales by channel</div>
+        <p class="ops-hint">Where each visit came from. Orders placed before tracking started show as "Before tracking". <span id="anDevices"></span></p>
+        <div class="table-wrap ops-table"><table>
+          <thead><tr><th>Channel</th><th>Visits</th><th>Orders</th><th>Net sales</th><th>Conversion</th></tr></thead>
+          <tbody id="anChannels"></tbody>
+        </table></div>
+      </div>
+
+      <div class="panel ops-panel">
+        <div class="panel-title">Products</div>
+        <p class="ops-hint">Views and add-to-cart count each visit once. A product with many views but few adds may need better photos, copy or price.</p>
+        <div class="table-wrap ops-table"><table>
+          <thead><tr><th>Product</th><th>Units sold</th><th>Sales</th><th>Views</th><th>Added to cart</th><th>View → cart</th></tr></thead>
+          <tbody id="anProducts"></tbody>
+        </table></div>
+      </div>
+
+      <div class="an-grid">
+        <div class="panel ops-panel">
+          <div class="panel-title">Top sources and campaigns</div>
+          <p class="ops-hint">Add <code>?utm_source=instagram&amp;utm_campaign=summer</code> to links you share to see them here.</p>
+          <div class="table-wrap ops-table"><table><thead><tr><th>Source</th><th>Campaign</th><th>Visits</th></tr></thead><tbody id="anSources"></tbody></table></div>
+        </div>
+        <div class="panel ops-panel">
+          <div class="panel-title">Landing pages</div>
+          <div class="table-wrap ops-table"><table><thead><tr><th>Page</th><th>Visits</th></tr></thead><tbody id="anLanding"></tbody></table></div>
+        </div>
+      </div>
     </section>
 
     <!-- ABANDONED CHECKOUTS -->
@@ -816,6 +880,7 @@
 <script src="shop-admin-materials.js"></script>
 <script src="shop-admin-account.js"></script>
 <script src="shop-admin-ops.js"></script>
+<script src="shop-admin-analytics.js"></script>
 <script src="shop-admin.js"></script>
 
 </body>

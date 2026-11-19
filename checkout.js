@@ -969,6 +969,7 @@ async function handlePay() {
     if (!orderRes.ok || orderData.error) throw new Error(orderData.error || 'Could not create your order.');
 
     const orderId    = orderData.order_id;
+    if (window.PBTrack) PBTrack.event('checkout_start', { order_id: orderId });
     const custToken  = orderData.customer_token || '';
 
     // FIX v24: `origin` must be declared before successUrl. Previously successUrl
