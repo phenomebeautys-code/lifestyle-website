@@ -490,13 +490,17 @@
         <button class="btn btn-primary" id="gcIssueBtn">Issue a gift card</button>
       </div>
       <div class="panel ops-panel">
-        <div class="panel-title">Selling online</div>
+        <div class="ops-row" style="justify-content:space-between;align-items:center">
+          <div class="panel-title" style="margin:0">Selling online</div>
+          <span class="badge" id="gcSaleState">Off</span>
+        </div>
         <div class="ops-form mk-form" style="margin-top:12px">
-          <label class="ops-switch"><input type="checkbox" id="gcOnline" /> <span>Sell gift cards on the website</span></label>
+          <label class="ops-switch"><input type="checkbox" id="gcOnline" role="switch" /> <span>Gift cards on sale (switching this saves straight away)</span></label>
+          <p class="ops-hint" id="gcSaleHint">Off: nobody can buy a gift card; the gift card page says they are coming soon. Cards already bought or issued can still be spent.</p>
           <label class="field-label" for="gcAmountsInput">Amounts offered (R, separated by commas)</label>
           <input class="field-input" id="gcAmountsInput" placeholder="250, 500, 1000" />
-          <p class="ops-hint">Cards are emailed to the recipient within about 5 minutes of payment and are valid for 3 years. At checkout a card pays for products and delivery, leaving at least R10 to pay by card.</p>
-          <button class="btn btn-primary" id="gcSaveSettings">Save</button>
+          <p class="ops-hint">Cards are emailed to the recipient within about 5 minutes of payment and are valid for 3 years. They can be spent on products in the online shop only, not on services. At checkout a card pays for products and delivery, leaving at least R10 to pay by card.</p>
+          <button class="btn btn-primary" id="gcSaveSettings">Save amounts</button>
         </div>
       </div>
       <div class="table-wrap ops-table" role="region" aria-label="Gift cards">

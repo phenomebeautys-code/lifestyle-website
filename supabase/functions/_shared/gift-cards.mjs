@@ -115,7 +115,7 @@ export function renderGiftCardEmail(card, amounts) {
     </td></tr>
     <tr><td bgcolor="${T.paper}" style="background:${T.paper};border-radius:48px 48px 0 0;padding:40px 32px 36px;" class="gc-pad">
       <h1 style="margin:0 0 20px;font-weight:500;font-size:30px;line-height:1.15;">${to ? `${esc(to)}, a` : 'A'} gift for you</h1>
-      <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">${from ? `${esc(from)} has sent you` : 'You have'} a Phenomebeauty gift card to spend on self-care, waxing and professional products.</p>
+      <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">${from ? `${esc(from)} has sent you` : 'You have'} a Phenomebeauty gift card to spend on skincare, wax and professional products in our online shop.</p>
       ${card.message ? `<p style="margin:0 0 20px;font-size:16px;line-height:1.6;font-style:italic;">&ldquo;${esc(card.message)}&rdquo;</p>` : ''}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${th.bg}" style="background:${th.bg};border-radius:20px;margin:8px 0 18px;${edge}"><tr><td style="padding:26px 26px 18px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
@@ -131,7 +131,7 @@ export function renderGiftCardEmail(card, amounts) {
         <div class="gc-code" style="font-size:22px;font-weight:600;letter-spacing:0.12em;white-space:nowrap;color:${T.ink};">${esc(card.code)}</div>
         <div style="font-size:12px;color:#555;margin-top:8px;">${esc(rand(card.initial_amount))} &middot; valid until ${esc(expires)}</div>
       </td></tr></table>
-      <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">Enter the code at checkout under Gift card. You can use it over more than one order until the balance is spent.</p>
+      <p style="margin:0 0 20px;font-size:15px;line-height:1.6;">Enter the code at checkout under Gift card. You can use it over more than one order until the balance is spent. Gift cards are for products only and cannot be used for services yet.</p>
       <table role="presentation" cellpadding="0" cellspacing="0"><tr><td bgcolor="${T.ink}" style="background:${T.ink};border-radius:999px;">
         <a href="${link}" style="display:inline-block;padding:15px 30px;font-size:15px;font-weight:600;color:${T.cream};text-decoration:none;">Start shopping</a></td></tr></table>
     </td></tr>
@@ -141,6 +141,6 @@ export function renderGiftCardEmail(card, amounts) {
     </td></tr>
   </table>
 </td></tr></table></body></html>`;
-  const text = `${from ? from + ' sent you' : 'You have'} a Phenomebeauty gift card of ${rand(card.initial_amount)}.\n${card.message ? '"' + card.message + '"\n' : ''}\nCode: ${card.code}\nValid until ${expires}.\nEnter the code at checkout under Gift card: ${link}`;
+  const text = `${from ? from + ' sent you' : 'You have'} a Phenomebeauty gift card of ${rand(card.initial_amount)}.\n${card.message ? '"' + card.message + '"\n' : ''}\nCode: ${card.code}\nValid until ${expires}.\nEnter the code at checkout under Gift card: ${link}\nFor products in our online shop only, not services.`;
   return { subject, html, text };
 }

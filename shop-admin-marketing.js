@@ -458,6 +458,7 @@
       cards = data.cards || [];
       $('gcSummary').textContent = `${data.live} live card${data.live === 1 ? '' : 's'} · ${money(data.outstanding)} still to be spent`;
       $('gcOnline').checked = data.settings.enabled;
+      showSaleState(data.settings.enabled);
       $('gcAmountsInput').value = data.settings.amounts.join(', ');
       render();
     } catch (err) {
@@ -487,16 +488,34 @@
     $('gcBody').querySelectorAll('tr[data-card]').forEach(tr => tr.addEventListener('click', () => openCard(tr.dataset.card)));
   }
 
-  async function saveSettings() {
+  function showSaleState(on) {
+    $('gcSaleState').textContent = on ? 'On sale' : 'Off';
+    $('gcSaleState').className = 'badge ' + (on ? 'badge-delivered' : 'badge-cancelled');
+    $('gcSaleHint').textContent = on
+      ? 'On: anyone can buy a gift card at phenomebeauty.co.za/gift-cards.'
+      : 'Off: nobody can buy a gift card; the gift card page says they are coming soon. Cards already bought or issued can still be spent.';
+  }
+
+  // The switch saves straight away; the amounts are saved with their own button.
+  async function saveSettings(fromSwitch) {
     const amounts = $('gcAmountsInput').value.split(/[,\s]+/).map(Number).filter(Boolean);
+    const wanted = $('gcOnline').checked;
     $('gcSaveSettings').disabled = true;
+    $('gcOnline').disabled = true;
     try {
-      const data = await call('save_gift_card_settings', { settings: { enabled: $('gcOnline').checked, amounts } });
+      const data = await call('save_gift_card_settings', { settings: { enabled: wanted, amounts } });
       $('gcOnline').checked = data.settings.enabled;
       $('gcAmountsInput').value = data.settings.amounts.join(', ');
-      showToast(data.settings.enabled ? 'Gift cards are on sale at phenomebeauty.co.za/gift-cards.' : 'Online gift card sales are off.');
-    } catch (err) { showToast(err.message, true); }
+      showSaleState(data.settings.enabled);
+      showToast(fromSwitch === true
+        ? (data.settings.enabled ? 'Gift cards are on sale at phenomebeauty.co.za/gift-cards.' : 'Gift cards are off. Nobody can buy one now.')
+        : 'Amounts saved.');
+    } catch (err) {
+      if (fromSwitch === true) $('gcOnline').checked = !wanted;
+      showToast(err.message, true);
+    }
     $('gcSaveSettings').disabled = false;
+    $('gcOnline').disabled = false;
   }
 
   function openIssue() {
@@ -593,7 +612,8 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     $('gcIssueBtn').addEventListener('click', openIssue);
-    $('gcSaveSettings').addEventListener('click', saveSettings);
+    $('gcSaveSettings').addEventListener('click', () => saveSettings(false));
+    $('gcOnline').addEventListener('change', () => saveSettings(true));
   });
 
   window.ShopAdminGiftCards = { load };
