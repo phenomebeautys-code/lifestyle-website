@@ -48,7 +48,7 @@ test('gift card email uses the colour for its price point', () => {
   const low = renderGiftCardEmail({ ...card, initial_amount: 250 }, [250, 500]).html;
   const high = renderGiftCardEmail({ ...card, initial_amount: 500 }, [250, 500]).html;
   assert.match(low, /bgcolor="#F2C6C2"/);
-  assert.match(high, /bgcolor="#000000" style="background:#000000;border-radius:20px/);
+  assert.match(high, /bgcolor="#000000" style="background-color:#000000;background-image:radial-gradient/);
   assert.match(high, />GIFT<\/div>/);
   assert.match(high, />CARD<\/div>/);
   assert.match(high, /Phenomebeauty<\/td>/);

@@ -6,20 +6,11 @@
 *, *::before, *::after { box-sizing: border-box; }
 
 /* ── ADMIN BACKGROUND ──────────────── */
-body {
-  background-image: url('https://iili.io/B6PIOFt.png');
-  background-size: cover;
-  background-position: center center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-}
-body::before {
-  content: '';
-  position: fixed; inset: 0;
-  background: rgba(4, 4, 6, 0.82);
-  z-index: 0;
-  pointer-events: none;
-}
+/* A solid surface. The old photo came from an outside image host that now returns "404 Not Found". */
+html, body { background: #0d0d0f; }
+body { background-image: none; }
+#bg-image { display: none !important; }
+body::before { background: none !important; }
 #loginWrap,
 #adminUI,
 .admin-toast,
@@ -1150,3 +1141,78 @@ select.field-input { appearance: auto; }
 #page-giftcards .page-head { flex-wrap: wrap; gap: 12px; }
 .gc-admin-code { font-size: 1.3rem; font-weight: 700; letter-spacing: 0.12em; color: var(--accent-strong); background: rgba(255,255,255,0.05); border: 1px dashed var(--glass-border); border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 14px; user-select: all; }
 #page-giftcards .ops-panel { margin-bottom: 16px; }
+
+/* ─── Charts (shop-admin-charts.js) ─────────────────────────────── */
+.ch-box { position: relative; margin-top: 12px; min-width: 0; container-type: inline-size; }
+.ch-tip {
+  position: absolute; z-index: 5; pointer-events: none; max-width: 220px;
+  background: #1f1f23; border: 1px solid var(--glass-border); border-radius: 8px;
+  padding: 8px 10px; font-size: 0.76rem; line-height: 1.45; color: var(--text);
+  box-shadow: 0 10px 24px -12px rgba(0,0,0,0.8);
+}
+.ch-tip strong { color: var(--text); }
+/* Donut: chart beside its legend; legend underneath on narrow panels. */
+.ch-donut { display: grid; grid-template-columns: minmax(130px, 180px) minmax(0, 1fr); gap: 20px; align-items: center; }
+.ch-donut svg { width: 100%; height: auto; overflow: visible; }
+.ch-seg { cursor: pointer; transition: opacity 0.15s; }
+.ch-seg.dim, .ch-leaf.dim { opacity: 0.35; }
+.ch-center-v { fill: var(--text); font-size: 22px; font-weight: 700; font-family: inherit; }
+.ch-center-l { fill: var(--text-muted); font-size: 11px; font-family: inherit; letter-spacing: 0.06em; text-transform: uppercase; }
+.ch-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.8rem; }
+.ch-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 4px 6px; border-radius: 6px; cursor: default; }
+.ch-legend li.on { background: rgba(255,255,255,0.06); }
+.ch-key { width: 12px; height: 12px; border-radius: 3px; }
+.ch-lname { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ch-lval { color: var(--text); font-weight: 600; white-space: nowrap; }
+.ch-muted { color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+.ch-legend-row { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; }
+.ch-legend-row li { display: inline-grid; grid-template-columns: 12px auto auto; padding: 0; }
+@container (max-width: 400px) { .ch-donut { grid-template-columns: minmax(0, 1fr); justify-items: center; } .ch-donut svg { max-width: 190px; } .ch-donut .ch-legend { width: 100%; } }
+/* Treemap */
+.ch-tm { display: block; height: auto; }
+.ch-leaf { cursor: pointer; transition: opacity 0.15s; }
+.ch-tm-head { fill: var(--text); font-size: 11px; font-weight: 700; font-family: inherit; letter-spacing: 0.02em; }
+.ch-tm-label { fill: #0d0d0f; font-size: 12px; font-weight: 600; font-family: inherit; }
+.ch-tm-value { fill: #0d0d0f; font-size: 11px; font-family: inherit; opacity: 0.85; }
+/* Nested proportional circles */
+.ch-circles { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 14px 10px; margin-top: 12px; }
+.ch-circ { margin: 0; text-align: center; cursor: pointer; }
+.ch-circ svg { width: 100%; max-width: 116px; height: auto; display: block; margin: 0 auto; }
+.ch-circ figcaption { font-size: 0.74rem; color: var(--text); line-height: 1.3; margin-top: 4px; overflow-wrap: anywhere; }
+.ch-circ figcaption span { display: block; color: var(--text-muted); font-size: 0.7rem; margin-top: 2px; }
+.ch-baseline { stroke: var(--glass-border); stroke-width: 1; }
+.ch-peak { fill: var(--text-muted); font-size: 10px; font-family: inherit; }
+.ch-pad { padding: 4px 20px 18px; min-width: 0; }
+.hub-charts { margin-top: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); }
+@media (max-width: 1100px) { .hub-charts { grid-template-columns: minmax(0, 1fr); } }
+.rep-panel { margin-bottom: 16px; }
+
+/* ─── Tables as cards on phones (labels come from shop-admin-responsive.js) ─── */
+@media (max-width: 640px) {
+  .ops-table table { min-width: 0 !important; }
+  .ops-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .ops-table table, .ops-table tbody, .ops-table tr, .ops-table td { display: block; width: 100%; }
+  .ops-table tr { padding: 10px 14px; border-bottom: 1px solid var(--glass-border); }
+  .ops-table tr:last-child { border-bottom: none; }
+  .ops-table td { padding: 6px 0; border: 0; overflow-wrap: anywhere; }
+  /* Label above its value, so cells that hold several lines or buttons stay together. */
+  .ops-table td::before {
+    content: attr(data-label); display: block; margin-bottom: 2px;
+    font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .ops-table td:not([data-label])::before { content: none; }
+  .ops-table td:not([data-label]) { display: block; }
+  .ops-table td:first-child { font-weight: 600; }
+  .ops-table .empty-row td { display: block; padding: 24px 0; text-align: center; }
+  .ops-table .empty-row td::before { content: none; }
+  .ops-table tr:hover td { background: none; }
+}
+
+/* Top bar on phones: a long page name shortens instead of running into the buttons. */
+.topbar-left { min-width: 0; }
+.topbar-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) {
+  .topbar-right { gap: 6px; flex: none; }
+  .topbar-right .btn { padding: 8px 12px; font-size: 0.74rem; }
+  .topbar-title { font-size: 1.15rem; }
+}

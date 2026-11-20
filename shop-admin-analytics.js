@@ -139,6 +139,18 @@
       : '<tr class="empty-row"><td colspan="2">No visits yet.</td></tr>';
     const dv = c.devices || {};
     const total = Object.values(dv).reduce((a, b) => a + b, 0);
+    if (window.PBCharts) {
+      /* Channels keep a fixed colour each, so the same channel is the same colour in every period. */
+      const ORDER = ['direct', 'search', 'social', 'whatsapp', 'email', 'paid', 'referral'];
+      const slot = key => { const i = ORDER.indexOf(key); return i >= 0 && i < PBCharts.SLOTS.length ? PBCharts.SLOTS[i] : PBCharts.OTHER; };
+      PBCharts.donut($('anChannelDonut'),
+        (c.channels || []).filter(r => r.channel !== 'untracked').map(r => ({ key: r.channel, label: CHANNEL_LABELS[r.channel] || r.channel, value: Number(r.sessions) || 0 })),
+        { title: 'Visits by channel', colorOf: slot, center: { value: fmtN(c.funnel.sessions), label: 'visits' }, labelHead: 'Channel', valueHead: 'Visits', empty: 'No visits recorded in this period yet.' });
+      const DEV = { mobile: ['Mobile', 0], desktop: ['Desktop', 1], tablet: ['Tablet', 2] };
+      PBCharts.donut($('anDeviceDonut'),
+        Object.keys(dv).map(k => ({ key: k, label: (DEV[k] || [k])[0], value: Number(dv[k]) || 0 })),
+        { title: 'Visits by device', colorOf: k => (DEV[k] ? PBCharts.SLOTS[DEV[k][1]] : PBCharts.OTHER), center: { value: fmtN(total), label: 'visits' }, labelHead: 'Device', valueHead: 'Visits', empty: 'No visits recorded in this period yet.' });
+    }
     $('anDevices').textContent = total
       ? ['mobile', 'desktop', 'tablet'].filter(k => dv[k]).map(k => `${k[0].toUpperCase() + k.slice(1)} ${fmtPct(pct(dv[k], total))}`).join(' · ')
       : '';
@@ -146,6 +158,16 @@
 
   function renderProducts(c) {
     const rows = c.products || [];
+    if (window.PBCharts) {
+      PBCharts.productMarkets().then(map => {
+        PBCharts.treemap($('anTreemap'), PBCharts.byMarket(map, rows.map(r => ({
+          id: r.product_id, name: r.name, value: Number(r.revenue) || 0, sub: `${fmtN(r.units)} unit${Number(r.units) === 1 ? '' : 's'} sold`,
+        }))), { title: 'Net sales by market and product', groupHead: 'Market', labelHead: 'Product', valueHead: 'Net sales', empty: 'No product sales in this period yet.' });
+      });
+      PBCharts.circles($('anCircles'),
+        rows.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).map(r => ({ label: r.name, values: [Number(r.views) || 0, Number(r.carts) || 0, Number(r.units) || 0] })),
+        ['Viewed', 'Added to cart', 'Units sold'], { labelHead: 'Product', empty: 'No product views or sales in this period yet.' });
+    }
     $('anProducts').innerHTML = rows.length ? rows.map(r => `<tr>
       <td style="color:var(--accent-strong);font-weight:600">${esc(r.name)}</td>
       <td>${fmtN(r.units)}</td>

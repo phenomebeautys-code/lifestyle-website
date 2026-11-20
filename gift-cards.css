@@ -8,11 +8,42 @@
 .gc-lead { font-size: var(--fs-lead); color: var(--fg-soft); max-width: 46ch; line-height: 1.55; }
 .gc-card {
   --gc-bg: #000000; --gc-type: #F2C6C2; --gc-mark: #F2C6C2; --gc-edge: transparent;
+  /* Matt paper stock: a fine grain, no gloss. */
+  --gc-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.4 -0.45'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  position: relative; isolation: isolate;
   container-type: inline-size; width: 100%; max-width: 380px; aspect-ratio: 5 / 7;
-  border-radius: 20px; background: var(--gc-bg); color: var(--gc-mark); border: 1px solid var(--gc-edge);
-  box-shadow: 0 30px 60px -32px rgba(0, 0, 0, 0.45); overflow: hidden;
-  transition: background-color 0.45s var(--ease, ease), color 0.45s var(--ease, ease), border-color 0.45s;
+  border-radius: 14px; background: var(--gc-bg); color: var(--gc-mark); border: 1px solid var(--gc-edge);
+  /* Lifted off the page: a tight contact shadow plus a soft, wide one below. */
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.18),
+    0 4px 8px -2px rgba(0, 0, 0, 0.18),
+    0 22px 34px -14px rgba(0, 0, 0, 0.32),
+    0 52px 70px -40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  transform: rotate(-1.5deg);
+  transition: background-color 0.45s var(--ease, ease), color 0.45s var(--ease, ease), border-color 0.45s, transform 0.6s var(--ease, ease);
 }
+.gc-card:hover { transform: rotate(0deg) translateY(-4px); }
+/* Grain, blended into the card colour so it reads as texture, not dots. */
+.gc-card::before {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background-image: var(--gc-grain); background-size: 180px 180px;
+  opacity: 0.22;
+}
+/* Shading: light from the top left, a little shadow toward the bottom right edge. */
+.gc-card::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(120% 80% at 12% 0%, rgba(255, 255, 255, 0.14), transparent 55%),
+    linear-gradient(160deg, transparent 45%, rgba(0, 0, 0, 0.16) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+}
+.gc-card-in { position: relative; z-index: 3; }
+/* Type pressed into the stock: a faint highlight under each letter, a faint shadow above. */
+.gc-card-mark, .gc-card-amount, .gc-card-word {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), 0 -0.5px 0 rgba(0, 0, 0, 0.12);
+}
+@media (prefers-reduced-motion: reduce) { .gc-card, .gc-card:hover { transform: none; } }
 .gc-card-in { height: 100%; display: flex; flex-direction: column; justify-content: space-between; padding: 7cqi 7cqi 6cqi; }
 .gc-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .gc-card-mark { font-family: var(--font-mark); font-size: 8.5cqi; line-height: 1; }

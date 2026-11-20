@@ -689,6 +689,73 @@ function updateStats() {
   setText('payoutDispatched', dispatched.length);
   setText('payoutDelivered', delivered.length);
   setText('payoutUnpaid', unpaid.length);
+  renderHubCharts();
+}
+
+/* Net sales of a paid order after refunds. */
+function netOf(order) {
+  return Number(order.total_amount || 0) - Number(order.refunded_amount || 0);
+}
+
+function renderHubCharts() {
+  if (!window.PBCharts) return;
+  const paid = allOrders.filter(o => o.payment_status === 'paid' && !o.cancelled_at);
+  const fmtDay = d => d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' });
+  const days = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (let i = 29; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); days.push({ d, value: 0, orders: 0 }); }
+  paid.forEach(o => {
+    const t = new Date(o.paid_at || o.created_at); t.setHours(0, 0, 0, 0);
+    const slot = days.find(x => x.d.getTime() === t.getTime());
+    if (slot) { slot.value += netOf(o); slot.orders += 1; }
+  });
+  PBCharts.bars(document.getElementById('hubSalesBars'), days.map(x => ({
+    label: fmtDay(x.d), value: Math.round(x.value),
+    tip: `<strong>${x.d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' })}</strong><br>R${Math.round(x.value).toLocaleString('en-ZA')} · ${x.orders} order${x.orders === 1 ? '' : 's'}`,
+  })), { title: 'Net sales, last 30 days', empty: 'No paid orders in the last 30 days.' });
+
+  /* Stages in the order an order moves through them; each keeps its colour. */
+  const STAGES = [
+    ['awaiting', 'Awaiting payment'], ['preparing', 'Being prepared'], ['dispatched', 'Dispatched'],
+    ['delivered', 'Delivered'], ['cancelled', 'Cancelled'],
+  ];
+  const stageOf = o => o.cancelled_at || o.status === 'cancelled' ? 'cancelled'
+    : o.payment_status !== 'paid' ? 'awaiting'
+    : o.status === 'dispatched' ? 'dispatched' : o.status === 'delivered' ? 'delivered' : 'preparing';
+  const counts = {};
+  allOrders.filter(o => !o.archived_at).forEach(o => { const k = stageOf(o); counts[k] = (counts[k] || 0) + 1; });
+  PBCharts.donut(document.getElementById('hubStatusDonut'),
+    STAGES.map(([k, label]) => ({ key: k, label, value: counts[k] || 0 })),
+    { title: 'Orders by stage', colorOf: k => PBCharts.SLOTS[STAGES.findIndex(s => s[0] === k)], max: 8,
+      center: { value: String(Object.values(counts).reduce((a, b) => a + b, 0)), label: 'orders' },
+      labelHead: 'Stage', valueHead: 'Orders', empty: 'No orders yet.', format: n => String(n) });
+}
+
+function renderReportCharts(paidOrders) {
+  if (!window.PBCharts) return;
+  const months = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push({ d, value: 0, orders: 0 }); }
+  paidOrders.filter(o => !o.cancelled_at).forEach(o => {
+    const t = new Date(o.paid_at || o.created_at);
+    const m = months.find(x => x.d.getFullYear() === t.getFullYear() && x.d.getMonth() === t.getMonth());
+    if (m) { m.value += netOf(o); m.orders += 1; }
+  });
+  PBCharts.bars(document.getElementById('repMonthly'), months.map(x => ({
+    label: x.d.toLocaleDateString('en-ZA', { month: 'short' }), value: Math.round(x.value),
+    tip: `<strong>${x.d.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</strong><br>R${Math.round(x.value).toLocaleString('en-ZA')} · ${x.orders} order${x.orders === 1 ? '' : 's'}`,
+  })), { title: 'Net sales by month', labelHead: 'Month', valueHead: 'Net sales', empty: 'No paid orders in the last 12 months.' });
+
+  /* Product sales from order lines (before order-level discounts, gift cards and refunds). */
+  const lines = {};
+  paidOrders.filter(o => !o.cancelled_at).forEach(o => (o.items || []).forEach(it => {
+    const id = it.productId || it.name;
+    const l = (lines[id] ||= { id: it.productId, name: it.name || 'Unnamed product', value: 0, units: 0 });
+    l.value += Number(it.price || 0) * Number(it.qty || 0); l.units += Number(it.qty || 0);
+  }));
+  PBCharts.productMarkets().then(map => PBCharts.treemap(document.getElementById('repTreemap'),
+    PBCharts.byMarket(map, Object.values(lines).map(l => ({ ...l, sub: `${l.units} unit${l.units === 1 ? '' : 's'} sold` }))),
+    { title: 'Net sales by market and product', groupHead: 'Market', labelHead: 'Product', valueHead: 'Sales', empty: 'No paid orders yet.' }));
 }
 
 function updateOrdersBadge() {
@@ -749,6 +816,7 @@ function updateReports() {
   )[0];
 
   setText('repTopProduct', topProduct ? topProduct[0] : '—');
+  renderReportCharts(paidOrders);
 
   const deliveredCount = paidOrders.filter(
     order => order.status === 'delivered'

@@ -117,7 +117,7 @@ export function renderGiftCardEmail(card, amounts) {
       <h1 style="margin:0 0 20px;font-weight:500;font-size:30px;line-height:1.15;">${to ? `${esc(to)}, a` : 'A'} gift for you</h1>
       <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">${from ? `${esc(from)} has sent you` : 'You have'} a Phenomebeauty gift card to spend on skincare, wax and professional products in our online shop.</p>
       ${card.message ? `<p style="margin:0 0 20px;font-size:16px;line-height:1.6;font-style:italic;">&ldquo;${esc(card.message)}&rdquo;</p>` : ''}
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${th.bg}" style="background:${th.bg};border-radius:20px;margin:8px 0 18px;${edge}"><tr><td style="padding:26px 26px 18px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="${th.bg}" style="background-color:${th.bg};background-image:radial-gradient(120% 80% at 12% 0%,rgba(255,255,255,0.14),rgba(255,255,255,0) 55%),linear-gradient(160deg,rgba(0,0,0,0) 45%,rgba(0,0,0,0.16) 100%);border-radius:14px;margin:8px 0 18px;box-shadow:0 1px 1px rgba(0,0,0,0.18),0 22px 34px -14px rgba(0,0,0,0.32);${edge}"><tr><td style="padding:26px 26px 18px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
           <td class="gc-wm" style="font-family:'Abril Fatface',Georgia,'Times New Roman',serif;font-size:24px;line-height:1;color:${th.mark};">Phenomebeauty</td>
           <td class="gc-amt" align="right" style="padding-left:12px;white-space:nowrap;font-family:Montserrat,Helvetica,Arial,sans-serif;font-size:22px;font-weight:600;line-height:1;color:${th.mark};">${esc(rand(card.initial_amount))}</td>
