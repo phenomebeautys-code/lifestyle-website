@@ -7,11 +7,15 @@
 (function () {
   'use strict';
 
-  const SLOTS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9', '#e66767'];
-  const OTHER = '#6b6b72';
-  /* Ordinal blue for nested amounts (outer → inner). */
-  const RINGS = ['#184f95', '#2a78d6', '#9ec5f4'];
-  const SURFACE = '#17171a';
+  /* Two validated sets of the same hues: dark for the admin panels, light for the printable report.
+     Light: the three lighter slots sit under 3:1 on white, so every report chart has a labelled table. */
+  const PALETTES = {
+    dark: { slots: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#0ca30c', '#9085e9', '#e66767'], other: '#6b6b72', rings: ['#184f95', '#2a78d6', '#9ec5f4'], surface: '#17171a' },
+    light: { slots: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'], other: '#8c8c93', rings: ['#6da7ec', '#2a78d6', '#104281'], surface: '#ffffff' },
+  };
+  const SLOTS = PALETTES.dark.slots;
+  const OTHER = PALETTES.dark.other;
+  const palOf = opts => PALETTES[opts && opts.theme] || PALETTES.dark;
 
   const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fmtN = n => Number(n || 0).toLocaleString('en-ZA');
@@ -47,22 +51,23 @@
   function empty(el, text) { el.innerHTML = `<div class="ops-empty">${esc(text)}</div>`; }
 
   /* Keep the first `max` items; fold the rest into "Other" so no colour is ever generated. */
-  function fold(items, max) {
+  function fold(items, max, other = OTHER) {
     const sorted = items.filter(i => i.value > 0).sort((a, b) => b.value - a.value);
     if (sorted.length <= max) return sorted;
     const keep = sorted.slice(0, max - 1);
     const rest = sorted.slice(max - 1).reduce((s, i) => s + i.value, 0);
-    return keep.concat([{ key: '_other', label: 'Other', value: rest, color: OTHER }]);
+    return keep.concat([{ key: '_other', label: 'Other', value: rest, color: other }]);
   }
 
   /* ── Donut ─────────────────────────────────────────────────────────
      items: [{ key, label, value, color? }]; colour by `colorOf(key)` or slot order. */
   function donut(el, items, opts = {}) {
     const format = opts.format || fmtN;
-    const data = fold(items, opts.max || 6);
+    const P = palOf(opts);
+    const data = fold(items, opts.max || 6, P.other);
     const total = data.reduce((s, d) => s + d.value, 0);
     if (!total) return empty(el, opts.empty || 'No data yet.');
-    data.forEach((d, i) => { d.color = d.color || (opts.colorOf ? opts.colorOf(d.key, i) : SLOTS[i]); });
+    data.forEach((d, i) => { d.color = d.color || (opts.colorOf ? opts.colorOf(d.key, i) : P.slots[i]); });
     const S = 200, R = 92, r = 62, cx = S / 2, cy = S / 2;
     let a0 = -Math.PI / 2;
     const arcs = data.map((d, i) => {
@@ -73,7 +78,7 @@
         ? `M ${cx} ${cy - R} A ${R} ${R} 0 1 1 ${cx - 0.01} ${cy - R} L ${cx - 0.01} ${cy - r} A ${r} ${r} 0 1 0 ${cx} ${cy - r} Z`
         : `M ${p(R, a0)} A ${R} ${R} 0 ${large} 1 ${p(R, a1)} L ${p(r, a1)} A ${r} ${r} 0 ${large} 0 ${p(r, a0)} Z`;
       a0 = a1;
-      return `<path class="ch-seg" data-i="${i}" d="${path}" fill="${d.color}" stroke="${SURFACE}" stroke-width="2" stroke-linejoin="round"/>`;
+      return `<path class="ch-seg" data-i="${i}" d="${path}" fill="${d.color}" stroke="${P.surface}" stroke-width="2" stroke-linejoin="round"/>`;
     }).join('');
     const center = opts.center || { value: format(total), label: 'total' };
     el.innerHTML = `<div class="ch-donut">
@@ -131,6 +136,7 @@
      groups: [{ key, label, color, children: [{ label, value, sub? }] }] */
   function treemap(el, groups, opts = {}) {
     const format = opts.format || fmtR;
+    const P = palOf(opts);
     const gs = groups.map(g => ({ ...g, children: g.children.filter(c => c.value > 0) }))
       .map(g => ({ ...g, value: g.children.reduce((s, c) => s + c.value, 0) })).filter(g => g.value > 0);
     const total = gs.reduce((s, g) => s + g.value, 0);
@@ -143,7 +149,7 @@
       const g = gr.item;
       const showHead = gr.h > HEAD + 28 && gr.w > 70;
       const inner = squarify(g.children, gr.x + GAP, gr.y + GAP + (showHead ? HEAD : 0), gr.w - GAP * 2, gr.h - GAP * 2 - (showHead ? HEAD : 0));
-      heads += `<rect x="${gr.x.toFixed(1)}" y="${gr.y.toFixed(1)}" width="${gr.w.toFixed(1)}" height="${gr.h.toFixed(1)}" rx="6" fill="${g.color}" fill-opacity="0.22" stroke="${SURFACE}" stroke-width="${GAP}"/>`;
+      heads += `<rect x="${gr.x.toFixed(1)}" y="${gr.y.toFixed(1)}" width="${gr.w.toFixed(1)}" height="${gr.h.toFixed(1)}" rx="6" fill="${g.color}" fill-opacity="0.22" stroke="${P.surface}" stroke-width="${GAP}"/>`;
       if (showHead) heads += `<text class="ch-tm-head" x="${(gr.x + 8).toFixed(1)}" y="${(gr.y + 16).toFixed(1)}">${esc(clip(`${g.label} · ${format(g.value)} (${fmtPct(pctOf(g.value, total))})`, gr.w - 16))}</text>`;
       inner.forEach(n => {
         const c = n.item, i = idx++;
@@ -156,7 +162,7 @@
     });
     el.innerHTML = `<svg class="ch-tm" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(opts.title || 'Treemap')}">${heads}${leaves}</svg>
       ${gs.length > 1 ? `<ul class="ch-legend ch-legend-row">${gs.map(g => `<li><span class="ch-key" style="background:${g.color}"></span><span class="ch-lname">${esc(g.label)}</span><span class="ch-lval">${esc(format(g.value))}</span></li>`).join('')}</ul>` : ''}
-      ${tableHTML([opts.groupHead || 'Group', opts.labelHead || 'Item', opts.valueHead || 'Value', 'Share'],
+      ${opts.table === false ? '' : tableHTML([opts.groupHead || 'Group', opts.labelHead || 'Item', opts.valueHead || 'Value', 'Share'],
         flat.map(({ g, c }) => [esc(g.label), esc(c.label), esc(format(c.value)), fmtPct(pctOf(c.value, total))]))}`;
     const tip = tooltip(el);
     el.querySelectorAll('.ch-leaf').forEach(n => {
@@ -173,6 +179,7 @@
      items: [{ label, values: [outer, middle, inner] }], names: ['Viewed', 'Added to cart', 'Sold'].
      Area ∝ value on one shared scale, so circles can be compared across items. */
   function circles(el, items, names, opts = {}) {
+    const P = palOf(opts);
     const rows = items.filter(i => i.values.some(v => v > 0)).slice(0, opts.max || 8);
     if (!rows.length) return empty(el, opts.empty || 'No data yet.');
     const max = Math.max(...rows.flatMap(i => i.values), 1);
@@ -180,14 +187,14 @@
     const cell = i => {
       const order = i.values.map((v, k) => ({ v, k })).sort((a, b) => b.v - a.v);
       const circ = order.map(({ v, k }) => v > 0
-        ? `<circle cx="${R + 4}" cy="${D - 4 - R * Math.sqrt(v / max)}" r="${(R * Math.sqrt(v / max)).toFixed(2)}" fill="${RINGS[k]}" stroke="${SURFACE}" stroke-width="2"/>` : '').join('');
+        ? `<circle cx="${R + 4}" cy="${D - 4 - R * Math.sqrt(v / max)}" r="${(R * Math.sqrt(v / max)).toFixed(2)}" fill="${P.rings[k]}" stroke="${P.surface}" stroke-width="2"/>` : '').join('');
       return `<figure class="ch-circ" data-i="${rows.indexOf(i)}"><svg viewBox="0 0 ${D} ${D}" role="img" aria-label="${esc(i.label)}">
         <line x1="0" x2="${D}" y1="${D - 4}" y2="${D - 4}" class="ch-baseline"/>${circ}</svg>
         <figcaption>${esc(i.label)}<span>${i.values.map(fmtN).join(' · ')}</span></figcaption></figure>`;
     };
-    el.innerHTML = `<ul class="ch-legend ch-legend-row">${names.map((n, k) => `<li><span class="ch-key" style="background:${RINGS[k]}"></span><span class="ch-lname">${esc(n)}</span></li>`).join('')}</ul>
+    el.innerHTML = `<ul class="ch-legend ch-legend-row">${names.map((n, k) => `<li><span class="ch-key" style="background:${P.rings[k]}"></span><span class="ch-lname">${esc(n)}</span></li>`).join('')}</ul>
       <div class="ch-circles">${rows.map(cell).join('')}</div>
-      ${tableHTML([opts.labelHead || 'Item'].concat(names), rows.map(i => [esc(i.label)].concat(i.values.map(fmtN))))}`;
+      ${opts.table === false ? '' : tableHTML([opts.labelHead || 'Item'].concat(names), rows.map(i => [esc(i.label)].concat(i.values.map(fmtN))))}`;
     const tip = tooltip(el);
     el.querySelectorAll('.ch-circ').forEach(n => {
       const i = rows[Number(n.dataset.i)];
@@ -239,22 +246,24 @@
     }
     return marketsPromise;
   }
+  /* Each market keeps its slot in both palettes. */
   const MARKETS = {
-    self_care: { label: 'Self-care', color: SLOTS[0] },
-    professional: { label: 'Professional', color: SLOTS[1] },
-    gift_card: { label: 'Gift cards', color: SLOTS[2] },
-    other: { label: 'Other', color: OTHER },
+    self_care: { label: 'Self-care', slot: 0 },
+    professional: { label: 'Professional', slot: 1 },
+    gift_card: { label: 'Gift cards', slot: 2 },
+    other: { label: 'Other', slot: -1 },
   };
+  const marketColor = (m, theme) => { const P = PALETTES[theme] || PALETTES.dark; return MARKETS[m].slot < 0 ? P.other : P.slots[MARKETS[m].slot]; };
   function marketOf(map, id, name) {
     if (id === 'gift-card') return 'gift_card';
     return map[id] || map[String(name || '').toLowerCase()] || 'other';
   }
   /* Build treemap groups from lines of { id, name, value, sub }. */
-  function byMarket(map, lines) {
+  function byMarket(map, lines, theme) {
     const groups = {};
     lines.forEach(l => {
       const m = marketOf(map, l.id, l.name);
-      (groups[m] ||= { key: m, label: MARKETS[m].label, color: MARKETS[m].color, children: [] }).children.push({ label: l.name, value: l.value, sub: l.sub });
+      (groups[m] ||= { key: m, label: MARKETS[m].label, color: marketColor(m, theme), children: [] }).children.push({ label: l.name, value: l.value, sub: l.sub });
     });
     return ['self_care', 'professional', 'gift_card', 'other'].filter(k => groups[k]).map(k => groups[k]);
   }
@@ -275,5 +284,5 @@
     };
   }
 
-  window.PBCharts = { donut: keep(donut), treemap: keep(treemap), circles: keep(circles), bars: keep(bars), productMarkets, byMarket, SLOTS, OTHER };
+  window.PBCharts = { donut: keep(donut), treemap: keep(treemap), circles: keep(circles), bars: keep(bars), productMarkets, byMarket, SLOTS, OTHER, PALETTES };
 })();

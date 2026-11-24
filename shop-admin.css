@@ -1216,3 +1216,8 @@ select.field-input { appearance: auto; }
   .topbar-right .btn { padding: 8px 12px; font-size: 0.74rem; }
   .topbar-title { font-size: 1.15rem; }
 }
+
+/* Analytics: period buttons and the report button share one row, wrapping on small screens. */
+.an-head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.an-report-btn { white-space: nowrap; }
+@media (max-width: 480px) { .an-head-actions { width: 100%; } .an-report-btn { width: 100%; justify-content: center; } }

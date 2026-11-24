@@ -20,6 +20,7 @@
 
   let days = 30;
   let loading = false;
+  let last = null; // the data on screen, for the printable report
 
   function delta(cur, prev, { invert = false, money = false } = {}) {
     if (prev == null || cur == null) return '';
@@ -187,6 +188,7 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Could not load analytics.');
       const { current: c, previous: p } = data;
+      last = { days, current: c, previous: p, loadedAt: new Date() };
       renderTiles(c, p);
       renderFunnel(c);
       renderDaily(c);
@@ -208,5 +210,5 @@
     }));
   });
 
-  window.ShopAdminAnalytics = { load };
+  window.ShopAdminAnalytics = { load, current: () => last, channelLabels: CHANNEL_LABELS };
 })();
