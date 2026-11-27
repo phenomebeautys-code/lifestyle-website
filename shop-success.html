@@ -216,8 +216,21 @@
         </div>`;
     }
 
+    /* Ask the shop to confirm this payment with Yoco right away, instead of waiting for Yoco's
+       webhook. Safe to call repeatedly; the order is only marked paid if Yoco says it is paid. */
+    function confirmWithYoco(id, token) {
+      return fetch(SUPABASE_URL + '/functions/v1/reconcile-orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON },
+        body: JSON.stringify({ order_id: id, customer_token: token })
+      }).then(function (r) { return r.json().catch(function () { return {}; }); })
+        .catch(function () { return {}; });
+    }
+
+    let pendingShown = false;
     async function pollOrder(id, token, attempts) {
       attempts = attempts || 0;
+      if (attempts === 0 || attempts === 3 || attempts === 7 || (pendingShown && attempts % 3 === 0)) await confirmWithYoco(id, token);
       try {
         const res = await fetch(
           SUPABASE_URL + '/rest/v1/shop_orders?id=eq.' + encodeURIComponent(id)
@@ -239,18 +252,20 @@
           return;
         }
 
-        if (attempts < 6) {
+        if (attempts < 10) {
           setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000);
         } else {
-          /* Timed out — webhook has not confirmed payment yet.
-             Do NOT render a false success screen. Show pending state instead. */
-          renderPending(order);
+          /* Not confirmed yet. Do NOT render a false success screen: show the pending state, and keep
+             checking quietly for a few minutes so the page turns to success once Yoco confirms. */
+          if (!pendingShown) { renderPending(order); pendingShown = true; }
+          if (attempts < 30) setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 10000);
         }
       } catch (e) {
-        if (attempts < 6) {
+        if (attempts < 10) {
           setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 2000);
         } else {
-          renderPending(null);
+          if (!pendingShown) { renderPending(null); pendingShown = true; }
+          if (attempts < 30) setTimeout(function(){ pollOrder(id, token, attempts + 1); }, 10000);
         }
       }
     }

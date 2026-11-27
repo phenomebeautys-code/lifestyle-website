@@ -9,9 +9,16 @@ Deno.serve(async req => {
   if (req.method !== 'POST') return respond({error: 'Method not allowed'}, 405);
   try {
     const raw = await req.text();
-    if (!await verifyWebhook(raw, req.headers, Deno.env.get('YOCO_WEBHOOK_SECRET') || '')) {
-      return respond({error: 'Invalid webhook signature'}, 401);
-    }
+    const url = Deno.env.get('SUPABASE_URL');
+    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const supabase = createClient(url, key);
+    // The signing secret is the one set on the function, or the one saved when the webhook was
+    // last registered (reconcile-orders, mode 'webhook_register'). Either may sign a delivery.
+    const {data: saved} = await supabase.from('shop_settings').select('value').eq('key', 'yoco_webhook_secret').maybeSingle();
+    const secrets = [Deno.env.get('YOCO_WEBHOOK_SECRET') || '', typeof saved?.value?.secret === 'string' ? saved.value.secret : ''].filter(Boolean);
+    let signed = false;
+    for (const candidate of secrets) { if (await verifyWebhook(raw, req.headers, candidate)) { signed = true; break; } }
+    if (!signed) return respond({error: 'Invalid webhook signature'}, 401);
     let event;
     try { event = JSON.parse(raw); } catch { return respond({error: 'Invalid JSON'}, 400); }
     if (!event || typeof event !== 'object') return respond({error: 'Invalid event'}, 400);
@@ -22,9 +29,6 @@ Deno.serve(async req => {
     const eventCheckoutId = payload?.checkoutId || payload?.metadata?.checkoutId;
     if (typeof paymentId !== 'string' || !paymentId.startsWith('p_')) return respond({error: 'Invalid payment ID'}, 422);
     if (!orderId && !eventCheckoutId) return respond({error: 'Order association missing'}, 422);
-    const url = Deno.env.get('SUPABASE_URL');
-    const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const supabase = createClient(url, key);
     let query = supabase.from('shop_orders').select('id, payment_status, total_amount, yoco_checkout_id, payment_id');
     query = orderId ? query.eq('id', orderId) : query.eq('yoco_checkout_id', eventCheckoutId);
     const {data: order, error: lookupError} = await query.maybeSingle();
@@ -63,12 +67,18 @@ Deno.serve(async req => {
     }).eq('id', order.id).eq('payment_status', 'unpaid').eq('yoco_checkout_id', checkoutId).select('id');
     if (updateError) return respond({error: 'Order update failed'}, 503);
     if (!changed?.length) return respond({received: true, processed: false, reason: 'order_changed_concurrently'});
-    // Numeric stock, recipes and material deductions are intentionally deferred.
+    // Same follow-up as the scheduled check (reconcile-orders): timeline, stock, emails.
     // PUDO dispatch and the final delivered-status action remain owner-controlled.
+    const headers = {'Content-Type': 'application/json', Authorization: `Bearer ${key}`, apikey: key};
+    try { await supabase.from('order_events').insert({order_id: order.id, actor: 'system', kind: 'payment', message: 'Payment confirmed with Yoco (payment notification).'}); } catch { /* best effort */ }
+    try {
+      const stock = await fetch(`${url}/functions/v1/consume-order-stock`, {method: 'POST', headers, body: JSON.stringify({order_id: order.id})});
+      if (!stock.ok) console.error('[yoco-webhook] consume-order-stock failed:', stock.status);
+    } catch (err) { console.error('[yoco-webhook] consume-order-stock error:', err); }
     let notificationAccepted = false;
     try {
       const notification = await fetch(`${url}/functions/v1/send-order-email`, {
-        method: 'POST', headers: {'Content-Type': 'application/json', Authorization: `Bearer ${key}`, apikey: key},
+        method: 'POST', headers,
         body: JSON.stringify({type: 'payment_received', order_id: order.id}),
       });
       const result = await notification.json().catch(() => null);

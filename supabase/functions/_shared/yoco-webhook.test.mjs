@@ -16,9 +16,10 @@ async function headersFor(raw) {
 }
 function harness(overrides={}) {
   let handler;const calls={updates:[],urls:[],fields:[]};let operation='lookup';
-  const client={from(){operation='lookup';return {
+  const client={from(table){operation='lookup';return {
     select(fields){calls.fields.push(fields);return this;},eq(){return this;},
-    maybeSingle(){return Promise.resolve({data:{...order,...overrides.order},error:null});},
+    insert(row){calls.events=(calls.events||[]).concat(table==='order_events'?[row]:[]);return Promise.resolve({error:null});},
+    maybeSingle(){return Promise.resolve(table==='shop_settings'?{data:overrides.savedSecret?{value:{secret:overrides.savedSecret}}:null,error:null}:{data:{...order,...overrides.order},error:null});},
     update(data){operation='update';calls.updates.push(data);return this;},
     then(resolve,reject){return Promise.resolve({data:overrides.concurrent?[]:[{id:order.id}],error:null}).then(resolve,reject);},
   };}};
@@ -46,13 +47,25 @@ test('missing secret or signature fails closed',async()=>{
     assert.equal(response.status,401);assert.equal(h.calls.updates.length,0);
   }
 });
-test('verified payment confirms without any stock or PUDO invocation',async()=>{
+test('verified payment confirms, consumes stock, emails and records the timeline (no PUDO)',async()=>{
   const h=harness();const response=await h.run();assert.equal(response.status,200);assert.equal(h.calls.updates[0].payment_status,'paid');
-  assert.equal(h.calls.urls.length,2);assert.ok(h.calls.urls[0].includes('/api/checkouts/'));assert.ok(h.calls.urls[1].endsWith('/send-order-email'));
+  assert.equal(h.calls.urls.length,3);assert.ok(h.calls.urls[0].includes('/api/checkouts/'));
+  assert.ok(h.calls.urls[1].endsWith('/consume-order-stock'));assert.ok(h.calls.urls[2].endsWith('/send-order-email'));
+  assert.ok(!h.calls.urls.some(u=>/pudo/i.test(u)));
+  assert.equal(h.calls.events.length,1);assert.match(h.calls.events[0].message,/payment notification/);
 });
 test('checkout fallback selects total amount and stored checkout ID',async()=>{
   const h=harness();await h.run({...event,payload:{id:'p_test',checkoutId:'ch_test'}});
-  assert.ok(h.calls.fields[0].includes('total_amount'));assert.ok(h.calls.fields[0].includes('yoco_checkout_id'));assert.equal(h.calls.updates.length,1);
+  const lookup=h.calls.fields.find(f=>f.includes('total_amount'));
+  assert.ok(lookup);assert.ok(lookup.includes('yoco_checkout_id'));assert.equal(h.calls.updates.length,1);
+});
+test('a delivery signed with the saved (re-registered) secret is accepted',async()=>{
+  const h=harness({env:{YOCO_WEBHOOK_SECRET:btoa('old-key-no-longer-used')},savedSecret:secret});
+  const response=await h.run();assert.equal(response.status,200);assert.equal(h.calls.updates.length,1);
+});
+test('a delivery signed with neither secret is rejected',async()=>{
+  const h=harness({env:{YOCO_WEBHOOK_SECRET:btoa('old-key')},savedSecret:btoa('other-key')});
+  assert.equal((await h.run()).status,401);assert.equal(h.calls.updates.length,0);
 });
 test('wrong amount, currency, missing currency or unpaid provider status rejected',async()=>{
   for(const patch of [{amount:20000},{currency:'USD'},{currency:null},{status:'pending'}]) {
